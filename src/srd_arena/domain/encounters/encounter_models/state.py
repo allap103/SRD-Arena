@@ -137,7 +137,6 @@ class EncounterStateData:
     encounter_id: str
     definition: EncounterDefinition
     creatures: dict[CreatureRef, EncounterCreatureState]
-    pace_automatic_actions: bool = False
     round: RoundState = field(default_factory=RoundState)
     turn: TurnState = field(default_factory=TurnState)
     interrupts: InterruptState = field(default_factory=InterruptState)

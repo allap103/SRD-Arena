@@ -42,7 +42,10 @@ class _RunningGameStub:
         self.commands.append(command)
         return self.command_result
 
-    def advance_automatic(self) -> GameUpdate:
+    def advance_one_automatic_action(self) -> GameUpdate:
+        return self.automatic_update
+
+    def advance_until_input_required(self) -> GameUpdate:
         return self.automatic_update
 
 
@@ -92,14 +95,27 @@ def test_presenter_refreshes_after_a_rejected_command() -> None:
     assert stub.observe_count == 2
 
 
-def test_presenter_retains_automatic_advance_observation() -> None:
+def test_presenter_retains_single_automatic_action_observation() -> None:
     initial = _observation("decision-1")
     advanced = _observation("decision-2")
     stub = _RunningGameStub(initial)
     stub.automatic_update = _update(advanced)
     presenter = GamePresenter(cast(RunningGame, stub))
 
-    update = presenter.advance_automatic()
+    update = presenter.advance_one_automatic_action()
+
+    assert update.observation == advanced
+    assert presenter.observation == advanced
+
+
+def test_presenter_retains_full_automatic_advance_observation() -> None:
+    initial = _observation("decision-1")
+    advanced = _observation("decision-2")
+    stub = _RunningGameStub(initial)
+    stub.automatic_update = _update(advanced)
+    presenter = GamePresenter(cast(RunningGame, stub))
+
+    update = presenter.advance_until_input_required()
 
     assert update.observation == advanced
     assert presenter.observation == advanced

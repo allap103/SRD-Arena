@@ -881,8 +881,14 @@ def test_attack_consumes_action_until_next_turn() -> None:
 
     wait_index = _action_id_by_label(session, "Wait")
     session.choose(wait_index)
-    while session.encounter_state.current_decision().kind == "reaction":
-        session.choose(_action_id_by_label(session, "Pass reaction"))
+    while not (
+        session.encounter_state.current_decision().kind == "turn"
+        and session.encounter_state.current_decision().creature_ref == "player"
+    ):
+        if session.encounter_state.requires_automatic_advance():
+            session.advance_until_input_required()
+        else:
+            session.choose(_action_id_by_label(session, "Pass reaction"))
 
     assert session.encounter_state.creatures["player"].actions_remaining == 1
     assert any(action.kind == "attack" for action in session.read().action_options)

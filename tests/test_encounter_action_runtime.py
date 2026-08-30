@@ -1582,6 +1582,7 @@ def test_goblin_encounter_wait_advances_enemy_turns() -> None:
     session.choose(move_up_index)
     wait_index = _action_id_by_label(session, "Wait")
     result = session.choose(wait_index)
+    session.advance_until_input_required()
 
     assert ("system", "Traveler waits.") in result.messages
     assert session.encounter_state is not None

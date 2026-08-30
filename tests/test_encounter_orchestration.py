@@ -77,7 +77,8 @@ def test_scripted_turns_advance_until_the_next_external_decision() -> None:
     assert state is not None
     wait = next(action for action in state.available_actions() if action.kind == "wait")
 
-    result = _choose_advertised_action(session, wait)
+    _choose_advertised_action(session, wait)
+    result = session.advance_until_input_required()
 
     assert state.current_decision().kind == "turn"
     assert state.current_decision().creature_ref == "player"
@@ -103,16 +104,14 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     assert goblin.behavior is not None
     goblin.behavior.type = "wait"
     session = scenario.create_session()
-    session.pace_automatic_actions = True
     session.read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("goblin_1")
     state.creatures["goblin_2"].creature.current_health = 0
 
-    progress = _ORCHESTRATOR.advance(state)
+    _ORCHESTRATOR.advance_one_action(state)
 
-    assert progress.paused_for_pacing is True
     assert state.current_decision().creature_ref == "goblin_3"
 
 
@@ -442,6 +441,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
         if action.kind == "opportunity_attack"
     )
     resumed = _choose_advertised_action(session, opportunity_attack)
+    advanced = session.advance_until_input_required()
 
     assert state.pending_movement is None
     assert state.current_decision().kind == "turn"
@@ -455,5 +455,5 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
     )
     assert any(
         event.type == "action_declared" and event.creature_ref == "goblin_3"
-        for event in resumed.events
+        for event in advanced.events
     )

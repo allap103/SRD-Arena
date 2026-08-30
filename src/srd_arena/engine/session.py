@@ -46,7 +46,6 @@ class Session:
         creature_templates: dict[str, Creature],
         item_templates: dict[str, Item] | None = None,
         start_scene_id: str = "goblin_encounter",
-        pace_automatic_actions: bool = False,
         geometry_config: GeometryConfig | None = None,
         encounter_orchestrator: EncounterOrchestrator | None = None,
         dice: DiceRoller | None = None,
@@ -57,7 +56,6 @@ class Session:
         self.start_scene_id = start_scene_id
         self.current_scene_id = start_scene_id
         self._initial_creature_templates = deepcopy(creature_templates)
-        self.pace_automatic_actions = pace_automatic_actions
         self.geometry_config = geometry_config or GeometryConfig()
         self.encounter_orchestrator = encounter_orchestrator or EncounterOrchestrator()
         self._dice = dice or DiceRoller()
@@ -229,6 +227,31 @@ class Session:
         >>> session.advance_until_input_required().messages
         (('Goblin', 'Waits'),)
         """
+        return self._advance_automatic(single_action=False)
+
+    def advance_one_automatic_action(self) -> EngineOutcome:
+        """Resolve one scripted action without introducing a time delay.
+
+        Presentation clients can call this operation from their own timer while
+        simulations use :meth:`advance_until_input_required` to run immediately.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
+        >>> from srd_arena.domain.geometry import Grid
+        >>> orchestrator = Mock()
+        >>> orchestrator.advance_one_action.return_value = EncounterProgress(messages=[("Goblin", "Moves")])
+        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
+        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
+        >>> session.encounter_state = Mock(
+        ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
+        >>> session.advance_one_automatic_action().messages
+        (('Goblin', 'Moves'),)
+        """
+        return self._advance_automatic(single_action=True)
+
+    def _advance_automatic(self, *, single_action: bool) -> EngineOutcome:
+        """Resolve scripted activity with the requested execution granularity."""
+
         self._ensure_encounter_state()
         if self.encounter_state is None:
             raise RuntimeError("AI advancement requested without an active encounter.")
@@ -237,7 +260,12 @@ class Session:
                 "AI advancement requested while no AI creature is active."
             )
 
-        progress = self.encounter_orchestrator.advance(self.encounter_state)
+        advance = (
+            self.encounter_orchestrator.advance_one_action
+            if single_action
+            else self.encounter_orchestrator.advance
+        )
+        progress = advance(self.encounter_state)
         transition = progress.transition
 
         scene_changed = False
@@ -270,7 +298,6 @@ class Session:
             self.geometry_config,
             self._dice,
         )
-        self.encounter_state.pace_automatic_actions = self.pace_automatic_actions
         self._encounter_actions = []
 
     def _continue_scene_transition(self) -> EngineOutcome:

@@ -514,12 +514,12 @@ def test_paced_ai_resolves_one_visible_action_per_step() -> None:
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
-    session.pace_automatic_actions = True
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
 
-    first = session.choose(_action_id_by_label(session, "Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
+    first = session.advance_one_automatic_action()
 
     assert state.current_decision().creature_ref == "goblin_1"
     assert (
@@ -527,7 +527,7 @@ def test_paced_ai_resolves_one_visible_action_per_step() -> None:
     )
     assert state.requires_automatic_advance() is True
 
-    second = session.advance_until_input_required()
+    second = session.advance_one_automatic_action()
 
     assert (
         len([event for event in second.events if event.type == "movement_resolved"])
@@ -536,14 +536,15 @@ def test_paced_ai_resolves_one_visible_action_per_step() -> None:
     assert state.current_decision().creature_ref == "goblin_1"
 
 
-def test_default_ai_still_resolves_until_the_next_user_decision() -> None:
+def test_full_automatic_advance_resolves_until_the_next_user_decision() -> None:
     session = load_scenario_directory(
         TACTICAL_SCENARIO_DIR,
         start_scene="goblin_encounter",
     ).create_session()
     session.read()
 
-    result = session.choose(_action_id_by_label(session, "Wait"))
+    session.choose(_action_id_by_label(session, "Wait"))
+    result = session.advance_until_input_required()
 
     assert session.encounter_state is not None
     assert session.encounter_state.current_decision().creature_ref == "player"

@@ -25,12 +25,7 @@ class GameStartup:
         """
         return self.scenarios.available_scenarios()
 
-    def start_scenario(
-        self,
-        scenario_id: str,
-        *,
-        pace_automatic_actions: bool = False,
-    ) -> RunningGame:
+    def start_scenario(self, scenario_id: str) -> RunningGame:
         """Load a scenario and wrap its new engine session as a running game.
 
         >>> from unittest.mock import Mock
@@ -43,8 +38,4 @@ class GameStartup:
         >>> repository.load_scenario.assert_called_once_with("demo")
         """
         scenario = self.scenarios.load_scenario(scenario_id)
-        return RunningGame(
-            scenario.create_session(
-                pace_automatic_actions=pace_automatic_actions,
-            )
-        )
+        return RunningGame(scenario.create_session())

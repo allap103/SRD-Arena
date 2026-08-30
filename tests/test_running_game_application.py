@@ -40,7 +40,8 @@ SPELL_DAMAGE_SCENARIO_DIR = (
 class SessionStub:
     def __init__(self) -> None:
         self.selected_action_ids: list[str] = []
-        self.advance_count = 0
+        self.advance_until_input_count = 0
+        self.advance_one_action_count = 0
         self.reset_count = 0
         self.read_state = SessionRead(
             scene_id="arena",
@@ -84,7 +85,11 @@ class SessionStub:
         return EngineOutcome(selected_action_id=action_id)
 
     def advance_until_input_required(self) -> EngineOutcome:
-        self.advance_count += 1
+        self.advance_until_input_count += 1
+        return EngineOutcome()
+
+    def advance_one_automatic_action(self) -> EngineOutcome:
+        self.advance_one_action_count += 1
         return EngineOutcome()
 
     def configure_action(
@@ -146,15 +151,18 @@ def test_running_game_exposes_headless_decision_workflow() -> None:
     action_id = observation.scene.action_details[0].id
 
     selected = game.execute(SelectAction(action_id, expected_decision_id=None))
-    advanced = game.advance_automatic()
+    advanced = game.advance_until_input_required()
+    stepped = game.advance_one_automatic_action()
     reset = game.reset()
 
     assert selected.update is not None
     assert selected.update.selected_action_id == action_id
     assert advanced.observation.scene.scene_id == session.read_state.scene_id
+    assert stepped.observation.scene.scene_id == session.read_state.scene_id
     assert reset.scene.scene_id == session.read_state.scene_id
     assert session.selected_action_ids == [action_id]
-    assert session.advance_count == 1
+    assert session.advance_until_input_count == 1
+    assert session.advance_one_action_count == 1
     assert session.reset_count == 1
 
 

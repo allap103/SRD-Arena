@@ -274,20 +274,39 @@ class GamePresenter:
             self.clear_target_mode()
         return update
 
-    def advance_automatic(self) -> GameUpdate:
-        """Advance one paced automatic step and retain its observation.
+    def advance_one_automatic_action(self) -> GameUpdate:
+        """Resolve one automatic action and retain its observation.
 
         >>> from unittest.mock import Mock
         >>> first, second, game = Mock(), Mock(), Mock()
         >>> game.observe.return_value = first
         >>> update = Mock(observation=second)
-        >>> game.advance_automatic.return_value = update
+        >>> game.advance_one_automatic_action.return_value = update
         >>> presenter = GamePresenter(game)
-        >>> presenter.advance_automatic() is update and presenter.observation is second
+        >>> presenter.advance_one_automatic_action() is update and presenter.observation is second
         True
         """
 
-        update = self._game.advance_automatic()
+        update = self._game.advance_one_automatic_action()
+        self._observation = update.observation
+        return update
+
+    def advance_until_input_required(self) -> GameUpdate:
+        """Resolve automatic actions immediately and retain the observation.
+
+        >>> from unittest.mock import Mock
+        >>> first, second, game = Mock(), Mock(), Mock()
+        >>> game.observe.return_value = first
+        >>> update = Mock(observation=second)
+        >>> game.advance_until_input_required.return_value = update
+        >>> presenter = GamePresenter(game)
+        >>> presenter.advance_until_input_required() is update
+        True
+        >>> presenter.observation is second
+        True
+        """
+
+        update = self._game.advance_until_input_required()
         self._observation = update.observation
         return update
 
