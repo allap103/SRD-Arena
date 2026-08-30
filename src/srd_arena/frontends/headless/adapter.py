@@ -50,12 +50,7 @@ class HeadlessGameAdapter:
             for scenario in self.startup.available_scenarios()
         )
 
-    def start_scenario(
-        self,
-        scenario_id: str,
-        *,
-        pace_automatic_actions: bool = False,
-    ) -> GameObservation:
+    def start_scenario(self, scenario_id: str) -> GameObservation:
         """Start a scenario selected by its advertised stable ID.
 
         >>> from unittest.mock import Mock
@@ -79,10 +74,7 @@ class HeadlessGameAdapter:
         )
         if summary is None:
             raise KeyError(f"Unknown scenario '{scenario_id}'.")
-        game = self.startup.start_scenario(
-            summary.id,
-            pace_automatic_actions=pace_automatic_actions,
-        )
+        game = self.startup.start_scenario(summary.id)
         observation = game.observe()
         self._game = game
         return observation
@@ -205,7 +197,7 @@ class HeadlessGameAdapter:
 
         return self._require_game().execute(command)
 
-    def advance_automatic(self) -> GameUpdate:
+    def advance_until_input_required(self) -> GameUpdate:
         """Advance scripted controllers until external input is required.
 
         >>> from unittest.mock import Mock
@@ -214,14 +206,32 @@ class HeadlessGameAdapter:
         >>> startup.start_scenario.return_value = game
         >>> game.observe.return_value = Mock()
         >>> update = Mock()
-        >>> game.advance_automatic.return_value = update
+        >>> game.advance_until_input_required.return_value = update
         >>> adapter = HeadlessGameAdapter(startup)
         >>> _ = adapter.start_scenario("demo")
-        >>> adapter.advance_automatic() is update
+        >>> adapter.advance_until_input_required() is update
         True
         """
 
-        return self._require_game().advance_automatic()
+        return self._require_game().advance_until_input_required()
+
+    def advance_one_automatic_action(self) -> GameUpdate:
+        """Resolve one scripted action for step-oriented clients.
+
+        >>> from unittest.mock import Mock
+        >>> startup, game = Mock(), Mock()
+        >>> startup.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
+        >>> startup.start_scenario.return_value = game
+        >>> game.observe.return_value = Mock()
+        >>> update = Mock()
+        >>> game.advance_one_automatic_action.return_value = update
+        >>> adapter = HeadlessGameAdapter(startup)
+        >>> _ = adapter.start_scenario("demo")
+        >>> adapter.advance_one_automatic_action() is update
+        True
+        """
+
+        return self._require_game().advance_one_automatic_action()
 
     def reset(self) -> GameObservation:
         """Reset the active game to its initial observation.

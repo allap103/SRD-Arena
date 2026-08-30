@@ -148,7 +148,6 @@ def merge_progress(
     target.paused_for_decision = (
         target.paused_for_decision or source.paused_for_decision
     )
-    target.paused_for_pacing = target.paused_for_pacing or source.paused_for_pacing
 
 
 def creature_label(state: EncounterState, creature_ref: CreatureRef) -> str:

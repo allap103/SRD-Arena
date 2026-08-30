@@ -36,7 +36,6 @@ class EncounterProgress:
     transition: str | None = None
     events: list[CombatEvent] = field(default_factory=list)
     paused_for_decision: bool = False
-    paused_for_pacing: bool = False
 
 
 @dataclass(frozen=True)

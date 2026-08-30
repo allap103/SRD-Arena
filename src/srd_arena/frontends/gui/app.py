@@ -62,7 +62,7 @@ class GameWindow(QMainWindow):
         image_root: Path | None = None,
         presentation_config: ScenarioPresentation | None = None,
         show_encounter_json: bool = False,
-        pace_automatic_actions: bool = True,
+        pause_between_automatic_actions: bool = True,
     ):
         super().__init__()
         self.presenter = presenter
@@ -74,7 +74,7 @@ class GameWindow(QMainWindow):
         self._combat_log_scene_id: str | None = None
         self._logged_round_number: int | None = None
         self._automatic_step_scheduled = False
-        self._pace_automatic_actions = pace_automatic_actions
+        self._pause_between_automatic_actions = pause_between_automatic_actions
         self._show_team_outlines = True
         self._always_show_creature_names = False
         self._movement_plan: MovementPlan | None = None
@@ -512,7 +512,9 @@ class GameWindow(QMainWindow):
         ):
             return
         self._automatic_step_scheduled = True
-        delay_ms = AUTOMATIC_ACTION_DELAY_MS if self._pace_automatic_actions else 0
+        delay_ms = (
+            AUTOMATIC_ACTION_DELAY_MS if self._pause_between_automatic_actions else 0
+        )
         QTimer.singleShot(delay_ms, self._advance_automatic_step)
 
     def _advance_automatic_step(self) -> None:
@@ -520,4 +522,9 @@ class GameWindow(QMainWindow):
         observation = self.presenter.refresh()
         if observation.encounter is None or not observation.requires_automatic_advance:
             return
-        self._apply_turn_result(self.presenter.advance_automatic())
+        update = (
+            self.presenter.advance_one_automatic_action()
+            if self._pause_between_automatic_actions
+            else self.presenter.advance_until_input_required()
+        )
+        self._apply_turn_result(update)

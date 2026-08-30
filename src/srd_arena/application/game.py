@@ -31,8 +31,8 @@ class RunningGame:
 
         return observe_session(self.__session)
 
-    def advance_automatic(self) -> GameUpdate:
-        """Advance scripted controllers until the engine yields control.
+    def advance_until_input_required(self) -> GameUpdate:
+        """Run scripted controllers immediately until the engine needs input.
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.models import EngineOutcome
@@ -40,13 +40,34 @@ class RunningGame:
         >>> engine = Mock()
         >>> engine.read.return_value = SessionRead("intro", None, (), None, None, (), {}, {}, {}, False)
         >>> engine.advance_until_input_required.return_value = EngineOutcome(messages=(("System", "Done"),))
-        >>> RunningGame(engine).advance_automatic().messages
+        >>> RunningGame(engine).advance_until_input_required().messages
         (('System', 'Done'),)
         """
 
         return game_update(
             self.__session,
             self.__session.advance_until_input_required(),
+        )
+
+    def advance_one_automatic_action(self) -> GameUpdate:
+        """Resolve one scripted action and return its resulting observation.
+
+        The operation itself is immediate. A presentation client may introduce
+        a delay before requesting the next action.
+
+        >>> from unittest.mock import Mock
+        >>> from srd_arena.engine.models import EngineOutcome
+        >>> from srd_arena.engine.queries import SessionRead
+        >>> engine = Mock()
+        >>> engine.read.return_value = SessionRead("intro", None, (), None, None, (), {}, {}, {}, False)
+        >>> engine.advance_one_automatic_action.return_value = EngineOutcome(messages=(("Goblin", "Moves"),))
+        >>> RunningGame(engine).advance_one_automatic_action().messages
+        (('Goblin', 'Moves'),)
+        """
+
+        return game_update(
+            self.__session,
+            self.__session.advance_one_automatic_action(),
         )
 
     def execute(self, command: GameCommand) -> CommandResult:
