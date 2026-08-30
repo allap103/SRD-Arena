@@ -15,16 +15,17 @@ pytest.importorskip("PySide6")
 from PySide6.QtWidgets import QApplication, QPushButton
 
 import srd_arena.frontends.gui.launcher as launcher
-from srd_arena.engine.session import Session
-from srd_arena.frontends.gui import app as game_app
-from srd_arena.scenarios.api import (
+from srd_arena.content.scenarios import (
     ScenarioCatalog,
     ScenarioPresentation,
     ScenarioSummary,
 )
+from srd_arena.domain.scenarios import ScenarioDefinition
+from srd_arena.engine.session import Session
+from srd_arena.frontends.gui import app as game_app
 
 
-def test_scenario_picker_delegates_session_creation_to_catalog(
+def test_scenario_picker_loads_content_then_creates_session(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
@@ -38,14 +39,14 @@ def test_scenario_picker_delegates_session_creation_to_catalog(
 
     class CatalogStub:
         def __init__(self) -> None:
-            self.started: list[str] = []
+            self.loaded: list[str] = []
 
         def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
             return (scenario,)
 
-        def start_scenario(self, scenario_id: str) -> Session:
-            self.started.append(scenario_id)
-            return session
+        def load_scenario(self, scenario_id: str) -> ScenarioDefinition:
+            self.loaded.append(scenario_id)
+            return cast(ScenarioDefinition, object())
 
     created_presenters: list[GamePresenterStub] = []
 
@@ -76,6 +77,7 @@ def test_scenario_picker_delegates_session_creation_to_catalog(
             self.was_shown = True
 
     catalog = CatalogStub()
+    monkeypatch.setattr(launcher, "Session", lambda _scenario: session)
     monkeypatch.setattr(launcher, "GamePresenter", GamePresenterStub)
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
     image_root = tmp_path / "images"
@@ -90,7 +92,7 @@ def test_scenario_picker_delegates_session_creation_to_catalog(
 
     picker._open_scenario(scenario)
 
-    assert catalog.started == ["example"]
+    assert catalog.loaded == ["example"]
     assert len(created_presenters) == 1
     assert created_presenters[0].received is session
     assert len(created_windows) == 1

@@ -7,11 +7,11 @@ from pathlib import Path
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
+from srd_arena.content.scenarios import ScenarioPresentation
 from srd_arena.engine.api import (
     EncounterObservation,
     GameUpdate,
 )
-from srd_arena.scenarios.api import ScenarioPresentation
 
 from .presentation.dice import build_roll_views, without_roll_details
 from .presentation.models import SessionPresentation

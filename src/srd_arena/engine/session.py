@@ -3,13 +3,11 @@
 from copy import deepcopy
 from dataclasses import dataclass
 
-from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
-from srd_arena.domain.equipment import Item
-from srd_arena.domain.geometry import GeometryConfig
 from srd_arena.domain.rolls.randomness import DiceRoller
+from srd_arena.domain.scenarios import ScenarioDefinition
 from srd_arena.engine.action_configuration import (
     configure_action as configure_engine_action,
 )
@@ -46,21 +44,20 @@ class Session:
 
     def __init__(
         self,
-        encounters: dict[str, EncounterDefinition],
-        creature_templates: dict[str, Creature],
-        item_templates: dict[str, Item] | None = None,
-        start_scene_id: str = "goblin_encounter",
-        geometry_config: GeometryConfig | None = None,
+        scenario: ScenarioDefinition,
         encounter_orchestrator: EncounterOrchestrator | None = None,
         dice: DiceRoller | None = None,
     ):
-        self.encounters = encounters
-        self.creature_templates = creature_templates
-        self.item_templates = item_templates or {}
-        self.start_scene_id = start_scene_id
-        self.current_scene_id = start_scene_id
-        self._initial_creature_templates = deepcopy(creature_templates)
-        self.geometry_config = geometry_config or GeometryConfig()
+        self.scenario = scenario
+        self.encounters = scenario.encounters
+        self.creature_templates = {
+            creature.id: creature for creature in scenario.creatures
+        }
+        self.item_templates = {item.id: item for item in scenario.items}
+        self.start_scene_id = scenario.start_encounter_id
+        self.current_scene_id = scenario.start_encounter_id
+        self._initial_creature_templates = deepcopy(self.creature_templates)
+        self.geometry_config = scenario.geometry_config
         self.encounter_orchestrator = encounter_orchestrator or EncounterOrchestrator()
         self._dice = dice or DiceRoller()
         self.encounter_state: EncounterState | None = None
@@ -73,7 +70,8 @@ class Session:
 
         >>> from srd_arena.domain.geometry import Grid
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
-        >>> Session({"demo": encounter}, {}, start_scene_id="demo")._current_encounter is encounter
+        >>> scenario = ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo")
+        >>> Session(scenario)._current_encounter is encounter
         True
         """
         return self.encounters[self.current_scene_id]
@@ -82,7 +80,8 @@ class Session:
         """Return typed internal inputs used to construct an observation.
 
         >>> from srd_arena.domain.geometry import Grid
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> session = Session(ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo"))
         >>> session.pending_scene_transition = PendingSceneTransition("next", "Victory!")
         >>> session.read().scene_text
         'Victory!'
@@ -128,7 +127,8 @@ class Session:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.domain.geometry import Grid
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> session = Session(ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo"))
         >>> session.encounter_state = Mock(encounter_id="demo")
         >>> outcome = session.choose("system-exit")
         >>> (outcome.selected_action_id, outcome.should_exit)
@@ -154,7 +154,8 @@ class Session:
         """Restore the session to its initially loaded content and scene.
 
         >>> from srd_arena.domain.geometry import Grid
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> session = Session(ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo"))
         >>> from unittest.mock import Mock
         >>> session.observe = Mock(return_value=None)
         >>> session.current_scene_id = "later"
@@ -209,7 +210,8 @@ class Session:
         >>> from unittest.mock import Mock
         >>> from srd_arena.domain.geometry import Grid
         >>> from srd_arena.engine.queries import ActionAim
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {}, start_scene_id="demo")
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> session = Session(ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo"))
         >>> session.encounter_state = Mock(encounter_id="demo")
         >>> session.configure_action("missing", ActionAim(1, 1))
         Traceback (most recent call last):
@@ -258,8 +260,9 @@ class Session:
         >>> from srd_arena.domain.geometry import Grid
         >>> orchestrator = Mock()
         >>> orchestrator.advance.return_value = EncounterProgress(messages=[("Goblin", "Waits")])
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
-        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> scenario = ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo")
+        >>> session = Session(scenario, encounter_orchestrator=orchestrator)
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
         >>> session.read = Mock(return_value=SessionRead(
@@ -281,8 +284,9 @@ class Session:
         >>> from srd_arena.domain.geometry import Grid
         >>> orchestrator = Mock()
         >>> orchestrator.advance_one_action.return_value = EncounterProgress(messages=[("Goblin", "Moves")])
-        >>> session = Session({"demo": EncounterDefinition("demo", Grid(1, 1))}, {},
-        ...     start_scene_id="demo", encounter_orchestrator=orchestrator)
+        >>> encounter = EncounterDefinition("demo", Grid(1, 1))
+        >>> scenario = ScenarioDefinition("demo", "Demo", {"demo": encounter}, ("demo",), "demo")
+        >>> session = Session(scenario, encounter_orchestrator=orchestrator)
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
         >>> session.read = Mock(return_value=SessionRead(

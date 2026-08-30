@@ -2,6 +2,7 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.effects import (
     TriggeredEffect,
     matching_effects,
@@ -12,7 +13,6 @@ from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.rolls.dice import reroll_dice, resolve_dice
 from srd_arena.engine.queries import DirectTargetOptionDetails
 from srd_arena.engine.session import Session
-from srd_arena.infrastructure.scenarios import load_scenario_directory
 from tests.encounter_runtime_support import active_creature as _active_creature
 from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
@@ -99,7 +99,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die() -> None:
 
 
 def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
-    session = load_scenario_directory(TACTICAL_SCENARIO_DIR).create_session()
+    session = Session(load_scenario_directory(TACTICAL_SCENARIO_DIR))
     player = _active_creature(session)
 
     [effect] = [
@@ -136,9 +136,11 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
 
 
 def _adjacent_tactical_encounter() -> Session:
-    session = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR, start_scene="goblin_encounter"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            TACTICAL_SCENARIO_DIR, start_encounter_id="goblin_encounter"
+        )
+    )
     session.read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4

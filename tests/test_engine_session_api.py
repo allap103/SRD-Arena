@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from srd_arena.content.scenarios import ScenarioCatalog
 from srd_arena.engine.api import (
     AimAction,
     ConfirmTargeting,
@@ -10,8 +11,6 @@ from srd_arena.engine.api import (
     Session,
     SetResourceAllocation,
 )
-from srd_arena.infrastructure.scenarios import FilesystemScenarioRepository
-from srd_arena.scenarios.api import ScenarioCatalog
 
 FULL_CONTROL_SCENARIO_DIR = (
     Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
@@ -28,7 +27,7 @@ SPELL_DAMAGE_SCENARIO_DIR = (
 
 
 def _session(scenario_id: str) -> Session:
-    return ScenarioCatalog(FilesystemScenarioRepository()).start_scenario(scenario_id)
+    return Session(ScenarioCatalog().load_scenario(scenario_id))
 
 
 def _advance_to_actor(

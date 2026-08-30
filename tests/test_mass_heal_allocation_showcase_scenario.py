@@ -1,8 +1,9 @@
 from pathlib import Path
 
+from srd_arena.content.scenarios import load_scenario_directory
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.participants import creature_team_id
-from srd_arena.infrastructure.scenarios import load_scenario_directory
+from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import is_spell_action
 
 SCENARIO_DIR = (
@@ -15,9 +16,11 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 
 def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> None:
-    session = load_scenario_directory(
-        str(SCENARIO_DIR), start_scene="mass_heal_allocation_showcase"
-    ).create_session()
+    session = Session(
+        load_scenario_directory(
+            str(SCENARIO_DIR), start_encounter_id="mass_heal_allocation_showcase"
+        )
+    )
     session.read()
 
     assert session.encounter_state is not None

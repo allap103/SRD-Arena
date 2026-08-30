@@ -1,6 +1,5 @@
-"""Schemas and loading for authored encounters and scenarios."""
+"""Schemas and loading for authored encounters."""
 
-from .discovery import ScenarioInfo, list_scenarios
 from .loader import LoadedEncounter, load_encounter
 from .schema import (
     BehaviorSchema,
@@ -17,7 +16,5 @@ __all__ = [
     "GridSchema",
     "LoadedEncounter",
     "PositionSchema",
-    "ScenarioInfo",
-    "list_scenarios",
     "load_encounter",
 ]
