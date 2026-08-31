@@ -21,8 +21,8 @@ class GridSchema(BaseModel):
 
     model_config = ConfigDict(extra="forbid")
 
-    width: int
-    height: int
+    width: int = Field(gt=0)
+    height: int = Field(gt=0)
 
 
 class BehaviorSchema(BaseModel):
@@ -69,8 +69,8 @@ class EncounterDefinitionSchema(BaseModel):
     teams: list[EncounterTeamSchema] = Field(default_factory=list, max_length=5)
 
     @model_validator(mode="after")
-    def require_unique_creature_ids(self) -> EncounterDefinitionSchema:
-        """Require unique creature IDs and at least one turn-taking creature.
+    def validate_creatures(self) -> EncounterDefinitionSchema:
+        """Require valid creature identities, turn ownership, and placement.
 
         >>> from pydantic import ValidationError
         >>> creature = {"id": "hero", "start": {"x": 0, "y": 0}, "team_id": "heroes"}
@@ -95,6 +95,42 @@ class EncounterDefinitionSchema(BaseModel):
             creature.takes_turns for creature in self.creatures
         ):
             raise ValueError("An encounter requires at least one turn-taking creature.")
+
+        outside_grid = [
+            creature
+            for creature in self.creatures
+            if not (
+                0 <= creature.start.x < self.grid.width
+                and 0 <= creature.start.y < self.grid.height
+            )
+        ]
+        if outside_grid:
+            placements = ", ".join(
+                f"{creature.id} at ({creature.start.x}, {creature.start.y})"
+                for creature in outside_grid
+            )
+            raise ValueError(
+                "Encounter creature starting positions must lie within the grid: "
+                + placements
+            )
+
+        creature_ids_by_start: dict[tuple[int, int], list[str]] = {}
+        for creature in self.creatures:
+            position = (creature.start.x, creature.start.y)
+            creature_ids_by_start.setdefault(position, []).append(creature.id)
+        overlapping_starts = {
+            position: creature_ids
+            for position, creature_ids in creature_ids_by_start.items()
+            if len(creature_ids) > 1
+        }
+        if overlapping_starts:
+            placements = "; ".join(
+                f"({x}, {y}): {', '.join(creature_ids)}"
+                for (x, y), creature_ids in sorted(overlapping_starts.items())
+            )
+            raise ValueError(
+                "Encounter creature starting positions must be unique: " + placements
+            )
         return self
 
 

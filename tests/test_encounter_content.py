@@ -304,6 +304,72 @@ def test_encounter_schema_rejects_duplicate_creature_ids() -> None:
         )
 
 
+def test_encounter_schema_rejects_overlapping_creature_starts() -> None:
+    with pytest.raises(
+        ValidationError,
+        match=(
+            r"Encounter creature starting positions must be unique: "
+            r"\(0, 0\): first, second"
+        ),
+    ):
+        EncounterDefinitionSchema.model_validate(
+            {
+                "id": "overlapping_creatures",
+                "grid": {"width": 2, "height": 2},
+                "creatures": [
+                    {
+                        "id": "first",
+                        "name": "First",
+                        "start": {"x": 0, "y": 0},
+                        "team_id": "team",
+                    },
+                    {
+                        "id": "second",
+                        "name": "Second",
+                        "start": {"x": 0, "y": 0},
+                        "team_id": "team",
+                    },
+                ],
+            }
+        )
+
+
+@pytest.mark.parametrize(
+    ("start", "position_text"),
+    [
+        ({"x": -1, "y": 0}, r"\(-1, 0\)"),
+        ({"x": 0, "y": -1}, r"\(0, -1\)"),
+        ({"x": 2, "y": 0}, r"\(2, 0\)"),
+        ({"x": 0, "y": 2}, r"\(0, 2\)"),
+    ],
+)
+def test_encounter_schema_rejects_creature_starts_outside_grid(
+    start: dict[str, int],
+    position_text: str,
+) -> None:
+    with pytest.raises(
+        ValidationError,
+        match=(
+            r"Encounter creature starting positions must lie within the grid: "
+            rf"traveler at {position_text}"
+        ),
+    ):
+        EncounterDefinitionSchema.model_validate(
+            {
+                "id": "outside_grid",
+                "grid": {"width": 2, "height": 2},
+                "creatures": [
+                    {
+                        "id": "traveler",
+                        "name": "Traveler",
+                        "start": start,
+                        "team_id": "team",
+                    }
+                ],
+            }
+        )
+
+
 def test_fighter_level_five_resolves_extra_attack(
     tmp_path: Path,
     creature_content: SimpleNamespace,
