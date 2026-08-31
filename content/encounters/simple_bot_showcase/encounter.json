@@ -1,0 +1,50 @@
+{
+  "id": "simple_bot_showcase",
+  "grid": {
+    "width": 9,
+    "height": 7
+  },
+  "creatures": [
+    {
+      "id": "player_goblin",
+      "name": "Player Goblin",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 1,
+        "y": 3
+      },
+      "team_id": "players"
+    },
+    {
+      "id": "bot_goblin",
+      "name": "Bot Goblin",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 3
+      },
+      "team_id": "bots",
+      "behavior": {
+        "type": "chase"
+      }
+    }
+  ],
+  "teams": [
+    {
+      "id": "players",
+      "name": "Player Team",
+      "controller": "external"
+    },
+    {
+      "id": "bots",
+      "name": "Bot Team",
+      "controller": "scripted"
+    }
+  ]
+}

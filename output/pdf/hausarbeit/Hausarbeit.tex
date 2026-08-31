@@ -1,0 +1,132 @@
+\documentclass[
+  11pt,
+  a4paper,
+  parskip=half,
+  headings=normal,
+  numbers=noenddot
+]{scrreprt}
+
+\usepackage[ngerman]{babel}
+\usepackage{fontspec}
+\usepackage{microtype}
+\usepackage{xcolor}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{enumitem}
+\usepackage{fvextra}
+\usepackage[most]{tcolorbox}
+\usepackage{xurl}
+\usepackage{hyperref}
+\usepackage{bookmark}
+\usepackage{scrlayer-scrpage}
+\usepackage[fencedCode,pipeTables]{markdown}
+
+\setmainfont{TeX Gyre Pagella}
+\setsansfont{TeX Gyre Heros}
+\setmonofont[Scale=0.88]{Latin Modern Mono}
+
+\definecolor{ArenaBlue}{HTML}{294C60}
+\definecolor{ArenaGold}{HTML}{B08D3C}
+\definecolor{ArenaInk}{HTML}{20262B}
+\definecolor{ArenaPaper}{HTML}{F6F3EC}
+\definecolor{ArenaCode}{HTML}{F2F4F5}
+\definecolor{ArenaRule}{HTML}{CCD3D7}
+
+\KOMAoptions{DIV=12}
+\setlength{\emergencystretch}{2em}
+\setlist{itemsep=0.15em,topsep=0.35em}
+\setkomafont{disposition}{\sffamily\bfseries\color{ArenaBlue}}
+\setkomafont{section}{\sffamily\bfseries\LARGE\color{ArenaBlue}}
+\setkomafont{subsection}{\sffamily\bfseries\Large\color{ArenaBlue}}
+\setkomafont{subsubsection}{\sffamily\bfseries\large\color{ArenaBlue}}
+\renewcommand*{\thesection}{\arabic{section}}
+\renewcommand*{\thesubsection}{\thesection.\arabic{subsection}}
+\renewcommand*{\thesubsubsection}{\thesubsection.\arabic{subsubsection}}
+
+\hypersetup{
+  colorlinks=true,
+  linkcolor=ArenaBlue,
+  urlcolor=ArenaBlue,
+  citecolor=ArenaBlue,
+  pdftitle={SRD Arena -- Projektbericht},
+  pdfsubject={Arbeitsfassung der Hausarbeit}
+}
+
+\clearpairofpagestyles
+\ihead{\sffamily\small SRD Arena}
+\ohead{\sffamily\small Projektbericht -- Arbeitsfassung}
+\cfoot{\sffamily\small\pagemark}
+\setkomafont{pageheadfoot}{\color{ArenaInk}}
+\renewcommand*{\headfont}{\normalfont}
+
+\renewenvironment{quotation}
+  {\begin{tcolorbox}[
+     enhanced,
+     breakable,
+     colback=ArenaPaper,
+     colframe=ArenaGold,
+     boxrule=0.5pt,
+     arc=1.5pt,
+     left=8pt,right=8pt,top=6pt,bottom=6pt,
+     before skip=8pt,after skip=8pt]
+   \small}
+  {\end{tcolorbox}}
+
+\markdownSetup{
+  rendererPrototypes={
+    inputVerbatim={%
+      \begin{tcolorbox}[
+        enhanced,
+        breakable,
+        colback=ArenaCode,
+        colframe=ArenaRule,
+        boxrule=0.4pt,
+        arc=1.5pt,
+        left=5pt,right=5pt,top=5pt,bottom=5pt,
+        before skip=8pt,after skip=8pt]
+      \VerbatimInput[
+        fontsize=\footnotesize,
+        breaklines=true,
+        breakanywhere=true,
+        commandchars=\\\{\}
+      ]{#1}%
+      \end{tcolorbox}%
+    }
+  }
+}
+
+\begin{document}
+\hypersetup{pageanchor=false}
+
+\begin{titlepage}
+  \pagecolor{ArenaPaper}
+  \color{ArenaInk}
+  \centering
+  \vspace*{2.4cm}
+  {\color{ArenaGold}\rule{0.72\textwidth}{1.2pt}\par}
+  \vspace{1.3cm}
+  {\sffamily\bfseries\fontsize{34}{40}\selectfont SRD Arena\par}
+  \vspace{0.45cm}
+  {\sffamily\fontsize{19}{24}\selectfont Projektbericht\par}
+  \vspace{0.8cm}
+  {\sffamily\large Arbeitsfassung\par}
+  \vfill
+  {\sffamily\large Einführung in Python\par}
+  \vspace{0.25cm}
+  {\sffamily Heinrich-Heine-Universität Düsseldorf\par}
+  \vspace{0.7cm}
+  {\sffamily 31. August 2026\par}
+  \vspace{1.3cm}
+  {\color{ArenaGold}\rule{0.72\textwidth}{1.2pt}\par}
+\end{titlepage}
+\nopagecolor
+\hypersetup{pageanchor=true}
+
+\pagenumbering{roman}
+\tableofcontents
+\clearpage
+\pagenumbering{arabic}
+
+\markdownInput{Hausarbeit-content.md}
+
+\end{document}
