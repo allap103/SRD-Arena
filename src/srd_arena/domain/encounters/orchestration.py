@@ -41,12 +41,6 @@ if TYPE_CHECKING:
 class EncounterOrchestrator:
     """Drive an encounter until it finishes or requires a controller decision."""
 
-    def __init__(
-        self,
-        continuation_runner: ContinuationRunner | None = None,
-    ) -> None:
-        self._continuation_runner = continuation_runner or ContinuationRunner()
-
     def submit(
         self,
         state: EncounterState,
@@ -195,7 +189,7 @@ class EncounterOrchestrator:
     ) -> EncounterProgress:
         progress = result.progress
         if result.completed:
-            self._continuation_runner.complete_decision(
+            ContinuationRunner().complete_decision(
                 state,
                 decision,
                 action_id=result.action_id,

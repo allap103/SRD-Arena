@@ -59,7 +59,7 @@ def observe_scene(read: SessionRead) -> SceneObservation:
     """Project the engine's advertised choices into immutable client action data.
 
     >>> read = SessionRead(
-    ...     scene_id="demo", scene_text="Choose", action_options=(
+    ...     scene_id="demo", action_options=(
     ...         ActionOption("exit", "Exit", "system_exit", ""),),
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
@@ -71,7 +71,6 @@ def observe_scene(read: SessionRead) -> SceneObservation:
 
     return SceneObservation(
         scene_id=read.scene_id,
-        scene_text=read.scene_text,
         action_details=tuple(
             _observe_action(option, read.encounter_state)
             for option in read.action_options

@@ -37,7 +37,6 @@ QFrame#overlayCard {
     border-radius: 12px;
 }
 
-QFrame#scenePanel,
 QFrame#choicesPanel,
 QWidget#encounterPanel {
     background: #1d1711;

@@ -912,13 +912,15 @@ def test_encounter_victory_waits_for_restart() -> None:
     assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
     assert ("system", "Victory! You may restart the encounter.") in result.messages
-    scene = session.read()
-    assert scene.scene_text == "Victory! You may restart the encounter."
+    encounter_read = session.read()
+    assert encounter_read.completion_message == (
+        "Victory! You may restart the encounter."
+    )
     assert (
         session.pending_encounter_completion.message
         == "Victory! You may restart the encounter."
     )
-    assert scene.action_options[0].id == "system-restart-encounter"
+    assert encounter_read.action_options[0].id == "system-restart-encounter"
     observation = observe_session(session)
     assert observation.completion is not None
     presentation = build_session_presentation(observation)

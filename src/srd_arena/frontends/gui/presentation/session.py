@@ -19,19 +19,19 @@ def build_session_presentation(
 ) -> SessionPresentation:
     """Convert one engine observation into a complete frontend snapshot.
 
-    Story scenes remain simple GUI projections when no encounter is active.
+    Non-encounter decisions remain simple action projections.
 
     >>> from types import SimpleNamespace
     >>> system = SimpleNamespace(kind="system_exit")
     >>> observation = SimpleNamespace(
     ...     scene=SimpleNamespace(
-    ...         scene_id="intro", scene_text="Welcome", action_details=(system,)
+    ...         scene_id="intro", action_details=(system,)
     ...     ),
     ...     encounter=None,
     ... )
     >>> presentation = build_session_presentation(observation)
-    >>> (presentation.scene_id, presentation.story_text, presentation.system_actions)
-    ('intro', 'Welcome', (namespace(kind='system_exit'),))
+    >>> (presentation.scene_id, presentation.system_actions)
+    ('intro', (namespace(kind='system_exit'),))
     """
 
     presentation_config = config or EncounterPresentation()
@@ -42,7 +42,6 @@ def build_session_presentation(
     if observation.encounter is None:
         return SessionPresentation(
             scene_id=view.scene_id,
-            story_text=view.scene_text,
             story_actions=story_actions,
             system_actions=system_actions,
         )
@@ -74,7 +73,6 @@ def build_session_presentation(
     )
     return SessionPresentation(
         scene_id=view.scene_id,
-        story_text="",
         story_actions=story_actions,
         system_actions=system_actions,
         encounter=EncounterView(

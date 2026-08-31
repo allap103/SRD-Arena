@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
-    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -53,12 +52,6 @@ class GameSurface(QWidget):
         layout.setContentsMargins(0, 0, 0, 0)
         layout.setSpacing(10)
 
-        self._scene_group, scene_layout = _build_group()
-        self._scene_group.setObjectName("scenePanel")
-        self._scene_text = _readonly_text(minimum_height=180)
-        self._scene_text.setObjectName("sceneText")
-        scene_layout.addWidget(self._scene_text)
-
         self._story_choices_group, story_group_layout = _build_group()
         self._story_choices_group.setObjectName("choicesPanel")
         self._story_choices_layout = QVBoxLayout()
@@ -76,7 +69,6 @@ class GameSurface(QWidget):
         )
         self._build_victory_overlay()
 
-        layout.addWidget(self._scene_group, stretch=1)
         layout.addWidget(self._story_choices_group, stretch=1)
         layout.addWidget(self._encounter_panel, stretch=2)
 
@@ -96,13 +88,10 @@ class GameSurface(QWidget):
 
     def show_story(
         self,
-        story_text: str | None,
         actions: Sequence[ActionObservation],
     ) -> None:
-        """Present a non-encounter scene and its choices."""
+        """Present choices outside an active encounter."""
 
-        self._scene_text.setPlainText(story_text or "")
-        self._scene_group.show()
         self._story_choices_group.show()
         self._encounter_panel.hide()
         self._victory_overlay.hide()
@@ -121,7 +110,6 @@ class GameSurface(QWidget):
     def show_encounter(self) -> None:
         """Switch the primary surface from story panels to the battlefield."""
 
-        self._scene_group.hide()
         self._story_choices_group.hide()
         self._encounter_panel.show()
 
@@ -233,10 +221,3 @@ def _wrap_in_scroll(content_layout: QVBoxLayout) -> QScrollArea:
     scroll.setFrameShape(QFrame.Shape.NoFrame)
     scroll.setWidget(container)
     return scroll
-
-
-def _readonly_text(*, minimum_height: int) -> QTextEdit:
-    text = QTextEdit()
-    text.setReadOnly(True)
-    text.setMinimumHeight(minimum_height)
-    return text

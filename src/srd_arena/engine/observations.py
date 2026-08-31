@@ -65,7 +65,7 @@ def observe_session(session: GameEngine) -> GameObservation:
 
     >>> from types import SimpleNamespace
     >>> read = SessionRead(
-    ...     scene_id="intro", scene_text="Ready", action_options=(),
+    ...     scene_id="intro", action_options=(),
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)

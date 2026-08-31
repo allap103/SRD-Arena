@@ -250,7 +250,6 @@ def test_unsupported_eligibility_is_advertised_as_unimplemented() -> None:
 
     read = SessionRead(
         scene_id="fight",
-        scene_text=None,
         action_options=(option,),
         encounter_state=None,
         completion_message=None,

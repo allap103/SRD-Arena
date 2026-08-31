@@ -61,7 +61,6 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
     observation = GameObservation(
         scene=SceneObservation(
             scene_id="example",
-            scene_text="Choose an action.",
             action_details=(
                 ActionObservation(
                     id="caster-fireball",

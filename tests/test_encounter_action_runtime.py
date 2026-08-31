@@ -134,12 +134,11 @@ from tests.encounter_runtime_support import (
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
-def test_goblin_encounter_scene_generates_runtime_actions() -> None:
+def test_goblin_encounter_generates_runtime_actions() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
 
-    scene_view = session.read()
-    assert scene_view.scene_text is None
-    labels = [action.label for action in scene_view.action_options]
+    encounter_read = session.read()
+    labels = [action.label for action in encounter_read.action_options]
     assert "Move up" in labels
     assert "Move up-right" in labels
     assert "Wait" in labels

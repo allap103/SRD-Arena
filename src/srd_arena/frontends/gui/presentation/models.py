@@ -170,7 +170,6 @@ class SessionPresentation:
     """Describe the current scene in the form consumed by any frontend."""
 
     scene_id: str
-    story_text: str | None
     story_actions: tuple[ActionObservation, ...]
     system_actions: tuple[ActionObservation, ...]
     encounter: EncounterView | None = None

@@ -43,7 +43,6 @@ class Session:
     def __init__(
         self,
         encounter: EncounterDefinition,
-        encounter_orchestrator: EncounterOrchestrator | None = None,
         dice: DiceRoller | None = None,
     ):
         self.encounter = encounter
@@ -53,7 +52,7 @@ class Session:
         self.item_templates = {item.id: item for item in encounter.items}
         self._initial_creature_templates = deepcopy(self.creature_templates)
         self.geometry_config = encounter.geometry_config
-        self.encounter_orchestrator = encounter_orchestrator or EncounterOrchestrator()
+        self.encounter_orchestrator = EncounterOrchestrator()
         self._dice = dice or DiceRoller()
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
@@ -66,7 +65,7 @@ class Session:
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
         >>> session = Session(encounter)
         >>> session.pending_encounter_completion = PendingEncounterCompletion("Victory!")
-        >>> session.read().scene_text
+        >>> session.read().completion_message
         'Victory!'
         """
 
@@ -79,10 +78,10 @@ class Session:
         >>> from srd_arena.engine.queries import SessionRead
         >>> session = Session.__new__(Session)
         >>> session.read = Mock(return_value=SessionRead(
-        ...     "intro", "Welcome", (), None, None, (), {}, {}, {}, False
+        ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
-        >>> session.observe().scene.scene_text
-        'Welcome'
+        >>> session.observe().scene.scene_id
+        'demo'
         """
 
         return observe_session(self)
@@ -95,7 +94,7 @@ class Session:
         >>> from srd_arena.engine.queries import SessionRead
         >>> session = Session.__new__(Session)
         >>> session.read = Mock(return_value=SessionRead(
-        ...     "intro", None, (), None, None, (), {}, {}, {}, False
+        ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.execute(SelectAction("wait", "old")).failure.code
         'stale_decision'
@@ -237,11 +236,12 @@ class Session:
         >>> orchestrator = Mock()
         >>> orchestrator.advance.return_value = EncounterProgress(messages=[("Goblin", "Waits")])
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
-        >>> session = Session(encounter, encounter_orchestrator=orchestrator)
+        >>> session = Session(encounter)
+        >>> session.encounter_orchestrator = orchestrator
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
         >>> session.read = Mock(return_value=SessionRead(
-        ...     "demo", None, (), None, None, (), {}, {}, {}, False
+        ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.advance_until_input_required().messages
         (('Goblin', 'Waits'),)
@@ -260,11 +260,12 @@ class Session:
         >>> orchestrator = Mock()
         >>> orchestrator.advance_one_action.return_value = EncounterProgress(messages=[("Goblin", "Moves")])
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
-        >>> session = Session(encounter, encounter_orchestrator=orchestrator)
+        >>> session = Session(encounter)
+        >>> session.encounter_orchestrator = orchestrator
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
         >>> session.read = Mock(return_value=SessionRead(
-        ...     "demo", None, (), None, None, (), {}, {}, {}, False
+        ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.advance_one_automatic_action().messages
         (('Goblin', 'Moves'),)

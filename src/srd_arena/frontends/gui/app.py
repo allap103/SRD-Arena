@@ -152,7 +152,6 @@ class GameWindow(QMainWindow):
         if presentation.encounter is None:
             self.sidebar.leave_encounter()
             self.surface.show_story(
-                presentation.story_text,
                 presentation.story_actions,
             )
         else:

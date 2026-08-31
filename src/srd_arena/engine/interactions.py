@@ -41,7 +41,7 @@ def execute_game_command(
     >>> from types import SimpleNamespace
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
-    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     scene_id="intro", action_options=(),
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
@@ -85,7 +85,7 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
     >>> from types import SimpleNamespace
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
-    ...     scene_id="intro", scene_text=None, action_options=(),
+    ...     scene_id="intro", action_options=(),
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
@@ -121,7 +121,7 @@ def decision_id(observation: GameObservation) -> str | None:
     """Return the decision token clients must echo with their next command.
 
     >>> from srd_arena.engine.observation_models import GameObservation, SceneObservation
-    >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+    >>> observation = GameObservation(SceneObservation("intro", ()), None, None, False)
     >>> decision_id(observation) is None
     True
     """

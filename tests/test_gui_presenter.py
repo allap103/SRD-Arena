@@ -155,7 +155,6 @@ def _observation(
     return GameObservation(
         scene=SceneObservation(
             scene_id="arena",
-            scene_text=None,
             action_details=actions,
         ),
         encounter=EncounterObservation(

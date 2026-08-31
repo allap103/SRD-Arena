@@ -78,10 +78,9 @@ class ActionObservation:
 
 @dataclass(frozen=True)
 class SceneObservation:
-    """Current scene text and all actions the client may display."""
+    """Identity and actions for the current client decision point."""
 
     scene_id: str
-    scene_text: str | None
     action_details: tuple[ActionObservation, ...]
 
 

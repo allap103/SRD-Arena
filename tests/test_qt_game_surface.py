@@ -14,7 +14,6 @@ from PySide6.QtWidgets import (
     QFrame,
     QLabel,
     QPushButton,
-    QTextEdit,
     QWidget,
 )
 
@@ -38,19 +37,16 @@ def test_game_surface_switches_between_story_and_encounter() -> None:
         creature_ref="",
     )
 
-    surface.show_story("An encounter awaits.", [story_action])
+    surface.show_story([story_action])
     app.processEvents()
 
-    scene_text = surface.findChild(QTextEdit, "sceneText")
     choice = next(
         button
         for button in surface.findChildren(QPushButton)
         if button.text() == "Enter encounter"
     )
     encounter_panel = surface.findChild(QWidget, "encounterPanel")
-    assert scene_text is not None
     assert encounter_panel is not None
-    assert scene_text.toPlainText() == "An encounter awaits."
     assert encounter_panel.isHidden()
 
     choice.click()
@@ -59,11 +55,8 @@ def test_game_surface_switches_between_story_and_encounter() -> None:
     surface.show_encounter()
     app.processEvents()
     assert not encounter_panel.isHidden()
-    scene_panel = surface.findChild(QFrame, "scenePanel")
     choices_panel = surface.findChild(QFrame, "choicesPanel")
-    assert scene_panel is not None
     assert choices_panel is not None
-    assert scene_panel.isHidden()
     assert choices_panel.isHidden()
 
     _dispose(surface, app)

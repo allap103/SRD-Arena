@@ -60,7 +60,6 @@ def read_session(session: Session) -> SessionRead:
         action_options.extend(_system_action_options(session))
         return _session_read(
             session,
-            scene_text=session.pending_encounter_completion.message,
             action_options=action_options,
         )
 
@@ -95,13 +94,12 @@ def read_session(session: Session) -> SessionRead:
         ]
 
     action_options.extend(_system_action_options(session))
-    return _session_read(session, scene_text=None, action_options=action_options)
+    return _session_read(session, action_options=action_options)
 
 
 def _session_read(
     session: Session,
     *,
-    scene_text: str | None,
     action_options: list[ActionOption],
 ) -> SessionRead:
     state = session.encounter_state
@@ -112,7 +110,6 @@ def _session_read(
     )
     return SessionRead(
         scene_id=session.encounter.id,
-        scene_text=scene_text,
         action_options=tuple(action_options),
         encounter_state=state,
         completion_message=completion_message,

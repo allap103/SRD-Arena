@@ -55,7 +55,7 @@ class HeadlessGameAdapter:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
-        >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+        >>> observation = GameObservation(SceneObservation("intro", ()), None, None, False)
         >>> catalog, session = Mock(), Mock()
         >>> catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
         >>> catalog.load_encounter.return_value = Mock()
@@ -88,7 +88,7 @@ class HeadlessGameAdapter:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
-        >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
+        >>> observation = GameObservation(SceneObservation("intro", ()), None, None, False)
         >>> session = Mock()
         >>> session.observe.return_value = observation
         >>> adapter = HeadlessGameAdapter(Mock())
@@ -114,7 +114,7 @@ class HeadlessGameAdapter:
         ...     ),
         ... )
         >>> observation = GameObservation(
-        ...     SceneObservation("fight", None, actions), None, None, False
+        ...     SceneObservation("fight", actions), None, None, False
         ... )
         >>> session = Mock()
         >>> session.observe.return_value = observation
@@ -136,7 +136,7 @@ class HeadlessGameAdapter:
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
         >>> action = ActionObservation("dodge", "Dodge", "action", "hero")
-        >>> observation = GameObservation(SceneObservation("fight", None, (action,)), None, None, False)
+        >>> observation = GameObservation(SceneObservation("fight", (action,)), None, None, False)
         >>> session = Mock()
         >>> session.observe.return_value = observation
         >>> adapter = HeadlessGameAdapter(Mock())
@@ -225,14 +225,14 @@ class HeadlessGameAdapter:
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
         >>> initial = GameObservation(
-        ...     SceneObservation("intro", "Ready?", ()), None, None, False
+        ...     SceneObservation("intro", ()), None, None, False
         ... )
         >>> session = Mock()
         >>> session.reset.return_value = initial
         >>> adapter = HeadlessGameAdapter(Mock())
         >>> adapter._session = session
-        >>> adapter.reset().scene.scene_text
-        'Ready?'
+        >>> adapter.reset().scene.scene_id
+        'intro'
         """
 
         return self._require_session().reset()

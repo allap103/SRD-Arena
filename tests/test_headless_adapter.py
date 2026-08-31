@@ -96,7 +96,7 @@ def test_headless_observation_preserves_unimplemented_action_reason(
         ),
     )
     observation = GameObservation(
-        SceneObservation("fight", None, (unsupported,)),
+        SceneObservation("fight", (unsupported,)),
         None,
         None,
         False,

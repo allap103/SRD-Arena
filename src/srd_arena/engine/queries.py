@@ -166,7 +166,6 @@ class SessionRead:
     """
 
     scene_id: str
-    scene_text: str | None
     action_options: tuple[ActionOption, ...]
     encounter_state: EncounterState | None
     completion_message: str | None
