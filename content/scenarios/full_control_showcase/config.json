@@ -1,9 +1,0 @@
-{
-  "display_name": "Full Control Showcase",
-  "encounters": ["full_control_showcase"],
-  "background_image": "backgrounds/grass.png",
-  "grid_opacity": 0.6,
-  "geometry": {
-    "directional_area_cell_coverage_threshold": 0.1
-  }
-}

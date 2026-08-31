@@ -1,6 +1,6 @@
 """Compose authored content with the selected SRD Arena frontend."""
 
-from srd_arena.content.scenarios import ScenarioCatalog
+from srd_arena.content.encounters import EncounterCatalog
 
 
 def main() -> None:
@@ -8,7 +8,7 @@ def main() -> None:
 
     from srd_arena.frontends.gui.launcher import run_gui
 
-    catalog = ScenarioCatalog()
+    catalog = EncounterCatalog()
     run_gui(
         catalog,
         image_root=catalog.image_root,

@@ -35,7 +35,7 @@ class GameSurfaceCallbacks:
     cell_clicked: Callable[[int, int], None]
     point_clicked: Callable[[float, float], None]
     interaction_cancelled: Callable[[], None]
-    continue_transition: Callable[[], None]
+    restart_encounter: Callable[[], None]
 
 
 class GameSurface(QWidget):
@@ -129,15 +129,15 @@ class GameSurface(QWidget):
         self,
         message: str | None,
         *,
-        can_continue: bool,
+        can_restart: bool,
     ) -> None:
-        """Show or hide the encounter transition overlay."""
+        """Show or hide the encounter-completion overlay."""
 
         if message is None:
             self._victory_overlay.hide()
             return
         self._victory_overlay_message.setText(message)
-        self._victory_overlay_button.setEnabled(can_continue)
+        self._victory_overlay_button.setEnabled(can_restart)
         self._update_victory_overlay_geometry()
         self._victory_overlay.show()
         self._victory_overlay.raise_()
@@ -193,15 +193,13 @@ class GameSurface(QWidget):
         overlay_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
         overlay_card_layout.addWidget(overlay_title)
         self._victory_overlay_message = QLabel("")
-        self._victory_overlay_message.setObjectName("transitionMessage")
+        self._victory_overlay_message.setObjectName("completionMessage")
         self._victory_overlay_message.setWordWrap(True)
         self._victory_overlay_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
         overlay_card_layout.addWidget(self._victory_overlay_message)
-        self._victory_overlay_button = QPushButton("Continue")
-        self._victory_overlay_button.setObjectName("transitionButton")
-        self._victory_overlay_button.clicked.connect(
-            self._callbacks.continue_transition
-        )
+        self._victory_overlay_button = QPushButton("Restart encounter")
+        self._victory_overlay_button.setObjectName("restartButton")
+        self._victory_overlay_button.clicked.connect(self._callbacks.restart_encounter)
         overlay_card_layout.addWidget(
             self._victory_overlay_button,
             alignment=Qt.AlignmentFlag.AlignCenter,

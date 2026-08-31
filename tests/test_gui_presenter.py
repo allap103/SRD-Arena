@@ -173,7 +173,7 @@ def _observation(
             team_ids=(),
             targeting=None,
         ),
-        transition=None,
+        completion=None,
         requires_automatic_advance=False,
     )
 
@@ -189,6 +189,5 @@ def _update(observation: GameObservation) -> GameUpdate:
         events=(),
         selected_action_id=None,
         selected_choice_text=None,
-        scene_changed=False,
         should_exit=False,
     )

@@ -51,8 +51,8 @@ def active_turn_creature(state: EncounterState) -> CreatureRef:
     return state.initiative_order[state.turn.index]
 
 
-def check_transition(state: EncounterState) -> str | None:
-    """Return the victory transition once only one configured team lives.
+def encounter_is_complete(state: EncounterState) -> bool:
+    """Return whether only one configured team remains alive.
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
@@ -61,17 +61,14 @@ def check_transition(state: EncounterState) -> str | None:
     ...         "hero": SimpleNamespace(is_alive=True),
     ...         "goblin": SimpleNamespace(is_alive=False),
     ...     },
-    ...     definition=SimpleNamespace(
-    ...         victory=SimpleNamespace(next_encounter_id="victory")
-    ...     ),
     ... )
     >>> teams = {"hero": "heroes", "goblin": "foes"}
     >>> with patch(
     ...     "srd_arena.domain.encounters.turn_lifecycle.creature_team_id",
     ...     side_effect=lambda _state, ref: teams[ref],
     ... ):
-    ...     check_transition(state)
-    'victory'
+    ...     encounter_is_complete(state)
+    True
     """
 
     configured_teams = {
@@ -82,13 +79,7 @@ def check_transition(state: EncounterState) -> str | None:
         for creature_ref, creature_state in state.creatures.items()
         if creature_state.is_alive
     }
-    if len(configured_teams) > 1 and len(living_teams) <= 1:
-        return (
-            state.definition.victory.next_encounter_id
-            if state.definition.victory
-            else None
-        )
-    return None
+    return len(configured_teams) > 1 and len(living_teams) <= 1
 
 
 def advance_turn(

@@ -268,8 +268,8 @@ class EncounterObservation:
 
 
 @dataclass(frozen=True)
-class TransitionObservation:
-    """Message presented while the game moves between scenes."""
+class EncounterCompletionObservation:
+    """Message presented after the encounter has been completed."""
 
     message: str
 
@@ -280,5 +280,5 @@ class GameObservation:
 
     scene: SceneObservation
     encounter: EncounterObservation | None
-    transition: TransitionObservation | None
+    completion: EncounterCompletionObservation | None
     requires_automatic_advance: bool

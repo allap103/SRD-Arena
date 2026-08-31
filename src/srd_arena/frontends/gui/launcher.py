@@ -1,4 +1,4 @@
-"""Let a user choose a discovered scenario before constructing the game window."""
+"""Let a user choose a discovered encounter before constructing the game window."""
 
 from __future__ import annotations
 
@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from srd_arena.content.scenarios import ScenarioCatalog, ScenarioSummary
+from srd_arena.content.encounters import EncounterCatalog, EncounterSummary
 from srd_arena.engine.api import Session
 
 from .app import GameWindow
@@ -23,12 +23,12 @@ from .presenter import GamePresenter
 from .theme import apply_fantasy_theme
 
 
-class ScenarioPickerWindow(QMainWindow):
-    """Display loadable scenarios and launch the selected game configuration."""
+class EncounterPickerWindow(QMainWindow):
+    """Display loadable encounters and launch the selected game configuration."""
 
     def __init__(
         self,
-        catalog: ScenarioCatalog,
+        catalog: EncounterCatalog,
         *,
         image_root: Path | None = None,
         pause_between_automatic_actions: bool = True,
@@ -38,7 +38,7 @@ class ScenarioPickerWindow(QMainWindow):
         self._image_root = image_root
         self._pause_between_automatic_actions = pause_between_automatic_actions
         self._game_window: GameWindow | None = None
-        self.setWindowTitle("Choose Scenario")
+        self.setWindowTitle("Choose Encounter")
         self.resize(520, 420)
 
         central = QWidget()
@@ -48,7 +48,7 @@ class ScenarioPickerWindow(QMainWindow):
         layout.setContentsMargins(24, 24, 24, 24)
         layout.setSpacing(12)
 
-        title = QLabel("Choose a scenario")
+        title = QLabel("Choose an encounter")
         title.setObjectName("windowTitle")
         title_font = QFont()
         title_font.setPointSize(18)
@@ -56,33 +56,35 @@ class ScenarioPickerWindow(QMainWindow):
         title.setFont(title_font)
         layout.addWidget(title)
 
-        subtitle = QLabel("Start a new session from any available scenario.")
+        subtitle = QLabel("Start a new session from any available encounter.")
         subtitle.setObjectName("sectionSubtitle")
         subtitle.setWordWrap(True)
         layout.addWidget(subtitle)
 
-        scenarios = self._catalog.available_scenarios()
-        if not scenarios:
-            empty = QLabel("No valid scenarios were found in app/content/scenarios/.")
+        encounters = self._catalog.available_encounters()
+        if not encounters:
+            empty = QLabel("No valid encounters were found in content/encounters/.")
             empty.setWordWrap(True)
             layout.addWidget(empty)
             return
 
-        for scenario in scenarios:
-            button = QPushButton(scenario.label)
+        for encounter in encounters:
+            button = QPushButton(encounter.label)
             button.setObjectName("sidebarButton")
             button.setMinimumHeight(44)
             button.clicked.connect(
-                lambda _checked=False, selected=scenario: self._open_scenario(selected)
+                lambda _checked=False, selected=encounter: self._open_encounter(
+                    selected
+                )
             )
             layout.addWidget(button)
         layout.addStretch(1)
 
-    def _open_scenario(self, scenario: ScenarioSummary) -> None:
+    def _open_encounter(self, encounter: EncounterSummary) -> None:
         self._game_window = GameWindow(
-            GamePresenter(Session(self._catalog.load_scenario(scenario.id))),
+            GamePresenter(Session(self._catalog.load_encounter(encounter.id))),
             image_root=self._image_root,
-            presentation_config=scenario.presentation,
+            presentation_config=encounter.presentation,
             pause_between_automatic_actions=self._pause_between_automatic_actions,
         )
         self._game_window.show()
@@ -90,12 +92,12 @@ class ScenarioPickerWindow(QMainWindow):
 
 
 def run_gui(
-    catalog: ScenarioCatalog,
+    catalog: EncounterCatalog,
     *,
     image_root: Path | None = None,
     pause_between_automatic_actions: bool = True,
 ) -> None:
-    """Start Qt, present scenario discovery, and enter the desktop event loop.
+    """Start Qt, present encounter discovery, and enter the desktop event loop.
 
     Automatic actions are separated by a short presentation delay unless
     ``pause_between_automatic_actions`` is disabled. The engine itself always
@@ -105,7 +107,7 @@ def run_gui(
     instance = QApplication.instance()
     app = instance if isinstance(instance, QApplication) else QApplication(sys.argv)
     apply_fantasy_theme(app)
-    window = ScenarioPickerWindow(
+    window = EncounterPickerWindow(
         catalog,
         image_root=image_root,
         pause_between_automatic_actions=pause_between_automatic_actions,

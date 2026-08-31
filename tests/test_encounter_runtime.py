@@ -8,7 +8,7 @@ import pytest
 from PySide6.QtWidgets import QPushButton
 
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
@@ -44,8 +44,8 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
 )
 from tests.encounter_runtime_support import (
     FIXTURE_ENCOUNTER_DIR,
-    STAT_BLOCK_ACTION_SCENARIO_DIR,
-    TACTICAL_SCENARIO_DIR,
+    STAT_BLOCK_ACTION_ENCOUNTER_DIR,
+    TACTICAL_ENCOUNTER_DIR,
     player_first_initiative,
 )
 from tests.encounter_runtime_support import (
@@ -80,8 +80,7 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 
 def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -90,15 +89,14 @@ def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
 
     progress = _ORCHESTRATOR.advance(session.encounter_state)
 
-    assert progress.transition is None
+    assert progress.completed is False
     assert ("system", "Goblin Warrior moves down-left to (4, 3).") in progress.messages
     assert session.encounter_state.active_creature() == "player"
     assert session.encounter_state.round.number == 2
 
 
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -133,8 +131,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
 
 
 def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -174,8 +171,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
 
 
 def test_extra_attack_allows_second_attack_after_movement() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -227,8 +223,7 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
 
 
 def test_second_wind_appears_and_consumes_bonus_action() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     _active_creature(session).current_health = 10
 
     _use_deterministic_dice(session, die_roller=lambda _sides: 5)
@@ -261,8 +256,7 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
 
 
 def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     _active_creature(session).current_health = 10
 
     _use_deterministic_dice(session, die_roller=lambda _sides: 5)
@@ -284,8 +278,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
 
 
 def test_action_surge_grants_additional_action_for_same_turn() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
@@ -324,11 +317,7 @@ def test_action_surge_grants_additional_action_for_same_turn() -> None:
 
 
 def test_presentation_surfaces_conditions_in_encounter_views() -> None:
-    session = Session(
-        load_scenario_directory(
-            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
-        )
-    )
+    session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -663,11 +652,7 @@ def test_allocation_target_clicks_add_and_shift_clicks_remove() -> None:
 def test_exact_spell_allocation_auto_confirms_after_final_click(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    session = Session(
-        load_scenario_directory(
-            str(TACTICAL_SCENARIO_DIR), start_encounter_id="goblin_encounter"
-        )
-    )
+    session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -725,9 +710,8 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
 def test_movement_does_not_consume_pending_multiattack_slots() -> None:
     session = Session(
-        load_scenario_directory(
-            str(STAT_BLOCK_ACTION_SCENARIO_DIR),
-            start_encounter_id="stat_block_action_showcase",
+        load_encounter_directory(
+            str(STAT_BLOCK_ACTION_ENCOUNTER_DIR),
         )
     )
     session.read()
@@ -829,9 +813,8 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
     )
 
 
-def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+def test_goblin_encounter_attack_can_complete_with_victory() -> None:
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -854,16 +837,13 @@ def test_goblin_encounter_attack_can_end_scene_with_victory() -> None:
 
     assert result.selected_choice_text is not None
     assert result.events[0].data["kind"] == "attack"
-    assert session.current_scene_id == "goblin_encounter"
-    assert session.pending_scene_transition is not None
+    assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
-    assert result.scene_changed is False
-    assert session.read().action_options[0].id == "system-continue-scene-transition"
+    assert session.read().action_options[0].id == "system-restart-encounter"
 
 
 def test_attack_consumes_action_until_next_turn() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
     assert session.encounter_state is not None
@@ -900,12 +880,8 @@ def test_attack_consumes_action_until_next_turn() -> None:
     assert any(action.kind == "attack" for action in session.read().action_options)
 
 
-def test_encounter_victory_waits_for_continue_before_restart() -> None:
-    session = Session(
-        load_scenario_directory(
-            str(FIXTURE_ENCOUNTER_DIR), start_encounter_id="goblin_encounter"
-        )
-    )
+def test_encounter_victory_waits_for_restart() -> None:
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
     for creature_ref, creature_state in session.encounter_state.creatures.items():
@@ -915,24 +891,26 @@ def test_encounter_victory_waits_for_continue_before_restart() -> None:
     wait_index = _action_id_by_label(session, "Wait")
     result = session.choose(wait_index)
 
-    assert result.scene_changed is False
-    assert session.current_scene_id == "goblin_encounter"
-    assert session.pending_scene_transition is not None
+    assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
-    assert ("system", "Victory! Press continue to proceed.") in result.messages
+    assert ("system", "Victory! You may restart the encounter.") in result.messages
     scene = session.read()
-    assert scene.scene_text == "Victory! Press continue to proceed."
+    assert scene.scene_text == "Victory! You may restart the encounter."
     assert (
-        session.pending_scene_transition.message
-        == "Victory! Press continue to proceed."
+        session.pending_encounter_completion.message
+        == "Victory! You may restart the encounter."
     )
-    assert scene.action_options[0].id == "system-continue-scene-transition"
+    assert scene.action_options[0].id == "system-restart-encounter"
+    observation = observe_session(session)
+    assert observation.completion is not None
+    presentation = build_session_presentation(observation)
+    assert presentation.encounter is not None
+    assert presentation.encounter.restart_action is not None
+    assert presentation.encounter.restart_action.id == "system-restart-encounter"
 
-    continue_result = session.choose("system-continue-scene-transition")
+    session.choose("system-restart-encounter")
 
-    assert continue_result.scene_changed is False
-    assert session.pending_scene_transition is None
-    assert session.current_scene_id == "goblin_encounter"
+    assert session.pending_encounter_completion is None
     assert session.encounter_state is not None
     assert all(
         creature_state.creature.get_health() > 0

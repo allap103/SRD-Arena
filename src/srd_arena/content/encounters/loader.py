@@ -22,7 +22,6 @@ from srd_arena.domain.encounters import (
     EncounterDefinition,
     EncounterParticipant,
     EncounterTeam,
-    EncounterTransition,
 )
 from srd_arena.domain.geometry import Grid, Position
 
@@ -91,16 +90,10 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
             for creature in schema.creatures
         ],
         teams=teams,
-        victory=EncounterTransition(
-            next_encounter_id=schema.id,
-        ),
-        defeat=EncounterTransition(
-            next_encounter_id=schema.id,
-        ),
     )
 
 
-def load_encounter(
+def load_encounter_file(
     path: str | Path,
     bestiary: BestiaryCatalog | None = None,
     classes: ClassCatalog | None = None,
@@ -127,7 +120,7 @@ def load_encounter(
     >>> with TemporaryDirectory() as directory:
     ...     path = Path(directory) / "duel.json"
     ...     _ = path.write_text(json.dumps(data))
-    ...     loaded = load_encounter(path)
+    ...     loaded = load_encounter_file(path)
     >>> (loaded.definition.id, loaded.creatures[0].name)
     ('duel', 'Hero')
     """

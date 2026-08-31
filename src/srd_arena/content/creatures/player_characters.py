@@ -1,4 +1,4 @@
-"""Load reusable player-character templates from scenario content."""
+"""Load reusable player-character templates from encounter content."""
 
 from pathlib import Path
 

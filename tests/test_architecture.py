@@ -21,7 +21,7 @@ RULES = (
             "srd_arena.frontends",
             "srd_arena.infrastructure",
             "srd_arena.engine",
-            "srd_arena.scenarios",
+            "srd_arena.encounters",
         ),
     ),
     DependencyRule(
@@ -30,7 +30,7 @@ RULES = (
             "srd_arena.frontends",
             "srd_arena.infrastructure",
             "srd_arena.engine",
-            "srd_arena.scenarios",
+            "srd_arena.encounters",
         ),
     ),
     DependencyRule(
@@ -43,7 +43,7 @@ RULES = (
             "srd_arena.content",
             "srd_arena.frontends",
             "srd_arena.infrastructure",
-            "srd_arena.scenarios",
+            "srd_arena.encounters",
         ),
     ),
     DependencyRule(
@@ -290,7 +290,7 @@ def test_gui_presenter_stays_independent_of_pyside6() -> None:
     ]
 
 
-def test_driving_adapters_use_only_public_engine_and_scenario_content_apis() -> None:
+def test_driving_adapters_use_only_public_engine_and_encounter_content_apis() -> None:
     violations: list[str] = []
 
     paths = [
@@ -304,18 +304,18 @@ def test_driving_adapters_use_only_public_engine_and_scenario_content_apis() -> 
                 imported_module.startswith("srd_arena.engine.")
                 and imported_module != "srd_arena.engine.api"
             )
-            private_scenario_content = (
+            private_encounter_content = (
                 imported_module == "srd_arena.content"
                 or imported_module.startswith("srd_arena.content.")
-            ) and imported_module != "srd_arena.content.scenarios"
-            if private_engine or private_scenario_content:
+            ) and imported_module != "srd_arena.content.encounters"
+            if private_engine or private_encounter_content:
                 violations.append(
                     f"{path.relative_to(PACKAGE_ROOT.parent)}:{line} imports "
                     f"{imported_module}"
                 )
 
     assert not violations, (
-        "Driving adapters must use public engine and scenario-content APIs:\n"
+        "Driving adapters must use public engine and encounter-content APIs:\n"
         + "\n".join(violations)
     )
 
@@ -384,10 +384,10 @@ def test_package_roots_remain_descriptive_namespaces() -> None:
         ), f"{path.relative_to(PACKAGE_ROOT.parent)} must remain namespace-only."
 
 
-def test_obsolete_scenario_service_packages_stay_removed() -> None:
-    """Keep scenario definitions and loading beside related concepts."""
+def test_obsolete_encounter_service_packages_stay_removed() -> None:
+    """Keep encounter definitions and loading beside related concepts."""
 
-    assert not list((PACKAGE_ROOT / "scenarios").glob("*.py"))
+    assert not list((PACKAGE_ROOT / "encounters").glob("*.py"))
     assert not list((PACKAGE_ROOT / "infrastructure").glob("*.py"))
 
 

@@ -1,7 +1,7 @@
 from collections.abc import Sequence
 from pathlib import Path
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.encounters import EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
@@ -12,8 +12,7 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 
 def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
-    session = Session(load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.current_scene_id = "goblin_encounter"
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state

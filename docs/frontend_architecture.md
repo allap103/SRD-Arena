@@ -1,6 +1,6 @@
 # Frontend architecture
 
-The frontends are driving adapters around the public engine and scenario-content
+The frontends are driving adapters around the public engine and encounter-content
 APIs.
 The broader layering, startup flow, and public game contract are documented in
 [Engine architecture](engine_architecture.md).
@@ -11,8 +11,8 @@ The broader layering, startup flow, and public game contract are documented in
 GUI-specific presentation configuration. PySide6 is its current implementation
 toolkit rather than part of the adapter's public identity. `GameWindow`
 receives a `GamePresenter` around an engine `Session`, plus presentation
-metadata from the launcher. It does not receive a scenario directory, parse
-scenario JSON, or inspect mutable domain state.
+metadata from the launcher. It does not receive an encounter directory, parse
+encounter JSON, or inspect mutable domain state.
 
 `GameWindow` is the GUI composition and orchestration shell. It wires engine
 commands to three view components and owns only transient interaction state such
@@ -20,7 +20,7 @@ as the selected targeting mode and movement preview:
 
 | Component | Responsibility |
 | --- | --- |
-| `ui.game_surface` | Story choices, battlefield surface, owned initiative rail, and encounter transition overlay. |
+| `ui.game_surface` | Story choices, battlefield surface, owned initiative rail, and encounter-completion overlay. |
 | `ui.sidebar` | Sidebar navigation, auxiliary creature views, settings, encounter JSON, and combat log. |
 | `ui.encounter.panel_renderer` | Populate encounter actions, resources, status, and allocation controls. |
 
@@ -76,8 +76,8 @@ widget changes cannot mutate the state currently being painted.
 `frontends.headless.HeadlessGameAdapter` is the Python/ML-facing driving
 adapter. It:
 
-- lists scenarios without exposing filesystem paths;
-- starts a scenario by stable ID;
+- lists encounters without exposing filesystem paths;
+- starts an encounter by stable ID;
 - returns typed observations and legal action IDs;
 - submits direct choices or any typed engine command;
 - preserves stale-decision validation;

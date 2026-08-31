@@ -129,22 +129,21 @@ def merge_progress(
     target: EncounterProgress,
     source: EncounterProgress,
 ) -> None:
-    """Append messages, events, and transitions from nested encounter progress.
+    """Append messages, events, and completion from nested encounter progress.
 
     >>> target = EncounterProgress(messages=[("system", "Start")])
     >>> source = EncounterProgress(
-    ...     messages=[("system", "Done")], transition="victory",
+    ...     messages=[("system", "Done")], completed=True,
     ...     paused_for_decision=True,
     ... )
     >>> merge_progress(None, target, source)
-    >>> (target.messages, target.transition, target.paused_for_decision)
-    ([('system', 'Start'), ('system', 'Done')], 'victory', True)
+    >>> (target.messages, target.completed, target.paused_for_decision)
+    ([('system', 'Start'), ('system', 'Done')], True, True)
     """
 
     target.messages.extend(source.messages)
     target.events.extend(source.events)
-    if source.transition is not None:
-        target.transition = source.transition
+    target.completed = target.completed or source.completed
     target.paused_for_decision = (
         target.paused_for_decision or source.paused_for_decision
     )

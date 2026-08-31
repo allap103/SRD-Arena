@@ -2,7 +2,9 @@
 
 from dataclasses import dataclass, field
 
-from srd_arena.domain.geometry import Grid, Position
+from srd_arena.domain.creatures import Creature
+from srd_arena.domain.equipment import Item
+from srd_arena.domain.geometry import GeometryConfig, Grid, Position
 
 
 @dataclass
@@ -37,15 +39,8 @@ class EncounterTeam:
 
 
 @dataclass
-class EncounterTransition:
-    """Name the encounter entered after a configured outcome."""
-
-    next_encounter_id: str
-
-
-@dataclass
 class EncounterDefinition:
-    """Describe an encounter's grid, participants, teams, and outcome links.
+    """Describe one complete encounter and the templates needed to run it.
 
     Definitions are loaded content. ``EncounterState`` copies their creature
     templates and creates the mutable initiative, turn, and effect state used
@@ -56,5 +51,15 @@ class EncounterDefinition:
     grid: Grid
     participants: list[EncounterParticipant] = field(default_factory=list)
     teams: list[EncounterTeam] = field(default_factory=list)
-    victory: EncounterTransition | None = None
-    defeat: EncounterTransition | None = None
+    display_name: str = "Unnamed Encounter"
+    creatures: tuple[Creature, ...] = ()
+    items: tuple[Item, ...] = ()
+    geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
+
+    def get_creature(self, creature_id: str) -> Creature:
+        """Return a creature template by its authored identifier."""
+
+        for creature in self.creatures:
+            if creature.id == creature_id:
+                return creature
+        raise KeyError(f"Creature '{creature_id}' not found.")

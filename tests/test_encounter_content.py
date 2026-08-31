@@ -16,17 +16,21 @@ from srd_arena.content.creatures import (
     load_creature,
     load_player_character_templates,
 )
-from srd_arena.content.encounters import EncounterDefinitionSchema
-from srd_arena.content.scenarios import ScenarioCatalog, load_scenario_directory
+from srd_arena.content.encounters import (
+    EncounterCatalog,
+    EncounterConfigSchema,
+    EncounterDefinitionSchema,
+    load_encounter_directory,
+)
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import AttackActionDefinition
 from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
 )
 
 
@@ -45,8 +49,7 @@ def creature_content() -> SimpleNamespace:
 
 
 def test_load_encounter_parses_definition() -> None:
-    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
-    encounter = scenario.encounters["goblin_encounter"]
+    encounter = load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR))
 
     assert encounter.id == "goblin_encounter"
     assert encounter.grid.width == 13
@@ -65,41 +68,35 @@ def test_load_encounter_parses_definition() -> None:
     assert chase is not None
     assert guard is not None
     assert patrol is not None
-    assert encounter.victory is not None
-    assert encounter.defeat is not None
     assert chase.type == "chase"
     assert guard.anchor is not None
     assert guard.radius == 2
     assert len(patrol.path) == 3
-    assert encounter.victory.next_encounter_id == "goblin_encounter"
-    assert encounter.defeat.next_encounter_id == "goblin_encounter"
 
 
 def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None:
-    scenario_dir = tmp_path / "mixed_control"
-    (scenario_dir / "encounters").mkdir(parents=True)
-    (scenario_dir / "player_characters").mkdir()
-    (scenario_dir / "player_characters" / "player").write_text(
+    encounter_dir = tmp_path / "mixed_control"
+    encounter_dir.mkdir()
+    (encounter_dir / "player_characters").mkdir()
+    (encounter_dir / "player_characters" / "player").write_text(
         (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(
             encoding="utf-8"
         ),
         encoding="utf-8",
     )
     encounter_data = json.loads(
-        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter").read_text(
-            encoding="utf-8"
-        )
+        (FIXTURE_ENCOUNTER_DIR / "encounter.json").read_text(encoding="utf-8")
     )
     encounter_data["creatures"][1]["controller"] = "external"
     encounter_data["creatures"][1].pop("behavior")
-    (scenario_dir / "encounters" / "goblin_encounter").write_text(
+    (encounter_dir / "encounter.json").write_text(
         json.dumps(encounter_data),
         encoding="utf-8",
     )
 
-    scenario = load_scenario_directory(scenario_dir)
-    participant = scenario.encounters["goblin_encounter"].participants[1]
-    session = Session(scenario)
+    encounter = load_encounter_directory(encounter_dir)
+    participant = encounter.participants[1]
+    session = Session(encounter)
     session.read()
 
     assert participant.creature_id == "goblin_1"
@@ -108,12 +105,11 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
 
 
 def test_full_control_showcase_gives_external_control_to_every_creature() -> None:
-    scenario = load_scenario_directory(GOBLIN_SKIRMISH_DIR)
-    encounter = scenario.encounters["full_control_showcase"]
-    session = Session(scenario)
+    encounter = load_encounter_directory(GOBLIN_SKIRMISH_DIR)
+    session = Session(encounter)
     session.read()
 
-    assert {creature.name for creature in scenario.creatures} == {
+    assert {creature.name for creature in encounter.creatures} == {
         "Aldren",
         "Brynn",
         "Redblade",
@@ -121,8 +117,8 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
         "Blueblade",
         "Blueeye",
     }
-    player_subclass = scenario.get_creature("player").subclass_ref
-    champion_subclass = scenario.get_creature("champion_2").subclass_ref
+    player_subclass = encounter.get_creature("player").subclass_ref
+    champion_subclass = encounter.get_creature("champion_2").subclass_ref
     assert player_subclass is not None
     assert champion_subclass is not None
     assert champion_subclass.name == "Champion"
@@ -138,12 +134,11 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
 
 
 def test_encounter_can_be_fully_scripted() -> None:
-    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
-    encounter = scenario.encounters["goblin_encounter"]
+    encounter = load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR))
     for team in encounter.teams:
         team.controller = "scripted"
 
-    session = Session(scenario)
+    session = Session(encounter)
     session.read()
 
     assert session.encounter_state is not None
@@ -155,8 +150,8 @@ def test_encounter_can_be_fully_scripted() -> None:
 
 
 def test_nested_creature_can_reference_system_stat_block() -> None:
-    scenario = load_scenario_directory(str(FIXTURE_ENCOUNTER_DIR))
-    creature = scenario.get_creature("goblin_1")
+    encounter = load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR))
+    creature = encounter.get_creature("goblin_1")
 
     assert creature.id == "goblin_1"
     assert creature.name == "Goblin Warrior"
@@ -177,67 +172,30 @@ def test_nested_creature_can_reference_system_stat_block() -> None:
     assert creature.token_image == "tokens/goblin.png"
 
 
-def test_game_uses_first_encounter_from_settings_when_not_overridden(
-    tmp_path: Path,
-) -> None:
-    scenario_dir = tmp_path / "encounter_start"
-    for subdir in ("encounters", "player_characters"):
-        (scenario_dir / subdir).mkdir(parents=True, exist_ok=True)
-    (scenario_dir / "config.json").write_text(
-        '{"display_name": "Two Arenas", "encounters": ["arena", "arena_two"]}\n',
-        encoding="utf-8",
-    )
-    (scenario_dir / "player_characters" / "player").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "player_characters" / "player").read_text(
-            encoding="utf-8"
-        ),
-        encoding="utf-8",
-    )
-    (scenario_dir / "encounters" / "arena").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter")
-        .read_text(encoding="utf-8")
-        .replace(
-            '"id":  "goblin_encounter"',
-            '"id":  "arena"',
-        ),
-        encoding="utf-8",
-    )
-    (scenario_dir / "encounters" / "arena_two").write_text(
-        (FIXTURE_ENCOUNTER_DIR / "encounters" / "goblin_encounter")
-        .read_text(encoding="utf-8")
-        .replace('"id":  "goblin_encounter"', '"id":  "arena_two"'),
-        encoding="utf-8",
-    )
-
-    scenario = load_scenario_directory(str(scenario_dir))
-
-    assert scenario.start_encounter_id == "arena"
-    assert scenario.encounter_order == ("arena", "arena_two")
-    first_victory = scenario.encounters["arena"].victory
-    second_victory = scenario.encounters["arena_two"].victory
-    assert first_victory is not None
-    assert second_victory is not None
-    assert first_victory.next_encounter_id == "arena_two"
-    assert second_victory.next_encounter_id == "arena_two"
+def test_encounter_config_rejects_removed_encounter_sequences() -> None:
+    with pytest.raises(ValidationError, match="Extra inputs are not permitted"):
+        EncounterConfigSchema.model_validate(
+            {"display_name": "Two Arenas", "encounters": ["arena", "arena_two"]}
+        )
 
 
 def test_game_loads_geometry_settings_from_config_json() -> None:
-    scenario = load_scenario_directory(str(TACTICAL_SCENARIO_DIR))
+    encounter = load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR))
     presentation = next(
         summary.presentation
-        for summary in ScenarioCatalog(
-            scenario_root=TACTICAL_SCENARIO_DIR.parent
-        ).available_scenarios()
-        if summary.id == TACTICAL_SCENARIO_DIR.name
+        for summary in EncounterCatalog(
+            encounter_root=TACTICAL_ENCOUNTER_DIR.parent
+        ).available_encounters()
+        if summary.id == TACTICAL_ENCOUNTER_DIR.name
     )
 
-    assert scenario.display_name == "Tactical Test Game"
-    assert scenario.geometry_config.directional_area_cell_coverage_threshold == 0.1
+    assert encounter.display_name == "Tactical Test Game"
+    assert encounter.geometry_config.directional_area_cell_coverage_threshold == 0.1
     assert presentation.background_image == "maps/tactical-test.png"
     assert presentation.grid_color == "#8fa3ad"
     assert presentation.grid_opacity == 0.65
 
-    session = Session(scenario)
+    session = Session(encounter)
     session.read()
 
     assert not hasattr(session, "background_image")
@@ -248,9 +206,9 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
 def test_game_uses_default_board_presentation_settings() -> None:
     presentation = next(
         summary.presentation
-        for summary in ScenarioCatalog(
-            scenario_root=FIXTURE_ENCOUNTER_DIR.parent
-        ).available_scenarios()
+        for summary in EncounterCatalog(
+            encounter_root=FIXTURE_ENCOUNTER_DIR.parent
+        ).available_encounters()
         if summary.id == FIXTURE_ENCOUNTER_DIR.name
     )
 

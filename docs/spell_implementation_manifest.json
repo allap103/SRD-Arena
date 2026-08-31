@@ -422,7 +422,7 @@
       "wave": 8,
       "name": "Prepared spell state",
       "status": "provisional",
-      "requires": ["scenario_effect", "dormant_trigger", "prepared_combatant", "long_duration"],
+      "requires": ["encounter_effect", "dormant_trigger", "prepared_combatant", "long_duration"],
       "spells": [
         "Animate Dead",
         "Antipathy/Sympathy",

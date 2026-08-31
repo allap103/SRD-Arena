@@ -25,6 +25,39 @@ class GridSchema(BaseModel):
     height: int = Field(gt=0)
 
 
+class GeometryConfigSchema(BaseModel):
+    """Validate encounter-level geometry rule configuration."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    directional_area_cell_coverage_threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+    )
+
+
+class EncounterConfigSchema(BaseModel):
+    """Validate one selectable encounter's metadata and presentation settings."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    display_name: str = "Unnamed Encounter"
+    background_image: str | None = None
+    grid_color: str = "#d3d3d3"
+    grid_opacity: float = Field(default=1.0, ge=0.0, le=1.0)
+    geometry: GeometryConfigSchema = Field(default_factory=GeometryConfigSchema)
+
+    @model_validator(mode="after")
+    def require_display_name(self) -> EncounterConfigSchema:
+        """Strip and require a non-empty encounter display name."""
+
+        self.display_name = self.display_name.strip()
+        if not self.display_name:
+            raise ValueError("An encounter display name must not be empty.")
+        return self
+
+
 class BehaviorSchema(BaseModel):
     """Validate parameters for an automatically controlled participant policy."""
 

@@ -61,7 +61,7 @@ def observe_scene(read: SessionRead) -> SceneObservation:
     >>> read = SessionRead(
     ...     scene_id="demo", scene_text="Choose", action_options=(
     ...         ActionOption("exit", "Exit", "system_exit", ""),),
-    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> scene = observe_scene(read)

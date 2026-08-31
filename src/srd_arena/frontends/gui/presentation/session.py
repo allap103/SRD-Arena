@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from srd_arena.content.scenarios import ScenarioPresentation
+from srd_arena.content.encounters import EncounterPresentation
 from srd_arena.engine.api import GameObservation
 
 from .actions import build_feature_actions
@@ -15,7 +15,7 @@ SYSTEM_ACTION_COUNT = 1
 
 def build_session_presentation(
     observation: GameObservation,
-    config: ScenarioPresentation | None = None,
+    config: EncounterPresentation | None = None,
 ) -> SessionPresentation:
     """Convert one engine observation into a complete frontend snapshot.
 
@@ -34,7 +34,7 @@ def build_session_presentation(
     ('intro', 'Welcome', (namespace(kind='system_exit'),))
     """
 
-    presentation_config = config or ScenarioPresentation()
+    presentation_config = config or EncounterPresentation()
     view = observation.scene
     story_actions = tuple(view.action_details[:-SYSTEM_ACTION_COUNT])
     system_actions = tuple(view.action_details[-SYSTEM_ACTION_COUNT:])
@@ -92,21 +92,21 @@ def build_session_presentation(
             feature_actions=feature_actions,
             end_turn_action=end_turn_action,
             action_pane_title=action_pane_title,
-            transition_message=(
-                observation.transition.message
-                if observation.transition is not None
+            completion_message=(
+                observation.completion.message
+                if observation.completion is not None
                 else None
             ),
-            transition_action=(
+            restart_action=(
                 next(
                     (
                         action
                         for action in story_actions
-                        if action.kind == "system_continue_transition"
+                        if action.kind == "system_restart_encounter"
                     ),
                     None,
                 )
-                if observation.transition is not None
+                if observation.completion is not None
                 else None
             ),
         ),

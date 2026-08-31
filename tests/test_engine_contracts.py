@@ -74,7 +74,7 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
             ),
         ),
         encounter=None,
-        transition=None,
+        completion=None,
         requires_automatic_advance=False,
     )
     update = GameUpdate(
@@ -89,7 +89,6 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
         ),
         selected_action_id=None,
         selected_choice_text=None,
-        scene_changed=False,
         should_exit=False,
     )
     boundary_values = (

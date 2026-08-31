@@ -97,7 +97,6 @@ class GameUpdate:
     events: tuple[GameEvent, ...]
     selected_action_id: str | None
     selected_choice_text: str | None
-    scene_changed: bool
     should_exit: bool
 
 

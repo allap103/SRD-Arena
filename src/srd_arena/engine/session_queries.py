@@ -20,8 +20,8 @@ from srd_arena.domain.encounters.participants import (
 from srd_arena.domain.encounters.state_runtime import creature_label
 from srd_arena.engine.action_queries import option_details
 from srd_arena.engine.queries import (
-    CONTINUE_CHOICE_TEXT,
     EXIT_CHOICE_TEXT,
+    RESTART_CHOICE_TEXT,
     ActionOption,
     ActionOptionCost,
     SessionRead,
@@ -34,25 +34,25 @@ if TYPE_CHECKING:
 def read_session(session: Session) -> SessionRead:
     """Return the intentional typed inputs for engine observation.
 
-    A pending transition advertises only Continue and system-level choices.
+    A completed encounter advertises only Restart and system-level choices.
 
     >>> from types import SimpleNamespace
     >>> session = SimpleNamespace(
-    ...     pending_scene_transition=SimpleNamespace(message="Victory!"),
+    ...     pending_encounter_completion=SimpleNamespace(message="Victory!"),
     ...     encounter_state=None,
-    ...     _current_encounter=SimpleNamespace(id="demo", teams=[]),
+    ...     encounter=SimpleNamespace(id="demo", teams=[]),
     ...     item_templates={})
     >>> [option.label for option in read_session(session).action_options]
-    ['Continue', 'Exit game']
+    ['Restart encounter', 'Exit game']
     """
 
-    if session.pending_scene_transition is not None:
+    if session.pending_encounter_completion is not None:
         action_options = [
             _action_option(
                 EncounterAction(
-                    id="system-continue-scene-transition",
-                    label=CONTINUE_CHOICE_TEXT,
-                    kind="system_continue_transition",
+                    id="system-restart-encounter",
+                    label=RESTART_CHOICE_TEXT,
+                    kind="system_restart_encounter",
                     creature_ref=_system_action_creature_ref(session),
                 )
             )
@@ -60,7 +60,7 @@ def read_session(session: Session) -> SessionRead:
         action_options.extend(_system_action_options(session))
         return _session_read(
             session,
-            scene_text=session.pending_scene_transition.message,
+            scene_text=session.pending_encounter_completion.message,
             action_options=action_options,
         )
 
@@ -105,18 +105,18 @@ def _session_read(
     action_options: list[ActionOption],
 ) -> SessionRead:
     state = session.encounter_state
-    transition_message = (
-        session.pending_scene_transition.message
-        if session.pending_scene_transition is not None
+    completion_message = (
+        session.pending_encounter_completion.message
+        if session.pending_encounter_completion is not None
         else None
     )
     return SessionRead(
-        scene_id=session._current_encounter.id,
+        scene_id=session.encounter.id,
         scene_text=scene_text,
         action_options=tuple(action_options),
         encounter_state=state,
-        transition_message=transition_message,
-        team_ids=tuple(team.id for team in session._current_encounter.teams),
+        completion_message=completion_message,
+        team_ids=tuple(team.id for team in session.encounter.teams),
         creature_labels=(
             {
                 creature_ref: creature_label(state, creature_ref)
@@ -137,7 +137,7 @@ def _session_read(
             item_id: item.name for item_id, item in session.item_templates.items()
         },
         requires_automatic_advance=(
-            transition_message is None
+            completion_message is None
             and state is not None
             and state.requires_automatic_advance()
         ),

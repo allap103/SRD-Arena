@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from srd_arena.content.scenarios import ScenarioCatalog
+from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     AimAction,
     ConfirmTargeting,
@@ -12,22 +12,22 @@ from srd_arena.engine.api import (
     SetResourceAllocation,
 )
 
-FULL_CONTROL_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+FULL_CONTROL_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
 )
-MASS_HEAL_SCENARIO_DIR = (
+MASS_HEAL_ENCOUNTER_DIR = (
     Path(__file__).parents[1]
     / "content"
-    / "scenarios"
+    / "encounters"
     / "mass_heal_allocation_showcase"
 )
-SPELL_DAMAGE_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "spell_damage_showcase"
+SPELL_DAMAGE_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "spell_damage_showcase"
 )
 
 
-def _session(scenario_id: str) -> Session:
-    return Session(ScenarioCatalog().load_scenario(scenario_id))
+def _session(encounter_id: str) -> Session:
+    return Session(EncounterCatalog().load_encounter(encounter_id))
 
 
 def _advance_to_actor(
@@ -52,7 +52,7 @@ def _advance_to_actor(
 
 
 def test_session_exposes_frontend_neutral_observations_and_commands() -> None:
-    session = _session(FULL_CONTROL_SCENARIO_DIR.name)
+    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
     observation = session.observe()
     assert observation.encounter is not None
     wait = next(
@@ -73,7 +73,7 @@ def test_session_exposes_frontend_neutral_observations_and_commands() -> None:
 
 
 def test_session_rejects_stale_commands_before_execution() -> None:
-    session = _session(FULL_CONTROL_SCENARIO_DIR.name)
+    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
     observation = session.observe()
     assert observation.encounter is not None
     wait = next(
@@ -91,7 +91,7 @@ def test_session_rejects_stale_commands_before_execution() -> None:
 
 
 def test_session_aims_an_advertised_area_action() -> None:
-    session = _session(SPELL_DAMAGE_SCENARIO_DIR.name)
+    session = _session(SPELL_DAMAGE_ENCOUNTER_DIR.name)
     observation = _advance_to_actor(session, "spectrum_adept")
     assert observation.encounter is not None
     fireball = next(
@@ -121,7 +121,7 @@ def test_session_aims_an_advertised_area_action() -> None:
 
 
 def test_session_controls_numeric_target_allocation() -> None:
-    session = _session(MASS_HEAL_SCENARIO_DIR.name)
+    session = _session(MASS_HEAL_ENCOUNTER_DIR.name)
     observation = session.observe()
     assert observation.encounter is not None
     cast = next(

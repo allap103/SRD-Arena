@@ -53,7 +53,7 @@ requirements for the first feature-complete release.
   spells, conditions, and later character features where applicable.
 - Spells with casting times longer than one action are not selectable during
   an encounter. They remain supported only when their completed effect creates
-  meaningful ongoing combat state for scenario setup.
+  meaningful ongoing combat state for encounter setup.
 
 ## Batch 1: rolls, conditions, and concentration
 
@@ -170,7 +170,7 @@ Bless, Bane, Mage Armor, Shield of Faith, Barkskin, Lesser Restoration,
 Greater Restoration, Protection from Energy, Stoneskin, Magic Missile, and
 Slow. Foresight also belongs here because its combat behavior consists of
 ordinary D20 Test and incoming-attack modifiers. Its one-minute casting time
-makes it scenario-applied rather than selectable during an encounter; it does
+makes it encounter-applied rather than selectable during an encounter; it does
 not require the prepared-state mechanics from Batch 8. Flesh to Stone also
 belongs here because its successful initial save
 applies a Speed modifier in addition to its condition progression.
@@ -268,7 +268,7 @@ handler.
 ## Batch 8: prepared, random, and exceptional orchestration
 
 Complete the remaining combat catalog with mechanics that require mature
-effect, event, and scenario systems:
+effect, event, and encounter systems:
 
 - random and nested outcome tables;
 - dormant authored triggers;
@@ -293,8 +293,8 @@ At the end of every batch:
 1. Reclassify active spells whose remaining behavior is no longer appropriate
    for the combat simulator.
 2. Audit enriched records for silent omissions and spell-name dispatch.
-3. Add a scenario showcasing the new shared capabilities rather than one
-   scenario per spell.
+3. Add a encounter showcasing the new shared capabilities rather than one
+   encounter per spell.
 4. Profile action discovery and resolution before expanding the next mechanic
    family.
 5. Confirm that serialization contains all spell-instance state required by

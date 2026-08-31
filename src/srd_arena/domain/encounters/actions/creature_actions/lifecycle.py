@@ -100,7 +100,7 @@ def finish_action_execution(
     'end_turn'
     """
 
-    if context.progress.transition is not None:
+    if context.progress.completed:
         outcome = ActionExecutionOutcome.ENCOUNTER_COMPLETE
     elif context.progress.paused_for_decision:
         outcome = ActionExecutionOutcome.PAUSE_FOR_DECISION

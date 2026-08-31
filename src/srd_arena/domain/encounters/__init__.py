@@ -5,7 +5,6 @@ from .definitions import (
     EncounterDefinition,
     EncounterParticipant,
     EncounterTeam,
-    EncounterTransition,
 )
 from .encounter import EncounterState
 from .encounter_models.actions import EncounterAction
@@ -19,5 +18,4 @@ __all__ = [
     "EncounterParticipant",
     "EncounterState",
     "EncounterTeam",
-    "EncounterTransition",
 ]

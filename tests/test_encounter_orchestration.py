@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.effects import EffectResult, TriggeredEffect
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.encounters import EncounterOrchestrator
@@ -16,9 +16,9 @@ from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
 )
 
-TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
-FULL_CONTROL_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+FULL_CONTROL_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
 )
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -33,13 +33,12 @@ def _stable_initiative(monkeypatch: pytest.MonkeyPatch) -> None:
 
 
 def _all_external_session() -> Session:
-    scenario = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR,
-        start_encounter_id="goblin_encounter",
+    encounter = load_encounter_directory(
+        TACTICAL_ENCOUNTER_DIR,
     )
-    for team in scenario.encounters["goblin_encounter"].teams:
+    for team in encounter.teams:
         team.controller = "external"
-    session = Session(scenario)
+    session = Session(encounter)
     session.read()
     return session
 
@@ -68,9 +67,8 @@ def test_manual_action_submission_returns_to_the_same_turn_until_wait() -> None:
 
 def test_scripted_turns_advance_until_the_next_external_decision() -> None:
     session = Session(
-        load_scenario_directory(
-            TACTICAL_SCENARIO_DIR,
-            start_encounter_id="goblin_encounter",
+        load_encounter_directory(
+            TACTICAL_ENCOUNTER_DIR,
         )
     )
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
@@ -94,18 +92,17 @@ def test_scripted_turns_advance_until_the_next_external_decision() -> None:
 
 
 def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
-    scenario = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR,
-        start_encounter_id="goblin_encounter",
+    encounter = load_encounter_directory(
+        TACTICAL_ENCOUNTER_DIR,
     )
     goblin = next(
         participant
-        for participant in scenario.encounters["goblin_encounter"].participants
+        for participant in encounter.participants
         if participant.creature_id == "goblin_1"
     )
     assert goblin.behavior is not None
     goblin.behavior.type = "wait"
-    session = Session(scenario)
+    session = Session(encounter)
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -141,7 +138,7 @@ def test_querying_a_defeated_actors_decision_does_not_advance_the_turn() -> None
 
 
 def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
@@ -191,7 +188,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
 
 
 def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda sides: sides)
     session.read()
     state = session.encounter_state
@@ -224,7 +221,7 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
 
 
 def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(
         session,
         die_roller=lambda sides: 15 if sides == 20 else 1,
@@ -312,7 +309,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> 
 
 
 def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state
@@ -356,7 +353,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
 
 
 def test_resumed_movement_carries_a_grappled_creature() -> None:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     session.read()
     state = session.encounter_state
     assert state is not None
@@ -401,18 +398,17 @@ def test_resumed_movement_carries_a_grappled_creature() -> None:
 
 
 def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
-    scenario = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR,
-        start_encounter_id="goblin_encounter",
+    encounter = load_encounter_directory(
+        TACTICAL_ENCOUNTER_DIR,
     )
     goblin = next(
         participant
-        for participant in scenario.encounters["goblin_encounter"].participants
+        for participant in encounter.participants
         if participant.creature_id == "goblin_2"
     )
     assert goblin.behavior is not None
     goblin.behavior.type = "guard"
-    session = Session(scenario)
+    session = Session(encounter)
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
     session.read()
     state = session.encounter_state

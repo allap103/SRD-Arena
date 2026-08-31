@@ -494,10 +494,10 @@ def encounter_json_payload(observation: GameObservation) -> dict[str, object]:
 
     >>> from types import SimpleNamespace
     >>> observation = SimpleNamespace(
-    ...     encounter=None, scene=SimpleNamespace(scene_id="scenario-selection")
+    ...     encounter=None, scene=SimpleNamespace(scene_id="encounter-selection")
     ... )
     >>> encounter_json_payload(observation)
-    {'encounter_active': False, 'scene_id': 'scenario-selection'}
+    {'encounter_active': False, 'scene_id': 'encounter-selection'}
     """
 
     if observation.encounter is None:

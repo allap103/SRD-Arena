@@ -1,4 +1,4 @@
-"""Shared scenario setup and action helpers for encounter integration tests."""
+"""Shared encounter setup and action helpers for encounter integration tests."""
 
 from __future__ import annotations
 
@@ -25,15 +25,15 @@ from srd_arena.engine.session import Session
 ORCHESTRATOR = EncounterOrchestrator()
 
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
-TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
-MULTIATTACK_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "multiattack_showcase"
+TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+MULTIATTACK_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "multiattack_showcase"
 )
-STAT_BLOCK_ACTION_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "stat_block_action_showcase"
+STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
 )
-CONDITIONS_SHOWCASE_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "conditions_showcase"
+CONDITIONS_SHOWCASE_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "conditions_showcase"
 )
 ROLL_INITIATIVE = EncounterState.roll_initiative
 

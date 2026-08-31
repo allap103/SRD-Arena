@@ -146,8 +146,8 @@ class EncounterView:
     feature_actions: tuple[ActionObservation, ...]
     end_turn_action: ActionObservation | None
     action_pane_title: str
-    transition_message: str | None = None
-    transition_action: ActionObservation | None = None
+    completion_message: str | None = None
+    restart_action: ActionObservation | None = None
 
     def __post_init__(self) -> None:
         """Detach advertised actions from mutable projection-builder storage."""

@@ -28,7 +28,7 @@ from .state_runtime import merge_progress
 from .turn_lifecycle import (
     active_turn_creature,
     advance_turn,
-    check_transition,
+    encounter_is_complete,
     maybe_reset_reactions,
     movement_budget_for_turn,
     skip_defeated_turn,
@@ -94,21 +94,20 @@ class EncounterOrchestrator:
         return self._apply_selected_action(state, action, decision)
 
     def advance(self, state: EncounterState) -> EncounterProgress:
-        """Resolve scripted actions until input or a transition stops execution.
+        """Resolve scripted actions until input or completion stops execution.
 
-        An already completed encounter returns its transition without selecting
-        another action.
+        An already completed encounter returns without selecting another action.
 
         >>> from unittest.mock import Mock
         >>> state = Mock(interrupts=Mock(decision_stack=[]))
         >>> from unittest.mock import patch
         >>> with patch(
-        ...     "srd_arena.domain.encounters.orchestration.check_transition",
-        ...     return_value="victory-scene",
+        ...     "srd_arena.domain.encounters.orchestration.encounter_is_complete",
+        ...     return_value=True,
         ... ):
-        ...     transition = EncounterOrchestrator().advance(state).transition
-        >>> transition
-        'victory-scene'
+        ...     completed = EncounterOrchestrator().advance(state).completed
+        >>> completed
+        True
         """
         return self._advance(state, stop_after_action=False)
 
@@ -122,12 +121,12 @@ class EncounterOrchestrator:
         >>> state = Mock(interrupts=Mock(decision_stack=[]))
         >>> from unittest.mock import patch
         >>> with patch(
-        ...     "srd_arena.domain.encounters.orchestration.check_transition",
-        ...     return_value="victory-scene",
+        ...     "srd_arena.domain.encounters.orchestration.encounter_is_complete",
+        ...     return_value=True,
         ... ):
-        ...     transition = EncounterOrchestrator().advance_one_action(state).transition
-        >>> transition
-        'victory-scene'
+        ...     completed = EncounterOrchestrator().advance_one_action(state).completed
+        >>> completed
+        True
         """
         return self._advance(state, stop_after_action=True)
 
@@ -142,8 +141,8 @@ class EncounterOrchestrator:
         progress = EncounterProgress()
         automatic_action_resolved = False
         while True:
-            self._record_transition(state, progress)
-            if progress.transition is not None:
+            self._record_completion(state, progress)
+            if progress.completed:
                 break
             if state.interrupts.decision_stack:
                 progress.paused_for_decision = True
@@ -179,12 +178,12 @@ class EncounterOrchestrator:
             )
             automatic_action_resolved = True
             merge_progress(state, progress, actor_progress)
-            if progress.transition is not None or progress.paused_for_decision:
+            if progress.completed or progress.paused_for_decision:
                 break
             if completed_turn:
                 self._finish_turn(state, creature_ref, progress)
-                self._record_transition(state, progress)
-                if progress.transition is not None:
+                self._record_completion(state, progress)
+                if progress.completed:
                     break
         return progress
 
@@ -202,16 +201,16 @@ class EncounterOrchestrator:
                 action_id=result.action_id,
                 progress=progress,
             )
-        self._record_transition(state, progress)
+        self._record_completion(state, progress)
         return progress
 
-    def _record_transition(
+    def _record_completion(
         self,
         state: EncounterState,
         progress: EncounterProgress,
     ) -> None:
-        if progress.transition is None:
-            progress.transition = check_transition(state)
+        if not progress.completed:
+            progress.completed = encounter_is_complete(state)
 
     def _finish_turn(
         self,
@@ -233,8 +232,8 @@ class EncounterOrchestrator:
     ) -> EncounterProgress:
         result = execute_creature_action(state, action, decision)
         progress = result.progress
-        self._record_transition(state, progress)
-        if progress.transition is not None:
+        self._record_completion(state, progress)
+        if progress.completed:
             return progress
         if result.outcome is not ActionExecutionOutcome.END_TURN:
             return progress
@@ -282,9 +281,9 @@ class EncounterOrchestrator:
                     reason="scripted_turn",
                 ),
             )
-            self._record_transition(state, result.progress)
+            self._record_completion(state, result.progress)
             merge_progress(state, progress, result.progress)
-            if progress.transition is not None:
+            if progress.completed:
                 return True, progress
             if result.outcome is ActionExecutionOutcome.PAUSE_FOR_DECISION:
                 return False, progress

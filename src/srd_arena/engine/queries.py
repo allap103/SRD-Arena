@@ -13,7 +13,7 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
 from srd_arena.domain.encounters.encounter import EncounterState
 
 EXIT_CHOICE_TEXT = "Exit game"
-CONTINUE_CHOICE_TEXT = "Continue"
+RESTART_CHOICE_TEXT = "Restart encounter"
 
 
 @dataclass(frozen=True)
@@ -169,7 +169,7 @@ class SessionRead:
     scene_text: str | None
     action_options: tuple[ActionOption, ...]
     encounter_state: EncounterState | None
-    transition_message: str | None
+    completion_message: str | None
     team_ids: tuple[str, ...]
     creature_labels: Mapping[str, str]
     creature_team_ids: Mapping[str, str]

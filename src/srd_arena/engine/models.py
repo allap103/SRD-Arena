@@ -17,6 +17,5 @@ class EngineOutcome:
     selected_choice_text: str | None = None
     selected_action_id: str | None = None
     messages: tuple[tuple[str, str], ...] = ()
-    scene_changed: bool = False
     should_exit: bool = False
     events: tuple[CombatEvent, ...] = ()

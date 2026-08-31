@@ -1,9 +1,0 @@
-{
-  "display_name": "Executable Stat-Block Actions",
-  "encounters": ["stat_block_action_showcase"],
-  "background_image": "backgrounds/grass.png",
-  "grid_opacity": 0.8,
-  "geometry": {
-    "directional_area_cell_coverage_threshold": 0.1
-  }
-}

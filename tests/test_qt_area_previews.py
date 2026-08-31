@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.engine.observations import observe_session
 from srd_arena.engine.session import Session
@@ -18,7 +18,7 @@ from srd_arena.frontends.gui.ui.encounter.targeting import (
     pending_area_overlay,
 )
 
-SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
+ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 
 
 def test_area_overlay_readers_ignore_malformed_geometry() -> None:
@@ -50,7 +50,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(
         ]
 
     monkeypatch.setattr(EncounterState, "roll_initiative", _tempo_archmage_first)
-    session = Session(load_scenario_directory(SCENARIOS_ROOT / "slow_showcase"))
+    session = Session(load_encounter_directory(ENCOUNTERS_ROOT / "slow_showcase"))
     session.read()
     observation = observe_session(session)
     slow_action = next(

@@ -20,6 +20,7 @@ from .observation_models import (
     AttributeObservation,
     CreatureObservation,
     DecisionObservation,
+    EncounterCompletionObservation,
     EncounterObservation,
     FeatureActionObservation,
     GameObservation,
@@ -33,7 +34,6 @@ from .observation_models import (
     TargetingObservation,
     TargetResourceAllocationObservation,
     TargetResourceLimitObservation,
-    TransitionObservation,
 )
 
 __all__ = [
@@ -42,6 +42,7 @@ __all__ = [
     "AttributeObservation",
     "CreatureObservation",
     "DecisionObservation",
+    "EncounterCompletionObservation",
     "EncounterObservation",
     "FeatureActionObservation",
     "GameObservation",
@@ -55,7 +56,6 @@ __all__ = [
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",
     "TargetingObservation",
-    "TransitionObservation",
     "observe_session",
 ]
 
@@ -66,7 +66,7 @@ def observe_session(session: GameEngine) -> GameObservation:
     >>> from types import SimpleNamespace
     >>> read = SessionRead(
     ...     scene_id="intro", scene_text="Ready", action_options=(),
-    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> observation = observe_session(SimpleNamespace(read=lambda: read))
@@ -77,15 +77,15 @@ def observe_session(session: GameEngine) -> GameObservation:
     read = session.read()
     state = read.encounter_state
     scene = observe_scene(read)
-    transition = (
-        TransitionObservation(message=read.transition_message)
-        if read.transition_message is not None
+    completion = (
+        EncounterCompletionObservation(message=read.completion_message)
+        if read.completion_message is not None
         else None
     )
     return GameObservation(
         scene=scene,
         encounter=_observe_encounter(read) if state is not None else None,
-        transition=transition,
+        completion=completion,
         requires_automatic_advance=read.requires_automatic_advance,
     )
 

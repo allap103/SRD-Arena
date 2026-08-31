@@ -27,10 +27,6 @@ Authored content
    :members:
    :show-inheritance:
 
-.. automodule:: srd_arena.content.scenarios
-   :members:
-   :show-inheritance:
-
 .. automodule:: srd_arena.content.equipment
    :members:
    :show-inheritance:
@@ -67,10 +63,6 @@ Domain model
    :show-inheritance:
 
 .. automodule:: srd_arena.domain.rolls
-   :members:
-   :show-inheritance:
-
-.. automodule:: srd_arena.domain.scenarios
    :members:
    :show-inheritance:
 

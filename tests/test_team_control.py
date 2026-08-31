@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
@@ -20,9 +20,9 @@ from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
 )
 
-TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
 )
 
 
@@ -50,14 +50,13 @@ def _player_first_initiative(
 
 
 def _all_external_session() -> Session:
-    scenario = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR,
-        start_encounter_id="goblin_encounter",
+    encounter = load_encounter_directory(
+        TACTICAL_ENCOUNTER_DIR,
     )
-    encounter = scenario.encounters["goblin_encounter"]
+    encounter = encounter
     for team in encounter.teams:
         team.controller = "external"
-    return Session(scenario)
+    return Session(encounter)
 
 
 def _action_id_by_label(session: Session, label: str) -> str:
@@ -67,10 +66,8 @@ def _action_id_by_label(session: Session, label: str) -> str:
 
 
 def test_tactical_fixture_loads_explicit_teams() -> None:
-    game = load_scenario_directory(
-        TACTICAL_SCENARIO_DIR, start_encounter_id="goblin_encounter"
-    )
-    encounter = game.encounters["goblin_encounter"]
+    game = load_encounter_directory(TACTICAL_ENCOUNTER_DIR)
+    encounter = game
 
     assert encounter is not None
     assert [(team.id, team.controller) for team in encounter.teams] == [
@@ -195,7 +192,7 @@ def test_externally_controlled_goblin_can_attack_opposing_player() -> None:
 
 
 def test_secondary_champion_gets_extra_attack_before_turn_ends() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -232,7 +229,7 @@ def test_secondary_champion_gets_extra_attack_before_turn_ends() -> None:
 
 
 def test_every_participant_uses_the_same_encounter_creature_state() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
 
     assert session.encounter_state is not None
@@ -247,7 +244,7 @@ def test_every_participant_uses_the_same_encounter_creature_state() -> None:
 
 
 def test_secondary_champion_can_use_class_feature() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     brynn = session.encounter_state.creatures["champion_2"].creature
@@ -271,7 +268,7 @@ def test_secondary_champion_can_use_class_feature() -> None:
 
 
 def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -303,7 +300,7 @@ def test_any_user_controlled_creature_can_take_an_opportunity_attack() -> None:
 
 
 def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -333,7 +330,7 @@ def test_user_controlled_goblin_chooses_reaction_to_primary_movement() -> None:
 
 
 def test_effectively_incapacitated_creature_gets_no_reaction_prompt() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -364,7 +361,7 @@ def test_effectively_incapacitated_creature_gets_no_reaction_prompt() -> None:
 
 
 def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -402,9 +399,8 @@ def test_dragged_user_controlled_creature_does_not_get_opportunity_attack() -> N
 
 def test_ai_controlled_creature_resolves_opportunity_attack_automatically() -> None:
     session = Session(
-        load_scenario_directory(
-            TACTICAL_SCENARIO_DIR,
-            start_encounter_id="goblin_encounter",
+        load_encounter_directory(
+            TACTICAL_ENCOUNTER_DIR,
         )
     )
     session.read()
@@ -434,7 +430,7 @@ def test_ai_controlled_creature_resolves_opportunity_attack_automatically() -> N
 
 
 def test_brynn_can_take_an_opportunity_attack() -> None:
-    session = Session(load_scenario_directory(GOBLIN_SKIRMISH_DIR))
+    session = Session(load_encounter_directory(GOBLIN_SKIRMISH_DIR))
     session.read()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -513,9 +509,8 @@ def test_externally_controlled_teammate_can_target_opposing_team() -> None:
 
 def test_paced_ai_resolves_one_visible_action_per_step() -> None:
     session = Session(
-        load_scenario_directory(
-            TACTICAL_SCENARIO_DIR,
-            start_encounter_id="goblin_encounter",
+        load_encounter_directory(
+            TACTICAL_ENCOUNTER_DIR,
         )
     )
     session.read()
@@ -542,9 +537,8 @@ def test_paced_ai_resolves_one_visible_action_per_step() -> None:
 
 def test_full_automatic_advance_resolves_until_the_next_user_decision() -> None:
     session = Session(
-        load_scenario_directory(
-            TACTICAL_SCENARIO_DIR,
-            start_encounter_id="goblin_encounter",
+        load_encounter_directory(
+            TACTICAL_ENCOUNTER_DIR,
         )
     )
     session.read()

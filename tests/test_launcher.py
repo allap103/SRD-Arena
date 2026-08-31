@@ -7,7 +7,7 @@ import pytest
 from srd_arena import main as launcher
 
 
-def test_main_launches_gui_scenario_picker(
+def test_main_launches_gui_encounter_picker(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     catalog = SimpleNamespace(image_root=Path("images"))
@@ -19,7 +19,7 @@ def test_main_launches_gui_scenario_picker(
     def _run_gui(received: object, **kwargs: object) -> None:
         launched.append((received, kwargs))
 
-    monkeypatch.setattr(launcher, "ScenarioCatalog", _catalog)
+    monkeypatch.setattr(launcher, "EncounterCatalog", _catalog)
     monkeypatch.setitem(
         sys.modules,
         "srd_arena.frontends.gui.launcher",

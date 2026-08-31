@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.effects import (
     TriggeredEffect,
     matching_effects,
@@ -18,7 +18,7 @@ from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
 )
 
-TACTICAL_SCENARIO_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
+TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 
 
 @pytest.fixture(autouse=True)
@@ -99,7 +99,7 @@ def test_reroll_matching_dice_enforces_maximum_per_die() -> None:
 
 
 def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
-    session = Session(load_scenario_directory(TACTICAL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(TACTICAL_ENCOUNTER_DIR))
     player = _active_creature(session)
 
     [effect] = [
@@ -136,11 +136,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
 
 
 def _adjacent_tactical_encounter() -> Session:
-    session = Session(
-        load_scenario_directory(
-            TACTICAL_SCENARIO_DIR, start_encounter_id="goblin_encounter"
-        )
-    )
+    session = Session(load_encounter_directory(TACTICAL_ENCOUNTER_DIR))
     session.read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4

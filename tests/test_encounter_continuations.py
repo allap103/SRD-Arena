@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import load_scenario_directory
+from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.encounters.continuations import ContinuationRunner
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.decisions import (
@@ -12,13 +12,13 @@ from srd_arena.domain.encounters.encounter_models.decisions import (
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.engine.session import Session
 
-FULL_CONTROL_SCENARIO_DIR = (
-    Path(__file__).parents[1] / "content" / "scenarios" / "full_control_showcase"
+FULL_CONTROL_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
 )
 
 
 def _encounter_state() -> EncounterState:
-    session = Session(load_scenario_directory(FULL_CONTROL_SCENARIO_DIR))
+    session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     session.read()
     assert session.encounter_state is not None
     return session.encounter_state

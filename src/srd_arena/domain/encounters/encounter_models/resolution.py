@@ -30,10 +30,10 @@ class CombatEvent:
 
 @dataclass
 class EncounterProgress:
-    """Accumulate messages, events, pauses, and transitions during orchestration."""
+    """Accumulate messages, events, completion, and pauses during orchestration."""
 
     messages: list[tuple[str, str]] = field(default_factory=list)
-    transition: str | None = None
+    completed: bool = False
     events: list[CombatEvent] = field(default_factory=list)
     paused_for_decision: bool = False
 

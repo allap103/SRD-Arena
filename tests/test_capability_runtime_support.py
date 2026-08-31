@@ -253,7 +253,7 @@ def test_unsupported_eligibility_is_advertised_as_unimplemented() -> None:
         scene_text=None,
         action_options=(option,),
         encounter_state=None,
-        transition_message=None,
+        completion_message=None,
         team_ids=(),
         creature_labels={},
         creature_team_ids={},

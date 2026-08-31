@@ -24,6 +24,7 @@ from .observations import (
     AttributeObservation,
     CreatureObservation,
     DecisionObservation,
+    EncounterCompletionObservation,
     EncounterObservation,
     FeatureActionObservation,
     GameObservation,
@@ -37,7 +38,6 @@ from .observations import (
     TargetingObservation,
     TargetResourceAllocationObservation,
     TargetResourceLimitObservation,
-    TransitionObservation,
 )
 from .session import Session
 
@@ -53,6 +53,7 @@ __all__ = [
     "ConfirmTargeting",
     "CreatureObservation",
     "DecisionObservation",
+    "EncounterCompletionObservation",
     "EncounterObservation",
     "FeatureActionObservation",
     "GameCommand",
@@ -72,5 +73,4 @@ __all__ = [
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",
     "TargetingObservation",
-    "TransitionObservation",
 ]

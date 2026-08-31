@@ -42,7 +42,7 @@ def execute_game_command(
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
     ...     scene_id="intro", scene_text=None, action_options=(),
-    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> session = SimpleNamespace(read=lambda: read)
@@ -86,7 +86,7 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
     ...     scene_id="intro", scene_text=None, action_options=(),
-    ...     encounter_state=None, transition_message=None, team_ids=(),
+    ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> update = game_update(
@@ -102,7 +102,6 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
         events=tuple(_observe_event(event) for event in result.events),
         selected_action_id=result.selected_action_id,
         selected_choice_text=result.selected_choice_text,
-        scene_changed=result.scene_changed,
         should_exit=result.should_exit,
     )
 

@@ -178,6 +178,6 @@ spell-instance root.
   not.
 - Creation, Control Weather, Imprisonment, Planar Ally, Prayer of Healing,
   Sequester, Tiny Hut, Unseen Servant, and Wind Walk are outside the active
-  catalog. Their long casting process produces ordinary scenario configuration,
+  catalog. Their long casting process produces ordinary encounter configuration,
   no lasting combat state, open-ended behavior, or no meaningful tactical
   participation under the current simulator scope.

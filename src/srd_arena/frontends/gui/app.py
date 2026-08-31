@@ -7,7 +7,7 @@ from pathlib import Path
 from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
-from srd_arena.content.scenarios import ScenarioPresentation
+from srd_arena.content.encounters import EncounterPresentation
 from srd_arena.engine.api import (
     EncounterObservation,
     GameUpdate,
@@ -60,14 +60,14 @@ class GameWindow(QMainWindow):
         presenter: GamePresenter,
         *,
         image_root: Path | None = None,
-        presentation_config: ScenarioPresentation | None = None,
+        presentation_config: EncounterPresentation | None = None,
         show_encounter_json: bool = False,
         pause_between_automatic_actions: bool = True,
     ):
         super().__init__()
         self.presenter = presenter
         self._encounter_presentation_config = (
-            presentation_config or ScenarioPresentation()
+            presentation_config or EncounterPresentation()
         )
         self._presentation: SessionPresentation | None = None
         self._action_menu_scope: ActionMenuScope | None = None
@@ -96,7 +96,7 @@ class GameWindow(QMainWindow):
                 cell_clicked=self._handle_battlefield_cell_clicked,
                 point_clicked=self._handle_battlefield_point_clicked,
                 interaction_cancelled=self._cancel_battlefield_interaction,
-                continue_transition=self._continue_pending_transition,
+                restart_encounter=self._restart_completed_encounter,
             ),
             image_root=image_root,
         )
@@ -163,9 +163,9 @@ class GameWindow(QMainWindow):
             self._render_encounter(presentation)
         encounter = presentation.encounter
         self.surface.sync_victory_overlay(
-            encounter.transition_message if encounter is not None else None,
-            can_continue=(
-                encounter is not None and encounter.transition_action is not None
+            encounter.completion_message if encounter is not None else None,
+            can_restart=(
+                encounter is not None and encounter.restart_action is not None
             ),
         )
         self._schedule_ai_step_if_needed()
@@ -231,10 +231,10 @@ class GameWindow(QMainWindow):
             action_menu_scope=self._action_menu_scope,
         )
 
-    def _continue_pending_transition(self) -> None:
+    def _restart_completed_encounter(self) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = self._presentation.encounter.transition_action
+        action = self._presentation.encounter.restart_action
         if action is not None:
             self._select_action(action.id)
 
@@ -507,7 +507,7 @@ class GameWindow(QMainWindow):
         if (
             self._automatic_step_scheduled
             or observation.encounter is None
-            or observation.transition is not None
+            or observation.completion is not None
             or not observation.requires_automatic_advance
         ):
             return

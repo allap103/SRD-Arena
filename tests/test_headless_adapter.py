@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pytest
 
-from srd_arena.content.scenarios import ScenarioCatalog
+from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
@@ -11,20 +11,20 @@ from srd_arena.engine.api import (
 )
 from srd_arena.frontends.headless import HeadlessGameAdapter
 
-SCENARIOS_ROOT = Path(__file__).parents[1] / "content" / "scenarios"
+ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 
 
 def _adapter() -> HeadlessGameAdapter:
-    return HeadlessGameAdapter(ScenarioCatalog(scenario_root=SCENARIOS_ROOT))
+    return HeadlessGameAdapter(EncounterCatalog(encounter_root=ENCOUNTERS_ROOT))
 
 
 def test_headless_adapter_drives_game_by_stable_ids() -> None:
     adapter = _adapter()
-    scenarios = adapter.available_scenarios()
+    encounters = adapter.available_encounters()
 
-    assert any(scenario.id == "full_control_showcase" for scenario in scenarios)
+    assert any(encounter.id == "full_control_showcase" for encounter in encounters)
 
-    observation = adapter.start_scenario("full_control_showcase")
+    observation = adapter.start_encounter("full_control_showcase")
     assert observation.encounter is not None
     decision_id = observation.encounter.decision.id
     wait = next(
@@ -45,7 +45,7 @@ def test_headless_adapter_drives_game_by_stable_ids() -> None:
 
 def test_headless_adapter_preserves_stale_decision_protection() -> None:
     adapter = _adapter()
-    observation = adapter.start_scenario("full_control_showcase")
+    observation = adapter.start_encounter("full_control_showcase")
     assert observation.encounter is not None
     old_decision_id = observation.encounter.decision.id
     wait = next(
@@ -69,11 +69,11 @@ def test_headless_adapter_preserves_stale_decision_protection() -> None:
 def test_headless_adapter_requires_a_started_game() -> None:
     adapter = _adapter()
 
-    with pytest.raises(RuntimeError, match="Start a scenario"):
+    with pytest.raises(RuntimeError, match="Start an encounter"):
         adapter.observe()
 
-    with pytest.raises(KeyError, match="Unknown scenario"):
-        adapter.start_scenario("missing")
+    with pytest.raises(KeyError, match="Unknown encounter"):
+        adapter.start_encounter("missing")
 
 
 def test_headless_observation_preserves_unimplemented_action_reason(
@@ -102,16 +102,16 @@ def test_headless_observation_preserves_unimplemented_action_reason(
         False,
     )
     catalog, session = Mock(), Mock()
-    catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-    catalog.load_scenario.return_value = Mock()
+    catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+    catalog.load_encounter.return_value = Mock()
     session.observe.return_value = observation
     monkeypatch.setattr(
         "srd_arena.frontends.headless.adapter.Session",
-        lambda _scenario: session,
+        lambda _encounter: session,
     )
     adapter = HeadlessGameAdapter(catalog)
 
-    observed = adapter.start_scenario("demo")
+    observed = adapter.start_encounter("demo")
 
     assert observed.scene.action_details[0].reasons == unsupported.reasons
     assert adapter.available_actions() == ()

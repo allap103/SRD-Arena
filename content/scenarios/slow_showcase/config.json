@@ -1,6 +1,0 @@
-{
-  "display_name": "Slow Rules Showcase",
-  "encounters": ["slow_showcase"],
-  "background_image": "backgrounds/grass.png",
-  "grid_opacity": 0.8
-}

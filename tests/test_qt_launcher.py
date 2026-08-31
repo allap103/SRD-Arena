@@ -12,28 +12,29 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 pytest.importorskip("PySide6")
 
+from PySide6.QtCore import QTimer
 from PySide6.QtWidgets import QApplication, QPushButton
 
 import srd_arena.frontends.gui.launcher as launcher
-from srd_arena.content.scenarios import (
-    ScenarioCatalog,
-    ScenarioPresentation,
-    ScenarioSummary,
+from srd_arena.content.encounters import (
+    EncounterCatalog,
+    EncounterPresentation,
+    EncounterSummary,
 )
-from srd_arena.domain.scenarios import ScenarioDefinition
+from srd_arena.domain.encounters import EncounterDefinition
 from srd_arena.engine.session import Session
 from srd_arena.frontends.gui import app as game_app
 
 
-def test_scenario_picker_loads_content_then_creates_session(
+def test_encounter_picker_loads_content_then_creates_session(
     monkeypatch: pytest.MonkeyPatch,
     tmp_path: Path,
 ) -> None:
     app = QApplication.instance() or QApplication([])
-    scenario = ScenarioSummary(
+    encounter = EncounterSummary(
         id="example",
         label="Example Encounter",
-        presentation=ScenarioPresentation(grid_color="#123456"),
+        presentation=EncounterPresentation(grid_color="#123456"),
     )
     session = cast(Session, object())
 
@@ -41,12 +42,12 @@ def test_scenario_picker_loads_content_then_creates_session(
         def __init__(self) -> None:
             self.loaded: list[str] = []
 
-        def available_scenarios(self) -> tuple[ScenarioSummary, ...]:
-            return (scenario,)
+        def available_encounters(self) -> tuple[EncounterSummary, ...]:
+            return (encounter,)
 
-        def load_scenario(self, scenario_id: str) -> ScenarioDefinition:
-            self.loaded.append(scenario_id)
-            return cast(ScenarioDefinition, object())
+        def load_encounter(self, encounter_id: str) -> EncounterDefinition:
+            self.loaded.append(encounter_id)
+            return cast(EncounterDefinition, object())
 
     created_presenters: list[GamePresenterStub] = []
 
@@ -63,7 +64,7 @@ def test_scenario_picker_loads_content_then_creates_session(
             received: GamePresenterStub,
             *,
             image_root: Path | None = None,
-            presentation_config: ScenarioPresentation | None = None,
+            presentation_config: EncounterPresentation | None = None,
             pause_between_automatic_actions: bool = True,
         ) -> None:
             self.received = received
@@ -77,12 +78,12 @@ def test_scenario_picker_loads_content_then_creates_session(
             self.was_shown = True
 
     catalog = CatalogStub()
-    monkeypatch.setattr(launcher, "Session", lambda _scenario: session)
+    monkeypatch.setattr(launcher, "Session", lambda _encounter: session)
     monkeypatch.setattr(launcher, "GamePresenter", GamePresenterStub)
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
     image_root = tmp_path / "images"
-    picker = launcher.ScenarioPickerWindow(
-        cast(ScenarioCatalog, catalog),
+    picker = launcher.EncounterPickerWindow(
+        cast(EncounterCatalog, catalog),
         image_root=image_root,
         pause_between_automatic_actions=False,
     )
@@ -90,7 +91,7 @@ def test_scenario_picker_loads_content_then_creates_session(
     buttons = picker.findChildren(QPushButton)
     assert [button.text() for button in buttons] == ["Example Encounter"]
 
-    picker._open_scenario(scenario)
+    picker._open_encounter(encounter)
 
     assert catalog.loaded == ["example"]
     assert len(created_presenters) == 1
@@ -98,7 +99,7 @@ def test_scenario_picker_loads_content_then_creates_session(
     assert len(created_windows) == 1
     assert created_windows[0].received is created_presenters[0]
     assert created_windows[0].image_root == image_root
-    assert created_windows[0].presentation_config == scenario.presentation
+    assert created_windows[0].presentation_config == encounter.presentation
     assert created_windows[0].pause_between_automatic_actions is False
     assert created_windows[0].was_shown is True
     picker.deleteLater()
@@ -116,7 +117,7 @@ def test_automatic_action_pacing_selects_the_gui_timer_delay(
 ) -> None:
     scheduled_delays: list[int] = []
     monkeypatch.setattr(
-        game_app.QTimer,
+        QTimer,
         "singleShot",
         lambda delay_ms, _callback: scheduled_delays.append(delay_ms),
     )
@@ -129,7 +130,7 @@ def test_automatic_action_pacing_selects_the_gui_timer_delay(
             presenter=SimpleNamespace(
                 observation=SimpleNamespace(
                     encounter=object(),
-                    transition=None,
+                    completion=None,
                     requires_automatic_advance=True,
                 )
             ),

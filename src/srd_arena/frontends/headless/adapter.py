@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 
-from srd_arena.content.scenarios import ScenarioCatalog
+from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     CommandResult,
@@ -17,8 +17,8 @@ from srd_arena.engine.api import (
 
 
 @dataclass(frozen=True)
-class ScenarioOption:
-    """A scenario exposed to a headless controller by stable ID."""
+class EncounterOption:
+    """An encounter exposed to a headless controller by stable ID."""
 
     id: str
     label: str
@@ -32,53 +32,53 @@ class HeadlessGameAdapter:
     choosing among them. A scripted controller or ML policy owns that choice.
     """
 
-    catalog: ScenarioCatalog
+    catalog: EncounterCatalog
     _session: Session | None = field(default=None, init=False, repr=False)
 
-    def available_scenarios(self) -> tuple[ScenarioOption, ...]:
-        """Return selectable scenarios without exposing filesystem paths.
+    def available_encounters(self) -> tuple[EncounterOption, ...]:
+        """Return selectable encounters without exposing filesystem paths.
 
         >>> from unittest.mock import Mock
         >>> catalog = Mock()
-        >>> catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> HeadlessGameAdapter(catalog).available_scenarios()
-        (ScenarioOption(id='demo', label='Demo'),)
+        >>> catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+        >>> HeadlessGameAdapter(catalog).available_encounters()
+        (EncounterOption(id='demo', label='Demo'),)
         """
 
         return tuple(
-            ScenarioOption(id=scenario.id, label=scenario.label)
-            for scenario in self.catalog.available_scenarios()
+            EncounterOption(id=encounter.id, label=encounter.label)
+            for encounter in self.catalog.available_encounters()
         )
 
-    def start_scenario(self, scenario_id: str) -> GameObservation:
-        """Start a scenario selected by its advertised stable ID.
+    def start_encounter(self, encounter_id: str) -> GameObservation:
+        """Start an encounter selected by its advertised stable ID.
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.api import SceneObservation
         >>> observation = GameObservation(SceneObservation("intro", None, ()), None, None, False)
         >>> catalog, session = Mock(), Mock()
-        >>> catalog.available_scenarios.return_value = (Mock(id="demo", label="Demo"),)
-        >>> catalog.load_scenario.return_value = Mock()
+        >>> catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+        >>> catalog.load_encounter.return_value = Mock()
         >>> session = Mock()
         >>> session.observe.return_value = observation
         >>> from unittest.mock import patch
         >>> with patch("srd_arena.frontends.headless.adapter.Session", return_value=session):
-        ...     result = HeadlessGameAdapter(catalog).start_scenario("demo")
+        ...     result = HeadlessGameAdapter(catalog).start_encounter("demo")
         >>> result.scene.scene_id
         'intro'
         """
 
         summary = next(
             (
-                scenario
-                for scenario in self.catalog.available_scenarios()
-                if scenario.id == scenario_id
+                encounter
+                for encounter in self.catalog.available_encounters()
+                if encounter.id == encounter_id
             ),
             None,
         )
         if summary is None:
-            raise KeyError(f"Unknown scenario '{scenario_id}'.")
-        session = Session(self.catalog.load_scenario(summary.id))
+            raise KeyError(f"Unknown encounter '{encounter_id}'.")
+        session = Session(self.catalog.load_encounter(summary.id))
         observation = session.observe()
         self._session = session
         return observation
@@ -239,5 +239,5 @@ class HeadlessGameAdapter:
 
     def _require_session(self) -> Session:
         if self._session is None:
-            raise RuntimeError("Start a scenario before interacting with the game.")
+            raise RuntimeError("Start an encounter before interacting with the game.")
         return self._session

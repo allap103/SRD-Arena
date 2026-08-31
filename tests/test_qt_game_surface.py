@@ -69,22 +69,20 @@ def test_game_surface_switches_between_story_and_encounter() -> None:
     _dispose(surface, app)
 
 
-def test_game_surface_owns_transition_overlay_behavior() -> None:
+def test_game_surface_owns_completion_overlay_behavior() -> None:
     app = _application()
-    continued: list[bool] = []
-    surface = GameSurface(
-        _callbacks(continue_transition=lambda: continued.append(True))
-    )
+    restarted: list[bool] = []
+    surface = GameSurface(_callbacks(restart_encounter=lambda: restarted.append(True)))
     surface.resize(900, 600)
     surface.show()
     surface.show_encounter()
 
-    surface.sync_victory_overlay("The encounter is over.", can_continue=True)
+    surface.sync_victory_overlay("The encounter is over.", can_restart=True)
     app.processEvents()
 
     overlay = surface.findChild(QFrame, "victoryOverlay")
-    message = surface.findChild(QLabel, "transitionMessage")
-    button = surface.findChild(QPushButton, "transitionButton")
+    message = surface.findChild(QLabel, "completionMessage")
+    button = surface.findChild(QPushButton, "restartButton")
     encounter_panel = surface.findChild(QWidget, "encounterPanel")
     assert overlay is not None
     assert message is not None
@@ -96,9 +94,9 @@ def test_game_surface_owns_transition_overlay_behavior() -> None:
     assert overlay.geometry() == encounter_panel.rect()
 
     button.click()
-    assert continued == [True]
+    assert restarted == [True]
 
-    surface.sync_victory_overlay(None, can_continue=False)
+    surface.sync_victory_overlay(None, can_restart=False)
     assert overlay.isHidden()
 
     _dispose(surface, app)
@@ -127,7 +125,7 @@ def test_game_surface_renders_initiative_through_its_rail() -> None:
 def _callbacks(
     *,
     select_story_action: Callable[[str], None] | None = None,
-    continue_transition: Callable[[], None] | None = None,
+    restart_encounter: Callable[[], None] | None = None,
 ) -> GameSurfaceCallbacks:
     return GameSurfaceCallbacks(
         select_story_action=select_story_action or (lambda _action_id: None),
@@ -135,7 +133,7 @@ def _callbacks(
         cell_clicked=lambda _x, _y: None,
         point_clicked=lambda _x, _y: None,
         interaction_cancelled=lambda: None,
-        continue_transition=continue_transition or (lambda: None),
+        restart_encounter=restart_encounter or (lambda: None),
     )
 
 
