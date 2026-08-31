@@ -10,7 +10,7 @@ from srd_arena.domain.rolls.saving_throws import Ability
 
 from .attributes import Attributes
 from .class_features import ClassFeature
-from .classes import ClassRef, SubclassRef
+from .classes import ClassRef
 from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
@@ -39,7 +39,6 @@ class Creature:
     size: str = "M"
     current_health: int | None = None
     class_ref: ClassRef | None = None
-    subclass_ref: SubclassRef | None = None
     class_features: list[ClassFeature] = field(default_factory=list)
     triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
@@ -69,75 +68,6 @@ class Creature:
 
     def __str__(self) -> str:
         return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"
-
-    def has_item(self, item: str) -> bool:
-        """Return whether the creature carries an item.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(["rope"]), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.has_item("rope")
-        True
-        """
-        return self.inventory.has_item(item)
-
-    def add_item(self, item: str) -> None:
-        """Add an item to the creature's inventory.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.add_item("rope")
-        >>> creature.has_item("rope")
-        True
-        """
-        self.inventory.add_item(item)
-
-    def remove_item(self, item: str) -> None:
-        """Remove one matching item from the creature's inventory.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(["rope"]), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.remove_item("rope")
-        >>> creature.has_item("rope")
-        False
-        """
-        self.inventory.remove_item(item)
-
-    def show_equipment(self) -> dict[str, str | None]:
-        """Return the creature's current equipment slots.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.show_equipment()["right_hand"] is None
-        True
-        """
-        return self.equipment.show()
-
-    def equip_item(self, item: str, slot: str) -> bool:
-        """Move a carried item into a valid equipment slot.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(["sword"]), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.equip_item("sword", "right_hand")
-        True
-        >>> (creature.has_item("sword"), creature.show_equipment()["right_hand"])
-        (False, 'sword')
-        """
-        if self.inventory.has_item(item) and self.equipment.equip(item, slot):
-            self.inventory.remove_item(item)
-            return True
-        return False
-
-    def unequip_item(self, slot: str) -> bool:
-        """Return an equipped item to the creature's inventory.
-
-        >>> creature = Creature("hero", "Hero", "", Inventory(["sword"]), Attributes(20, 1, 14, 12, 10, 10, 10, 10, 10), Equipment())
-        >>> creature.equip_item("sword", "right_hand")
-        True
-        >>> creature.unequip_item("right_hand")
-        True
-        >>> creature.has_item("sword")
-        True
-        """
-        removed_item = self.equipment.unequip(slot)
-        if removed_item is not None:
-            self.inventory.add_item(removed_item)
-            return True
-        return False
 
     def get_modifier(self, attribute_value: int) -> int:
         """Calculate the modifier for an ability score.

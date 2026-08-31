@@ -4,25 +4,10 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-EQUIPMENT_SLOTS = (
-    "head",
-    "body",
-    "legs",
-    "feet",
-    "hands",
-    "right_hand",
-    "left_hand",
-    "accessory",
-)
+EQUIPMENT_SLOTS = ("right_hand", "left_hand")
 EquipmentSlot = Literal[
-    "head",
-    "body",
-    "legs",
-    "feet",
-    "hands",
     "right_hand",
     "left_hand",
-    "accessory",
 ]
 
 
@@ -92,7 +77,6 @@ class CreatureSchema(BaseModel):
     equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)
     metadata: dict[str, object] = Field(default_factory=dict)
     class_ref: StatBlockReferenceSchema | None = None
-    subclass_ref: SubclassReferenceSchema | None = None
     spellcasting: SpellcastingSchema | None = None
     spells_known: list[StatBlockReferenceSchema] = Field(default_factory=list)
     optional_features: list[StatBlockReferenceSchema] = Field(default_factory=list)
@@ -107,17 +91,6 @@ class StatBlockReferenceSchema(BaseModel):
 
     name: str
     source: str | None = None
-
-
-class SubclassReferenceSchema(BaseModel):
-    """Define the authored creature-reference fields with name and source."""
-
-    model_config = ConfigDict(extra="forbid")
-
-    name: str
-    source: str | None = None
-    class_name: str | None = None
-    class_source: str | None = None
 
 
 CreatureSchema.model_rebuild()

@@ -26,7 +26,7 @@ def available_feature_actions(
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
     >>> feature = FeatureActionDefinition(
-    ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
+    ...     "second_wind", "Second Wind", "bonus_action"
     ... )
     >>> creature = SimpleNamespace(
     ...     combat_profile=SimpleNamespace(
@@ -74,7 +74,7 @@ def feature_action_available(
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
     >>> feature = FeatureActionDefinition(
-    ...     "second_wind", "Second Wind", "bonus_action", "self", "fighter"
+    ...     "second_wind", "Second Wind", "bonus_action"
     ... )
     >>> actor = SimpleNamespace(feature_uses_remaining={"second_wind": 1})
     >>> state = SimpleNamespace(

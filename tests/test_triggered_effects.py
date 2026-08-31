@@ -3,6 +3,7 @@ from pathlib import Path
 import pytest
 
 from srd_arena.content.encounters import load_encounter_directory
+from srd_arena.domain.creatures import Equipment
 from srd_arena.domain.effects import (
     TriggeredEffect,
     matching_effects,
@@ -110,12 +111,12 @@ def test_tactical_fighter_loads_great_weapon_fighting_effect() -> None:
 
     assert effect.operation == "reroll_matching_dice"
     assert effect.parameters["values"] == [1, 2]
-    assert player.equipment.equipped_items["right_hand"] == "greatsword"
+    assert player.equipment.right_hand == "greatsword"
 
 
 def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
     session = _adjacent_tactical_encounter()
-    _active_creature(session).equipment.equipped_items["right_hand"] = "longsword"
+    _active_creature(session).equipment = Equipment(right_hand="longsword")
     _use_deterministic_dice(
         session,
         die_roller=lambda sides: 15 if sides == 20 else 1,

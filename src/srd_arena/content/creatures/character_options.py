@@ -1,4 +1,4 @@
-"""Apply authored class and subclass choices while building a creature."""
+"""Apply the supported authored class choices while building a creature."""
 
 import re
 
@@ -6,8 +6,6 @@ from srd_arena.content.character_options.classes import (
     ClassCatalog,
     ClassRecord,
     OptionalFeatureCatalog,
-    SubclassCatalog,
-    SubclassRecord,
     normalize_optional_feature_effects,
 )
 from srd_arena.content.character_options.classes.optional_feature_schema import (
@@ -90,47 +88,6 @@ def find_class_record(
     return classes.find(schema.class_ref.name, schema.class_ref.source)
 
 
-def find_subclass_record(
-    schema: CreatureSchema,
-    subclasses: SubclassCatalog | None,
-    class_record: ClassRecord | None,
-) -> SubclassRecord | None:
-    """Resolve a subclass within its referenced parent class identity.
-
-    >>> from srd_arena.content.character_options.classes.schema import SubclassSchema
-    >>> champion = SubclassRecord(SubclassSchema(
-    ...     name="Champion", source="X", className="Fighter", classSource="X"), ())
-    >>> catalog = SubclassCatalog([champion])
-    >>> schema = CreatureSchema(id="hero", subclass_ref={
-    ...     "name": "Champion", "class_name": "Fighter"})
-    >>> find_subclass_record(schema, catalog, None) is champion
-    True
-    """
-
-    reference = schema.subclass_ref
-    if reference is None:
-        return None
-    if subclasses is None:
-        raise ValueError(
-            f"Creature references subclass '{reference.name}', "
-            "but no subclass catalog was loaded."
-        )
-    class_name = reference.class_name or (
-        class_record.definition.public_name if class_record else None
-    )
-    if class_name is None:
-        raise ValueError(f"Subclass '{reference.name}' requires a class name.")
-    class_source = reference.class_source or (
-        class_record.definition.source if class_record else None
-    )
-    return subclasses.find(
-        reference.name,
-        reference.source,
-        class_name,
-        class_source,
-    )
-
-
 def resolve_class_features(
     class_record: ClassRecord | None,
     level: int,
@@ -164,43 +121,6 @@ def resolve_class_features(
     return resolved
 
 
-def resolve_subclass_features(
-    subclass_record: SubclassRecord | None,
-    level: int,
-    *,
-    class_name: str | None,
-) -> list[ClassFeature]:
-    """Collect supported subclass features earned at or below a level.
-
-    >>> from srd_arena.content.character_options.classes.schema import SubclassSchema
-    >>> definition = SubclassSchema(
-    ...     name="Champion", source="X", className="Fighter", classSource="X",
-    ...     subclassFeatures=["Extra Attack Improvement|Fighter|X|10"])
-    >>> features = resolve_subclass_features(
-    ...     SubclassRecord(definition, ()), 10, class_name="Fighter")
-    >>> (features[0].source_subclass, features[0].data["attacks"])
-    ('Champion', 2)
-    """
-
-    if subclass_record is None:
-        return []
-    definition = subclass_record.definition
-    resolved: list[ClassFeature] = []
-    for feature_ref in definition.subclass_features:
-        parsed = _parse_class_feature_reference(feature_ref)
-        if parsed is None or parsed[1] > level:
-            continue
-        feature = _normalize_class_feature(
-            class_name or definition.class_name,
-            parsed[0],
-            parsed[1],
-            source_subclass=definition.public_name,
-        )
-        if feature is not None:
-            resolved.append(feature)
-    return resolved
-
-
 def _parse_class_feature_reference(
     feature_ref: str | ClassFeatureReferenceSchema,
 ) -> tuple[str, int] | None:
@@ -218,13 +138,13 @@ def _normalize_class_feature(
     feature_level: int,
     class_record: ClassRecord | None = None,
     creature_level: int = 1,
-    source_subclass: str | None = None,
 ) -> ClassFeature | None:
     attacks = {
         "Extra Attack": 2,
         "Extra Attack (2)": 3,
         "Extra Attack (3)": 4,
-        "Extra Attack Improvement": 2,
+        "Two Extra Attacks": 3,
+        "Three Extra Attacks": 4,
     }.get(feature_name)
     if attacks is not None:
         return ClassFeature(
@@ -232,7 +152,6 @@ def _normalize_class_feature(
             name=feature_name,
             source_class=class_name,
             level=feature_level,
-            source_subclass=source_subclass,
             data={"attacks": attacks},
         )
     if feature_name == "Second Wind":
@@ -241,7 +160,6 @@ def _normalize_class_feature(
             name=feature_name,
             source_class=class_name,
             level=feature_level,
-            source_subclass=source_subclass,
             data={
                 "uses": _second_wind_uses(class_record, creature_level),
                 **_second_wind_healing_dice(
@@ -257,7 +175,6 @@ def _normalize_class_feature(
             name=feature_name,
             source_class=class_name,
             level=feature_level,
-            source_subclass=source_subclass,
             data={"uses": _action_surge_uses(class_record, creature_level)},
         )
     return None

@@ -2,7 +2,6 @@
 
 from dataclasses import dataclass
 
-from .armor import ArmorStat
 from .weapons import WeaponStat
 
 
@@ -15,7 +14,6 @@ class Item:
     description: str
     category: str
     weapon_stat: WeaponStat | None = None
-    armor_stat: ArmorStat | None = None
     item_type: str = ""
     misc_tags: list[str] | None = None
 

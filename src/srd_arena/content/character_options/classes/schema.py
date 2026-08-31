@@ -1,4 +1,4 @@
-"""Validate authored class, subclass, and feature records."""
+"""Validate authored class and class-feature records."""
 
 from pydantic import Field
 
@@ -54,13 +54,6 @@ class ClassFeatureSchema(SourceModel):
         return self.name
 
 
-class SubclassFeatureSchema(ClassFeatureSchema):
-    """Define the authored character-option fields with subclass short name."""
-
-    subclass_short_name: str = Field(alias="subclassShortName")
-    subclass_source: str = Field(alias="subclassSource")
-
-
 class ClassSchema(SourceModel):
     """Validate a class identity, progression table, and spellcasting metadata."""
 
@@ -111,65 +104,11 @@ class ClassSchema(SourceModel):
         return self.name
 
 
-class SubclassSchema(SourceModel):
-    """Validate a subclass together with the parent class identity it extends."""
-
-    name: str
-    short_name: str = Field(default="", alias="shortName")
-    source: str
-    class_name: str = Field(alias="className")
-    class_source: str = Field(alias="classSource")
-    subclass_features: list[str | ClassFeatureReferenceSchema] = Field(
-        default_factory=list,
-        alias="subclassFeatures",
-    )
-    table_groups: list[ClassTableGroupSchema] = Field(
-        default_factory=list,
-        alias="subclassTableGroups",
-    )
-    spellcasting_ability: str | None = Field(
-        default=None,
-        alias="spellcastingAbility",
-    )
-    caster_progression: str | None = Field(
-        default=None,
-        alias="casterProgression",
-    )
-    cantrip_progression: list[object] = Field(
-        default_factory=list,
-        alias="cantripProgression",
-    )
-    spells_known_progression: list[object] = Field(
-        default_factory=list,
-        alias="spellsKnownProgression",
-    )
-    srd: bool | str | None = None
-    srd52: bool | str | None = None
-
-    @property
-    def public_name(self) -> str:
-        """Return the SRD-facing subclass name.
-
-        >>> subclass = SubclassSchema(name="Champion Legacy", source="X", className="Fighter", classSource="X", srd52="Champion")
-        >>> subclass.public_name
-        'Champion'
-        """
-        for marker in (self.srd52, self.srd):
-            if isinstance(marker, str):
-                return marker
-        return self.name
-
-
 class ClassFileSchema(SourceModel):
-    """Define the authored character-option fields with classes and subclasses."""
+    """Define the authored class and class-feature records."""
 
     classes: list[ClassSchema] = Field(default_factory=list, alias="class")
-    subclasses: list[SubclassSchema] = Field(default_factory=list, alias="subclass")
     class_features: list[ClassFeatureSchema] = Field(
         default_factory=list,
         alias="classFeature",
-    )
-    subclass_features: list[SubclassFeatureSchema] = Field(
-        default_factory=list,
-        alias="subclassFeature",
     )

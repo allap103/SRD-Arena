@@ -24,8 +24,6 @@ class ItemSchema(SourceModel):
         alias="additionalEntries",
     )
     weapon: bool = False
-    armor: bool = False
-    ac: int | None = None
     damage: str | None = Field(default=None, alias="dmg1")
     damage_type: str = Field(default="", alias="dmgType")
     properties: list[str | ItemPropertySchema] = Field(
@@ -58,12 +56,3 @@ class ItemSchema(SourceModel):
         True
         """
         return self.weapon or self.damage is not None
-
-    @property
-    def is_armor(self) -> bool:
-        """Return whether authored fields identify this item as armor.
-
-        >>> ItemSchema(name="Shield", source="X", ac=2).is_armor
-        True
-        """
-        return self.armor or isinstance(self.ac, int)

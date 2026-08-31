@@ -21,15 +21,13 @@ def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | 
     ...     weapon_stat=WeaponStat([], "1d8", "slashing", []),
     ... )
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": "sword", "left_hand": None}
-    ...     )
+    ...     equipment=SimpleNamespace(right_hand="sword", left_hand=None)
     ... )
     >>> equipped_weapon(attacker, {"sword": sword}) is sword
     True
     """
     for slot in ("right_hand", "left_hand"):
-        item_id = attacker.equipment.equipped_items.get(slot)
+        item_id = getattr(attacker.equipment, slot)
         if item_id is None:
             continue
         item = items_by_id.get(item_id)
@@ -43,15 +41,13 @@ def has_free_hand(creature: Creature) -> bool:
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": "sword", "left_hand": None}
-    ...     )
+    ...     equipment=SimpleNamespace(right_hand="sword", left_hand=None)
     ... )
     >>> has_free_hand(creature)
     True
     """
     return any(
-        creature.equipment.equipped_items.get(slot) is None
+        getattr(creature.equipment, slot) is None
         for slot in ("right_hand", "left_hand")
     )
 
@@ -183,9 +179,7 @@ def select_attack_source(
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
     >>> select_attack_source(attacker, {}) is None
@@ -231,9 +225,7 @@ def attack_sources(
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
     >>> attack_sources(attacker, {})
@@ -261,9 +253,7 @@ def attack_range_squares(
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
     >>> attack_range_squares(attacker, {}, Grid(10, 10))
@@ -326,9 +316,7 @@ def selected_attack_type(
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
     >>> selected_attack_type(attacker, {}, preferred_attack_type="ranged")
@@ -352,9 +340,7 @@ def can_make_opportunity_attack(
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
     >>> can_make_opportunity_attack(attacker, {})

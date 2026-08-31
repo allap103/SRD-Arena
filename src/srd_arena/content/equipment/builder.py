@@ -1,7 +1,7 @@
 """Translate validated equipment records into domain item templates."""
 
 from srd_arena.content.common.sources import slug
-from srd_arena.domain.equipment import ArmorStat, Item, WeaponStat
+from srd_arena.domain.equipment import Item, WeaponStat
 
 from .schema import ItemSchema
 
@@ -40,27 +40,6 @@ def build_item(source_item: ItemSchema) -> Item:
             item_type=source_item.type,
             misc_tags=source_item.misc_tags,
         )
-    if source_item.is_armor:
-        return Item(
-            id=slug(source_item.public_name),
-            name=source_item.public_name,
-            description=_description(source_item),
-            category="armor",
-            armor_stat=ArmorStat(
-                slot="body",
-                type=_armor_type(source_item.type),
-                armor_class=source_item.ac if isinstance(source_item.ac, int) else 10,
-                modifier_cap=(
-                    0
-                    if source_item.type.startswith("HA")
-                    else 2
-                    if source_item.type.startswith("MA")
-                    else 99
-                ),
-            ),
-            item_type=source_item.type,
-            misc_tags=source_item.misc_tags,
-        )
     return Item(
         id=slug(source_item.public_name),
         name=source_item.public_name,
@@ -76,16 +55,6 @@ def _description(item: ItemSchema) -> str:
         if isinstance(entry, str):
             return entry
     return ""
-
-
-def _armor_type(item_type: str) -> str:
-    if item_type.startswith("HA"):
-        return "heavy"
-    if item_type.startswith("MA"):
-        return "medium"
-    if item_type.startswith("LA"):
-        return "light"
-    return "armor"
 
 
 def _attack_type(item_type: str) -> str:

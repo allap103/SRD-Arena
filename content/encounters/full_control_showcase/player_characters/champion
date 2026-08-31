@@ -6,12 +6,6 @@
     "name": "Fighter",
     "source": "XPHB"
   },
-  "subclass_ref": {
-    "name": "Champion",
-    "source": "XPHB",
-    "class_name": "Fighter",
-    "class_source": "XPHB"
-  },
   "attributes": {
     "base_health": 44,
     "level": 5,
@@ -26,10 +20,6 @@
   "equipment": {
     "right_hand": {
       "name": "Greatsword",
-      "source": "XPHB"
-    },
-    "body": {
-      "name": "Chain Mail",
       "source": "XPHB"
     }
   }

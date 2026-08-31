@@ -7,7 +7,6 @@ from pathlib import Path
 from srd_arena.content.character_options.classes import (
     load_class_catalog,
     load_optional_feature_catalog,
-    load_subclass_catalog,
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.common.sources import load_json
@@ -40,7 +39,6 @@ def load_encounter_directory(
         load_class_catalog(system_path),
         load_player_character_templates(directory / "player_characters"),
         load_optional_feature_catalog(system_path),
-        load_subclass_catalog(system_path),
         load_spell_catalog(system_path),
     )
     definition = loaded.definition

@@ -255,6 +255,24 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
     assert healing_roll_detail["applied_healing"] == 7
 
 
+def test_healing_potion_appears_and_is_consumed() -> None:
+    session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
+    player = _active_creature(session)
+    player.current_health = 10
+    _use_deterministic_dice(session, die_roller=lambda _sides: 4)
+
+    result = session.choose(_action_id_by_label(session, "Drink Potion of Healing"))
+
+    assert player.get_health() == 20
+    assert "potion_of_healing" not in player.inventory.items
+    assert session.encounter_state is not None
+    assert session.encounter_state.active_bonus_action_available is False
+    event = next(event for event in result.events if event.type == "item_used")
+    assert event.data["item_name"] == "Potion of Healing"
+    assert event.data["healing"] == 10
+    assert event.data["consumed"] is True
+
+
 def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     _active_creature(session).current_health = 10

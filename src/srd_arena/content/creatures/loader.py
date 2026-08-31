@@ -6,7 +6,6 @@ from typing import cast
 from srd_arena.content.character_options.classes import (
     ClassCatalog,
     OptionalFeatureCatalog,
-    SubclassCatalog,
 )
 from srd_arena.content.common.sources import load_json, slug
 from srd_arena.content.spells import SpellCatalog
@@ -15,7 +14,6 @@ from srd_arena.domain.creatures import (
     Creature,
     Equipment,
     Inventory,
-    SubclassRef,
 )
 
 from .actions.builder import (
@@ -27,10 +25,8 @@ from .attributes import build_creature_attributes, build_creature_size
 from .catalog import BestiaryCatalog
 from .character_options import (
     find_class_record,
-    find_subclass_record,
     resolve_class_features,
     resolve_optional_feature_effects,
-    resolve_subclass_features,
 )
 from .features import build_combat_profile, build_feature_uses_remaining
 from .player_characters import PlayerCharacterTemplates
@@ -46,7 +42,6 @@ def load_creature(
     classes: ClassCatalog | None = None,
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
     """Validate one creature document and translate it with the supplied catalogs.
@@ -67,7 +62,6 @@ def load_creature(
         classes,
         player_characters,
         optional_features,
-        subclasses,
         spells,
     )
 
@@ -78,7 +72,6 @@ def build_creature(
     classes: ClassCatalog | None = None,
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> Creature:
     """Assemble a domain creature from authored statistics, actions, and options.
@@ -91,34 +84,20 @@ def build_creature(
     schema = _resolve_creature_schema(schema, player_characters)
     stat_block = _find_bestiary_monster(schema, bestiary)
     class_record = find_class_record(schema, classes)
-    subclass_record = find_subclass_record(schema, subclasses, class_record)
     equipment = Equipment(
-        equipped_items={
-            **Equipment().equipped_items,
-            **{
-                slot: _creature_item_id(item)
-                for slot, item in cast(
-                    dict[str, object], dict(schema.equipment)
-                ).items()
-            },
+        **{
+            slot: _creature_item_id(item)
+            for slot, item in cast(dict[str, object], dict(schema.equipment)).items()
         }
     )
     attributes = build_creature_attributes(schema, stat_block, class_record)
     class_features = resolve_class_features(class_record, schema.attributes.level)
-    class_features.extend(
-        resolve_subclass_features(
-            subclass_record,
-            schema.attributes.level,
-            class_name=schema.class_ref.name if schema.class_ref else None,
-        )
-    )
     triggered_effects = resolve_optional_feature_effects(schema, optional_features)
     combat_profile = build_combat_profile(class_features)
     spellcasting = build_spellcasting(
         schema,
         attributes,
         class_record,
-        subclass_record,
         spells,
     )
 
@@ -151,16 +130,6 @@ def build_creature(
         class_ref=(
             ClassRef(name=schema.class_ref.name, source=schema.class_ref.source)
             if schema.class_ref
-            else None
-        ),
-        subclass_ref=(
-            SubclassRef(
-                name=schema.subclass_ref.name,
-                source=schema.subclass_ref.source,
-                class_name=schema.subclass_ref.class_name,
-                class_source=schema.subclass_ref.class_source,
-            )
-            if schema.subclass_ref
             else None
         ),
         class_features=class_features,

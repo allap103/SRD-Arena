@@ -6,12 +6,6 @@
         "name": "Fighter",
         "source": "XPHB"
     },
-    "subclass_ref": {
-        "name": "Champion",
-        "source": "XPHB",
-        "class_name": "Fighter",
-        "class_source": "XPHB"
-    },
     "spellcasting": {
         "ability": "int",
         "caster_progression": "1/3",
@@ -70,10 +64,6 @@
     "equipment": {
         "right_hand": {
             "name": "Greatsword",
-            "source": "XPHB"
-        },
-        "body": {
-            "name": "Chain Mail",
             "source": "XPHB"
         }
     }

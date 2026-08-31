@@ -83,8 +83,6 @@ def test_unimplemented_feature_rejection_retains_feature_identity() -> None:
         "mystery",
         "Mystery Feature",
         "bonus_action",
-        "self",
-        "missing_resolver",
     )
     creature = SimpleNamespace(
         combat_profile=SimpleNamespace(feature_actions={"mystery": definition}),

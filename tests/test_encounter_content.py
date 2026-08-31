@@ -8,10 +8,10 @@ from pydantic import ValidationError
 from srd_arena.content.character_options.classes import (
     load_class_catalog,
     load_optional_feature_catalog,
-    load_subclass_catalog,
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (
+    CreatureSchema,
     load_bestiary_catalog,
     load_creature,
     load_player_character_templates,
@@ -43,7 +43,6 @@ def creature_content() -> SimpleNamespace:
             FIXTURE_ENCOUNTER_DIR / "player_characters"
         ),
         optional_features=load_optional_feature_catalog(SYSTEM_CONTENT_ROOT),
-        subclasses=load_subclass_catalog(SYSTEM_CONTENT_ROOT),
         spells=load_spell_catalog(SYSTEM_CONTENT_ROOT),
     )
 
@@ -117,11 +116,6 @@ def test_full_control_showcase_gives_external_control_to_every_creature() -> Non
         "Blueblade",
         "Blueeye",
     }
-    player_subclass = encounter.get_creature("player").subclass_ref
-    champion_subclass = encounter.get_creature("champion_2").subclass_ref
-    assert player_subclass is not None
-    assert champion_subclass is not None
-    assert champion_subclass.name == "Champion"
     assert all(
         participant.controller == "external" for participant in encounter.participants
     )
@@ -328,19 +322,22 @@ def test_encounter_schema_rejects_creature_starts_outside_grid(
         )
 
 
-def test_fighter_level_five_resolves_extra_attack(
+@pytest.mark.parametrize(("level", "attacks"), [(5, 2), (11, 3), (20, 4)])
+def test_supported_fighter_levels_resolve_extra_attack(
     tmp_path: Path,
     creature_content: SimpleNamespace,
+    level: int,
+    attacks: int,
 ) -> None:
-    creature_path = tmp_path / "fighter_level_five.json"
+    creature_path = tmp_path / f"fighter_level_{level}.json"
     creature_path.write_text(
         json.dumps(
             {
-                "id": "fighter_level_five",
+                "id": f"fighter_level_{level}",
                 "name": "Veteran",
                 "class_ref": {"name": "Fighter", "source": "XPHB"},
                 "attributes": {
-                    "level": 5,
+                    "level": level,
                     "strength": 16,
                     "dexterity": 12,
                     "constitution": 14,
@@ -364,10 +361,28 @@ def test_fighter_level_five_resolves_extra_attack(
     assert any(
         class_feature.id == "extra_attack" for class_feature in upgraded.class_features
     )
-    assert upgraded.combat_profile.attacks_per_attack_action == 2
+    assert upgraded.combat_profile.attacks_per_attack_action == attacks
 
 
-def test_creature_can_load_subclass_and_explicit_spellcasting(
+@pytest.mark.parametrize(
+    ("unsupported", "message"),
+    [
+        ({"equipment": {"body": "chain_mail"}}, "right_hand.*left_hand"),
+        (
+            {"subclass_ref": {"name": "Champion", "source": "XPHB"}},
+            "Extra inputs are not permitted",
+        ),
+    ],
+)
+def test_creature_schema_rejects_deferred_player_character_systems(
+    unsupported: dict[str, object],
+    message: str,
+) -> None:
+    with pytest.raises(ValidationError, match=message):
+        CreatureSchema.model_validate({"id": "hero", **unsupported})
+
+
+def test_creature_can_load_explicit_spellcasting(
     tmp_path: Path,
     creature_content: SimpleNamespace,
 ) -> None:
@@ -378,12 +393,6 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(
                 "id": "arcane_champion",
                 "name": "Arcane Veteran",
                 "class_ref": {"name": "Fighter", "source": "XPHB"},
-                "subclass_ref": {
-                    "name": "Champion",
-                    "source": "XPHB",
-                    "class_name": "Fighter",
-                    "class_source": "XPHB",
-                },
                 "spellcasting": {
                     "ability": "int",
                     "caster_progression": "1/3",
@@ -416,12 +425,9 @@ def test_creature_can_load_subclass_and_explicit_spellcasting(
         creature_content.classes,
         creature_content.player_characters,
         creature_content.optional_features,
-        creature_content.subclasses,
         creature_content.spells,
     )
 
-    assert creature.subclass_ref is not None
-    assert creature.subclass_ref.name == "Champion"
     assert creature.spellcasting is not None
     assert creature.spellcasting.ability == "int"
     assert creature.spellcasting.ability_modifier == 1
@@ -460,7 +466,11 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(
             {
                 "id": "geometry_spells",
                 "name": "Arcane Tester",
-                "class_ref": {"name": "Wizard", "source": "XPHB"},
+                "spellcasting": {
+                    "ability": "int",
+                    "caster_progression": "full",
+                    "spell_slots": {"1": 4, "2": 3, "3": 2},
+                },
                 "spells_known": [
                     {"name": "Burning Hands", "source": "XPHB"},
                     {"name": "Thunderwave", "source": "XPHB"},
@@ -488,7 +498,6 @@ def test_loaded_spells_classify_geometry_modes_from_game_data(
         creature_content.classes,
         creature_content.player_characters,
         creature_content.optional_features,
-        creature_content.subclasses,
         creature_content.spells,
     )
 

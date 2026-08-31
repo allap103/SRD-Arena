@@ -38,6 +38,17 @@ Authored JSON content is validated and translated into domain definitions by
 the content package. Infrastructure connects that content to the application,
 while GUI and headless clients drive the same public application API.
 
+## Implemented player-character scope
+
+Player-character support is intentionally limited to the combat mechanics used
+by the bundled Fighter examples: weapon attacks from a fixed hand loadout,
+Extra Attack, Second Wind, Action Surge, and Great Weapon Fighting. Inventory
+supports healing potions. Changing equipment, armor-derived AC, subclasses,
+and general class-feature coverage are outside the current project scope.
+
+Monster attacks remain self-contained stat-block actions. A monster's named
+weapon attack does not depend on the player-character item/loadout model.
+
 See the
 [engine architecture](docs/engine_architecture.md),
 [combat action architecture](docs/combat_action_architecture.md), and

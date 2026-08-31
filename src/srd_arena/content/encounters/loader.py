@@ -6,7 +6,6 @@ from pathlib import Path
 from srd_arena.content.character_options.classes import (
     ClassCatalog,
     OptionalFeatureCatalog,
-    SubclassCatalog,
 )
 from srd_arena.content.common.sources import load_json
 from srd_arena.content.creatures import (
@@ -99,7 +98,6 @@ def load_encounter_file(
     classes: ClassCatalog | None = None,
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
-    subclasses: SubclassCatalog | None = None,
     spells: SpellCatalog | None = None,
 ) -> LoadedEncounter:
     """Validate one encounter file and build all referenced domain objects.
@@ -146,7 +144,6 @@ def load_encounter_file(
                 classes,
                 player_characters,
                 optional_features,
-                subclasses,
                 spells,
             )
             for creature in schema.creatures

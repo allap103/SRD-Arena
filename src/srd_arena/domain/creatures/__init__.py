@@ -2,7 +2,7 @@
 
 from .attributes import Attributes, Movement
 from .class_features import ClassFeature
-from .classes import ClassRef, SubclassRef
+from .classes import ClassRef
 from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
@@ -54,7 +54,6 @@ __all__ = [
     "Spellcasting",
     "SpellcastingActionDefinition",
     "StatBlockActionDefinition",
-    "SubclassRef",
     "can_grapple",
     "is_two_sizes_smaller",
     "normalize_size",

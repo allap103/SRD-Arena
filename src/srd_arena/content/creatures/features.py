@@ -23,13 +23,10 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                     profile.attacks_per_attack_action, attacks
                 )
         elif class_feature.id == "second_wind":
-            profile.bonus_action_options.add("second_wind")
             profile.feature_actions["second_wind"] = FeatureActionDefinition(
                 feature_id="second_wind",
                 label="Second Wind",
                 economy="bonus_action",
-                target="self",
-                resolver="second_wind",
             )
             uses = class_feature.data.get("uses")
             if isinstance(uses, int):
@@ -49,8 +46,6 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 feature_id="action_surge",
                 label="Action Surge",
                 economy="none",
-                target="self",
-                resolver="action_surge",
             )
             uses = class_feature.data.get("uses")
             if isinstance(uses, int):

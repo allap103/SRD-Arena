@@ -30,10 +30,6 @@
         "right_hand": {
             "name": "Longsword",
             "source": "XPHB"
-        },
-        "body": {
-            "name": "Chain Mail",
-            "source": "XPHB"
         }
     }
 }

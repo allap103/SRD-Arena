@@ -1,24 +1,20 @@
 """Build creature-specific spellcasting grants from authored progressions."""
 
-from srd_arena.content.character_options.classes import ClassRecord, SubclassRecord
-from srd_arena.content.character_options.classes.schema import (
-    ClassSchema,
-    SubclassSchema,
-)
+from srd_arena.content.character_options.classes import ClassRecord
+from srd_arena.content.character_options.classes.schema import ClassSchema
 from srd_arena.content.spells import SpellCatalog, build_spell
 from srd_arena.domain.creatures import Attributes, Spellcasting
 from srd_arena.domain.spells import Spell
 
 from .schema import CreatureSchema
 
-SpellcastingSource = ClassSchema | SubclassSchema
+SpellcastingSource = ClassSchema
 
 
 def build_spellcasting(
     schema: CreatureSchema,
     attributes: Attributes,
     class_record: ClassRecord | None,
-    subclass_record: SubclassRecord | None,
     spells: SpellCatalog | None,
 ) -> Spellcasting | None:
     """Bind spell definitions to a creature's casting statistics and resource pools.
@@ -42,7 +38,7 @@ def build_spellcasting(
     ...     charisma=10,
     ...     base_armor_class=10,
     ... )
-    >>> casting = build_spellcasting(schema, attributes, None, None, None)
+    >>> casting = build_spellcasting(schema, attributes, None, None)
     >>> (casting.save_dc, casting.spell_slots_remaining) if casting else None
     (13, {1: 2})
     """
@@ -70,10 +66,7 @@ def build_spellcasting(
             ],
         )
 
-    source_definition = _spellcasting_source_definition(
-        class_record,
-        subclass_record,
-    )
+    source_definition = _spellcasting_source_definition(class_record)
     if source_definition is None:
         return None
 
@@ -119,22 +112,15 @@ def _build_referenced_spell(
 
 def _spellcasting_source_definition(
     class_record: ClassRecord | None,
-    subclass_record: SubclassRecord | None,
 ) -> SpellcastingSource | None:
-    definitions: tuple[SpellcastingSource | None, ...] = (
-        subclass_record.definition if subclass_record else None,
-        class_record.definition if class_record else None,
-    )
-    return next(
-        (
-            definition
-            for definition in definitions
-            if definition is not None
-            and definition.spellcasting_ability is not None
-            and definition.caster_progression is not None
-        ),
-        None,
-    )
+    definition = class_record.definition if class_record else None
+    if (
+        definition is not None
+        and definition.spellcasting_ability is not None
+        and definition.caster_progression is not None
+    ):
+        return definition
+    return None
 
 
 def spellcasting_ability_score(attributes: Attributes, ability: str) -> int:

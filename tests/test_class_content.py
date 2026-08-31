@@ -2,7 +2,6 @@ from srd_arena.content.character_options.classes import (
     ClassRecord,
     ClassSchema,
     load_class_catalog,
-    load_subclass_catalog,
 )
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
@@ -13,22 +12,16 @@ def test_bundled_classes_load_with_typed_feature_records() -> None:
 
     fighter = catalog.find("Fighter", "XPHB")
 
-    assert len(catalog) == 12
+    assert len(catalog) == 1
     assert isinstance(fighter.definition, ClassSchema)
     assert fighter.definition.proficiency == ["str", "con"]
-    assert any(feature.public_name == "Second Wind" for feature in fighter.features)
-
-
-def test_bundled_subclasses_use_class_aware_identity() -> None:
-    catalog = load_subclass_catalog(SYSTEM_CONTENT_ROOT)
-
-    champion = catalog.find("Champion", "XPHB", "Fighter", "XPHB")
-
-    assert len(catalog) == 24
-    assert champion.definition.class_name == "Fighter"
-    assert any(
-        feature.public_name == "Improved Critical" for feature in champion.features
-    )
+    assert {feature.public_name for feature in fighter.features} == {
+        "Second Wind",
+        "Action Surge",
+        "Extra Attack",
+        "Two Extra Attacks",
+        "Three Extra Attacks",
+    }
 
 
 def test_class_schema_preserves_unknown_source_fields() -> None:

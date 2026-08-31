@@ -3,10 +3,7 @@
 from .catalog import (
     ClassCatalog,
     ClassRecord,
-    SubclassCatalog,
-    SubclassRecord,
     load_class_catalog,
-    load_subclass_catalog,
 )
 from .optional_feature_catalog import (
     OptionalFeatureCatalog,
@@ -21,8 +18,6 @@ from .schema import (
     ClassSchema,
     ClassTableGroupSchema,
     StartingProficienciesSchema,
-    SubclassFeatureSchema,
-    SubclassSchema,
 )
 
 __all__ = [
@@ -36,12 +31,7 @@ __all__ = [
     "OptionalFeatureCatalog",
     "OptionalFeatureSchema",
     "StartingProficienciesSchema",
-    "SubclassCatalog",
-    "SubclassFeatureSchema",
-    "SubclassRecord",
-    "SubclassSchema",
     "load_class_catalog",
     "load_optional_feature_catalog",
-    "load_subclass_catalog",
     "normalize_optional_feature_effects",
 ]

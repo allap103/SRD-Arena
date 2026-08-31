@@ -111,7 +111,7 @@ SCHEMA_DOCUMENTS = (
     SchemaDocument(
         slug="classes",
         title="Classes",
-        description="Class, subclass, and feature records in an authored class file.",
+        description="Class and class-feature records in an authored class file.",
         schema_type=ClassFileSchema,
         diagram_models=(ClassFileSchema,),
     ),

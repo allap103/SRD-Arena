@@ -31,9 +31,7 @@ def attack_action_candidates(
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
     ...     multiattack=None, stat_block_actions={},
-    ...     equipment=SimpleNamespace(
-    ...         equipped_items={"right_hand": None, "left_hand": None}
-    ...     ),
+    ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ... )
     >>> actor = SimpleNamespace(
     ...     creature=creature, pending_multiattack=[], attacks_remaining=0

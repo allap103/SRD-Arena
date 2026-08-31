@@ -79,6 +79,10 @@ when common interpreters can express them clearly. Class features are
 Python-first because they are a smaller, highly varied set and can be
 implemented class by class.
 
+The submitted implementation deliberately supports only Extra Attack, Second
+Wind, Action Surge, and Great Weapon Fighting. Subclasses and general-purpose
+equipment changes are not represented as partially executable content.
+
 A spell may use one of three implementation depths:
 
 1. A declarative definition interpreted entirely by shared domain rules.
