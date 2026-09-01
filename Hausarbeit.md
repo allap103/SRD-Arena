@@ -8,20 +8,21 @@
 - [2. Bibliotheken und Entwicklungswerkzeuge](#2-bibliotheken-und-entwicklungswerkzeuge)
 - [3. Konzept und Implementierung](#3-konzept-und-implementierung)
   - [3.1 Programmstruktur](#31-programmstruktur)
-  - [3.2 Datenimport und Validierung](#32-datenimport-und-validierung-content)
-  - [3.3 Fachmodell und Regellogik](#33-fachmodell-und-regellogik-domain)
-  - [3.4 Anwendungssteuerung und Schnittstellen](#34-anwendungssteuerung-und-schnittstellen-engine)
-  - [3.5 Technischer Ablauf am Beispiel eines Zaubers](#35-technischer-ablauf-am-beispiel-eines-zaubers)
-  - [3.6 KI-Unterstützung im Entwicklungsprozess](#36-ki-unterstützung-im-entwicklungsprozess)
-    - [3.6.1 Einsatzumfang und Arbeitsteilung](#361-einsatzumfang-und-arbeitsteilung)
-    - [3.6.2 Einfluss auf Architektur- und Designentscheidungen](#362-einfluss-auf-architektur--und-designentscheidungen)
-    - [3.6.3 Codegenerierung, Prüfung und Iteration](#363-codegenerierung-prüfung-und-iteration)
+  - [3.2 Spieldaten als JSON](#32-spieldaten-als-json)
+  - [3.3 Datenimport und Validierung](#33-datenimport-und-validierung-content)
+  - [3.4 Modellierung der Regellogik](#34-modellierung-der-regellogik-domain)
+  - [3.5 Anwendungssteuerung und Schnittstellen](#35-anwendungssteuerung-und-schnittstellen-engine)
+  - [3.6 Technischer Ablauf am Beispiel eines Zaubers](#36-technischer-ablauf-am-beispiel-eines-zaubers)
+  - [3.7 KI-Unterstützung im Entwicklungsprozess](#37-ki-unterstützung-im-entwicklungsprozess)
+    - [3.7.1 Einsatzumfang und Arbeitsteilung](#371-einsatzumfang-und-arbeitsteilung)
+    - [3.7.2 Einfluss auf Architektur- und Designentscheidungen](#372-einfluss-auf-architektur--und-designentscheidungen)
+    - [3.7.3 Codegenerierung, Prüfung und Iteration](#373-codegenerierung-prüfung-und-iteration)
 - [4. Ergebnisse](#4-ergebnisse)
   - [4.1 Funktionsnachweis](#41-funktionsnachweis)
   - [4.2 Beispieldurchlauf eines Encounters](#42-beispieldurchlauf-eines-encounters)
 - [5. Diskussion und Fazit](#5-diskussion-und-fazit)
   - [5.1 Zielerreichung](#51-zielerreichung)
-  - [5.2 Herausforderungen und Abweichungen vom Plan](#52-herausforderungen-und-abweichungen-vom-plan)
+  - [5.2 Abweichungen vom Plan](#52-abweichungen-vom-plan)
   - [5.3 Kritische Würdigung](#53-kritische-würdigung)
   - [5.4 Ausblick](#54-ausblick)
 - [6. Literatur- und Quellenverzeichnis](#6-literatur-und-quellenverzeichnis)
@@ -31,14 +32,15 @@
 
 ## 1. Einleitung
 
-Dungeons and Dragons (D&D) ist ein beliebtes Pen and Paper-Rollenspiel, in dem taktische, rundenbasierte Kämpfe (Encounter) einen großen Teil des Spiels ausmachen. Üblicherweise kämpft ein Team von Spielern gegen ein Team von NPCs (Non-Player-Characters), die vom Spielleiter gesteuert werden. 
-Das System Reference Document (SRD) 5.2.1 ist eine unter der Creative Commons License CC-BY-4.0 verfügbare Fassung der Spielregeln, die den größten Teil der Grundmechaniken des Spiels enthält, in der aber viele Inhalte des eigentlichen Spiels fehlen. So kann ein Spieler beispielsweise für seinen Charakter eine Klasse und Subklasse wählen, jedoch steht pro Klasse nur eine Subklasse zur Verfügung, während im proprietär lizensierten Spielerhandbuch pro Klasse vier Subklassen zur Auswahl stehen.
-Dieses Programm, SRD Arena, setzt zunächst einen Teil des Kampfsystems des SRD 5.2.1 als rundenbasiertes 2D-Spiel um. Es gibt mehrere vordefinierte Kampfszenarien, die die umgesetzten Funktionalitäten demonstrieren. Anhand von Vorlagen können in weiteren Dateien auch weitere Szenarien vom Nutzer definiert und anschließend gespielt werden.
+Dungeons and Dragons ist ein beliebtes Pen and Paper-Rollenspiel, in dem taktische, rundenbasierte Kämpfe einen großen Teil des Spiels ausmachen. Üblicherweise sind die Teilnehmer eines Kampfes ein Team von Spielern und ein Team von Gegnern, die vom Spielleiter gesteuert werden. 
+Das System Reference Document 5.2.1 (SRD) ist eine unter der Creative Commons License CC-BY-4.0 verfügbare Fassung der Spielregeln, die den größten Teil der Grundmechaniken des Spiels enthält, in der aber viele Inhalte des eigentlichen Spiels fehlen. So kann ein Spieler beispielsweise für seinen Charakter eine Klasse und Subklasse wählen, jedoch steht pro Klasse nur eine Subklasse zur Verfügung, während im proprietär lizensierten Spielerhandbuch pro Klasse vier Subklassen zur Auswahl stehen.
+Dieses Programm, SRD Arena, setzt zunächst einen Teil des Kampfsystems des SRD als rundenbasiertes 2D-Spiel um. Es gibt mehrere vordefinierte Kampfszenarien, die die umgesetzten Funktionalitäten demonstrieren. Anhand von Vorlagen können in weiteren Dateien auch weitere Szenarien vom Nutzer definiert und anschließend gespielt werden.
 
 ### 1.1 Motivation
 
-Die meisten Spielleiter entwerfen die Kampfszenarien für ihre Spieler bereits vor dem eigentlichen Spieltermin. Aus Sicht des Spielleiters ist das Ziel eines Kampfes, den Spielern neben einem interessanten Narrativ auch eine taktische Herausforderung zu bieten, ohne dass der Kampf zu schwer wird.
-Im Rahmen der umgesetzten Regeln können Spielleiter mit diesem Programm ihre Kampfszenarien vor dem eigentlichen Spiel ausprobieren. Das ist bereits vorteilhaft, weil im Programm viele Berechnungen und Würfe von Würfeln automatisch stattfinden, die sonst händisch geschehen müssten. Mittelfristig, aber nach Abgabe des Projektes, soll der gesamte Umfang der SRD-Regeln abgedeckt werden. 
+Die meisten Spielleiter entwerfen die Kampfszenarien für ihre Spieler bereits vor dem eigentlichen Spieltermin. Aus Sicht des Spielleiters gehört zu den Zielen eines Kampfes, den Spielern eine taktische Herausforderung zu bieten, ohne dass der Kampf zu schwer wird.
+
+Im Rahmen der umgesetzten Regeln können Spielleiter mit diesem Programm ihre Kampfszenarien vor dem eigentlichen Spiel mehrfach ausprobieren. Das ist bereits vorteilhaft, weil im Programm viele Berechnungen und Würfe von Würfeln automatisch stattfinden, die sonst händisch geschehen müssten. Mittelfristig, aber nach Abgabe des Projektes, soll der gesamte Umfang der SRD-Regeln abgedeckt werden. 
 
 Langfristig wäre es auch möglich, das Projekt um eine Option zu erweitern, die Kampfentscheidungen aller Teilnehmer durch klügere Bots automatisiert. Dann könnten Kämpfe vielfach simuliert werden, um Statistiken zu erzeugen. Für einen Spielleiter wäre dann nicht nur erkennbar, ob ein Encounter einmal gewonnen wurde, sondern auch, wie häufig ein Team gewinnt und welche Teilnehmer besonders großen Einfluss auf das Ergebnis haben. Die im Projekt umgesetzte Kampfengine soll dafür später die technische Grundlage bilden.
 
@@ -57,64 +59,87 @@ Während seines Zuges verfügt ein Teilnehmer grundsätzlich über Bewegung, ein
 Bestimmte Ereignisse können eine Reaktion eines anderen Teilnehmers auslösen und den laufenden Zug vorübergehend unterbrechen. Eine implementierte Anwendung ist der Gelegenheitsangriff beim Verlassen der Reichweite eines Gegners. Eine verbrauchte Reaktion wird zu Beginn des nächsten eigenen Zuges wieder verfügbar.
 
 #### Das Spielfeld
-Die Engine modelliert das Spielfeld als Gitter aus quadratischen Feldern. Die Seite eines Feldes ist fünf Fuß lang.
+Die Engine modelliert das Spielfeld als Gitter aus quadratischen Feldern. Die Seite eines Feldes repräsentiert den Regeln entsprechend fünf Fuß in der Spielwelt.
 
-*Der Umfang der Abgabe ist bewusst kleiner als der Umfang des SRD. Unterstützt wird jeweils ein einzelner Encounter mit ausgewählten Kampfregeln. Nicht Teil der Abgabe sind eine vollständige Abbildung aller Klassen und Zauber, eine allgemeine Ausrüstungsverwaltung sowie mehrere aufeinanderfolgende Encounter. Diese Begrenzung ermöglicht es, die unterstützten Regeln innerhalb eines vollständigen Kampfablaufs zu verbinden und zu testen.*
+
+#### Begrenzung des Umfangs
+Der Umfang der Abgabe ist bewusst kleiner als der Umfang des SRD. Unterstützt wird jeweils ein einzelner Encounter mit eingeschränkten Kampfregeln. Nicht Teil der Abgabe sind eine vollständige Abbildung aller Klassen und Zauber, eine allgemeine Ausrüstungsverwaltung sowie mehrere aufeinanderfolgende Encounter. Diese Begrenzung ermöglicht es, die unterstützten Regeln innerhalb eines vollständigen Kampfablaufs zu verbinden und zu testen.
 
 
 ## 2. Bibliotheken und Entwicklungswerkzeuge
 
-Zur Laufzeit verwendet SRD Arena hauptsächlich Pydantic und PySide6. Pydantic bildet die Schemata der JSON-Inhalte ab und validiert eingelesene Daten, bevor daraus Objekte des Fachmodells entstehen. Dadurch müssen Struktur- und Typprüfungen nicht für jedes Eingabeformat manuell implementiert werden. PySide6 stellt die Desktop-GUI bereit und verarbeitet die Eingaben sowie die Darstellung des Kampfgeschehens.
+Zur Laufzeit verwendet SRD Arena hauptsächlich Pydantic und PySide6. Pydantic bildet die Schemata der JSON-Inhalte ab und validiert eingelesene Daten, bevor daraus Objekte des Fachmodells entstehen. Dadurch müssen Struktur- und Typprüfungen nicht für jedes Eingabeformat manuell implementiert werden. Die Desktop-GUI ist mit PySide6 implementiert. Eine Alternative wäre eine browserbasierte Oberfläche gewesen, aber zum Zeitpunkt der Entscheidung war ich aus den Übungen noch mit PySide6 vertrauter. Eine browserbasierte Nutzeroberfläche hätte bereits Grundlagen dafür gelegt, SRD Arena irgendwann online bereitzustellen.
 
-Für automatisierte Tests kommt pytest zum Einsatz. Hypothesis ergänzt beispielbasierte Tests um generierte Eingaben, mit denen unter anderem die Grenzen der Lebenspunktlogik geprüft werden; pytest-cov misst die dabei erreichte Testabdeckung. mypy prüft die Typannotationen, Ruff übernimmt statische Prüfungen und die einheitliche Formatierung, während Interrogate die Abdeckung durch Dokumentation misst.
+Für automatisierte Tests wird pytest genutzt. Hypothesis ergänzt beispielbasierte Tests um generierte Eingaben, mit denen unter anderem die Grenzen der Lebenspunktlogik geprüft werden. pytest-cov misst die erreichte Testabdeckung. mypy prüft die Typannotationen, Ruff prüft die einheitliche Formatierung, Interrogate misst die Abdeckung durch Dokumentation. 
 
-Sphinx, MyST-Parser und Furo werden zum Erzeugen der Projektdokumentation verwendet. Erdantic und json-schema-for-humans erzeugen zusätzliche Darstellungen der Inhaltsmodelle und ihrer JSON-Schemata. Die Python-Abhängigkeiten sind in der pyproject.toml erfasst und werden mit uv installiert. uv wird außerdem verwendet, um die Entwicklungswerkzeuge in einer einheitlichen Projektumgebung auszuführen.
+Während der Entwicklung wurden mit GitHub Actions durch eine CI-Pipeline die mypy- und ruff-Prüfungen laufend durchgeführt. Die CI-Pipeline erzeugt auch mithilfe von Sphinx eine GitHub Pages-Dokumentationsseite.
 
-*Für die Auswahl der Werkzeuge war vor allem ihre Aufgabe im Projekt entscheidend. Pydantic und PySide6 werden von der Anwendung zur Laufzeit benötigt. Die übrigen Pakete unterstützen Entwicklung, Prüfung und Dokumentation, ohne Teil der eigentlichen Kampflogik zu werden. Zusätzliche Bibliotheken wurden nicht allein für kleine Hilfsfunktionen eingeführt, wenn dieselbe Aufgabe mit der Python-Standardbibliothek verständlich gelöst werden konnte.*
+Die Python-Abhängigkeiten sind in der pyproject.toml erfasst und werden mit uv installiert. uv wird außerdem verwendet, um die Entwicklungswerkzeuge in einer einheitlichen Projektumgebung auszuführen.
+
+Pydantic und PySide6 werden zur Laufzeit von der Anwendung benötigt. Die übrigen Pakete dienen nur der Entwicklung und Dokumentation.
 
 ## 3. Konzept und Implementierung
 
 ### 3.1 Programmstruktur
-Der Quellcode ist nach Verantwortungsbereichen in die Pakete content, domain, engine und frontends gegliedert. Der Content-Bereich liest die in JSON-Dateien definierten Spieldaten, validiert sie und übersetzt sie in Domain-Objekte. Die Domain enthält den veränderlichen Encounterzustand sowie die davon unabhängigen Kampfregeln. Die Engine stellt mit Session, Commands und Observations eine frontendneutrale Schnittstelle bereit und koordiniert die Interaktion mit der Domain. Die Frontends setzen Benutzereingaben in Engine-Befehle um und stellen die zurückgegebenen Beobachtungen dar.
-Die Abhängigkeiten verlaufen überwiegend in Richtung der Domain: Diese kennt weder Content, Engine noch Frontends. Die Engine verwendet die Domain, ist aber nicht für das Laden von Dateien zuständig. Die Frontends steuern einen laufenden Kampf über die Engine-Schnittstelle. Direkte Zugriffe auf den Content-Bereich dienen lediglich der Encounter-Auswahl und Darstellungskonfiguration; die GUI verwendet zusätzlich zustandslose Geometriefunktionen für visuelle Vorschauen. Architekturtests prüfen diese Paketgrenzen. Die folgenden Abschnitte erläutern Datenverarbeitung, Regellogik und Anwendungssteuerung getrennt, bevor Abschnitt 3.5 ihr Zusammenspiel am Beispiel des Spellcastings zeigt.
+Der Quellcode ist nach Verantwortungsbereichen in die Python-Pakete content, domain, engine und frontends gegliedert. Neben dem Quellcode gibt es ein Content-Verzeichnis, in dem Spielregeln als JSON-Dateien hinterlegt sind. Das Content-Paket liest die in JSON-Dateien definierten Spieldaten, validiert sie und übersetzt sie in Domain-Objekte. Die Domain enthält den veränderlichen Encounterzustand sowie die davon unabhängigen Kampfregeln. Die Engine stellt mit Session, Commands und Observations eine frontendneutrale Schnittstelle bereit und koordiniert die Interaktion mit der Domain. Die Frontends setzen Benutzereingaben in Engine-Befehle um und stellen die zurückgegebenen Beobachtungen dar.
+Die Abhängigkeiten verlaufen überwiegend in Richtung der Domain: Diese kennt weder Content, Engine noch Frontends. Die Engine verwendet die Domain, ist aber nicht für das Laden von Dateien zuständig. Die Frontends steuern einen laufenden Kampf über die Engine-Schnittstelle. Direkte Zugriffe auf den Content-Bereich dienen lediglich der Encounter-Auswahl und Darstellungskonfiguration; die GUI verwendet zusätzlich zustandslose Geometriefunktionen für visuelle Vorschauen. Architekturtests prüfen diese Paketgrenzen. Die folgenden Abschnitte erläutern Datenverarbeitung, Regellogik und Anwendungssteuerung getrennt, bevor Abschnitt 3.6 ihr Zusammenspiel am Beispiel des Spellcastings zeigt.
 
-*Die Aufteilung richtet sich damit nach Verantwortlichkeiten und nicht nach einzelnen Spielfunktionen. Ein Zauber durchläuft mehrere Bereiche, ohne dass das Einlesen seiner JSON-Datei, seine Regelwirkung und seine Darstellung in derselben Klasse behandelt werden. Abbildung [X] kann diese Abhängigkeiten als Übersicht zeigen. Pfeile sollten dabei nur in die Richtung der tatsächlich erlaubten Importe weisen.*
+Die Aufteilung richtet sich damit nach Verantwortlichkeiten. Innerhalb der einzelnen Pakete gibt es eine weitere Aufteilung nach Spielfunktionen. Ein Zauber durchläuft zum Beispiel mehrere Bereiche, ohne dass das Einlesen seiner JSON-Datei, seine Regelwirkung und seine Darstellung in derselben Klasse behandelt werden.
 
-### 3.2 Datenimport und Validierung (content)
+[Bild]
 
-Die auf 5e.tools veröffentlichten JSON-Daten zum SRD-Regelwerk dienten als Grundlage für die selbst gepflegten Inhaltsdateien des Projekts.
+### 3.2 Spieldaten als JSON
+Das SRD ist eine PDF-Datei, in der alle Regeln in Prosa stehen. Es enthält zahlreiche Zauber, die sich in ihrer Funktionsweise ähneln. Betrachten wir zum Beispiel Cone of Cold und Burning Hands:
 
-*Die Inhaltsdateien werden nicht direkt von der Kampflogik ausgewertet. Der Content-Bereich liest die JSON-Daten zunächst ein und prüft sie mit Pydantic-Schemata. Bei einem Encounter werden unter anderem positive Spielfeldmaße, eindeutige Teilnehmerkennungen, gültige Teamzuordnungen und unterschiedliche Startpositionen verlangt. Anschließend übersetzen Builder die validierten Daten in Objekte der Domain. Fehlerhafte Inhalte werden dadurch an der Dateigrenze abgelehnt, während die übrigen Bereiche mit bereits geprüften Daten arbeiten können.*
+```
+Cone of Cold:
+You unleash a blast of cold air. Each creature in a 60-foot Cone originating from you makes a Constitution saving throw, taking 8d8 Cold damage on a failed save or half as much damage on a successful one. [...]
 
-### 3.3 Fachmodell und Regellogik (domain)
+Burning Hands:
+A thin sheet of flames shoots forth from you. Each creature in a 15-foot Cone makes a Dexterity saving throw, taking 3d6 Fire damage on a failed save or half as much damage on a successful one.
+```
 
-*Die Domain enthält sowohl die Definition eines Encounters als auch seinen veränderlichen Zustand während eines Kampfes. Beim Start werden die geladenen Kreaturvorlagen in einen `EncounterState` übernommen. Dort werden Initiative, Positionen, Lebenspunkte, Aktionsressourcen und laufende Effekte verwaltet. Die Regeln für Bewegung, Angriffe, Rettungswürfe, Schaden, Heilung und Bedingungen arbeiten auf diesem Zustand, kennen aber weder JSON-Dateien noch Elemente der GUI.*
+Die Zauber verwenden unterschiedliche Schadenswürfel und Schadensarten, wirken aber beide in einem Kegel und verlangen einen Rettungswurf. Lediglich die Größe des Kegels und die konkreten Werte unterscheiden sich. Hier zeichnen sich bereits Mechanismen ab, die wiederverwendet werden können.
 
-*Regelverletzungen werden möglichst verhindert, bevor eine Aktion angeboten wird. Vor der Ausführung werden ihre Voraussetzungen erneut geprüft, weil sich der Zustand seit der Darstellung geändert haben kann. Eine erwartbare ungültige Auswahl führt zu einer fachlichen Ablehnung mit Meldung und Fehlercode und nicht zu einem Programmabbruch. Unerwartete Programmierfehler werden innerhalb der Domain dagegen nicht pauschal abgefangen, damit ihr Traceback bei der Fehlersuche erhalten bleibt.*
+Die Seite 5e.tools, die unter der MIT-Lizenz ihren Quellcode verfügbar macht, hat bereits alle Zauber in ihr eigenes JSON-Schema überführt. Dieses Schema war nicht perfekt für SRD Arena geeignet, denn auch darin waren einzelne Mechanismen noch in Prosa versteckt. Es lieferte trotzdem bereits eine bessere Grundlage zur Weiterarbeit als die originale PDF-Datei, da das Schema nur umgeformt und erweitert werden musste und Inhalte auch für KI besser lesbar waren.
 
-### 3.4 Anwendungssteuerung und Schnittstellen (engine)
+Für das Projekt wurde für die implementierten Zauber ein erweitertes JSON-Schema entworfen, sodass die zugrundeliegenden Mechaniken nur einmal implementiert und dann von den jeweiligen Zaubern verwendet werden können.
+Für die Beispiele Cone of Cold und Burning Hands befinden sich im Anhang die Daten in JSON-Form, wie sie vom Programm verwendet werden.
 
-*Die Engine stellt mit `Session` die Schnittstelle für ein laufendes Spiel bereit. Ein Frontend erhält über Observations eine unveränderliche Sicht auf den aktuellen Entscheidungszustand und sendet seine Auswahl als typisierten Command zurück. Die Engine prüft, ob der Command noch zur aktuellen Entscheidung gehört, und übergibt eine gültige Aktion an die Domain. Das Ergebnis enthält anschließend die neue Observation sowie Meldungen und Ereignisse für die Darstellung.*
+Außerdem werden auch nutzerdefinierte Kampfszenarien direkt als JSON-Dateien geschrieben.
 
-*Dadurch muss die GUI den Encounterzustand nicht selbst verändern und keine Kampfregeln nachbilden. Automatisch gesteuerte Teilnehmer verwenden denselben Ablauf; die Session führt ihre Aktionen nur so lange aus, bis wieder eine Eingabe von außen erforderlich ist. Neben der GUI könnte deshalb später auch ein Simulationsprogramm dieselbe Engine-Schnittstelle verwenden.*
+### 3.3 Datenimport und Validierung (content)
 
-### 3.5 Technischer Ablauf am Beispiel eines Zaubers
-Beim Laden eines Encounters werden zunächst alle Zauberdateien eingelesen und durch das Pydantic-Modell SpellSchema validiert. Der Builder überführt die validierten Daten anschließend in Domänenobjekte vom Typ Spell. Dabei wird insbesondere die deklarative capability in eine ausführbare Definition übersetzt. Beim Beispiel Fireball beschreibt sie Zielgebiet, Rettungswurf, Schaden und Skalierung. Über die in der Kreatur hinterlegten Zauberreferenzen werden diese Objekte ihrem Spellcasting und damit den bekannten Zaubern zugeordnet; die JSON-Datei selbst wird zur Laufzeit nicht direkt ausgewertet.
-Ist die Kreatur am Zug, erzeugt available_spell_actions aus ihren bekannten Zaubern mögliche EncounterAction-Objekte. Vor der Anzeige prüfen Eligibility Rules unter anderem, ob der Zauber bekannt und implementiert ist, genügend Aktions- und Zauberplatzressourcen verfügbar sind und gültige Ziele existieren. Nach der Auswahl werden gegebenenfalls noch Ziel, Wirkungsbereich oder Zaubergrad ergänzt. Bei Fireball bestimmt beispielsweise ein gewählter Punkt den kugelförmigen Wirkungsbereich.
-Die ausgewählte Aktion gelangt über den EncounterOrchestrator zur Zauberausführung. Dort werden die Voraussetzungen erneut geprüft, Ressourcen verbraucht und anschließend die deklarative Fähigkeit aufgelöst. Für Fireball werden die betroffenen Kreaturen bestimmt, Geschicklichkeitsrettungswürfe durchgeführt, 8d6 Feuerschaden beziehungsweise halber Schaden berechnet und eine mögliche Skalierung durch höhere Zauberplätze berücksichtigt. Abschließend werden Schaden und weitere Effekte auf den EncounterState angewendet und als Meldungen sowie Ereignisse für die Frontends bereitgestellt.
+Die JSON-Inhaltsdateien werden durch die Content-Ebene eingelesen und mit Pydantic-Schemata validiert. Bei einem Kampfszenario werden unter anderem positive Spielfeldmaße, eindeutige Teilnehmerkennungen, gültige Teamzuordnungen und unterschiedliche Startpositionen je Teilnehmer auf dem Spielfeld geprüft. Anschließend übersetzen Builder die validierten Daten in Objekte der Domain. Fehlerhafte Inhalte werden bereits hier abgelehnt, damit die übrigen Bereiche mit bereits geprüften Inhalten arbeiten können.
 
-*Das Capability-Schema zerlegt die gemeinsame Struktur vieler Zauber in Zielauswahl, Auflösung, Effekte und Skalierung. Fireball und Cone of Cold gehören dabei zur selben Familie: Beide führen einen Rettungswurf aus und verursachen bei einem Erfolg halben Schaden. Sie unterscheiden sich hauptsächlich durch Ursprung und Form des Zielgebiets, Schadensart und Schadenswürfel. Hold Person verwendet denselben Ablauf für Zielauswahl und Rettungswurf, erzeugt bei einem Fehlschlag aber den Zustand Paralyzed und einen wiederholten Rettungswurf am Ende des Zuges. Auf diese Weise können unterschiedliche Zauber aus wiederverwendbaren Bausteinen zusammengesetzt werden, ohne für jeden Zauber einen vollständigen eigenen Ausführungspfad zu schreiben.*
+### 3.4 Modellierung der Regellogik (domain)
+
+Die Domain bildet die für den Kampf relevanten Konzepte wie Aktionen, Zauber und Effekte ab. Neben deren Definitionen enthält sie den veränderlichen Zustand eines laufenden Kampfes sowie die Regeln für Bewegung, Angriffe, Rettungswürfe, Schaden, Heilung und Bedingungen. Diese Regeln bestimmen, welche Aktionen im aktuellen Kampfzustand zulässig sind und wie ihre Ausführung den Zustand verändert. Der wichtige Unterschied zur Content-Ebene ist, dass im Content die Form der Eingabedateien modelliert wird, sodass diese in die Python-Objekte der Domain-Ebene übersetzt werden können. Die Regeln für Bewegung, Angriffe, Rettungswürfe, Schaden, Heilung und Bedingungen arbeiten auf diesem Zustand, kennen aber weder JSON-Dateien noch Elemente der GUI.
+
+### 3.5 Anwendungssteuerung und Schnittstellen (engine)
+
+Die Engine bildet die Schnittstelle zwischen Domain und Frontends. Sie gibt den aktuellen Kampfzustand und die zulässigen Aktionen als frontendneutrale Observation auf. Ein Frontend übermittelt die Auswahl des Nutzers als Befehl an die Engine, die dessen Ausführung an die Domain weitergibt und anschließend eine aktualisierte Observation erzeugt. Dadurch verwenden die GUI und das Headless-Frontend dieselbe Schnittstelle und müssen die interne Struktur der Domain nicht kennen.
+
+### 3.6 Technischer Ablauf am Beispiel eines Zaubers
+
+Beim Laden eines Encounters liest die Content-Ebene die Zauberdateien ein, validiert sie mit dem Pydantic-Modell `SpellSchema` und legt sie in einem Katalog ab. In Domänenobjekte vom Typ `Spell` werden anschließend nur die Zauber übersetzt, auf die eine Kreatur des Encounters verweist. Bei `Burning Hands` überführt der Builder insbesondere das JSON-Feld `capability` in eine ausführbare Definition für Zielgebiet, Rettungswurf, Schaden und Skalierung. Das erzeugte Objekt wird dem Spellcasting der Kreatur zugeordnet; während des Kampfes muss die JSON-Datei daher nicht erneut ausgewertet werden.
+
+Ist die Kreatur am Zug, leitet die Domain aus ihren bekannten Zaubern die derzeit zulässigen `EncounterAction`-Objekte ab. Für `Burning Hands` entstehen dabei auch Varianten für höhere verfügbare Zauberplätze. Die Engine nimmt diese Aktionen in die Observation für das Frontend auf. Nach der Auswahl legt der Nutzer auf dem Spielfeld die Richtung des 15 Fuß langen Kegels fest; das Frontend sendet diese Konfiguration über die Engine zurück.
+
+Die konfigurierte Aktion gelangt über die Engine zum `EncounterOrchestrator` der Domain. Bei der Ausführung werden die Aktionsressource und der gewählte Zauberplatz verbraucht und anschließend die Capability aufgelöst. Die Domain bestimmt alle Kreaturen im Kegel und führt für sie Geschicklichkeitsrettungswürfe aus. Bei einem Fehlschlag verursacht der Zauber 3d6 Feuerschaden, bei einem Erfolg die Hälfte. Für jede Stufe des Zauberplatzes oberhalb der ersten kommt 1d6 hinzu. Der Schaden wird auf den `EncounterState` angewendet; aus dem neuen Zustand sowie den erzeugten Meldungen und Ereignissen erstellt die Engine die nächste Observation. Das im Regeltext ebenfalls beschriebene Entzünden brennbarer Gegenstände ist in der Inhaltsdatei ausdrücklich als noch nicht umgesetzt gekennzeichnet.
+
+*Das Capability-Schema zerlegt Zauber in wiederverwendbare Bausteine für Zielauswahl, Auflösung, Effekte und Skalierung. `Burning Hands` und `Cone of Cold` verwenden dieselbe Struktur: Beide wirken als vom Zaubernden ausgehende Kegel, verlangen einen Rettungswurf, verursachen Flächenschaden und halbieren diesen bei einem erfolgreichen Wurf. Unterschiede wie Kegellänge, Rettungswurfsattribut, Schadensart, Schadenswürfel und Skalierung stehen in den jeweiligen Inhaltsdaten. `Hold Person` gehört zu einer anderen Zauberfamilie: Statt Flächenschaden betrifft der Zauber einzelne Humanoide und erzeugt bei einem fehlgeschlagenen Rettungswurf den Zustand `Paralyzed`, der durch wiederholte Rettungswürfe beendet werden kann. Trotzdem verwendet er dieselben allgemeinen Bausteine für Zielauswahl, Rettungswurf und Effekt. Dadurch benötigen diese Zauber keinen jeweils vollständig eigenen Ausführungspfad.*
 
 
-### 3.6 KI-Unterstützung im Entwicklungsprozess
+### 3.7 KI-Unterstützung im Entwicklungsprozess
 
-#### 3.6.1 Einsatzumfang und Arbeitsteilung
+#### 3.7.1 Einsatzumfang und Arbeitsteilung
 
-In diesem Projekt wurde der überwiegende Teil der Programmlogik mit KI generiert.
-Viele Ideen zur Struktur wurden auch mit KI-Unterstützung auf Lücken geprüft und angepasst.
-Außerdem wurden Regelabschnitte, die in JSON-Dateien noch in Prosaform gegeben waren, mithilfe von KI in das entworfene JSON-Schema übersetzt.
+In diesem Projekt wurde der überwiegende Teil der Programmlogik in vielen Iterationen mit KI generiert.
+Meist formulierte ich eine möglichst genaue Anforderung für ein Feature oder einen Bug, ließ Codex einen Änderungsvorschlag erstellen und prüfte anschließend den generierten Code und die Auswirkungen auf das fertige Programm.
 
-*Eine eindeutige Trennung nach vollständig menschlich und vollständig durch KI erstellten Dateien ist bei diesem Projekt kaum möglich. Meist gab ich ein fachliches Ziel oder ein erkanntes Problem vor, ließ Codex einen Änderungsvorschlag erstellen und prüfte anschließend Code, Tests und Auswirkungen auf die übrige Architektur. Meine eigene Arbeit lag damit besonders in der Auswahl des Umfangs, der Formulierung der Regeln, der Bewertung der Vorschläge und der Entscheidung, wann eine vorhandene Struktur nicht weitergeführt werden sollte.*
+Viele Ideen zur Architektur wurden auch mit KI-Unterstützung auf Lücken geprüft und angepasst. 
+Außerdem wurden Regelabschnitte, die in den ursprünglichen JSON-Dateien noch in Prosaform gegeben waren, mithilfe von KI in das entworfene JSON-Schema übersetzt. In Stichproben sind dabei keine Fehler aufgefallen, aber für eine finale Version sollte die Korrektheit jedes Zaubers manuell sichergestellt werden.
 
 
 **KI-generierte Bestandteile**
@@ -130,7 +155,7 @@ Außerdem wurden Regelabschnitte, die in JSON-Dateien noch in Prosaform gegeben 
 
 *Vollständig selbst geschriebene größere Module gibt es nicht. Nicht an Codex delegiert werden konnten jedoch die fachliche Auswahl der umgesetzten Regeln und die abschließende Bewertung, ob eine Lösung zum Projekt passt. Dazu gehörten insbesondere das Streichen nicht mehr benötigter Features, die Entscheidung für einen einzelnen Encounter und die Kontrolle von Grenzfällen anhand des SRD-Regeltexts. Diese Arbeit führte häufig dazu, dass generierter Code anschließend umgebaut oder wieder entfernt wurde.*
 
-#### 3.6.2 Einfluss auf Architektur- und Designentscheidungen
+#### 3.7.2 Einfluss auf Architektur- und Designentscheidungen
 
 > **Vorgabe:** Darstellen, ob die KI bereits bei der Planung und Architektur des Projekts konsultiert wurde. Falls dies der Fall war, erläutern, welche Vorschläge übernommen wurden und an welchen Stellen bewusst von den Empfehlungen der KI abgewichen wurde, weil die eigene Einschätzung besser zum Projekt passte.
 - Lernen über Layered Architecture
@@ -154,7 +179,7 @@ Die Vorschläge der KI wurden nicht unverändert übernommen. Beispielsweise emp
 
 *Die KI war besonders hilfreich, um mögliche Aufteilungen und Abhängigkeiten sichtbar zu machen. Die Richtung einer Umstrukturierung musste trotzdem aus dem Gesamtzustand des Projekts abgeleitet werden. Ein Beispiel ist die Trennung von Content, Domain und Engine: Codex half beim Verschieben einzelner Verantwortlichkeiten, während ich darauf achten musste, dass keine neuen Rückabhängigkeiten entstehen. Ein weiteres Beispiel sind voneinander abhängige Conditions. Eine allgemein wirkende Abstraktion war dort nicht automatisch regelkonform, weil etwa Unconscious zwar Incapacitated verursacht, Prone nach dem Ende von Unconscious aber unabhängig bestehen bleiben kann.*
 
-#### 3.6.3 Codegenerierung, Prüfung und Iteration
+#### 3.7.3 Codegenerierung, Prüfung und Iteration
 
 > **Vorgabe:** Die Zusammenarbeit mit der KI beschreiben. Dabei insbesondere erläutern, ob generierter Code direkt übernommen oder in kritischen Iterationsschleifen geprüft und überarbeitet wurde. Dazu gehören auch manuelle Korrekturen von KI-Fehlern wie Halluzinationen oder veralteter Syntax.
 
@@ -174,100 +199,71 @@ Die Vorschläge der KI wurden nicht unverändert übernommen. Beispielsweise emp
 
 *Nach dem Start mit `uv run srd-arena` zeigt das Programm zunächst die verfügbaren Encounter an. Für diesen Beispieldurchlauf wird „Immediate Damage Spells“ gewählt. Der Encounter enthält den Zauberwirker Spectrum Adept sowie mehrere gegnerische Ziele auf einem 18 mal 12 Felder großen Spielfeld. Beim Start erzeugt die Engine den veränderlichen Encounterzustand aus den geladenen Definitionen und würfelt die Initiative.*
 
-*Sobald Spectrum Adept an der Reihe ist, zeigt die GUI seine möglichen Bewegungen und Aktionen. Der Nutzer wählt Fireball und anschließend einen Zielpunkt auf dem Spielfeld. Eine Vorschau markiert den kugelförmigen Wirkungsbereich. Nach der Bestätigung bestimmt die Engine die betroffenen Ziele, führt für jedes Ziel einen Geschicklichkeitsrettungswurf aus, zieht den ausgewürfelten oder halbierten Schaden ab und verbraucht den verwendeten Zauberplatz. Die Ergebnisse erscheinen sowohl an den Kreaturen als auch im Kampfprotokoll. Abbildung [X] zeigt die Wahl des Zielgebiets, Abbildung [Y] den Zustand nach der Auflösung.*
+*Sobald Spectrum Adept an der Reihe ist, zeigt die GUI seine möglichen Bewegungen und Aktionen. Der Nutzer wählt `Burning Hands` und legt anschließend die Richtung des Kegels auf dem Spielfeld fest. Eine Vorschau markiert den Wirkungsbereich. Nach der Bestätigung bestimmt die Domain die betroffenen Ziele, führt für jedes Ziel einen Geschicklichkeitsrettungswurf aus, zieht den ausgewürfelten oder halbierten Schaden ab und verbraucht den verwendeten Zauberplatz. Die Ergebnisse erscheinen sowohl an den Kreaturen als auch im Kampfprotokoll. Abbildung [X] zeigt die Wahl des Zielgebiets, Abbildung [Y] den Zustand nach der Auflösung.*
 
-*Danach geht die Initiative zum nächsten Teilnehmer über. Automatisch gesteuerte Ziele führen ihre hinterlegte einfache Aktion aus, bis erneut eine Nutzereingabe erforderlich ist. Der Ablauf aus Entscheidung, Auflösung und aktualisierter Darstellung wiederholt sich, bis nur noch ein Team kampffähige Teilnehmer besitzt. Anschließend meldet die Engine das Ergebnis und bietet einen Neustart oder das Beenden der Anwendung an.*
+*Danach geht die Initiative zum nächsten Teilnehmer über. Da in diesem Showcase alle Teilnehmer extern gesteuert werden, kann der Nutzer die Züge der übrigen Kreaturen ohne weitere Aktion beenden. Der Ablauf aus Entscheidung, Auflösung und aktualisierter Darstellung wiederholt sich, bis nur noch ein Team kampffähige Teilnehmer besitzt. Anschließend meldet die Engine das Ergebnis und bietet einen Neustart oder das Beenden der Anwendung an.*
 
 ## 5. Diskussion und Fazit
 
 ### 5.1 Zielerreichung
 
-*Das für die Abgabe eingegrenzte Ziel wurde erreicht. Encounter können aus JSON-Dateien geladen, validiert, in der GUI ausgewählt und bis zu ihrem Ende gespielt werden. Die Engine verwaltet Initiative, Züge, Bewegung und Aktionsressourcen und unterstützt die im Projekt dokumentierten Angriffe, Rettungswürfe, Zauber, Bedingungen und Reaktionen. Externe Eingaben und einfache automatisch gesteuerte Teilnehmer verwenden dabei dieselbe Engine-Schnittstelle.*
+Das für die Abgabe eingegrenzte Ziel wurde erreicht. Encounter können aus JSON-Dateien geladen, validiert, in der GUI ausgewählt und bis zu ihrem Ende gespielt werden. Die Engine verwaltet Initiative, Züge, Bewegung und Aktionsressourcen und unterstützt die im Projekt dokumentierten Angriffe, Rettungswürfe, Zauber, Bedingungen und Reaktionen. Externe Eingaben und einfache automatisch gesteuerte Teilnehmer verwenden dabei dieselbe Engine-Schnittstelle.
 
-*Nicht erreicht wurde das langfristige Ziel einer vollständigen Umsetzung des SRD. Viele Zauber enthalten weiterhin Mechaniken, für die noch kein ausführbarer Capability-Baustein vorhanden ist. Auch Spielercharaktere, Ausrüstung und Bots sind nur in dem Umfang umgesetzt, der von den mitgelieferten Beispielen benötigt wird. Diese Einschränkungen widersprechen nicht dem zuletzt festgelegten Abgabeumfang, begrenzen aber die Encounter, die ohne weitere Programmierung definiert werden können.*
+### 5.2 Abweichungen vom Plan
 
-### 5.2 Herausforderungen und Abweichungen vom Plan
-
-*Eine wesentliche Schwierigkeit entstand aus der Vorgeschichte des Projekts. Die erste Version war als Textabenteuer mit Szenen und Übergängen aufgebaut und unterschied an vielen Stellen zwischen einem primären Spieler, Verbündeten und Gegnern. Für die heutige Encounter-Engine waren diese Annahmen nicht mehr passend. Im Verlauf der Arbeit wurden deshalb Szenen, Folgen mehrerer Encounter sowie Teile der Ausrüstungs- und Klassenlogik entfernt oder enger begrenzt. Im Nachhinein wäre es vermutlich einfacher gewesen, von vorne zu beginnen. Das CYOA-Projekt beinhaltete nicht genug nützliche Vorarbeit, um zu die Aufräumarbeiten für die entfernten Strukturen zu rechtfertigen.*
-
-*Auch der ursprünglich stärkere Schwerpunkt auf Spielercharakteren wurde verändert. Für die Abgabe erwiesen sich Monster-Statblocks und die allgemeinen Kampfregeln als bessere Grundlage, weil damit mehr unterschiedliche Encounter erstellt werden konnten, ohne zunächst eine vollständige Klassenprogression zu modellieren. Gleichzeitig erforderte die große Vielfalt der Zauber eine Entscheidung zwischen vielen einzelnen Sonderimplementierungen und einem gemeinsamen Capability-Schema. Der Aufbau dieses Schemas nahm mehr Zeit ein, verringerte danach aber die Menge an zauberspezifischem Programmcode.*
+Der ursprünglich stärkere Schwerpunkt auf Spielercharakteren wurde verändert. Für die Abgabe erwiesen sich Monster-Statblocks und die allgemeinen Kampfregeln als bessere Grundlage, weil damit mehr unterschiedliche Encounter erstellt werden konnten, ohne zunächst eine vollständige Klassenprogression zu modellieren. Gleichzeitig erforderte die große Vielfalt der Zauber eine Entscheidung zwischen vielen einzelnen Sonderimplementierungen und einem gemeinsamen Capability-Schema. Der Aufbau dieses Schemas nahm mehr Zeit ein, verringerte danach aber die Menge an zauberspezifischem Programmcode.
 
 ### 5.3 Kritische Würdigung
 
-*Gut funktioniert hat die Trennung zwischen geladenen Inhaltsdaten, Regellogik und Anwendungssteuerung. Sie macht inzwischen erkennbar, an welcher Stelle eine neue Prüfung oder Regel ergänzt werden muss. Die automatisierten Tests waren besonders während größerer Refactorings nützlich, weil sie unbeabsichtigte Änderungen an bereits unterstützten Regeln sichtbar machten. Das Capability-Schema hat sich außerdem für Zauber mit ähnlicher Struktur bewährt, etwa für unterschiedliche Formen von Flächenschaden.*
+Die Trennung zwischen geladenen Inhaltsdaten, Regellogik und Anwendungssteuerung hat mittlerweile einen guten Stand erreicht. Das entworfene Schema kann für zukünftige Funktionalitäten gut erweitert werden und die Aufgaben der einzelnen Pakete sind klar getrennt. Die automatisierten Tests waren besonders während größerer Refactorings nützlich, weil sie unbeabsichtigte Änderungen an bereits unterstützten Regeln sichtbar machten.
 
-*Weniger gut funktionierte die frühe Erweiterung des Funktionsumfangs, bevor die grundlegenden Paketgrenzen stabil waren. Durch KI konnten schnell neue Features entstehen, dadurch wuchs aber auch Code weiter, dessen Annahmen nicht mehr zum späteren Ziel passten. Bei einem neuen Projekt würde ich deshalb zuerst einen vollständigen, aber sehr kleinen Ablauf vom Einlesen einer Datei bis zur Darstellung in der GUI umsetzen. Erst danach würde ich weitere Regeln ergänzen. Architekturtests und eine ausdrücklich festgehaltene Liste nicht unterstützter Funktionen würde ich ebenfalls früher einführen.*
+#### KI-Zusammenarbeit
+
+Ich glaube, dass mir erst die Unterstützung durch KI ermöglicht hat, in der investierten Bearbeitungszeit ein so umfangreiches Ergebnis zu produzieren. Ich wusste bereits vor Beginn des Projektes, dass es Muster im Software-Design gibt, die sich für mein Projekt anbieten, aber ich konnte sie nicht benennen. Der Prozess, über diese zu recherchieren und den genauen Bezug zu meiner Anforderung herzustellen, war aber mit Hilfe eines Chatbots deutlich schneller. Mithilfe eines Agenten war es dann auch schneller möglich, diese Muster auszuprobieren und zu versuchen, sie am Beispiel meines Projektes nachzuvollziehen.
+Auch die Implementierung neuer Features war zuerst weniger mühsam. Oft erreichte ich einen spielbaren Zustand für ein gegebenes Feature in wenigen Iterationen.
+
+Ein Problem war, dass ich oft in längeren Sitzungen dazu geneigt habe, den produzierten Code irgendwann nicht mehr kritisch genug zu hinterfragen. Dann ist später aufgefallen, dass Muster gewachsen sind, die ich sonst nicht erlaubt hätte. Das möchte ich an einem frühen Beispiel aus der Entwicklung zeigen:
+
+In seiner ursprünglichen Fassung war SRD Arena noch als Kampfmodul für die CYOA-Engine aus den Übungen gedacht. So wären in dieser Version Kämpfe eine komplizierte Variante von Szenen, für die ein Spielfeld erzeugt wird. Nach dem Kampf würde man dann je nach Erfolg in die nächste Szene weitergeleitet werden.
+
+Dieses Projekt hat sich auch aus meinem Code aus den Übungen weiterentwickelt. In der CYOA-Engine war der Spieler die zentrale Figur des Programmes, dem wir über die Übungen hinweg Attribute wie Lebenspunkte und ein Inventar gegeben haben, die sich dann für Kämpfe gut verwenden ließen. Für die ersten Versuche mit Kämpfen habe ich dann Gegner hinzufügen lassen, die diese Systeme auch nutzen sollten. Danach ließ ich auch das Spielerteam erweitern.
+
+Erst später fiel mir auf, dass für Spieler, Gegner und Verbündete parallele Strukturen im Code gewachsen waren, die nicht wünschenswert waren. Ein korrekt abstrahierter Kampfteilnehmer sollte zu einem Team gehören und unabhängig davon je nach Konfiguration vom Nutzer oder von einem Bot gesteuert werden. Stattdessen war eine Mischform implementiert, an der an einigen Stellen abstrahiert wurde, aber an anderen Stellen speziell zwischen Spielern, Gegnern und Verbündeten unterschieden wurde.
+
+Obwohl das ein frühes Beispiel war, passiert mir das Gleiche immer noch. Ich frage mich, ob die die Zeitersparnis in der Implementierung die Aufräumarbeit überhaupt aufwiegt. Und selbst wenn das der Fall ist, ist dieses Muster vermutlich ein Zeichen dafür, dass ich einen zu großen Teil der Arbeit abgebe, die mir eigentlich immer Spaß gemacht hat und mir damit Arbeit schaffe, die mir weniger Freude bereitet. Trotzdem wirkt in dem Moment, in dem ich anfange zu arbeiten, der KI-Agent wie der "Path of least resistance" und ich entscheide mich, ihn weiter zu nutzen. Das Projekt war für mich das erste Mal, dass ich einen KI-Agenten in diesem Ausmaß benutzt habe und hat mir klar gemacht, dass ich weiter daran arbeiten muss, das für mich richtige Maß an KI-Unterstützung in der Entwicklung zu finden.
+
 
 ### 5.4 Ausblick
 
+Die nächsten Meilensteine sind weitere Bestandteile der Regeln, beginnend mit der Arbeit an weiteren Zaubern. Danach wird die Unterstützung für Spielercharaktere mit Ausrüstung, Klassen, Subklassen, Charakterherkunft und Spezies erweitert.
 
-*Als nächste Erweiterung bietet sich eine gezielte Vergrößerung des Capability-Schemas an. Weitere wiederkehrende Zaubermechaniken könnten ergänzt werden, ohne bereits unterstützte Bausteine erneut zu implementieren. Spielercharaktere sollten dagegen erst nach einem eigenen Entwurf für Klassenprogression und Ausrüstung erweitert werden, weil die derzeitige kleine Lösung nur auf die mitgelieferten Fighter-Beispiele zugeschnitten ist.*
+Das Programm könnte auch von einem Szenario-Editor profitieren, damit Spielleiter ihre Kämpfe nicht in JSON-Dateien definieren müssten. Hier könnte man verfügbare Charaktere und Monster aus einer Liste auswählen und auf dem Spielfeld platzieren.
 
-*Langfristig sollen bessere Bots vollständige Encounter automatisch spielen können. Viele Wiederholungen desselben Encounters könnten dann Siegquoten, verbleibende Lebenspunkte und den Einfluss einzelner Aktionen erfassen. Damit würde das Projekt wieder an seine ursprüngliche Motivation anschließen: Ein Spielleiter könnte einen vorbereiteten Kampf nicht nur einmal ausprobieren, sondern seine Schwierigkeit anhand mehrerer Simulationen einschätzen.*
+Langfristig sollen bessere Bots hinzugefügt werden, die vollständige Encounter automatisch spielen können. Viele Wiederholungen desselben Encounters könnten dann Siegquoten, verbleibende Lebenspunkte und weitere verbrauchte Spielerressourcen erfassen. Damit würde das Projekt wieder an seine ursprüngliche Motivation anschließen: Ein Spielleiter könnte einen vorbereiteten Kampf nicht nur einmal ausprobieren, sondern seine Schwierigkeit anhand mehrerer Simulationen einschätzen.
 
-*Außerdem könnte mithilfe der Engine ein KI-Modell trainiert werden, das in der Lage ist, einzelne oder sogar mehrere Charaktere effektiv zu spielen.*
+Außerdem könnte mithilfe der Engine KI-Modelle trainiert werden, die in der Lage sind, einzelne oder sogar mehrere Arten von Charakteren effektiv zu spielen.
 
 ## 6. Literatur- und Quellenverzeichnis
-
 
 - System Reference Document 5.2.1 inkl. CC-BY-4.0-Lizenz
 - Dateien von 5e.tools
 
 ## 7. Anhang
 
-
-*Der Anhang enthält die kurzen Schritte zum Starten und Bedienen des Programms sowie ausgewählte Ausschnitte aus den Inhaltsdateien. Die Ausschnitte dienen als Beleg für das beschriebene Capability-Schema; die vollständigen Dateien und der übrige Quellcode sind über das Repository verfügbar.*
+Der Anhang enthält die Schritte zum Starten und Bedienen des Programms sowie ausgewählte Ausschnitte aus den Inhaltsdateien. Die Ausschnitte dienen als Beispiel für das beschriebene Capability-Schema. Die vollständigen Dateien und der übrige Quellcode sind über das Repository verfügbar.
 
 ### 7.1 Bedienungsanleitung
 
-*Vorausgesetzt werden Python 3.14 oder neuer und uv. Nach dem Klonen des Repositorys installiert `uv sync` die in der `pyproject.toml` festgelegten Abhängigkeiten. Mit `uv run srd-arena` wird die Anwendung gestartet. Im ersten Fenster wählt der Nutzer einen Encounter aus. Während des Kampfes zeigt die Seitenleiste die für den aktiven Teilnehmer verfügbaren Aktionen. Ziele oder Zielgebiete werden anschließend auf dem Spielfeld ausgewählt und bestätigt. Nach dem Ende des Encounters kann derselbe Kampf neu gestartet oder die Anwendung beendet werden.*
+Vorausgesetzt werden Python 3.14 oder neuer und uv. Nach dem Klonen des Repositorys installiert `uv sync` die in der `pyproject.toml` festgelegten Abhängigkeiten. Mit `uv run srd-arena` wird die Anwendung gestartet. Im ersten Fenster wählt der Nutzer einen Encounter aus. Während des Kampfes zeigt die Seitenleiste die für den aktiven Teilnehmer verfügbaren Aktionen. Ziele oder Zielgebiete werden anschließend auf dem Spielfeld ausgewählt und bestätigt. Nach dem Ende des Encounters kann derselbe Kampf neu gestartet oder die Anwendung beendet werden.
 
 ### 7.2 Ausgewählte Code-Snippets
 
-*Die folgenden Ausschnitte vergleichen die Capabilities von Fireball und Cone of Cold. Beide Zauber verwenden einen Rettungswurf und verursachen bei einem erfolgreichen Wurf halben Schaden. Die Unterschiede werden ausschließlich durch die Daten für Ursprung, Geometrie, Attribut, Schadenswürfel und Schadensart beschrieben. Dadurch verwenden beide Definitionen denselben Builder und dieselbe Auflösungslogik.*
+Die folgenden Ausschnitte vergleichen die Capabilities von `Burning Hands` und `Cone of Cold`. Beide Zauber verwenden einen vom Zaubernden ausgehenden Kegel, verlangen einen Rettungswurf und verursachen bei einem erfolgreichen Wurf halben Schaden. Unterschiede wie Kegellänge, Rettungswurfsattribut, Schadenswürfel, Schadensart und Skalierung werden durch die Inhaltsdaten beschrieben. Dadurch verwenden beide Definitionen denselben Builder und dieselbe Auflösungslogik.
+
 
 ```
-FIREBALL:
-...
-  "capability": {
-    "target": {
-      "type": "area",
-      "origin": "point_in_range",
-      "geometry": {
-        "shape": "sphere",
-        "radius_feet": 20
-      }
-    },
-    "resolution": {
-      "type": "saving_throw",
-      "ability": "dex",
-      "failure": {
-        "effects": [
-          {
-            "type": "damage",
-            "dice": "8d6",
-            "damage_type": "fire"
-          }
-        ]
-      },
-      "success_damage": "half"
-    },
-    "scaling": [
-      {
-        "type": "slot_level",
-        "above_level": 3,
-        "per_level": [
-          {
-            "type": "damage_dice",
-            "amount": "1d6"
-          }
-        ]
-      }
-    ]
-  }
-```
-```
-CONE OF COLD:
+Cone of Cold:
+"You unleash a blast of cold air. Each creature in a 60-foot Cone originating from you makes a Constitution saving throw, taking 8d8 Cold damage on a failed save or half as much damage on a successful one. [...]"
 ...
   "capability": {
     "target": {
@@ -300,6 +296,48 @@ CONE OF COLD:
           {
             "type": "damage_dice",
             "amount": "1d8"
+          }
+        ]
+      }
+    ]
+  }
+```
+```
+
+Burning Hands:
+"A thin sheet of flames shoots forth from you. Each creature in a 15-foot Cone makes a Dexterity saving throw, taking 3d6 Fire damage on a failed save or half as much damage on a successful one."
+
+  "capability": {
+    "target": {
+      "type": "area",
+      "origin": "self",
+      "geometry": {
+        "shape": "cone",
+        "length_feet": 15
+      }
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "dex",
+      "failure": {
+        "effects": [
+          {
+            "type": "damage",
+            "dice": "3d6",
+            "damage_type": "fire"
+          }
+        ]
+      },
+      "success_damage": "half"
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 1,
+        "per_level": [
+          {
+            "type": "damage_dice",
+            "amount": "1d6"
           }
         ]
       }

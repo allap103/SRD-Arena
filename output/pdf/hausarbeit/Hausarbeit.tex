@@ -14,6 +14,7 @@
 \usepackage{booktabs}
 \usepackage{enumitem}
 \usepackage{fvextra}
+\usepackage{needspace}
 \usepackage[most]{tcolorbox}
 \usepackage{xurl}
 \usepackage{hyperref}
@@ -75,6 +76,7 @@
 \markdownSetup{
   rendererPrototypes={
     inputVerbatim={%
+    \Needspace{0.75\textheight}%
       \begin{tcolorbox}[
         enhanced,
         breakable,
@@ -115,7 +117,7 @@
   \vspace{0.25cm}
   {\sffamily Heinrich-Heine-Universität Düsseldorf\par}
   \vspace{0.7cm}
-  {\sffamily 31. August 2026\par}
+  {\sffamily 1. September 2026\par}
   \vspace{1.3cm}
   {\color{ArenaGold}\rule{0.72\textwidth}{1.2pt}\par}
 \end{titlepage}
