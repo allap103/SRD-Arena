@@ -161,8 +161,10 @@ class GameWindow(QMainWindow):
             self._sync_combat_log_round(observation.encounter)
             self._render_encounter(presentation)
         encounter = presentation.encounter
-        self.surface.sync_victory_overlay(
-            encounter.completion_message if encounter is not None else None,
+        self.surface.sync_completion_overlay(
+            visible=(
+                encounter is not None and encounter.completion_message is not None
+            ),
             can_restart=(
                 encounter is not None and encounter.restart_action is not None
             ),

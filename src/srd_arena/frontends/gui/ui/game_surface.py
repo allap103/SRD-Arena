@@ -7,11 +7,10 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from PySide6.QtCore import Qt
-from PySide6.QtGui import QFont, QResizeEvent
+from PySide6.QtGui import QResizeEvent
 from PySide6.QtWidgets import (
     QFrame,
     QHBoxLayout,
-    QLabel,
     QPushButton,
     QScrollArea,
     QVBoxLayout,
@@ -38,7 +37,7 @@ class GameSurfaceCallbacks:
 
 
 class GameSurface(QWidget):
-    """Own story panels, battlefield widgets, and the victory overlay."""
+    """Own story panels, battlefield widgets, and the completion overlay."""
 
     def __init__(
         self,
@@ -67,7 +66,7 @@ class GameSurface(QWidget):
             self._build_battlefield_area(image_root),
             stretch=1,
         )
-        self._build_victory_overlay()
+        self._build_completion_overlay()
 
         layout.addWidget(self._story_choices_group, stretch=1)
         layout.addWidget(self._encounter_panel, stretch=2)
@@ -94,7 +93,7 @@ class GameSurface(QWidget):
 
         self._story_choices_group.show()
         self._encounter_panel.hide()
-        self._victory_overlay.hide()
+        self._completion_overlay.hide()
         self._battlefield.set_area_overlay(None)
         clear_layout(self._story_choices_layout)
         for action in actions:
@@ -113,22 +112,21 @@ class GameSurface(QWidget):
         self._story_choices_group.hide()
         self._encounter_panel.show()
 
-    def sync_victory_overlay(
+    def sync_completion_overlay(
         self,
-        message: str | None,
+        visible: bool,
         *,
         can_restart: bool,
     ) -> None:
         """Show or hide the encounter-completion overlay."""
 
-        if message is None:
-            self._victory_overlay.hide()
+        if not visible:
+            self._completion_overlay.hide()
             return
-        self._victory_overlay_message.setText(message)
-        self._victory_overlay_button.setEnabled(can_restart)
-        self._update_victory_overlay_geometry()
-        self._victory_overlay.show()
-        self._victory_overlay.raise_()
+        self._completion_overlay_button.setEnabled(can_restart)
+        self._update_completion_overlay_geometry()
+        self._completion_overlay.show()
+        self._completion_overlay.raise_()
 
     def _build_battlefield_area(self, image_root: Path | None) -> QWidget:
         battlefield_area = QWidget()
@@ -150,57 +148,39 @@ class GameSurface(QWidget):
         battlefield_layout.addWidget(self._battlefield, stretch=1)
         return battlefield_area
 
-    def _build_victory_overlay(self) -> None:
-        self._victory_overlay = QFrame(self._encounter_panel)
-        self._victory_overlay.setObjectName("victoryOverlay")
-        self._victory_overlay.setStyleSheet(
-            "QFrame { background: rgba(12, 10, 6, 190); }"
-            "QLabel { color: #f6edd9; }"
+    def _build_completion_overlay(self) -> None:
+        self._completion_overlay = QFrame(self._encounter_panel)
+        self._completion_overlay.setObjectName("completionOverlay")
+        self._completion_overlay.setStyleSheet(
+            "QFrame {"
+            " background: rgba(12, 10, 6, 230);"
+            " border: 1px solid #756344;"
+            " border-radius: 6px;"
+            "}"
             "QPushButton { min-width: 140px; min-height: 40px; }"
         )
-        self._victory_overlay.hide()
-        overlay_layout = QVBoxLayout(self._victory_overlay)
-        overlay_layout.setContentsMargins(40, 40, 40, 40)
-        overlay_layout.setSpacing(12)
-        overlay_layout.addStretch(1)
-        overlay_card = QFrame()
-        overlay_card.setObjectName("overlayCard")
-        overlay_card.setStyleSheet(
-            "QFrame { background: #1d1710; border: 2px solid #c9a227; "
-            "border-radius: 10px; }"
+        self._completion_overlay.hide()
+        overlay_layout = QVBoxLayout(self._completion_overlay)
+        overlay_layout.setContentsMargins(16, 16, 16, 16)
+        self._completion_overlay_button = QPushButton("Restart encounter")
+        self._completion_overlay_button.setObjectName("restartButton")
+        self._completion_overlay_button.clicked.connect(
+            self._callbacks.restart_encounter
         )
-        overlay_card_layout = QVBoxLayout(overlay_card)
-        overlay_card_layout.setContentsMargins(24, 24, 24, 24)
-        overlay_card_layout.setSpacing(12)
-        overlay_title = QLabel("Victory")
-        overlay_title.setObjectName("overlayTitle")
-        overlay_title_font = QFont()
-        overlay_title_font.setPointSize(18)
-        overlay_title_font.setBold(True)
-        overlay_title.setFont(overlay_title_font)
-        overlay_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        overlay_card_layout.addWidget(overlay_title)
-        self._victory_overlay_message = QLabel("")
-        self._victory_overlay_message.setObjectName("completionMessage")
-        self._victory_overlay_message.setWordWrap(True)
-        self._victory_overlay_message.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        overlay_card_layout.addWidget(self._victory_overlay_message)
-        self._victory_overlay_button = QPushButton("Restart encounter")
-        self._victory_overlay_button.setObjectName("restartButton")
-        self._victory_overlay_button.clicked.connect(self._callbacks.restart_encounter)
-        overlay_card_layout.addWidget(
-            self._victory_overlay_button,
+        overlay_layout.addWidget(
+            self._completion_overlay_button,
             alignment=Qt.AlignmentFlag.AlignCenter,
         )
-        overlay_layout.addWidget(overlay_card, alignment=Qt.AlignmentFlag.AlignCenter)
-        overlay_layout.addStretch(1)
 
-    def _update_victory_overlay_geometry(self) -> None:
-        self._victory_overlay.setGeometry(self._encounter_panel.rect())
+    def _update_completion_overlay_geometry(self) -> None:
+        self._completion_overlay.resize(self._completion_overlay.sizeHint())
+        popup_geometry = self._completion_overlay.rect()
+        popup_geometry.moveCenter(self._encounter_panel.rect().center())
+        self._completion_overlay.setGeometry(popup_geometry)
 
     def resizeEvent(self, event: QResizeEvent) -> None:  # pragma: no cover
         super().resizeEvent(event)
-        self._update_victory_overlay_geometry()
+        self._update_completion_overlay_geometry()
 
 
 def _build_group() -> tuple[QFrame, QVBoxLayout]:

@@ -387,6 +387,7 @@ def test_without_roll_details_keeps_outcomes_and_removes_formula_messages() -> N
         ("system", "Damage to Goblin: 1d8=6 + STR mod 3 = 9."),
         ("system", "Goblin makes a Constitution save: d20=4 + 2 = 6 vs DC 12."),
         ("system", "Traveler hits Goblin for 9 damage."),
+        ("system", "Traveler misses Goblin."),
         ("system", "Healing: 1d10=7 + level 2 = 9; applied 9."),
         ("system", "Traveler uses Second Wind."),
     ]

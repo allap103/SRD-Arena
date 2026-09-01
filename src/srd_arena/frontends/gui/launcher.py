@@ -10,13 +10,14 @@ from PySide6.QtWidgets import (
     QApplication,
     QLabel,
     QMainWindow,
+    QMessageBox,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
 from srd_arena.content.encounters import EncounterCatalog, EncounterSummary
-from srd_arena.engine.api import Session
+from srd_arena.engine.api import Session, SessionFactory
 
 from .app import GameWindow
 from .presenter import GamePresenter
@@ -32,11 +33,13 @@ class EncounterPickerWindow(QMainWindow):
         *,
         image_root: Path | None = None,
         pause_between_automatic_actions: bool = True,
+        session_factory: SessionFactory | None = None,
     ) -> None:
         super().__init__()
         self._catalog = catalog
         self._image_root = image_root
         self._pause_between_automatic_actions = pause_between_automatic_actions
+        self._session_factory = session_factory or Session
         self._game_window: GameWindow | None = None
         self.setWindowTitle("Choose Encounter")
         self.resize(520, 420)
@@ -56,12 +59,14 @@ class EncounterPickerWindow(QMainWindow):
         title.setFont(title_font)
         layout.addWidget(title)
 
-        subtitle = QLabel("Start a new session from any available encounter.")
-        subtitle.setObjectName("sectionSubtitle")
-        subtitle.setWordWrap(True)
-        layout.addWidget(subtitle)
-
-        encounters = self._catalog.available_encounters()
+        encounters = sorted(
+            self._catalog.available_encounters(),
+            key=lambda encounter: (
+                encounter.label.casefold(),
+                encounter.label,
+                encounter.id,
+            ),
+        )
         if not encounters:
             empty = QLabel("No valid encounters were found in content/encounters/.")
             empty.setWordWrap(True)
@@ -81,8 +86,17 @@ class EncounterPickerWindow(QMainWindow):
         layout.addStretch(1)
 
     def _open_encounter(self, encounter: EncounterSummary) -> None:
+        try:
+            definition = self._catalog.load_encounter(encounter.id)
+        except (KeyError, OSError, ValueError) as error:
+            QMessageBox.critical(
+                self,
+                "Unable to load encounter",
+                str(error),
+            )
+            return
         self._game_window = GameWindow(
-            GamePresenter(Session(self._catalog.load_encounter(encounter.id))),
+            GamePresenter(self._session_factory(definition)),
             image_root=self._image_root,
             presentation_config=encounter.presentation,
             pause_between_automatic_actions=self._pause_between_automatic_actions,
@@ -96,12 +110,14 @@ def run_gui(
     *,
     image_root: Path | None = None,
     pause_between_automatic_actions: bool = True,
+    session_factory: SessionFactory | None = None,
 ) -> None:
     """Start Qt, present encounter discovery, and enter the desktop event loop.
 
     Automatic actions are separated by a short presentation delay unless
     ``pause_between_automatic_actions`` is disabled. The engine itself always
-    resolves actions immediately.
+    resolves actions immediately. ``session_factory`` lets the composition
+    root supply configured sessions without exposing engine setup to the GUI.
     """
 
     instance = QApplication.instance()
@@ -111,6 +127,7 @@ def run_gui(
         catalog,
         image_root=image_root,
         pause_between_automatic_actions=pause_between_automatic_actions,
+        session_factory=session_factory,
     )
     window.show()
     app.exec()

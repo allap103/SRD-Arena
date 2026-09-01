@@ -160,7 +160,7 @@ def test_stat_block_action_showcase_exposes_new_runtime_capabilities() -> None:
     wyrmling_actions = available_creature_actions(state, "blue_wyrmling")
     assassin_actions = creature_action_candidates(state, "assassin")
 
-    assert encounter.display_name == "Executable Stat-Block Actions"
+    assert encounter.display_name == "Executable Stat-Block Actions Demo"
     assert any(
         action.preferred_attack_name == "Reaping Scythe" for action in avatar_actions
     )
@@ -1140,7 +1140,7 @@ def test_multiattack_showcase_loads_enriched_creatures() -> None:
     session = Session(encounter)
     session.read()
 
-    assert encounter.display_name == "Multiattack Showcase"
+    assert encounter.display_name == "Multiattack Demo"
     assert session.encounter_state is not None
     state = session.encounter_state
     creatures = {

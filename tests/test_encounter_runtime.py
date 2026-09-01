@@ -831,7 +831,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
     )
 
 
-def test_goblin_encounter_attack_can_complete_with_victory() -> None:
+def test_goblin_encounter_attack_can_complete_the_encounter() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
 
@@ -898,7 +898,7 @@ def test_attack_consumes_action_until_next_turn() -> None:
     assert any(action.kind == "attack" for action in session.read().action_options)
 
 
-def test_encounter_victory_waits_for_restart() -> None:
+def test_completed_encounter_waits_for_restart() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
     session.read()
     assert session.encounter_state is not None
@@ -911,15 +911,13 @@ def test_encounter_victory_waits_for_restart() -> None:
 
     assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
-    assert ("system", "Victory! You may restart the encounter.") in result.messages
-    encounter_read = session.read()
-    assert encounter_read.completion_message == (
-        "Victory! You may restart the encounter."
-    )
     assert (
-        session.pending_encounter_completion.message
-        == "Victory! You may restart the encounter."
-    )
+        "system",
+        "Encounter complete",
+    ) in result.messages
+    encounter_read = session.read()
+    assert encounter_read.completion_message == "Encounter complete"
+    assert session.pending_encounter_completion.message == "Encounter complete"
     assert encounter_read.action_options[0].id == "system-restart-encounter"
     observation = observe_session(session)
     assert observation.completion is not None

@@ -3,6 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from srd_arena.content.encounters import EncounterCatalog
+from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.api import (
     AimAction,
     ConfirmTargeting,
@@ -11,6 +12,7 @@ from srd_arena.engine.api import (
     Session,
     SetResourceAllocation,
 )
+from srd_arena.engine.session import PendingEncounterCompletion
 
 FULL_CONTROL_ENCOUNTER_DIR = (
     Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
@@ -39,6 +41,9 @@ def _advance_to_actor(
         assert observation.encounter is not None
         if observation.encounter.decision.creature_ref == creature_ref:
             return observation
+        if observation.requires_automatic_advance:
+            session.advance_until_input_required()
+            continue
         wait = next(
             action
             for action in observation.scene.action_details
@@ -70,6 +75,36 @@ def test_session_exposes_frontend_neutral_observations_and_commands() -> None:
     assert result.update is not None
     assert result.update.selected_action_id == wait.id
     assert next_observation.scene.scene_id == observation.scene.scene_id
+
+
+def test_restart_rewinds_seeded_encounter_randomness() -> None:
+    session = Session(
+        EncounterCatalog().load_encounter(FULL_CONTROL_ENCOUNTER_DIR.name),
+        dice=DiceRoller.seeded(42),
+    )
+    session.observe()
+    assert session.encounter_state is not None
+
+    def random_signature() -> tuple[tuple[tuple[str, int], ...], tuple[int, ...]]:
+        assert session.encounter_state is not None
+        initiative = tuple(
+            (entry.creature_ref, entry.roll)
+            for entry in session.encounter_state.initiative_entries
+        )
+        following_rolls = tuple(
+            session.encounter_state.dice.roll_die(sides) for sides in (20, 6, 8, 20)
+        )
+        return initiative, following_rolls
+
+    first_run = random_signature()
+    session.pending_encounter_completion = PendingEncounterCompletion(
+        "Encounter complete"
+    )
+
+    result = session.choose("system-restart-encounter")
+
+    assert result.selected_action_id == "system-restart-encounter"
+    assert random_signature() == first_run
 
 
 def test_session_rejects_stale_commands_before_execution() -> None:

@@ -1,0 +1,47 @@
+{
+  "id": "invalid_encounter_showcase",
+  "grid": {
+    "width": 5,
+    "height": 5
+  },
+  "creatures": [
+    {
+      "id": "inside_goblin",
+      "name": "Inside Goblin",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 1,
+        "y": 2
+      },
+      "team_id": "inside"
+    },
+    {
+      "id": "outside_goblin",
+      "name": "Outside Goblin",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 5,
+        "y": 2
+      },
+      "team_id": "outside"
+    }
+  ],
+  "teams": [
+    {
+      "id": "inside",
+      "name": "Inside",
+      "controller": "external"
+    },
+    {
+      "id": "outside",
+      "name": "Outside",
+      "controller": "external"
+    }
+  ]
+}

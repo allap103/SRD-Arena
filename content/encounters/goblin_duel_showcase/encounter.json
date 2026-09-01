@@ -1,0 +1,55 @@
+{
+  "id": "goblin_duel_showcase",
+  "grid": {
+    "width": 9,
+    "height": 7
+  },
+  "creatures": [
+    {
+      "id": "left_goblin",
+      "name": "Grim",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 2,
+        "y": 3
+      },
+      "team_id": "grim",
+      "behavior": {
+        "type": "chase"
+      }
+    },
+    {
+      "id": "right_goblin",
+      "name": "Snag",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 6,
+        "y": 3
+      },
+      "team_id": "snag",
+      "behavior": {
+        "type": "chase"
+      }
+    }
+  ],
+  "teams": [
+    {
+      "id": "grim",
+      "name": "Grim",
+      "controller": "scripted"
+    },
+    {
+      "id": "snag",
+      "name": "Snag",
+      "controller": "scripted"
+    }
+  ]
+}

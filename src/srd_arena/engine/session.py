@@ -1,5 +1,6 @@
 """Own mutable game state and expose the frontend-neutral engine API."""
 
+from collections.abc import Callable
 from copy import deepcopy
 from dataclasses import dataclass
 
@@ -64,9 +65,11 @@ class Session:
         >>> from srd_arena.domain.geometry import Grid
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
         >>> session = Session(encounter)
-        >>> session.pending_encounter_completion = PendingEncounterCompletion("Victory!")
+        >>> session.pending_encounter_completion = PendingEncounterCompletion(
+        ...     "Encounter complete"
+        ... )
         >>> session.read().completion_message
-        'Victory!'
+        'Encounter complete'
         """
 
         return read_session(self)
@@ -135,6 +138,9 @@ class Session:
     def reset(self) -> GameObservation:
         """Restore the session to its initially loaded content and scene.
 
+        A seeded session also rewinds its private dice stream, so repeating the
+        same decisions after reset produces the same random outcomes.
+
         >>> from srd_arena.domain.geometry import Grid
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
         >>> session = Session(encounter)
@@ -144,10 +150,7 @@ class Session:
         >>> session.encounter_state is None
         True
         """
-        self.creature_templates = deepcopy(self._initial_creature_templates)
-        self.pending_encounter_completion = None
-        self.encounter_state = None
-        self._encounter_actions = []
+        self._restore_initial_state()
         return self.observe()
 
     def _exit_game(self) -> EngineOutcome:
@@ -323,18 +326,25 @@ class Session:
         pending = self.pending_encounter_completion
         if pending is None:
             raise RuntimeError("Restart requested without a completed encounter.")
-        self.creature_templates = deepcopy(self._initial_creature_templates)
-        self.pending_encounter_completion = None
-        self.encounter_state = None
-        self._encounter_actions = []
+        self._restore_initial_state()
         self._ensure_encounter_state()
         return EngineOutcome(
             selected_choice_text=RESTART_CHOICE_TEXT,
             selected_action_id="system-restart-encounter",
         )
 
+    def _restore_initial_state(self) -> None:
+        self.creature_templates = deepcopy(self._initial_creature_templates)
+        self.pending_encounter_completion = None
+        self.encounter_state = None
+        self._encounter_actions = []
+        self._dice = self._dice.restarted()
+
     def _complete_encounter(self) -> None:
         self.pending_encounter_completion = PendingEncounterCompletion(
-            message="Victory! You may restart the encounter."
+            message="Encounter complete"
         )
         self._encounter_actions = []
+
+
+type SessionFactory = Callable[[EncounterDefinition], Session]

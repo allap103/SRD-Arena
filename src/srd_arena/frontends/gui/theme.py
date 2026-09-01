@@ -30,8 +30,7 @@ QLabel {
 QFrame#panel,
 QFrame#untitledPanel,
 QFrame#sidebarPanel,
-QFrame#rollRail,
-QFrame#overlayCard {
+QFrame#rollRail {
     background: #241c15;
     border: 1px solid #8e6d3b;
     border-radius: 12px;
@@ -227,7 +226,7 @@ QLabel#initiativeScore {
     font-weight: 700;
 }
 
-QFrame#victoryOverlay {
+QFrame#completionOverlay {
     background: rgba(10, 8, 6, 200);
     border-radius: 16px;
 }

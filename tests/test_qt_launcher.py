@@ -13,7 +13,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 pytest.importorskip("PySide6")
 
 from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QPushButton
+from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton
 
 import srd_arena.frontends.gui.launcher as launcher
 from srd_arena.content.encounters import (
@@ -36,6 +36,11 @@ def test_encounter_picker_loads_content_then_creates_session(
         label="Example Encounter",
         presentation=EncounterPresentation(grid_color="#123456"),
     )
+    encounters = (
+        EncounterSummary("zulu", "Zulu Demo"),
+        encounter,
+        EncounterSummary("alpha", "alpha Demo"),
+    )
     session = cast(Session, object())
 
     class CatalogStub:
@@ -43,7 +48,7 @@ def test_encounter_picker_loads_content_then_creates_session(
             self.loaded: list[str] = []
 
         def available_encounters(self) -> tuple[EncounterSummary, ...]:
-            return (encounter,)
+            return encounters
 
         def load_encounter(self, encounter_id: str) -> EncounterDefinition:
             self.loaded.append(encounter_id)
@@ -78,7 +83,10 @@ def test_encounter_picker_loads_content_then_creates_session(
             self.was_shown = True
 
     catalog = CatalogStub()
-    monkeypatch.setattr(launcher, "Session", lambda _encounter: session)
+
+    def create_session(_encounter: EncounterDefinition) -> Session:
+        return session
+
     monkeypatch.setattr(launcher, "GamePresenter", GamePresenterStub)
     monkeypatch.setattr(launcher, "GameWindow", GameWindowStub)
     image_root = tmp_path / "images"
@@ -86,10 +94,18 @@ def test_encounter_picker_loads_content_then_creates_session(
         cast(EncounterCatalog, catalog),
         image_root=image_root,
         pause_between_automatic_actions=False,
+        session_factory=create_session,
     )
 
     buttons = picker.findChildren(QPushButton)
-    assert [button.text() for button in buttons] == ["Example Encounter"]
+    assert [button.text() for button in buttons] == [
+        "alpha Demo",
+        "Example Encounter",
+        "Zulu Demo",
+    ]
+    assert "Start a new session from any available encounter." not in {
+        label.text() for label in picker.findChildren(QLabel)
+    }
 
     picker._open_encounter(encounter)
 
@@ -102,6 +118,34 @@ def test_encounter_picker_loads_content_then_creates_session(
     assert created_windows[0].presentation_config == encounter.presentation
     assert created_windows[0].pause_between_automatic_actions is False
     assert created_windows[0].was_shown is True
+    picker.deleteLater()
+    app.processEvents()
+
+
+def test_encounter_picker_displays_content_loading_errors(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    app = QApplication.instance() or QApplication([])
+    encounter = EncounterSummary("invalid", "Invalid Encounter")
+    catalog = Mock(spec=EncounterCatalog)
+    catalog.available_encounters.return_value = (encounter,)
+    catalog.load_encounter.side_effect = ValueError(
+        "Starting position lies outside the grid."
+    )
+    displayed_errors: list[tuple[str, str]] = []
+    monkeypatch.setattr(
+        QMessageBox,
+        "critical",
+        lambda _parent, title, message: displayed_errors.append((title, message)),
+    )
+    picker = launcher.EncounterPickerWindow(catalog)
+
+    picker._open_encounter(encounter)
+
+    assert displayed_errors == [
+        ("Unable to load encounter", "Starting position lies outside the grid.")
+    ]
+    assert picker._game_window is None
     picker.deleteLater()
     app.processEvents()
 

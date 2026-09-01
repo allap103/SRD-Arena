@@ -39,6 +39,7 @@ def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     assert len(window.surface.findChildren(QFrame, "initiativeCard")) > 1
     assert bindings.actions_layout.count() > 0
     assert bindings.end_turn_button.text() in {"End Turn", "Pass Reaction"}
+    assert window.sidebar._roll_scroll.minimumHeight() == 216
 
     window.sidebar.show_attributes()
     assert "Name:" in window.sidebar._attributes_text.toPlainText()

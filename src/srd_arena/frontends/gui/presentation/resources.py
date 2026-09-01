@@ -86,6 +86,7 @@ def _build_initiative_track(
             is_active=entry.creature_ref == encounter.decision.creature_ref,
         )
         for entry in encounter.initiative
+        if encounter.creature(entry.creature_ref).is_alive
     )
 
 

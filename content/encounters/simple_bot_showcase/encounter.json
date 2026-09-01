@@ -6,12 +6,9 @@
   },
   "creatures": [
     {
-      "id": "player_goblin",
-      "name": "Player Goblin",
-      "stat_block": {
-        "name": "Goblin Warrior",
-        "source": "XMM"
-      },
+      "id": "fighter",
+      "token_image": "tokens/human_fighter.png",
+      "player_character": "fighter",
       "start": {
         "x": 1,
         "y": 3
@@ -19,15 +16,33 @@
       "team_id": "players"
     },
     {
-      "id": "bot_goblin",
-      "name": "Bot Goblin",
+      "id": "droop",
+      "name": "Droop",
+      "token_image": "tokens/goblin_warrior.png",
       "stat_block": {
         "name": "Goblin Warrior",
         "source": "XMM"
       },
       "start": {
         "x": 7,
-        "y": 3
+        "y": 2
+      },
+      "team_id": "bots",
+      "behavior": {
+        "type": "chase"
+      }
+    },
+    {
+      "id": "redeye",
+      "name": "Redeye",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 4
       },
       "team_id": "bots",
       "behavior": {
@@ -38,12 +53,12 @@
   "teams": [
     {
       "id": "players",
-      "name": "Player Team",
+      "name": "Fighter",
       "controller": "external"
     },
     {
       "id": "bots",
-      "name": "Bot Team",
+      "name": "Goblins",
       "controller": "scripted"
     }
   ]

@@ -38,7 +38,9 @@ def read_session(session: Session) -> SessionRead:
 
     >>> from types import SimpleNamespace
     >>> session = SimpleNamespace(
-    ...     pending_encounter_completion=SimpleNamespace(message="Victory!"),
+    ...     pending_encounter_completion=SimpleNamespace(
+    ...         message="Encounter complete"
+    ...     ),
     ...     encounter_state=None,
     ...     encounter=SimpleNamespace(id="demo", teams=[]),
     ...     item_templates={})

@@ -70,26 +70,28 @@ def test_game_surface_owns_completion_overlay_behavior() -> None:
     surface.show()
     surface.show_encounter()
 
-    surface.sync_victory_overlay("The encounter is over.", can_restart=True)
+    surface.sync_completion_overlay(visible=True, can_restart=True)
     app.processEvents()
 
-    overlay = surface.findChild(QFrame, "victoryOverlay")
-    message = surface.findChild(QLabel, "completionMessage")
+    overlay = surface.findChild(QFrame, "completionOverlay")
     button = surface.findChild(QPushButton, "restartButton")
     encounter_panel = surface.findChild(QWidget, "encounterPanel")
     assert overlay is not None
-    assert message is not None
     assert button is not None
     assert encounter_panel is not None
     assert not overlay.isHidden()
-    assert message.text() == "The encounter is over."
+    assert surface.findChild(QFrame, "overlayCard") is None
+    assert surface.findChild(QLabel, "completionMessage") is None
     assert button.isEnabled()
-    assert overlay.geometry() == encounter_panel.rect()
+    assert overlay.size() == overlay.sizeHint()
+    assert overlay.width() < encounter_panel.width()
+    assert overlay.height() < encounter_panel.height()
+    assert overlay.geometry().center() == encounter_panel.rect().center()
 
     button.click()
     assert restarted == [True]
 
-    surface.sync_victory_overlay(None, can_restart=False)
+    surface.sync_completion_overlay(visible=False, can_restart=False)
     assert overlay.isHidden()
 
     _dispose(surface, app)

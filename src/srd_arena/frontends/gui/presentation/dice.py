@@ -132,6 +132,10 @@ def without_roll_details(
             or message.startswith("Damage to ")
             or message.startswith("Healing:")
             or " save: d20=" in message
+            or (
+                channel == "system"
+                and re.fullmatch(r".+ misses .+\.", message) is not None
+            )
         )
     ]
 

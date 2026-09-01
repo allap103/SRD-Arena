@@ -9,6 +9,7 @@
       "id": "spectrum_adept",
       "name": "Spectrum Adept",
       "description": "A demo spellcaster prepared with every Wave 1A damage spell.",
+      "token_image": "tokens/human_wizard.png",
       "stat_block": {
         "name": "Mage",
         "source": "XMM"
@@ -52,68 +53,74 @@
     {
       "id": "plant_target",
       "name": "Blight Target",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Awakened Tree",
         "source": "XMM"
       },
-      "start": {"x": 5, "y": 2},
+      "start": {"x": 9, "y": 5},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     },
     {
       "id": "construct_target",
       "name": "Shatter Target",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Animated Armor",
         "source": "XMM"
       },
-      "start": {"x": 5, "y": 9},
+      "start": {"x": 10, "y": 5},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     },
     {
       "id": "near_target",
       "name": "Near Target",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Warrior Veteran",
         "source": "XMM"
       },
-      "start": {"x": 3, "y": 6},
+      "start": {"x": 11, "y": 5},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     },
     {
       "id": "area_target_1",
       "name": "Area Target One",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Goblin Warrior",
         "source": "XMM"
       },
-      "start": {"x": 9, "y": 5},
+      "start": {"x": 9, "y": 6},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     },
     {
       "id": "area_target_2",
       "name": "Area Target Two",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Goblin Warrior",
         "source": "XMM"
       },
       "start": {"x": 10, "y": 6},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     },
     {
       "id": "area_target_3",
       "name": "Area Target Three",
+      "token_image": "tokens/skeleton-warrior.png",
       "stat_block": {
         "name": "Goblin Warrior",
         "source": "XMM"
       },
-      "start": {"x": 9, "y": 7},
+      "start": {"x": 11, "y": 6},
       "team_id": "targets",
-      "controller": "external"
+      "behavior": {"type": "wait"}
     }
   ],
   "teams": [
@@ -125,7 +132,7 @@
     {
       "id": "targets",
       "name": "Demo Targets",
-      "controller": "external"
+      "controller": "scripted"
     }
   ]
 }

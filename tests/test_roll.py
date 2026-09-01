@@ -16,6 +16,7 @@ from srd_arena.domain.rolls.dice import (
     roll_d20_pool,
     select_d20,
 )
+from srd_arena.domain.rolls.randomness import DiceRoller
 
 
 class ResolveDiceKwargs(TypedDict, total=False):
@@ -50,6 +51,17 @@ def test_resolve_d20_selects_die_for_mode(
 
     assert result.selected == expected_selected
     assert result.total == expected_total
+
+
+def test_seeded_dice_are_isolated_and_restartable() -> None:
+    first = DiceRoller.seeded(42)
+    same_seed = DiceRoller.seeded(42)
+
+    opening = tuple(first.roll_die(20) for _ in range(5))
+    restarted = first.restarted()
+
+    assert tuple(same_seed.roll_die(20) for _ in range(5)) == opening
+    assert tuple(restarted.roll_die(20) for _ in range(5)) == opening
 
 
 def test_extended_d20_pool_can_select_highest_of_three() -> None:

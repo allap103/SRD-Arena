@@ -33,6 +33,7 @@ from .encounter.config import ENCOUNTER_BUTTON_HEIGHT
 from .encounter.panel_renderer import EncounterPanelBindings
 
 SIDEBAR_WIDTH = 320
+COMBAT_LOG_MINIMUM_HEIGHT = 216
 EXIT_CHOICE_TEXT = "Exit game"
 
 
@@ -319,7 +320,7 @@ class GameSidebar(QFrame):
         self._dice_roll_panel = DiceRollPanel(self._callbacks.select_log_action)
         self._roll_scroll = QScrollArea()
         self._roll_scroll.setWidgetResizable(True)
-        self._roll_scroll.setMinimumHeight(180)
+        self._roll_scroll.setMinimumHeight(COMBAT_LOG_MINIMUM_HEIGHT)
         self._roll_scroll.setWidget(self._dice_roll_panel)
         log_layout.addWidget(self._roll_scroll)
         page_layout.addWidget(log_section)

@@ -9,7 +9,8 @@ ENCOUNTER_DIR = (
 
 
 def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
-    session = Session(load_encounter_directory(str(ENCOUNTER_DIR)))
+    encounter = load_encounter_directory(str(ENCOUNTER_DIR))
+    session = Session(encounter)
     session.read()
 
     assert session.encounter_state is not None
@@ -53,4 +54,16 @@ def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
             "construct_target"
         ].creature.statistics.creature_type
         == "construct"
+    )
+    targets = [
+        participant
+        for participant in encounter.participants
+        if participant.creature_id != "spectrum_adept"
+    ]
+    target_team = next(team for team in encounter.teams if team.id == "targets")
+    assert target_team.controller == "scripted"
+    assert all(participant.controller is None for participant in targets)
+    assert all(
+        participant.behavior is not None and participant.behavior.type == "wait"
+        for participant in targets
     )

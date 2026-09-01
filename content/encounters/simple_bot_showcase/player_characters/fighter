@@ -1,0 +1,26 @@
+{
+  "id": "fighter",
+  "name": "Aldren",
+  "description": "A veteran fighter facing a pair of scripted goblins.",
+  "class_ref": {
+    "name": "Fighter",
+    "source": "XPHB"
+  },
+  "attributes": {
+    "base_health": 44,
+    "level": 4,
+    "strength": 18,
+    "dexterity": 20,
+    "constitution": 16,
+    "wisdom": 10,
+    "intelligence": 10,
+    "charisma": 10,
+    "base_armor_class": 15
+  },
+  "equipment": {
+    "right_hand": {
+      "name": "Greatsword",
+      "source": "XPHB"
+    }
+  }
+}

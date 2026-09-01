@@ -39,7 +39,7 @@ from .observations import (
     TargetResourceAllocationObservation,
     TargetResourceLimitObservation,
 )
-from .session import Session
+from .session import Session, SessionFactory
 
 __all__ = [
     "ActionObservation",
@@ -68,6 +68,7 @@ __all__ = [
     "SceneObservation",
     "SelectAction",
     "Session",
+    "SessionFactory",
     "SetResourceAllocation",
     "SpellSlotObservation",
     "TargetResourceAllocationObservation",
