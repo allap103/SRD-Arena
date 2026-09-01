@@ -1,7 +1,7 @@
 # SRD Arena
 
 SRD Arena is a Python combat simulator for the 2024 rules represented by
-SRD 5.2. It provides an interactive PySide6 GUI and a typed, frontend-neutral
+SRD 5.2.1. It provides an interactive PySide6 GUI and a typed, frontend-neutral
 application interface intended for simulations and future machine-learning
 integration.
 
