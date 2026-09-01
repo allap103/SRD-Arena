@@ -6,19 +6,21 @@ application interface intended for simulations and future machine-learning
 integration.
 
 The project is under active development. Its implemented combat rules and
-authored content cover only the functionality described by the repository's
-tests and documentation.
+authored content cover only partial functionality.
 
 ## Run the application
 
 The project uses [uv](https://docs.astral.sh/uv/) and requires Python 3.14 or
 newer.
 
-    uv sync
-    uv run srd-arena
+> uv sync
+> uv run srd-arena
+
 or
-    uv run srd-arena --seed 42
-To run the application with seed 42. Note that die rolls will only be the same between different executions of the same encounter if participants also perform the same steps between encounters.
+> uv run srd-arena --seed 42
+
+To run the application with seed 42. 
+Note that die rolls will only be the same between different executions of the same encounter if participants also perform the same steps between encounters.
 
 ## Quality checks
 
@@ -52,16 +54,3 @@ and general class-feature coverage are outside the current project scope.
 Monster attacks remain self-contained stat-block actions. A monster's named
 weapon attack does not depend on the player-character item/loadout model.
 
-See the
-[engine architecture](docs/engine_architecture.md),
-[combat action architecture](docs/combat_action_architecture.md), and
-[documentation index](docs/index.md) for the detailed design.
-
-## Documentation
-
-Build the Sphinx documentation locally with:
-
-    uv run sphinx-build -b html docs build/docs
-
-The documentation combines architecture notes, content-schema references, API
-documentation, and executable examples from the project's docstrings.
