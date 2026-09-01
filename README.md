@@ -16,6 +16,9 @@ newer.
 
     uv sync
     uv run srd-arena
+or
+    uv run srd-arena --seed 42
+To run the application with seed 42. Note that die rolls will only be the same between different executions of the same encounter if participants also perform the same steps between encounters.
 
 ## Quality checks
 
