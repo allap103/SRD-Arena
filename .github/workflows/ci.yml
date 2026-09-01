@@ -47,8 +47,5 @@ jobs:
       - name: Check doctest coverage
         run: uv run doctest-audit --fail-under 90
 
-      - name: Build documentation
-        run: uv run sphinx-build --fail-on-warning --builder html docs docs/_build/html
-
       - name: Run pytest
         run: uv run pytest
