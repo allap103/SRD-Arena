@@ -50,7 +50,12 @@ class HeadlessGameAdapter:
             for encounter in self.catalog.available_encounters()
         )
 
-    def start_encounter(self, encounter_id: str) -> GameObservation:
+    def start_encounter(
+        self,
+        encounter_id: str,
+        *,
+        seed: int | None = None,
+    ) -> GameObservation:
         """Start an encounter selected by its advertised stable ID.
 
         >>> from unittest.mock import Mock
@@ -78,7 +83,7 @@ class HeadlessGameAdapter:
         )
         if summary is None:
             raise KeyError(f"Unknown encounter '{encounter_id}'.")
-        session = Session(self.catalog.load_encounter(summary.id))
+        session = Session(self.catalog.load_encounter(summary.id), seed=seed)
         observation = session.observe()
         self._session = session
         return observation
@@ -219,7 +224,13 @@ class HeadlessGameAdapter:
 
         return self._require_session().advance_one_automatic_action()
 
-    def reset(self) -> GameObservation:
+    @property
+    def seed(self) -> int | None:
+        """Return the seed governing the active encounter, if any."""
+
+        return self._require_session().seed
+
+    def reset(self, *, seed: int | None = None) -> GameObservation:
         """Reset the active game to its initial observation.
 
         >>> from unittest.mock import Mock
@@ -235,7 +246,7 @@ class HeadlessGameAdapter:
         'intro'
         """
 
-        return self._require_session().reset()
+        return self._require_session().reset(seed=seed)
 
     def _require_session(self) -> Session:
         if self._session is None:

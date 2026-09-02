@@ -5,7 +5,6 @@ from collections.abc import Sequence
 
 from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.domain.encounters import EncounterDefinition
-from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.api import Session, SessionFactory
 
 
@@ -14,7 +13,7 @@ def _session_factory(seed: int | None) -> SessionFactory:
         return Session
 
     def create_seeded_session(encounter: EncounterDefinition) -> Session:
-        return Session(encounter, dice=DiceRoller.seeded(seed))
+        return Session(encounter, seed=seed)
 
     return create_seeded_session
 

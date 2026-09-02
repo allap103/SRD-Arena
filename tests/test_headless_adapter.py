@@ -43,6 +43,24 @@ def test_headless_adapter_drives_game_by_stable_ids() -> None:
     assert result.update.observation.encounter is not None
 
 
+def test_headless_adapter_owns_and_replaces_the_episode_seed() -> None:
+    adapter = _adapter()
+
+    initial = adapter.start_encounter("full_control_showcase", seed=41)
+    assert initial.encounter is not None
+    assert adapter.seed == 41
+
+    reseeded = adapter.reset(seed=42)
+    assert reseeded.encounter is not None
+    reseeded_initiative = reseeded.encounter.initiative
+    assert adapter.seed == 42
+
+    replayed = adapter.reset()
+    assert replayed.encounter is not None
+    assert replayed.encounter.initiative == reseeded_initiative
+    assert adapter.seed == 42
+
+
 def test_headless_adapter_preserves_stale_decision_protection() -> None:
     adapter = _adapter()
     observation = adapter.start_encounter("full_control_showcase")
@@ -107,7 +125,7 @@ def test_headless_observation_preserves_unimplemented_action_reason(
     session.observe.return_value = observation
     monkeypatch.setattr(
         "srd_arena.frontends.headless.adapter.Session",
-        lambda _encounter: session,
+        lambda _encounter, *, seed=None: session,
     )
     adapter = HeadlessGameAdapter(catalog)
 

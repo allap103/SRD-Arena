@@ -60,6 +60,7 @@ def test_seeded_dice_are_isolated_and_restartable() -> None:
     opening = tuple(first.roll_die(20) for _ in range(5))
     restarted = first.restarted()
 
+    assert first.seed == 42
     assert tuple(same_seed.roll_die(20) for _ in range(5)) == opening
     assert tuple(restarted.roll_die(20) for _ in range(5)) == opening
 

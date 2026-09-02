@@ -107,6 +107,25 @@ def test_restart_rewinds_seeded_encounter_randomness() -> None:
     assert random_signature() == first_run
 
 
+def test_reset_can_replace_and_then_replay_the_session_seed() -> None:
+    encounter = EncounterCatalog().load_encounter(FULL_CONTROL_ENCOUNTER_DIR.name)
+    session = Session(encounter, seed=41)
+
+    first_observation = session.observe()
+    assert first_observation.encounter is not None
+    assert session.seed == 41
+
+    reseeded_observation = session.reset(seed=42)
+    assert reseeded_observation.encounter is not None
+    reseeded_initiative = reseeded_observation.encounter.initiative
+    assert session.seed == 42
+
+    replayed_observation = session.reset()
+    assert replayed_observation.encounter is not None
+    assert replayed_observation.encounter.initiative == reseeded_initiative
+    assert session.seed == 42
+
+
 def test_session_rejects_stale_commands_before_execution() -> None:
     session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
     observation = session.observe()

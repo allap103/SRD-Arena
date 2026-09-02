@@ -2,7 +2,6 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
 from dataclasses import dataclass, field
 from random import Random
 
@@ -19,11 +18,17 @@ class DiceRoller:
     """
 
     die_roller: DieRoller = roll_die
-    _restart: Callable[[], DiceRoller] | None = field(
+    _seed: int | None = field(
         default=None,
         repr=False,
         compare=False,
     )
+
+    @property
+    def seed(self) -> int | None:
+        """Return the reproducibility seed owned by this roller, if any."""
+
+        return self._seed
 
     @classmethod
     def seeded(cls, seed: int) -> DiceRoller:
@@ -42,7 +47,7 @@ class DiceRoller:
         generator = Random(seed)
         return cls(
             die_roller=lambda sides: generator.randint(1, sides),
-            _restart=lambda: cls.seeded(seed),
+            _seed=seed,
         )
 
     def roll_die(self, sides: int) -> int:
@@ -66,4 +71,4 @@ class DiceRoller:
         True
         """
 
-        return self._restart() if self._restart is not None else self
+        return type(self).seeded(self._seed) if self._seed is not None else self

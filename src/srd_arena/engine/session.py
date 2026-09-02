@@ -45,7 +45,11 @@ class Session:
         self,
         encounter: EncounterDefinition,
         dice: DiceRoller | None = None,
+        *,
+        seed: int | None = None,
     ):
+        if dice is not None and seed is not None:
+            raise ValueError("Provide either dice or seed, not both.")
         self.encounter = encounter
         self.creature_templates = {
             creature.id: creature for creature in encounter.creatures
@@ -54,7 +58,9 @@ class Session:
         self._initial_creature_templates = deepcopy(self.creature_templates)
         self.geometry_config = encounter.geometry_config
         self.encounter_orchestrator = EncounterOrchestrator()
-        self._dice = dice or DiceRoller()
+        self._dice = dice or (
+            DiceRoller.seeded(seed) if seed is not None else DiceRoller()
+        )
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_encounter_completion: PendingEncounterCompletion | None = None
@@ -135,11 +141,18 @@ class Session:
             return self._choose_encounter(action_id)
         raise RuntimeError("No encounter is active.")
 
-    def reset(self) -> GameObservation:
+    @property
+    def seed(self) -> int | None:
+        """Return the seed governing this session's random stream, if any."""
+
+        return self._dice.seed
+
+    def reset(self, *, seed: int | None = None) -> GameObservation:
         """Restore the session to its initially loaded content and scene.
 
         A seeded session also rewinds its private dice stream, so repeating the
-        same decisions after reset produces the same random outcomes.
+        same decisions after reset produces the same random outcomes. Supplying
+        a new seed starts and owns that reproducible stream instead.
 
         >>> from srd_arena.domain.geometry import Grid
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
@@ -150,7 +163,7 @@ class Session:
         >>> session.encounter_state is None
         True
         """
-        self._restore_initial_state()
+        self._restore_initial_state(seed=seed)
         return self.observe()
 
     def _exit_game(self) -> EngineOutcome:
@@ -333,12 +346,14 @@ class Session:
             selected_action_id="system-restart-encounter",
         )
 
-    def _restore_initial_state(self) -> None:
+    def _restore_initial_state(self, *, seed: int | None = None) -> None:
         self.creature_templates = deepcopy(self._initial_creature_templates)
         self.pending_encounter_completion = None
         self.encounter_state = None
         self._encounter_actions = []
-        self._dice = self._dice.restarted()
+        self._dice = (
+            DiceRoller.seeded(seed) if seed is not None else self._dice.restarted()
+        )
 
     def _complete_encounter(self) -> None:
         self.pending_encounter_completion = PendingEncounterCompletion(
