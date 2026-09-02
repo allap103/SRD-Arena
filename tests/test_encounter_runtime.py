@@ -12,12 +12,14 @@ from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import (
     load_spell_catalog,
 )
+from srd_arena.domain.encounters.participants import creature_team_id
 from srd_arena.domain.encounters.state_initialization import (
     initialize_action_selectors,
 )
 from srd_arena.engine.observations import (
     ActionObservation,
     ActionReasonObservation,
+    EncounterTerminationReason,
     observe_session,
 )
 from srd_arena.engine.queries import (
@@ -905,6 +907,11 @@ def test_completed_encounter_waits_for_restart() -> None:
     for creature_ref, creature_state in session.encounter_state.creatures.items():
         if creature_ref != session.encounter_state.current_decision().creature_ref:
             creature_state.creature.current_health = 0
+    winning_creature_ref = session.encounter_state.current_decision().creature_ref
+    expected_winning_team_id = creature_team_id(
+        session.encounter_state,
+        winning_creature_ref,
+    )
 
     wait_index = _action_id_by_label(session, "Wait")
     result = session.choose(wait_index)
@@ -921,6 +928,10 @@ def test_completed_encounter_waits_for_restart() -> None:
     assert encounter_read.action_options[0].id == "system-restart-encounter"
     observation = observe_session(session)
     assert observation.completion is not None
+    assert (
+        observation.completion.reason is EncounterTerminationReason.LAST_TEAM_STANDING
+    )
+    assert observation.completion.winning_team_id == expected_winning_team_id
     presentation = build_session_presentation(observation)
     assert presentation.encounter is not None
     assert presentation.encounter.restart_action is not None

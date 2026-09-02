@@ -12,6 +12,8 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
 )
 from srd_arena.domain.encounters.encounter import EncounterState
 
+from .observation_models import EncounterTerminationReason
+
 EXIT_CHOICE_TEXT = "Exit game"
 RESTART_CHOICE_TEXT = "Restart encounter"
 
@@ -174,6 +176,8 @@ class SessionRead:
     creature_team_ids: Mapping[str, str]
     item_names: Mapping[str, str]
     requires_automatic_advance: bool
+    completion_reason: EncounterTerminationReason | None = None
+    winning_team_id: str | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(

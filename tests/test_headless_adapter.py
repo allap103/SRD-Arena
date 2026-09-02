@@ -6,10 +6,16 @@ from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
+    EncounterCompletionObservation,
+    EncounterTerminationReason,
     GameObservation,
     SceneObservation,
 )
-from srd_arena.frontends.headless import HeadlessGameAdapter
+from srd_arena.frontends.headless import (
+    EpisodeState,
+    EpisodeTruncationReason,
+    HeadlessGameAdapter,
+)
 
 ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 
@@ -59,6 +65,64 @@ def test_headless_adapter_owns_and_replaces_the_episode_seed() -> None:
     assert replayed.encounter is not None
     assert replayed.encounter.initiative == reseeded_initiative
     assert adapter.seed == 42
+
+
+def test_headless_adapter_reports_and_clears_explicit_truncation() -> None:
+    adapter = _adapter()
+    observation = adapter.start_encounter("full_control_showcase")
+    assert observation.encounter is not None
+    wait = next(
+        action for action in adapter.available_actions() if action.kind == "wait"
+    )
+
+    status = adapter.truncate(EpisodeTruncationReason.STEP_LIMIT)
+    rejected = adapter.select_action(
+        wait.id,
+        expected_decision_id=observation.encounter.decision.id,
+    )
+
+    assert status.state is EpisodeState.TRUNCATED
+    assert status.truncated is True
+    assert status.terminated is False
+    assert status.truncation_reason is EpisodeTruncationReason.STEP_LIMIT
+    assert status.winning_team_id is None
+    assert adapter.available_actions() == ()
+    assert rejected.failure is not None
+    assert rejected.failure.code == "episode_truncated"
+
+    adapter.reset()
+
+    assert adapter.episode_status().state is EpisodeState.ACTIVE
+
+
+def test_headless_adapter_reports_rules_driven_termination() -> None:
+    from unittest.mock import Mock
+
+    completion = EncounterCompletionObservation(
+        message="Encounter complete",
+        reason=EncounterTerminationReason.LAST_TEAM_STANDING,
+        winning_team_id="heroes",
+    )
+    observation = GameObservation(
+        SceneObservation("fight", ()),
+        None,
+        completion,
+        False,
+    )
+    session = Mock()
+    session.observe.return_value = observation
+    adapter = HeadlessGameAdapter(Mock())
+    adapter._session = session
+
+    status = adapter.episode_status()
+
+    assert status.state is EpisodeState.TERMINATED
+    assert status.terminated is True
+    assert status.truncated is False
+    assert status.termination_reason is EncounterTerminationReason.LAST_TEAM_STANDING
+    assert status.winning_team_id == "heroes"
+    with pytest.raises(RuntimeError, match="cannot be truncated"):
+        adapter.truncate(EpisodeTruncationReason.TURN_LIMIT)
 
 
 def test_headless_adapter_preserves_stale_decision_protection() -> None:

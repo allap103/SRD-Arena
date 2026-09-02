@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Literal
 
 from .values import EngineValue, freeze_mapping
+
+
+class EncounterTerminationReason(StrEnum):
+    """Rules-driven reason an encounter reached a terminal state."""
+
+    LAST_TEAM_STANDING = "last_team_standing"
+    ALL_TEAMS_DEFEATED = "all_teams_defeated"
 
 
 @dataclass(frozen=True)
@@ -158,6 +166,28 @@ class InventoryItemObservation:
 
 
 @dataclass(frozen=True)
+class ResourcePoolObservation:
+    """State and recovery metadata for one non-slot combat resource."""
+
+    id: str
+    source_id: str
+    kind: str
+    remaining: int
+    maximum: int
+    refresh: tuple[str, ...] = ()
+    recharge_die_sides: int | None = None
+    recharge_minimum: int | None = None
+
+
+@dataclass(frozen=True)
+class CreatureDefenseObservation:
+    """Effective typed defenses currently supported by combat resolution."""
+
+    condition_immunities: tuple[str, ...] = ()
+    damage_resistances: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class CreatureObservation:
     """Frontend-neutral snapshot of one encounter combatant."""
 
@@ -186,6 +216,13 @@ class CreatureObservation:
     armor_class: int
     attributes: AttributeObservation
     inventory: tuple[InventoryItemObservation, ...]
+    temporary_hit_points: int = 0
+    creature_type: str | None = None
+    type_tags: tuple[str, ...] = ()
+    size: str = "M"
+    occupied_cells: tuple[PositionObservation, ...] = ()
+    resource_pools: tuple[ResourcePoolObservation, ...] = ()
+    defenses: CreatureDefenseObservation = CreatureDefenseObservation()
 
 
 @dataclass(frozen=True)
@@ -198,6 +235,17 @@ class OngoingEffectObservation:
     definition_id: str
     target_refs: tuple[str, ...]
     label: str
+
+
+@dataclass(frozen=True)
+class CreatureRelationshipObservation:
+    """Source and target of one directional encounter relationship."""
+
+    id: str
+    kind: str
+    source_ref: str
+    target_ref: str
+    source_definition_id: str
 
 
 @dataclass(frozen=True)
@@ -244,6 +292,7 @@ class EncounterObservation:
     ongoing_effects: tuple[OngoingEffectObservation, ...]
     team_ids: tuple[str, ...]
     targeting: TargetingObservation | None
+    relationships: tuple[CreatureRelationshipObservation, ...] = ()
 
     def creature(self, creature_ref: str) -> CreatureObservation:
         """Return a combatant by its stable encounter reference.
@@ -268,9 +317,11 @@ class EncounterObservation:
 
 @dataclass(frozen=True)
 class EncounterCompletionObservation:
-    """Message presented after the encounter has been completed."""
+    """Describe a rules-driven terminal encounter state to a client."""
 
     message: str
+    reason: EncounterTerminationReason
+    winning_team_id: str | None
 
 
 @dataclass(frozen=True)

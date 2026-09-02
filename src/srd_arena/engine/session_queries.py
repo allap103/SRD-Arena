@@ -37,9 +37,12 @@ def read_session(session: Session) -> SessionRead:
     A completed encounter advertises only Restart and system-level choices.
 
     >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.api import EncounterTerminationReason
     >>> session = SimpleNamespace(
     ...     pending_encounter_completion=SimpleNamespace(
-    ...         message="Encounter complete"
+    ...         message="Encounter complete",
+    ...         reason=EncounterTerminationReason.LAST_TEAM_STANDING,
+    ...         winning_team_id="heroes",
     ...     ),
     ...     encounter_state=None,
     ...     encounter=SimpleNamespace(id="demo", teams=[]),
@@ -139,6 +142,16 @@ def _session_read(
             completion_message is None
             and state is not None
             and state.requires_automatic_advance()
+        ),
+        completion_reason=(
+            session.pending_encounter_completion.reason
+            if session.pending_encounter_completion is not None
+            else None
+        ),
+        winning_team_id=(
+            session.pending_encounter_completion.winning_team_id
+            if session.pending_encounter_completion is not None
+            else None
         ),
     )
 

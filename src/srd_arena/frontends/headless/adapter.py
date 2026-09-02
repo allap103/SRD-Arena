@@ -3,17 +3,90 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from enum import StrEnum
 
 from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     ActionObservation,
+    CommandFailure,
     CommandResult,
+    EncounterTerminationReason,
     GameCommand,
     GameObservation,
     GameUpdate,
     SelectAction,
     Session,
 )
+
+
+class EpisodeState(StrEnum):
+    """Lifecycle state of one headless encounter episode."""
+
+    ACTIVE = "active"
+    TERMINATED = "terminated"
+    TRUNCATED = "truncated"
+
+
+class EpisodeTruncationReason(StrEnum):
+    """Non-rules reason a headless episode stopped before combat ended."""
+
+    STEP_LIMIT = "step_limit"
+    TURN_LIMIT = "turn_limit"
+
+
+@dataclass(frozen=True)
+class EpisodeStatus:
+    """Report whether an episode is active, terminated, or truncated.
+
+    Rules determine termination and its winner. The environment imposing a
+    training limit determines truncation, which never invents a combat winner.
+
+    >>> EpisodeStatus(EpisodeState.ACTIVE).terminated
+    False
+    >>> EpisodeStatus(
+    ...     EpisodeState.TRUNCATED,
+    ...     truncation_reason=EpisodeTruncationReason.STEP_LIMIT,
+    ... ).truncated
+    True
+    """
+
+    state: EpisodeState
+    termination_reason: EncounterTerminationReason | None = None
+    truncation_reason: EpisodeTruncationReason | None = None
+    winning_team_id: str | None = None
+
+    def __post_init__(self) -> None:
+        if self.state is EpisodeState.ACTIVE and any(
+            value is not None
+            for value in (
+                self.termination_reason,
+                self.truncation_reason,
+                self.winning_team_id,
+            )
+        ):
+            raise ValueError("An active episode cannot have an outcome.")
+        if self.state is EpisodeState.TERMINATED and (
+            self.termination_reason is None or self.truncation_reason is not None
+        ):
+            raise ValueError("A terminated episode requires only a termination reason.")
+        if self.state is EpisodeState.TRUNCATED and (
+            self.truncation_reason is None
+            or self.termination_reason is not None
+            or self.winning_team_id is not None
+        ):
+            raise ValueError("A truncated episode requires only a truncation reason.")
+
+    @property
+    def terminated(self) -> bool:
+        """Return whether combat rules ended the encounter."""
+
+        return self.state is EpisodeState.TERMINATED
+
+    @property
+    def truncated(self) -> bool:
+        """Return whether an environment limit stopped the episode."""
+
+        return self.state is EpisodeState.TRUNCATED
 
 
 @dataclass(frozen=True)
@@ -34,6 +107,11 @@ class HeadlessGameAdapter:
 
     catalog: EncounterCatalog
     _session: Session | None = field(default=None, init=False, repr=False)
+    _truncation_reason: EpisodeTruncationReason | None = field(
+        default=None,
+        init=False,
+        repr=False,
+    )
 
     def available_encounters(self) -> tuple[EncounterOption, ...]:
         """Return selectable encounters without exposing filesystem paths.
@@ -86,6 +164,7 @@ class HeadlessGameAdapter:
         session = Session(self.catalog.load_encounter(summary.id), seed=seed)
         observation = session.observe()
         self._session = session
+        self._truncation_reason = None
         return observation
 
     def observe(self) -> GameObservation:
@@ -129,6 +208,8 @@ class HeadlessGameAdapter:
         ('dodge',)
         """
 
+        if self._truncation_reason is not None:
+            return ()
         return tuple(
             action
             for action in self.observe().scene.action_details
@@ -192,6 +273,13 @@ class HeadlessGameAdapter:
         True
         """
 
+        if self._truncation_reason is not None:
+            return CommandResult(
+                failure=CommandFailure(
+                    code="episode_truncated",
+                    message="Reset the episode before submitting another command.",
+                )
+            )
         return self._require_session().execute(command)
 
     def advance_until_input_required(self) -> GameUpdate:
@@ -207,6 +295,7 @@ class HeadlessGameAdapter:
         True
         """
 
+        self._require_active_episode()
         return self._require_session().advance_until_input_required()
 
     def advance_one_automatic_action(self) -> GameUpdate:
@@ -222,6 +311,7 @@ class HeadlessGameAdapter:
         True
         """
 
+        self._require_active_episode()
         return self._require_session().advance_one_automatic_action()
 
     @property
@@ -246,7 +336,43 @@ class HeadlessGameAdapter:
         'intro'
         """
 
-        return self._require_session().reset(seed=seed)
+        observation = self._require_session().reset(seed=seed)
+        self._truncation_reason = None
+        return observation
+
+    def episode_status(self) -> EpisodeStatus:
+        """Return a typed episode outcome without interpreting display text."""
+
+        completion = self.observe().completion
+        if completion is not None:
+            return EpisodeStatus(
+                state=EpisodeState.TERMINATED,
+                termination_reason=completion.reason,
+                winning_team_id=completion.winning_team_id,
+            )
+        if self._truncation_reason is not None:
+            return EpisodeStatus(
+                state=EpisodeState.TRUNCATED,
+                truncation_reason=self._truncation_reason,
+            )
+        return EpisodeStatus(state=EpisodeState.ACTIVE)
+
+    def truncate(self, reason: EpisodeTruncationReason) -> EpisodeStatus:
+        """Stop an active episode for an environment-imposed limit.
+
+        Truncation is deliberately explicit: the combat engine never guesses a
+        training horizon or treats it as a rules-driven victory.
+        """
+
+        status = self.episode_status()
+        if status.terminated:
+            raise RuntimeError("A terminated encounter cannot be truncated.")
+        self._truncation_reason = reason
+        return self.episode_status()
+
+    def _require_active_episode(self) -> None:
+        if self._truncation_reason is not None:
+            raise RuntimeError("Reset the truncated episode before advancing it.")
 
     def _require_session(self) -> Session:
         if self._session is None:

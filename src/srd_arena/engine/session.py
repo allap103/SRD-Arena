@@ -7,6 +7,7 @@ from dataclasses import dataclass
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
+from srd_arena.domain.encounters.turn_lifecycle import surviving_team_ids
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.action_configuration import (
     configure_action as configure_engine_action,
@@ -14,7 +15,11 @@ from srd_arena.engine.action_configuration import (
 from srd_arena.engine.commands import CommandResult, GameCommand, GameUpdate
 from srd_arena.engine.interactions import execute_game_command, game_update
 from srd_arena.engine.models import EngineOutcome
-from srd_arena.engine.observations import GameObservation, observe_session
+from srd_arena.engine.observations import (
+    EncounterTerminationReason,
+    GameObservation,
+    observe_session,
+)
 from srd_arena.engine.queries import (
     EXIT_CHOICE_TEXT,
     RESTART_CHOICE_TEXT,
@@ -29,6 +34,8 @@ class PendingEncounterCompletion:
     """Hold a completed encounter until the client chooses what to do next."""
 
     message: str
+    reason: EncounterTerminationReason = EncounterTerminationReason.LAST_TEAM_STANDING
+    winning_team_id: str | None = None
 
 
 class Session:
@@ -356,8 +363,17 @@ class Session:
         )
 
     def _complete_encounter(self) -> None:
+        if self.encounter_state is None:
+            raise RuntimeError("Cannot complete an encounter before it has started.")
+        surviving_teams = surviving_team_ids(self.encounter_state)
         self.pending_encounter_completion = PendingEncounterCompletion(
-            message="Encounter complete"
+            message="Encounter complete",
+            reason=(
+                EncounterTerminationReason.LAST_TEAM_STANDING
+                if surviving_teams
+                else EncounterTerminationReason.ALL_TEAMS_DEFEATED
+            ),
+            winning_team_id=(surviving_teams[0] if surviving_teams else None),
         )
         self._encounter_actions = []
 

@@ -74,12 +74,38 @@ def encounter_is_complete(state: EncounterState) -> bool:
     configured_teams = {
         creature_team_id(state, creature_ref) for creature_ref in state.creatures
     }
-    living_teams = {
-        creature_team_id(state, creature_ref)
-        for creature_ref, creature_state in state.creatures.items()
-        if creature_state.is_alive
-    }
+    living_teams = surviving_team_ids(state)
     return len(configured_teams) > 1 and len(living_teams) <= 1
+
+
+def surviving_team_ids(state: EncounterState) -> tuple[str, ...]:
+    """Return configured team IDs that still have a living combatant.
+
+    Team order follows the encounter's creature order so callers receive a
+    deterministic result without needing to inspect mutable combat state.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> state = SimpleNamespace(creatures={
+    ...     "hero": SimpleNamespace(is_alive=True),
+    ...     "goblin": SimpleNamespace(is_alive=False),
+    ... })
+    >>> teams = {"hero": "heroes", "goblin": "foes"}
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.turn_lifecycle.creature_team_id",
+    ...     side_effect=lambda _state, ref: teams[ref],
+    ... ):
+    ...     surviving_team_ids(state)
+    ('heroes',)
+    """
+
+    return tuple(
+        dict.fromkeys(
+            creature_team_id(state, creature_ref)
+            for creature_ref, creature_state in state.creatures.items()
+            if creature_state.is_alive
+        )
+    )
 
 
 def advance_turn(
