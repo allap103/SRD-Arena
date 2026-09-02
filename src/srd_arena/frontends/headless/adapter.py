@@ -90,6 +90,58 @@ class EpisodeStatus:
 
 
 @dataclass(frozen=True)
+class NumericActionSlot:
+    """Bind one decision-local numeric index to a semantic engine action."""
+
+    index: int
+    action_id: str
+    label: str
+    kind: str
+
+
+@dataclass(frozen=True)
+class DecisionActionMap:
+    """Describe the deterministic numerical choices for one engine decision.
+
+    Indices are stable for the lifetime of the decision ID. Consumers submit
+    that identifier with a numerical choice so an index observed for an earlier
+    decision cannot accidentally select an action in a later one.
+    """
+
+    decision_id: str
+    slots: tuple[NumericActionSlot, ...]
+    legal_action_mask: tuple[bool, ...]
+
+    def __post_init__(self) -> None:
+        """Reject maps whose slots and mask cannot be interpreted in parallel."""
+
+        if len(self.slots) != len(self.legal_action_mask):
+            raise ValueError("Action slots and the legal-action mask must align.")
+        if any(slot.index != index for index, slot in enumerate(self.slots)):
+            raise ValueError("Action-slot indices must be contiguous and ordered.")
+
+    @property
+    def legal_indices(self) -> tuple[int, ...]:
+        """Return the numeric indices currently accepted by the adapter.
+
+        >>> action_map = DecisionActionMap(
+        ...     decision_id="turn:1",
+        ...     slots=(
+        ...         NumericActionSlot(0, "wait", "Wait", "action"),
+        ...         NumericActionSlot(1, "attack", "Attack", "action"),
+        ...     ),
+        ...     legal_action_mask=(False, True),
+        ... )
+        >>> action_map.legal_indices
+        (1,)
+        """
+
+        return tuple(
+            index for index, legal in enumerate(self.legal_action_mask) if legal
+        )
+
+
+@dataclass(frozen=True)
 class EncounterOption:
     """An encounter exposed to a headless controller by stable ID."""
 
@@ -232,6 +284,94 @@ class HeadlessGameAdapter:
         """
 
         return tuple(action.id for action in self.available_actions())
+
+    def decision_action_map(self) -> DecisionActionMap:
+        """Return a deterministic numeric map and mask for the current decision.
+
+        The map includes unavailable and unimplemented gameplay options so a
+        controller can distinguish an illegal choice from an absent one. System
+        controls such as restart and exit are deliberately not policy actions.
+        """
+
+        observation = self.observe()
+        if observation.encounter is None:
+            raise RuntimeError("No encounter decision is currently available.")
+        actions = tuple(
+            sorted(
+                (
+                    action
+                    for action in observation.scene.action_details
+                    if not action.kind.startswith("system_")
+                ),
+                key=lambda action: action.id,
+            )
+        )
+        slots = tuple(
+            NumericActionSlot(
+                index=index,
+                action_id=action.id,
+                label=action.label,
+                kind=action.kind,
+            )
+            for index, action in enumerate(actions)
+        )
+        accepts_actions = (
+            observation.completion is None and self._truncation_reason is None
+        )
+        legal_action_mask = tuple(
+            accepts_actions and action.enabled and action.availability == "available"
+            for action in actions
+        )
+        return DecisionActionMap(
+            decision_id=observation.encounter.decision.id,
+            slots=slots,
+            legal_action_mask=legal_action_mask,
+        )
+
+    def select_action_index(
+        self,
+        action_index: int,
+        *,
+        expected_decision_id: str,
+    ) -> CommandResult:
+        """Submit a legal numerical choice from an observed decision map."""
+
+        if self._truncation_reason is not None:
+            return CommandResult(
+                failure=CommandFailure(
+                    code="episode_truncated",
+                    message="Reset the episode before submitting another command.",
+                )
+            )
+        action_map = self.decision_action_map()
+        if action_map.decision_id != expected_decision_id:
+            return CommandResult(
+                failure=CommandFailure(
+                    code="stale_decision",
+                    message=(
+                        f"Decision '{expected_decision_id}' is stale; "
+                        f"the current decision is '{action_map.decision_id}'."
+                    ),
+                )
+            )
+        if not 0 <= action_index < len(action_map.slots):
+            return CommandResult(
+                failure=CommandFailure(
+                    code="invalid_action_index",
+                    message=f"Action index {action_index} is outside the current map.",
+                )
+            )
+        if not action_map.legal_action_mask[action_index]:
+            return CommandResult(
+                failure=CommandFailure(
+                    code="action_unavailable",
+                    message=f"Action index {action_index} is not currently legal.",
+                )
+            )
+        return self.select_action(
+            action_map.slots[action_index].action_id,
+            expected_decision_id=expected_decision_id,
+        )
 
     def select_action(
         self,

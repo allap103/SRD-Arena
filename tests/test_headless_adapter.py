@@ -49,6 +49,47 @@ def test_headless_adapter_drives_game_by_stable_ids() -> None:
     assert result.update.observation.encounter is not None
 
 
+def test_headless_adapter_maps_numeric_actions_to_stable_ids() -> None:
+    adapter = _adapter()
+    observation = adapter.start_encounter("full_control_showcase")
+    assert observation.encounter is not None
+
+    action_map = adapter.decision_action_map()
+    wait_slot = next(slot for slot in action_map.slots if slot.kind == "wait")
+    result = adapter.select_action_index(
+        wait_slot.index,
+        expected_decision_id=action_map.decision_id,
+    )
+
+    assert tuple(slot.index for slot in action_map.slots) == tuple(
+        range(len(action_map.slots))
+    )
+    assert tuple(slot.action_id for slot in action_map.slots) == tuple(
+        sorted(slot.action_id for slot in action_map.slots)
+    )
+    assert all(not slot.kind.startswith("system_") for slot in action_map.slots)
+    assert action_map.legal_action_mask[wait_slot.index] is True
+    assert result.accepted is True
+    assert result.update is not None
+    assert result.update.selected_action_id == wait_slot.action_id
+
+
+def test_numeric_action_selection_rejects_a_stale_decision() -> None:
+    adapter = _adapter()
+    observation = adapter.start_encounter("full_control_showcase")
+    assert observation.encounter is not None
+    action_map = adapter.decision_action_map()
+    wait_slot = next(slot for slot in action_map.slots if slot.kind == "wait")
+
+    stale = adapter.select_action_index(
+        wait_slot.index,
+        expected_decision_id="earlier-decision",
+    )
+
+    assert stale.failure is not None
+    assert stale.failure.code == "stale_decision"
+
+
 def test_headless_adapter_owns_and_replaces_the_episode_seed() -> None:
     adapter = _adapter()
 
@@ -177,9 +218,11 @@ def test_headless_observation_preserves_unimplemented_action_reason(
             ),
         ),
     )
+    encounter = Mock()
+    encounter.decision.id = "turn:1"
     observation = GameObservation(
         SceneObservation("fight", (unsupported,)),
-        None,
+        encounter,
         None,
         False,
     )
@@ -197,3 +240,52 @@ def test_headless_observation_preserves_unimplemented_action_reason(
 
     assert observed.scene.action_details[0].reasons == unsupported.reasons
     assert adapter.available_actions() == ()
+    action_map = adapter.decision_action_map()
+    assert tuple(slot.action_id for slot in action_map.slots) == ("animate-objects",)
+    assert action_map.legal_action_mask == (False,)
+
+
+def test_numeric_action_selection_rejects_an_illegal_or_unknown_index(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from unittest.mock import Mock
+
+    unavailable = ActionObservation(
+        "dash",
+        "Dash",
+        "action",
+        "hero",
+        availability="unavailable",
+    )
+    encounter = Mock()
+    encounter.decision.id = "turn:1"
+    observation = GameObservation(
+        SceneObservation("fight", (unavailable,)),
+        encounter,
+        None,
+        False,
+    )
+    catalog, session = Mock(), Mock()
+    catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+    catalog.load_encounter.return_value = Mock()
+    session.observe.return_value = observation
+    monkeypatch.setattr(
+        "srd_arena.frontends.headless.adapter.Session",
+        lambda _encounter, *, seed=None: session,
+    )
+    adapter = HeadlessGameAdapter(catalog)
+    adapter.start_encounter("demo")
+
+    unavailable_result = adapter.select_action_index(
+        0,
+        expected_decision_id="turn:1",
+    )
+    unknown_result = adapter.select_action_index(
+        1,
+        expected_decision_id="turn:1",
+    )
+
+    assert unavailable_result.failure is not None
+    assert unavailable_result.failure.code == "action_unavailable"
+    assert unknown_result.failure is not None
+    assert unknown_result.failure.code == "invalid_action_index"
