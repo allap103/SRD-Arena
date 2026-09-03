@@ -1,0 +1,196 @@
+{
+  "id": "barbarian",
+  "name": "Canonical Barbarian",
+  "species": {"name": "Human", "source": "XPHB"},
+  "background": {"name": "Soldier", "source": "XPHB"},
+  "class_ref": {"name": "Barbarian", "source": "XPHB"},
+  "snapshots": [
+    {
+      "level": 1,
+      "feats": [
+        {"name": "Savage Attacker", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "weapon_masteries": ["Maul", "Javelin"],
+      "creature": {
+        "id": "canonical_barbarian",
+        "name": "Canonical Barbarian",
+        "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
+        "token_image": "tokens/human-bear_barbarian.png",
+        "attributes": {
+          "base_health": 12,
+          "level": 1,
+          "strength": 16,
+          "dexterity": 16,
+          "constitution": 16,
+          "wisdom": 8,
+          "intelligence": 8,
+          "charisma": 8,
+          "base_armor_class": 13
+        },
+        "inventory": [
+          {"name": "Maul", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"}
+        ],
+        "equipment": {
+          "right_hand": {"name": "Maul", "source": "XPHB"},
+          "left_hand": {"name": "Javelin", "source": "XPHB"}
+        }
+      }
+    },
+    {
+      "level": 2,
+      "feats": [
+        {"name": "Savage Attacker", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "weapon_masteries": ["Maul", "Javelin"],
+      "creature": {
+        "id": "canonical_barbarian",
+        "name": "Canonical Barbarian",
+        "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
+        "token_image": "tokens/human-bear_barbarian.png",
+        "attributes": {
+          "base_health": 19,
+          "level": 2,
+          "strength": 16,
+          "dexterity": 16,
+          "constitution": 16,
+          "wisdom": 8,
+          "intelligence": 8,
+          "charisma": 8,
+          "base_armor_class": 13
+        },
+        "inventory": [
+          {"name": "Maul", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"}
+        ],
+        "equipment": {
+          "right_hand": {"name": "Maul", "source": "XPHB"},
+          "left_hand": {"name": "Javelin", "source": "XPHB"}
+        }
+      }
+    },
+    {
+      "level": 3,
+      "subclass_ref": {"name": "Path of the Berserker", "source": "XPHB"},
+      "feats": [
+        {"name": "Savage Attacker", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "weapon_masteries": ["Maul", "Javelin"],
+      "deferred_options": ["skill:primal_knowledge"],
+      "creature": {
+        "id": "canonical_barbarian",
+        "name": "Canonical Barbarian",
+        "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
+        "token_image": "tokens/human-bear_barbarian.png",
+        "attributes": {
+          "base_health": 26,
+          "level": 3,
+          "strength": 16,
+          "dexterity": 16,
+          "constitution": 16,
+          "wisdom": 8,
+          "intelligence": 8,
+          "charisma": 8,
+          "base_armor_class": 13
+        },
+        "inventory": [
+          {"name": "Maul", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"}
+        ],
+        "equipment": {
+          "right_hand": {"name": "Maul", "source": "XPHB"},
+          "left_hand": {"name": "Javelin", "source": "XPHB"}
+        }
+      }
+    },
+    {
+      "level": 4,
+      "subclass_ref": {"name": "Path of the Berserker", "source": "XPHB"},
+      "feats": [
+        {"name": "Savage Attacker", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "weapon_masteries": ["Maul", "Javelin", "Greatsword"],
+      "deferred_options": ["skill:primal_knowledge"],
+      "creature": {
+        "id": "canonical_barbarian",
+        "name": "Canonical Barbarian",
+        "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
+        "token_image": "tokens/human-bear_barbarian.png",
+        "attributes": {
+          "base_health": 33,
+          "level": 4,
+          "strength": 18,
+          "dexterity": 16,
+          "constitution": 16,
+          "wisdom": 8,
+          "intelligence": 8,
+          "charisma": 8,
+          "base_armor_class": 13
+        },
+        "inventory": [
+          {"name": "Maul", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"}
+        ],
+        "equipment": {
+          "right_hand": {"name": "Maul", "source": "XPHB"},
+          "left_hand": {"name": "Javelin", "source": "XPHB"}
+        }
+      }
+    },
+    {
+      "level": 5,
+      "subclass_ref": {"name": "Path of the Berserker", "source": "XPHB"},
+      "feats": [
+        {"name": "Savage Attacker", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "weapon_masteries": ["Maul", "Javelin", "Greatsword"],
+      "deferred_options": ["skill:primal_knowledge"],
+      "creature": {
+        "id": "canonical_barbarian",
+        "name": "Canonical Barbarian",
+        "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
+        "token_image": "tokens/human-bear_barbarian.png",
+        "attributes": {
+          "base_health": 40,
+          "level": 5,
+          "movement": {"speed_feet": 40},
+          "strength": 18,
+          "dexterity": 16,
+          "constitution": 16,
+          "wisdom": 8,
+          "intelligence": 8,
+          "charisma": 8,
+          "base_armor_class": 13
+        },
+        "inventory": [
+          {"name": "Maul", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"},
+          {"name": "Javelin", "source": "XPHB"}
+        ],
+        "equipment": {
+          "right_hand": {"name": "Maul", "source": "XPHB"},
+          "left_hand": {"name": "Javelin", "source": "XPHB"}
+        }
+      }
+    }
+  ]
+}

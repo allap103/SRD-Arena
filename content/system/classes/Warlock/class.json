@@ -1,0 +1,19 @@
+{
+  "name": "Warlock",
+  "source": "XPHB",
+  "proficiency": ["wis", "cha"],
+  "startingProficiencies": {
+    "weapons": ["simple"]
+  },
+  "spellcastingAbility": "cha",
+  "casterProgression": "pact",
+  "cantripProgression": [2, 2, 2, 3, 3],
+  "spellsKnownProgression": [2, 3, 4, 5, 6],
+  "classFeatures": [
+    "Eldritch Invocations|Warlock|XPHB|1",
+    "Pact Magic|Warlock|XPHB|1",
+    "Magical Cunning|Warlock|XPHB|2",
+    "Warlock Subclass|Warlock|XPHB|3",
+    "Ability Score Improvement|Warlock|XPHB|4"
+  ]
+}

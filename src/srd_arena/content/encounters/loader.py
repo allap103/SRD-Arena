@@ -10,6 +10,7 @@ from srd_arena.content.character_options.classes import (
 from srd_arena.content.common.sources import load_json
 from srd_arena.content.creatures import (
     BestiaryCatalog,
+    CharacterSnapshotCatalog,
     CreatureSchema,
     PlayerCharacterTemplates,
     build_creature,
@@ -99,6 +100,7 @@ def load_encounter_file(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> LoadedEncounter:
     """Validate one encounter file and build all referenced domain objects.
 
@@ -145,6 +147,7 @@ def load_encounter_file(
                 player_characters,
                 optional_features,
                 spells,
+                character_snapshots,
             )
             for creature in schema.creatures
         ),

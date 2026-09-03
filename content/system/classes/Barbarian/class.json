@@ -1,0 +1,20 @@
+{
+  "name": "Barbarian",
+  "source": "XPHB",
+  "proficiency": ["str", "con"],
+  "startingProficiencies": {
+    "weapons": ["simple", "martial"]
+  },
+  "classFeatures": [
+    "Rage|Barbarian|XPHB|1",
+    "Unarmored Defense|Barbarian|XPHB|1",
+    "Weapon Mastery|Barbarian|XPHB|1",
+    "Danger Sense|Barbarian|XPHB|2",
+    "Reckless Attack|Barbarian|XPHB|2",
+    "Barbarian Subclass|Barbarian|XPHB|3",
+    "Primal Knowledge|Barbarian|XPHB|3",
+    "Ability Score Improvement|Barbarian|XPHB|4",
+    "Extra Attack|Barbarian|XPHB|5",
+    "Fast Movement|Barbarian|XPHB|5"
+  ]
+}

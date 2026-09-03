@@ -28,6 +28,7 @@ from .character_options import (
     resolve_class_features,
     resolve_optional_feature_effects,
 )
+from .character_snapshots import CharacterSnapshotCatalog, build_character_profile
 from .features import build_combat_profile, build_feature_uses_remaining
 from .player_characters import PlayerCharacterTemplates
 from .schema import CreatureItemReferenceSchema, CreatureSchema
@@ -43,6 +44,7 @@ def load_creature(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> Creature:
     """Validate one creature document and translate it with the supplied catalogs.
 
@@ -63,6 +65,7 @@ def load_creature(
         player_characters,
         optional_features,
         spells,
+        character_snapshots,
     )
 
 
@@ -73,6 +76,7 @@ def build_creature(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> Creature:
     """Assemble a domain creature from authored statistics, actions, and options.
 
@@ -81,7 +85,11 @@ def build_creature(
     ('hero', 10)
     """
 
-    schema = _resolve_creature_schema(schema, player_characters)
+    schema = _resolve_creature_schema(
+        schema,
+        player_characters,
+        character_snapshots,
+    )
     stat_block = _find_bestiary_monster(schema, bestiary)
     class_record = find_class_record(schema, classes)
     equipment = Equipment(
@@ -132,6 +140,7 @@ def build_creature(
             if schema.class_ref
             else None
         ),
+        character_profile=build_character_profile(schema.character_profile),
         class_features=class_features,
         triggered_effects=triggered_effects,
         combat_profile=combat_profile,
@@ -154,24 +163,51 @@ def build_creature(
 def _resolve_creature_schema(
     instance: CreatureSchema,
     player_characters: PlayerCharacterTemplates | None,
+    character_snapshots: CharacterSnapshotCatalog | None,
 ) -> CreatureSchema:
-    if instance.player_character is None:
-        return instance
-    if player_characters is None:
+    if (
+        instance.player_character is not None
+        and instance.character_snapshot is not None
+    ):
         raise ValueError(
-            f"Creature '{instance.id}' references player character "
-            f"'{instance.player_character}', but no player character catalog was loaded."
+            f"Creature '{instance.id}' cannot reference both a local player "
+            "character and a canonical character snapshot."
         )
-    template = player_characters.get(instance.player_character)
-    if template is None:
-        raise KeyError(f"Player character '{instance.player_character}' not found.")
+    if instance.player_character is None and instance.character_snapshot is None:
+        return instance
+    template: CreatureSchema
+    if instance.character_snapshot is not None:
+        if character_snapshots is None:
+            raise ValueError(
+                f"Creature '{instance.id}' references canonical build "
+                f"'{instance.character_snapshot.build}', but no character "
+                "snapshot catalog was loaded."
+            )
+        template = character_snapshots.creature_template(
+            instance.character_snapshot.build,
+            instance.character_snapshot.level,
+        )
+    else:
+        if player_characters is None:
+            raise ValueError(
+                f"Creature '{instance.id}' references player character "
+                f"'{instance.player_character}', but no player character catalog "
+                "was loaded."
+            )
+        local_template = player_characters.get(instance.player_character or "")
+        if local_template is None:
+            raise KeyError(f"Player character '{instance.player_character}' not found.")
+        template = local_template
 
-    template_data = template.model_dump(exclude={"id", "player_character"})
+    template_data = template.model_dump(
+        exclude={"id", "player_character", "character_snapshot"}
+    )
     instance_data = instance.model_dump(
         exclude_unset=True,
         exclude={
             "attributes",
             "player_character",
+            "character_snapshot",
             "equipment",
             "inventory",
             "metadata",

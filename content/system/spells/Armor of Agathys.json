@@ -1,0 +1,36 @@
+{
+  "name": "Armor of Agathys",
+  "source": "XPHB",
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a cup of water"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "damageInflict": ["cold"],
+  "implementation": {
+    "status": "unimplemented"
+  }
+}

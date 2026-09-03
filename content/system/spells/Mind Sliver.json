@@ -1,0 +1,36 @@
+{
+  "name": "Mind Sliver",
+  "source": "XPHB",
+  "level": 0,
+  "school": "E",
+  "time": [
+    {
+      "number": 1,
+      "unit": "action"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "feet",
+      "amount": 60
+    }
+  },
+  "components": {
+    "v": true
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "round",
+        "amount": 1
+      }
+    }
+  ],
+  "savingThrow": ["intelligence"],
+  "damageInflict": ["psychic"],
+  "implementation": {
+    "status": "unimplemented"
+  }
+}

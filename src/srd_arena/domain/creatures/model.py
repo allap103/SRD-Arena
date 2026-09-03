@@ -9,6 +9,7 @@ from srd_arena.domain.effects.triggered import TriggeredEffect
 from srd_arena.domain.rolls.saving_throws import Ability
 
 from .attributes import Attributes
+from .character_profiles import CharacterProfile
 from .class_features import ClassFeature
 from .classes import ClassRef
 from .combat_profile import CombatProfile
@@ -39,6 +40,7 @@ class Creature:
     size: str = "M"
     current_health: int | None = None
     class_ref: ClassRef | None = None
+    character_profile: CharacterProfile | None = None
     class_features: list[ClassFeature] = field(default_factory=list)
     triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)

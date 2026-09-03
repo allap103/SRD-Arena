@@ -1,6 +1,7 @@
 """Expose the public creatures package API."""
 
 from .attributes import Attributes, Movement
+from .character_profiles import CharacterOptionRef, CharacterProfile
 from .class_features import ClassFeature
 from .classes import ClassRef
 from .combat_profile import CombatProfile
@@ -33,6 +34,8 @@ __all__ = [
     "AttackActionDefinition",
     "Attributes",
     "AutomaticActionDefinition",
+    "CharacterOptionRef",
+    "CharacterProfile",
     "ClassFeature",
     "ClassRef",
     "CombatProfile",
