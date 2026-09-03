@@ -124,6 +124,57 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     assert air_elemental.speed.can_hover is True
 
 
+def test_milestone_monsters_load_unconditional_damage_defenses() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+
+    expected = {
+        "Skeleton": (frozenset(), frozenset({"poison"}), frozenset({"bludgeoning"})),
+        "Zombie": (frozenset(), frozenset({"poison"}), frozenset()),
+        "Animated Armor": (
+            frozenset(),
+            frozenset({"poison", "psychic"}),
+            frozenset(),
+        ),
+        "Hell Hound": (frozenset(), frozenset({"fire"}), frozenset()),
+        "Wight": (
+            frozenset({"necrotic"}),
+            frozenset({"poison"}),
+            frozenset(),
+        ),
+    }
+
+    for name, defenses in expected.items():
+        creature = build_creature(
+            CreatureSchema.model_validate(
+                {
+                    "id": name.casefold().replace(" ", "_"),
+                    "stat_block": {"name": name, "source": "XMM"},
+                }
+            ),
+            bestiary=catalog,
+        )
+        assert (
+            creature.statistics.damage_resistances,
+            creature.statistics.damage_immunities,
+            creature.statistics.damage_vulnerabilities,
+        ) == defenses
+
+
+def test_structured_damage_defense_is_not_treated_as_unconditional() -> None:
+    catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
+    rakshasa = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "rakshasa",
+                "stat_block": {"name": "Rakshasa", "source": "XMM"},
+            }
+        ),
+        bestiary=catalog,
+    )
+
+    assert rakshasa.statistics.damage_vulnerabilities == frozenset()
+
+
 def test_goblin_actions_build_from_typed_bestiary_capabilities() -> None:
     catalog = load_bestiary_catalog(SYSTEM_CONTENT_ROOT)
     creature = build_creature(

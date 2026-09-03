@@ -20,4 +20,30 @@ class CreatureStatistics:
     languages: tuple[str, ...] = ()
     condition_immunities: frozenset[Condition] = frozenset()
     damage_resistances: frozenset[str] = frozenset()
+    damage_immunities: frozenset[str] = frozenset()
+    damage_vulnerabilities: frozenset[str] = frozenset()
     mechanical_traits: frozenset[str] = frozenset()
+
+    def __post_init__(self) -> None:
+        """Normalize authored damage types for case-insensitive rule queries.
+
+        >>> statistics = CreatureStatistics(
+        ...     damage_resistances=frozenset({"Fire"}),
+        ...     damage_immunities=frozenset({"POISON"}),
+        ...     damage_vulnerabilities=frozenset({"Bludgeoning"}),
+        ... )
+        >>> statistics.damage_immunities
+        frozenset({'poison'})
+        """
+
+        for field_name in (
+            "damage_resistances",
+            "damage_immunities",
+            "damage_vulnerabilities",
+        ):
+            values = getattr(self, field_name)
+            object.__setattr__(
+                self,
+                field_name,
+                frozenset(value.casefold() for value in values),
+            )

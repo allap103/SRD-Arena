@@ -74,6 +74,32 @@ class DamageResistance:
         object.__setattr__(self, "damage_types", normalized)
 
 
+@dataclass(frozen=True)
+class DamageImmunity:
+    """Grant immunity to one or more normalized damage types."""
+
+    damage_types: frozenset[str]
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(value.casefold() for value in self.damage_types)
+        if not normalized:
+            raise ValueError("Damage immunity requires at least one damage type.")
+        object.__setattr__(self, "damage_types", normalized)
+
+
+@dataclass(frozen=True)
+class DamageVulnerability:
+    """Grant vulnerability to one or more normalized damage types."""
+
+    damage_types: frozenset[str]
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(value.casefold() for value in self.damage_types)
+        if not normalized:
+            raise ValueError("Damage vulnerability requires at least one damage type.")
+        object.__setattr__(self, "damage_types", normalized)
+
+
 @dataclass
 class DamageReduction:
     """Reduce matching damage once before being restored at turn start."""
@@ -221,6 +247,8 @@ type RuntimeRuleEffect = (
     | SpeedMultiplier
     | MaximumHitPointAdjustment
     | DamageResistance
+    | DamageImmunity
+    | DamageVulnerability
     | DamageReduction
     | ConditionImmunity
     | ConditionSuppression
@@ -262,6 +290,16 @@ def serialize_runtime_rule_effect(
     if isinstance(effect, DamageResistance):
         return {
             "type": "damage_resistance",
+            "damage_types": sorted(effect.damage_types),
+        }
+    if isinstance(effect, DamageImmunity):
+        return {
+            "type": "damage_immunity",
+            "damage_types": sorted(effect.damage_types),
+        }
+    if isinstance(effect, DamageVulnerability):
+        return {
+            "type": "damage_vulnerability",
             "damage_types": sorted(effect.damage_types),
         }
     if isinstance(effect, DamageReduction):

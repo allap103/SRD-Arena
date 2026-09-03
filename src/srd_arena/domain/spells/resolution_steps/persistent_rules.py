@@ -7,6 +7,7 @@ from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
+    DamageImmunityEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
     EffectDuration,
@@ -20,6 +21,7 @@ from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
     ConditionImmunity,
     ConditionSaveAdvantage,
+    DamageImmunity,
     DamageReduction,
     DamageResistance,
     GrantedSense,
@@ -86,6 +88,12 @@ def prepare_persistent_rule_plan(
             if context.selected_damage_type in resistance_effect.damage_types
             else resistance_effect.damage_types[:1]
         )
+    damage_immunities = tuple(
+        damage_type
+        for effect in prepared.definition_effects
+        if isinstance(effect, DamageImmunityEffect)
+        for damage_type in effect.damage_types
+    )
     reduction_effect = _first_effect(prepared, DamageReductionEffect)
     damage_reduction_type = (
         context.selected_damage_type
@@ -123,6 +131,7 @@ def prepare_persistent_rule_plan(
                 else False
             ),
             damage_resistances=damage_resistances,
+            damage_immunities=damage_immunities,
             damage_reduction_type=damage_reduction_type,
             damage_reduction_dice=(
                 reduction_effect.dice if reduction_effect is not None else None
@@ -170,6 +179,7 @@ def _translate_rule_effects(
     maximum_hit_point_modifier: int = 0,
     also_modify_current: bool = False,
     damage_resistances: tuple[str, ...] = (),
+    damage_immunities: tuple[str, ...] = (),
     damage_reduction_type: str | None = None,
     damage_reduction_dice: str | None = None,
     condition_immunities: tuple[str, ...] = (),
@@ -204,6 +214,8 @@ def _translate_rule_effects(
         )
     if damage_resistances:
         effects.append(DamageResistance(frozenset(damage_resistances)))
+    if damage_immunities:
+        effects.append(DamageImmunity(frozenset(damage_immunities)))
     if damage_reduction_type is not None and damage_reduction_dice is not None:
         effects.append(DamageReduction(damage_reduction_type, damage_reduction_dice))
     if condition_immunities:

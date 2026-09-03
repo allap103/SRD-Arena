@@ -185,6 +185,8 @@ class CreatureDefenseObservation:
 
     condition_immunities: tuple[str, ...] = ()
     damage_resistances: tuple[str, ...] = ()
+    damage_immunities: tuple[str, ...] = ()
+    damage_vulnerabilities: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)

@@ -57,6 +57,22 @@ class BestiaryConditionalImmunitySchema(SourceModel):
     conditional: bool = Field(default=True, alias="cond")
 
 
+class BestiaryDamageDefenseSchema(SourceModel):
+    """Preserve a conditional or specially determined damage defense.
+
+    Plain string entries are unconditional and executable. Structured entries
+    remain typed source data until their condition or special choice can be
+    evaluated by a dedicated rule provider.
+    """
+
+    resist: list[str] = Field(default_factory=list)
+    immune: list[str] = Field(default_factory=list)
+    vulnerable: list[str] = Field(default_factory=list)
+    note: str | None = None
+    conditional: bool = Field(default=True, alias="cond")
+    special: str | None = None
+
+
 class BestiaryConditionalSpeedSchema(SourceModel):
     """Define the authored stat-block fields with number and condition."""
 
@@ -150,6 +166,9 @@ class BestiaryMonsterSchema(SourceModel):
         default_factory=list,
         alias="conditionImmune",
     )
+    resist: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
+    immune: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
+    vulnerable: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
     mechanical_traits: list[str] = Field(
         default_factory=list,
         alias="mechanicalTraits",

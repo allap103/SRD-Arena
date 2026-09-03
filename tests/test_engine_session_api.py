@@ -96,6 +96,8 @@ def test_observation_exposes_combat_identity_defenses_and_resources() -> None:
         type_tags=("human",),
         condition_immunities=frozenset({Condition.FRIGHTENED}),
         damage_resistances=frozenset({"fire"}),
+        damage_immunities=frozenset({"poison"}),
+        damage_vulnerabilities=frozenset({"cold"}),
     )
 
     observation = session.observe()
@@ -110,6 +112,8 @@ def test_observation_exposes_combat_identity_defenses_and_resources() -> None:
     assert observed_player.occupied_cells == (observed_player.position,)
     assert observed_player.defenses.condition_immunities == ("frightened",)
     assert observed_player.defenses.damage_resistances == ("fire",)
+    assert observed_player.defenses.damage_immunities == ("poison",)
+    assert observed_player.defenses.damage_vulnerabilities == ("cold",)
     assert {
         resource.id: (resource.remaining, resource.maximum)
         for resource in observed_player.resource_pools

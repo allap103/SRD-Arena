@@ -331,6 +331,12 @@ def _observe_creature(
             damage_resistances=tuple(
                 sorted(rule_queries.damage_resistances(state, creature_ref).values)
             ),
+            damage_immunities=tuple(
+                sorted(rule_queries.damage_immunities(state, creature_ref).values)
+            ),
+            damage_vulnerabilities=tuple(
+                sorted(rule_queries.damage_vulnerabilities(state, creature_ref).values)
+            ),
         ),
     )
 

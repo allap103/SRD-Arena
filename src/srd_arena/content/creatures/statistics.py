@@ -1,5 +1,6 @@
 """Derive domain combat statistics from authored creature values."""
 
+from collections.abc import Sequence
 from fractions import Fraction
 
 from srd_arena.domain.creatures import CreatureStatistics
@@ -55,6 +56,9 @@ def build_creature_statistics(
             for condition in stat_block.condition_immune
             if isinstance(condition, str)
         ),
+        damage_resistances=_unconditional_damage_types(stat_block.resist),
+        damage_immunities=_unconditional_damage_types(stat_block.immune),
+        damage_vulnerabilities=_unconditional_damage_types(stat_block.vulnerable),
         mechanical_traits=frozenset(stat_block.mechanical_traits),
     )
 
@@ -76,3 +80,9 @@ def challenge_rating_proficiency_bonus(challenge_rating: str | None) -> int:
 
 def _parse_bonus(value: str) -> int:
     return int(value.strip())
+
+
+def _unconditional_damage_types(values: Sequence[object]) -> frozenset[str]:
+    """Return normalized plain entries without guessing structured conditions."""
+
+    return frozenset(value.casefold() for value in values if isinstance(value, str))

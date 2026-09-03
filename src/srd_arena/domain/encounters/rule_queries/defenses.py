@@ -7,8 +7,10 @@ from srd_arena.domain.effects.rule_effects import (
     ConditionImmunity,
     ConditionSaveAdvantage,
     ConditionSuppression,
+    DamageImmunity,
     DamageReduction,
     DamageResistance,
+    DamageVulnerability,
 )
 from srd_arena.domain.rolls.dice import DieRoller
 
@@ -61,6 +63,48 @@ def damage_resistances(
         if isinstance(rule_effect, DamageResistance)
     )
     return SetRuleResult(creature.statistics.damage_resistances, contributions)
+
+
+def damage_immunities(
+    state: CreatureEffectQueryContext,
+    creature_ref: str,
+) -> SetRuleResult[str]:
+    """Return intrinsic and effect-granted damage immunities."""
+
+    creature = state.creatures[creature_ref].creature
+    contributions = tuple(
+        SourcedRuleContribution(
+            provider_state_id,
+            source,
+            rule_effect.damage_types,
+        )
+        for provider_state_id, source, rule_effect in ongoing_rule_effects(
+            state, creature_ref
+        )
+        if isinstance(rule_effect, DamageImmunity)
+    )
+    return SetRuleResult(creature.statistics.damage_immunities, contributions)
+
+
+def damage_vulnerabilities(
+    state: CreatureEffectQueryContext,
+    creature_ref: str,
+) -> SetRuleResult[str]:
+    """Return intrinsic and effect-granted damage vulnerabilities."""
+
+    creature = state.creatures[creature_ref].creature
+    contributions = tuple(
+        SourcedRuleContribution(
+            provider_state_id,
+            source,
+            rule_effect.damage_types,
+        )
+        for provider_state_id, source, rule_effect in ongoing_rule_effects(
+            state, creature_ref
+        )
+        if isinstance(rule_effect, DamageVulnerability)
+    )
+    return SetRuleResult(creature.statistics.damage_vulnerabilities, contributions)
 
 
 def condition_suppressions(
@@ -155,9 +199,12 @@ def apply_damage(
     amount: int,
     damage_type: str | None = None,
 ) -> int:
-    """Apply reduction and resistance before mutating creature health."""
+    """Apply immunity, adjustments, resistance, and vulnerability in SRD order."""
 
     if damage_type is not None:
+        normalized = damage_type.casefold()
+        if normalized in damage_immunities(state, creature_ref).values:
+            return state.creatures[creature_ref].creature.take_damage(0)
         amount = max(
             0,
             amount
@@ -168,8 +215,10 @@ def apply_damage(
                 state.dice.roll_die,
             ),
         )
-        if damage_type.casefold() in damage_resistances(state, creature_ref).values:
+        if normalized in damage_resistances(state, creature_ref).values:
             amount //= 2
+        if normalized in damage_vulnerabilities(state, creature_ref).values:
+            amount *= 2
     return state.creatures[creature_ref].creature.take_damage(amount)
 
 
