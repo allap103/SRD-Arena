@@ -5,6 +5,12 @@
   "startingProficiencies": {
     "weapons": ["simple", "martial"]
   },
+  "classTableGroups": [
+    {
+      "colLabels": ["Rage"],
+      "rows": [["2"], ["2"], ["3"], ["3"], ["3"]]
+    }
+  ],
   "classFeatures": [
     "Rage|Barbarian|XPHB|1",
     "Unarmored Defense|Barbarian|XPHB|1",

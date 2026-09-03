@@ -177,6 +177,14 @@ def _normalize_class_feature(
             level=feature_level,
             data={"uses": _action_surge_uses(class_record, creature_level)},
         )
+    if feature_name == "Rage":
+        return ClassFeature(
+            id="rage",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+            data={"uses": _rage_uses(class_record, creature_level)},
+        )
     return None
 
 
@@ -216,6 +224,25 @@ def _action_surge_uses(
         return int(table_value)
     except ValueError:
         return 1
+
+
+def _rage_uses(
+    class_record: ClassRecord | None,
+    creature_level: int,
+) -> int:
+    if class_record is None:
+        return 2 if creature_level < 3 else 3
+    table_value = _class_table_value(
+        class_record.definition,
+        "Rage",
+        creature_level,
+    )
+    if table_value is None:
+        return 2 if creature_level < 3 else 3
+    try:
+        return int(table_value)
+    except ValueError:
+        return 2 if creature_level < 3 else 3
 
 
 def _second_wind_healing_dice(

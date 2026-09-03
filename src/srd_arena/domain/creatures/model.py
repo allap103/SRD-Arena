@@ -16,6 +16,16 @@ from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
 from .multiattack import Multiattack
+from .resources import (
+    ResourceRecovery,
+    RestType,
+)
+from .resources import (
+    recover_resources as recover_creature_resources,
+)
+from .resources import (
+    spend_feature_use as spend_creature_feature_use,
+)
 from .spellcasting import Spellcasting
 from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
 from .statistics import CreatureStatistics
@@ -70,6 +80,30 @@ class Creature:
 
     def __str__(self) -> str:
         return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"
+
+    def spend_feature_use(self, feature_id: str) -> int:
+        """Spend one use of an addressed creature feature.
+
+        >>> creature = Creature(
+        ...     "hero", "Hero", "", Inventory(),
+        ...     Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10), Equipment(),
+        ...     feature_uses_remaining={"rage": 2},
+        ... )
+        >>> creature.spend_feature_use("rage")
+        1
+        """
+
+        return spend_creature_feature_use(self, feature_id)
+
+    def recover_resources(self, rest: RestType) -> tuple[ResourceRecovery, ...]:
+        """Restore all creature resources affected by a completed rest.
+
+        Recovery is separate from turn orchestration: callers decide when a
+        valid Short or Long Rest has completed, while the creature owns the
+        counters and their recovery rules.
+        """
+
+        return recover_creature_resources(self, rest)
 
     def get_modifier(self, attribute_value: int) -> int:
         """Calculate the modifier for an ability score.

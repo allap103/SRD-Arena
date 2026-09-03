@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.capabilities import CapabilityGrant, SpellSlotCost, SpellSlotPool
 
+from .resources import ResourceRecovery, RestType
+
 if TYPE_CHECKING:
     from srd_arena.domain.spells.definitions import Spell
 
@@ -43,7 +45,58 @@ class Spellcasting:
         return SpellSlotPool(
             id="spell_slots",
             maximum_by_level=tuple(sorted(self.spell_slots_max.items())),
+            refresh=(
+                "short_rest" if self.caster_progression == "pact" else "long_rest"
+            ),
         )
+
+    def spend_slot(self, level: int) -> int:
+        """Spend one slot of the requested level and return the new remainder.
+
+        >>> casting = Spellcasting(
+        ...     "cha", 3, 13, 5, "pact", spell_slots_remaining={2: 2}
+        ... )
+        >>> casting.spend_slot(2)
+        1
+        """
+
+        remaining = self.spell_slots_remaining.get(level, 0)
+        if remaining <= 0:
+            raise RuntimeError(f"No level {level} spell slots remain.")
+        self.spell_slots_remaining[level] = remaining - 1
+        return self.spell_slots_remaining[level]
+
+    def recover_slots(self, rest: RestType) -> tuple[ResourceRecovery, ...]:
+        """Restore spell slots whose pool refreshes at the completed rest.
+
+        Pact Magic refreshes on either rest. Other spellcasting represented by
+        this component refreshes only on a Long Rest.
+
+        >>> casting = Spellcasting(
+        ...     "cha", 3, 13, 5, "pact",
+        ...     spell_slots_max={2: 2}, spell_slots_remaining={2: 0},
+        ... )
+        >>> casting.recover_slots(RestType.SHORT)[0].current
+        2
+        """
+
+        refresh = self.spell_slot_pool.refresh
+        if rest is RestType.SHORT and refresh != "short_rest":
+            return ()
+        recoveries: list[ResourceRecovery] = []
+        for level, maximum in sorted(self.spell_slots_max.items()):
+            previous = self.spell_slots_remaining.get(level, maximum)
+            if previous >= maximum:
+                continue
+            self.spell_slots_remaining[level] = maximum
+            recoveries.append(
+                ResourceRecovery(
+                    resource_id=f"{self.spell_slot_pool.id}:{level}",
+                    previous=previous,
+                    current=maximum,
+                )
+            )
+        return tuple(recoveries)
 
     def grant_for(self, spell: Spell) -> CapabilityGrant | None:
         """Create a castable grant when the spell has executable mechanics.

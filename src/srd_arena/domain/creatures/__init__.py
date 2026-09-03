@@ -17,6 +17,7 @@ from .multiattack import (
     MultiattackRequirement,
     MultiattackStep,
 )
+from .resources import ResourceRecovery, RestType
 from .size import can_grapple, is_two_sizes_smaller, normalize_size, size_rank
 from .spellcasting import Spellcasting
 from .stat_block_actions import (
@@ -52,6 +53,8 @@ __all__ = [
     "MultiattackReplacement",
     "MultiattackRequirement",
     "MultiattackStep",
+    "ResourceRecovery",
+    "RestType",
     "SavingThrowActionDefinition",
     "SpellOption",
     "Spellcasting",

@@ -150,4 +150,4 @@ def spend_spell_resources(
         state.active_reaction_available = False
     if spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
-        spellcasting.spell_slots_remaining[slot_level] -= 1
+        spellcasting.spend_slot(slot_level)

@@ -56,6 +56,14 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 "short_rest": "all",
                 "long_rest": "all",
             }
+        elif class_feature.id == "rage":
+            uses = class_feature.data.get("uses")
+            if isinstance(uses, int):
+                profile.feature_uses_max["rage"] = uses
+            profile.feature_recharge["rage"] = {
+                "short_rest": 1,
+                "long_rest": "all",
+            }
     return profile
 
 
