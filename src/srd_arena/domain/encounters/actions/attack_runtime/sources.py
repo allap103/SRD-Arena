@@ -2,13 +2,51 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.creatures.stat_block_actions import AttackActionDefinition
 from srd_arena.domain.equipment import Item
-from srd_arena.domain.geometry import Grid
+from srd_arena.domain.geometry import Grid, GridDistance
+from srd_arena.domain.rolls.dice import D20RollMode
 
 from ...encounter_models.resolution import AttackSource
+
+
+@dataclass(frozen=True)
+class AttackRangeBand:
+    """Describe the normal and maximum distance of one selected attack mode.
+
+    Attacks beyond ``normal`` but within ``maximum`` remain legal and are made
+    with disadvantage. Melee attacks and ranged attacks without a distinct long
+    range use the same value for both boundaries.
+
+    >>> band = AttackRangeBand(GridDistance(6), GridDistance(24))
+    >>> (band.contains(GridDistance(24)), band.roll_mode(GridDistance(7)))
+    (True, 'disadvantage')
+    """
+
+    normal: GridDistance
+    maximum: GridDistance
+
+    def __post_init__(self) -> None:
+        """Reject a maximum distance shorter than the normal distance."""
+
+        if self.maximum < self.normal:
+            raise ValueError(
+                "Maximum attack range cannot be shorter than normal range."
+            )
+
+    def contains(self, distance: GridDistance) -> bool:
+        """Return whether ``distance`` lies within the attack's maximum range."""
+
+        return distance <= self.maximum
+
+    def roll_mode(self, distance: GridDistance) -> D20RollMode:
+        """Return disadvantage only when attacking in the long-range band."""
+
+        return "disadvantage" if distance > self.normal else "normal"
 
 
 def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:
@@ -241,24 +279,25 @@ def attack_sources(
     ]
 
 
-def attack_range_squares(
+def attack_range_band_squares(
     attacker: Creature,
     items_by_id: dict[str, Item],
     grid: Grid,
     *,
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
-) -> int:
-    """Return the selected attack's normal reach or range in grid squares.
+) -> AttackRangeBand:
+    """Return normal and maximum ranges for the exact selected attack mode.
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
     ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
-    >>> attack_range_squares(attacker, {}, Grid(10, 10))
-    1
+    >>> attack_range_band_squares(attacker, {}, Grid(10, 10))
+    AttackRangeBand(normal=1, maximum=1)
     """
+
     source = select_attack_source(
         attacker,
         items_by_id,
@@ -266,12 +305,18 @@ def attack_range_squares(
         preferred_attack_name=preferred_attack_name,
     )
     if source is None:
-        return 1
+        return AttackRangeBand(GridDistance(1), GridDistance(1))
     attack_type = source.attack_modes[0]
-    range_feet = (
+    normal_feet = (
         source.range_normal or 5 if attack_type == "ranged" else source.reach_feet or 5
     )
-    return int(grid.distance_from_feet(range_feet, minimum=1))
+    maximum_feet = (
+        source.range_long or normal_feet if attack_type == "ranged" else normal_feet
+    )
+    return AttackRangeBand(
+        grid.distance_from_feet(normal_feet, minimum=1),
+        grid.distance_from_feet(maximum_feet, minimum=1),
+    )
 
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
@@ -311,6 +356,7 @@ def selected_attack_type(
     items_by_id: dict[str, Item],
     *,
     preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
 ) -> str:
     """Return the selected source's attack mode, with a melee fallback.
 
@@ -326,6 +372,7 @@ def selected_attack_type(
         attacker,
         items_by_id,
         preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
     )
     if attack_source is None:
         return preferred_attack_type or "melee"

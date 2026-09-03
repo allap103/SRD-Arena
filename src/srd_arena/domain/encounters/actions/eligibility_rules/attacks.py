@@ -15,7 +15,7 @@ from ...rule_queries.permissions import (
     target_eligibility,
 )
 from ...spatial import creature_distance
-from ..attack_resolution import attack_range_squares, has_free_hand
+from ..attack_resolution import attack_range_band_squares, has_free_hand
 from ..stat_block import (
     executable_multiattack_slot_plans,
     stat_block_action_resource_available,
@@ -137,14 +137,14 @@ class AttackRule:
                 "resource_spent",
                 f"{preferred_attack_name} is not available.",
             )
-        reach = attack_range_squares(
+        range_band = attack_range_band_squares(
             actor.creature,
             state.item_templates,
             state.definition.grid,
             preferred_attack_type=action.preferred_attack_type,
             preferred_attack_name=preferred_attack_name,
         )
-        if creature_distance(state, actor_ref, action.value) > reach:
+        if not range_band.contains(creature_distance(state, actor_ref, action.value)):
             return EligibilityFailure(
                 "target_out_of_range", "The target is out of range."
             )

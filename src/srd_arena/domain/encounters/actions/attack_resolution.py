@@ -23,7 +23,8 @@ from .attack_runtime.damage import (
 )
 from .attack_runtime.rolls import resolve_attack_roll
 from .attack_runtime.sources import (
-    attack_range_squares,
+    AttackRangeBand,
+    attack_range_band_squares,
     attack_sources,
     can_make_opportunity_attack,
     equipped_weapon,
@@ -39,8 +40,9 @@ from .attack_runtime.sources import (
 from .attack_runtime.triggers import matching_damage_reroll_rule
 
 __all__ = [
+    "AttackRangeBand",
     "apply_attack_damage",
-    "attack_range_squares",
+    "attack_range_band_squares",
     "attack_sources",
     "can_make_opportunity_attack",
     "damage_roll_detail",

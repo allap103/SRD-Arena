@@ -189,16 +189,16 @@ def test_content_loading_rejects_overlapping_large_footprints(
                     {"id": "two", "name": "Two", "controller": "external"},
                 ],
                 "creatures": [
-                        {
-                            "id": "ogre",
-                            "name": "Ogre",
+                    {
+                        "id": "ogre",
+                        "name": "Ogre",
                         "metadata": {"size": "L"},
                         "start": {"x": 0, "y": 0},
                         "team_id": "one",
                     },
-                        {
-                            "id": "hero",
-                            "name": "Hero",
+                    {
+                        "id": "hero",
+                        "name": "Hero",
                         "start": {"x": 1, "y": 1},
                         "team_id": "two",
                     },

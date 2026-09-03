@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls.dice import combine_roll_modes
 
 from ...attack_economy import spend_attack, spend_current_attack
 from ...effect_lifecycle.concentration import resolve_concentration_damage
@@ -16,10 +17,12 @@ from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import apply_damage
 from ...rule_queries.numeric import effective_armor_class
 from ...rule_queries.rolls import roll_modifiers
+from ...spatial import creature_distance
 from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
     apply_attack_damage,
+    attack_range_band_squares,
     resolve_attack,
     selected_attack_type,
 )
@@ -102,6 +105,22 @@ def resolve_attack_action(
         creature_ref,
         "damage_roll",
     )
+    attack_type = selected_attack_type(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    range_band = attack_range_band_squares(
+        creature,
+        state.item_templates,
+        state.definition.grid,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    range_roll_mode = range_band.roll_mode(
+        creature_distance(state, creature_ref, target_ref)
+    )
     roll_die = state.dice.roll_die
     outcome = resolve_attack(
         creature,
@@ -113,18 +132,17 @@ def resolve_attack_action(
         nearby_opponent_positions=nearby_opponent_positions,
         preferred_attack_name=preferred_attack_name,
         preferred_attack_type=action.preferred_attack_type,
-        attack_roll_mode_override=attack_roll_mode_for(
-            state,
-            creature_ref,
-            target_ref,
-            selected_attack_type(
-                creature,
-                state.item_templates,
-                preferred_attack_type=action.preferred_attack_type,
+        attack_roll_mode_override=combine_roll_modes(
+            attack_roll_mode_for(
+                state,
+                creature_ref,
+                target_ref,
+                attack_type,
+                creature_state.position,
+                nearby_opponent_positions,
+                nearby_opponent_refs=nearby_opponent_refs,
             ),
-            creature_state.position,
-            nearby_opponent_positions,
-            nearby_opponent_refs=nearby_opponent_refs,
+            range_roll_mode,
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
         target_armor_class=effective_armor_class(
