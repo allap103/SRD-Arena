@@ -86,6 +86,23 @@
       "behavior": {
         "type": "chase"
       }
+    },
+    {
+      "id": "ogre_target",
+      "name": "Training Ogre",
+      "stat_block": {
+        "name": "Ogre",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 9,
+        "y": 6
+      },
+      "team_id": "goblins",
+      "behavior": {
+        "type": "wait"
+      },
+      "takes_turns": false
     }
   ],
   "teams": [
@@ -96,7 +113,7 @@
     },
     {
       "id": "goblins",
-      "name": "Goblin Warriors",
+      "name": "Training Enemies",
       "controller": "scripted"
     }
   ]

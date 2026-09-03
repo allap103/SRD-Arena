@@ -343,18 +343,21 @@ def test_warlock_training_scenario_uses_the_canonical_level_five_party() -> None
 
     warlock = encounter.get_creature("warlock")
     barbarian = encounter.get_creature("barbarian")
+    ogre = encounter.get_creature("ogre_target")
     assert warlock.character_profile is not None
     assert warlock.character_profile.build_id == "warlock"
     assert warlock.attributes.level == 5
     assert barbarian.character_profile is not None
     assert barbarian.character_profile.build_id == "barbarian"
     assert barbarian.attributes.level == 5
+    assert ogre.size == "L"
     assert {creature.id for creature in encounter.creatures} == {
         "warlock",
         "barbarian",
         "goblin_1",
         "goblin_2",
         "goblin_3",
+        "ogre_target",
     }
     controllers = {
         participant.creature_id: participant.controller
@@ -366,11 +369,20 @@ def test_warlock_training_scenario_uses_the_canonical_level_five_party() -> None
         "goblin_1": None,
         "goblin_2": None,
         "goblin_3": None,
+        "ogre_target": None,
     }
     assert {team.id: team.controller for team in encounter.teams} == {
         "heroes": "external",
         "goblins": "scripted",
     }
+    assert (
+        next(
+            participant
+            for participant in encounter.participants
+            if participant.creature_id == "ogre_target"
+        ).takes_turns
+        is False
+    )
 
 
 def test_character_build_validation_rejects_level_gaps() -> None:
