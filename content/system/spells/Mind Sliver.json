@@ -30,7 +30,48 @@
   ],
   "savingThrow": ["intelligence"],
   "damageInflict": ["psychic"],
+  "scalingLevelDice": {
+    "label": "Psychic damage",
+    "scaling": {
+      "1": "1d6",
+      "5": "2d6",
+      "11": "3d6",
+      "17": "4d6"
+    }
+  },
   "implementation": {
-    "status": "unimplemented"
+    "status": "complete"
+  },
+  "capability": {
+    "target": {
+      "type": "creature",
+      "disposition": "enemy",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "int",
+      "failure": {
+        "effects": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "psychic"
+          },
+          {
+            "type": "roll_modifier",
+            "roll": "saving_throw",
+            "mode": "subtract",
+            "dice": "1d4",
+            "consume_on_use": true,
+            "duration": {
+              "type": "end_of_turn",
+              "creature": "source",
+              "turn_offset": 1
+            }
+          }
+        ]
+      }
+    }
   }
 }

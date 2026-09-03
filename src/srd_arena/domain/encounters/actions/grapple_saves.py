@@ -9,6 +9,7 @@ from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.rolls.saving_throws import Ability, resolve_saving_throw
 
+from ..effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import DecisionFrame, GrappleSaveRequest
 from ..encounter_models.resolution import DecisionExecutionResult, EncounterProgress
@@ -147,7 +148,11 @@ def resolve_grapple_save(
                 )
                 else "normal"
             ),
-            sourced_modifier_override=rules.resolve_modifier(roll_die),
+            sourced_modifier_override=resolve_saving_throw_modifier(
+                state,
+                request.target_ref,
+                rules,
+            ),
             sourced_mode_override=rules.mode,
             roller=roll_die,
             automatic_failure_reasons=automatic_failure_reasons,

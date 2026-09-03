@@ -256,6 +256,7 @@ def _translate_rule_effects(
                         subject=effect.subject,
                         ignored_by_senses=effect.ignored_by_senses,
                         ability=ability,
+                        consume_on_use=effect.consume_on_use,
                     )
                 )
                 for roll in rolls

@@ -13,6 +13,7 @@ from ..participants import creatures_are_opponents
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import automatic_save_failure_provider_ids_for
 from .removal import _remove_effect_target
+from .roll_usage import resolve_saving_throw_modifier
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -83,8 +84,10 @@ def resolve_spell_lifecycle_event(
                     cast(Ability, ability),
                     dc,
                     mode="advantage",
-                    sourced_modifier_override=roll_rules.resolve_modifier(
-                        state.dice.roll_die
+                    sourced_modifier_override=resolve_saving_throw_modifier(
+                        state,
+                        affected_ref,
+                        roll_rules,
                     ),
                     sourced_mode_override=roll_rules.mode,
                     roller=state.dice.roll_die,

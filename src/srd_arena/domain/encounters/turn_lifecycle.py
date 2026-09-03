@@ -9,6 +9,7 @@ from srd_arena.domain.geometry import MovementBudget, MovementCost
 
 from .attack_economy import clear_attack_action
 from .effect_lifecycle.repeat_saves import resolve_end_turn_effects
+from .effect_lifecycle.turn_end import expire_ongoing_effects_for_turn_end
 from .effect_lifecycle.turn_start import expire_ongoing_effects_for_turn_start
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
@@ -125,6 +126,10 @@ def advance_turn(
     ...     ) as end_effects,
     ...     patch(
     ...         "srd_arena.domain.encounters.turn_lifecycle."
+    ...         "expire_ongoing_effects_for_turn_end"
+    ...     ),
+    ...     patch(
+    ...         "srd_arena.domain.encounters.turn_lifecycle."
     ...         "expire_conditions_for_turn_end"
     ...     ),
     ...     patch(
@@ -143,6 +148,7 @@ def advance_turn(
 
     ending_creature_ref = state.current_decision().creature_ref
     resolve_end_turn_effects(state, ending_creature_ref, progress)
+    expire_ongoing_effects_for_turn_end(state, ending_creature_ref)
     expire_conditions_for_turn_end(state, ending_creature_ref)
     apply_shared_space_prone(state, ending_creature_ref, progress)
     _advance_initiative(state)

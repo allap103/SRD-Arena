@@ -111,9 +111,12 @@ def start_ongoing_effect(
         ),
         target_refs=target_refs,
         duration=(
-            Rounds(duration_rounds)
-            if isinstance(duration_rounds, int)
-            else Indefinite()
+            result.duration
+            or (
+                Rounds(duration_rounds)
+                if isinstance(duration_rounds, int)
+                else Indefinite()
+            )
         ),
         kind=kind,
         polarity=polarity,

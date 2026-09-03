@@ -26,6 +26,7 @@ from srd_arena.domain.rolls.saving_throws import (
 )
 
 from ...attack_economy import consume_action
+from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
@@ -117,7 +118,7 @@ def resolve_saving_throw_stat_block_action(
                 else "normal"
             ),
             sourced_modifier_override=(
-                roll_rules.resolve_modifier(roll_die)
+                resolve_saving_throw_modifier(state, target_ref, roll_rules)
                 + (
                     cover_between(state, creature_ref, target_ref).bonus
                     if ability == "dexterity"

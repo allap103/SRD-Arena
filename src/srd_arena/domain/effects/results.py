@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 from .rule_effects import RuntimeRuleEffect
-from .runtime import OngoingEffectLifecycle
+from .runtime import EffectDuration, OngoingEffectLifecycle
 
 
 @dataclass(frozen=True)
@@ -17,6 +17,7 @@ class EffectResult:
     rule_effects: tuple[RuntimeRuleEffect, ...] = ()
     effect_label: str | None = None
     lifecycle: OngoingEffectLifecycle | None = None
+    duration: EffectDuration | None = None
 
 
 @dataclass(frozen=True)

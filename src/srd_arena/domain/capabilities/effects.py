@@ -210,6 +210,7 @@ class RollModifierEffect:
     subject: Literal["target", "attacks_against_target"] = "target"
     ignored_by_senses: tuple[str, ...] = ()
     requirements: tuple[CapabilityRequirement, ...] = ()
+    consume_on_use: bool = False
 
 
 @dataclass(frozen=True)

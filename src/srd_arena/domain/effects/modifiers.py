@@ -25,6 +25,7 @@ class RollModifier:
     subject: ModifierSubject = "target"
     ignored_by_senses: tuple[str, ...] = ()
     ability: str | None = None
+    consume_on_use: bool = False
 
     def resolve(self, roller: DieRoller) -> int:
         """Resolve an additive or subtractive modifier.

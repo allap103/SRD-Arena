@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema
@@ -102,6 +102,15 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
     value: int | None = None
     duration: EffectDurationSchema | None = None
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    consume_on_use: bool = False
+
+    @model_validator(mode="after")
+    def validate_consumption_trigger(self) -> RollModifierEffectSchema:
+        """Limit one-use modifiers to the saving-throw pipeline that consumes them."""
+
+        if self.consume_on_use and self.roll != "saving_throw":
+            raise ValueError("consume_on_use currently requires roll='saving_throw'.")
+        return self
 
 
 class ControlEffectSchema(CapabilitySchemaModel):

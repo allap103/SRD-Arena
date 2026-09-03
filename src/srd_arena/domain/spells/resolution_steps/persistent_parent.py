@@ -5,10 +5,16 @@ from typing import cast
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.runtime import (
+    EffectDuration as RuntimeEffectDuration,
+)
+from srd_arena.domain.effects.runtime import (
     EndEventRule,
     OngoingEffectLifecycle,
     RepeatedDamage,
     RepeatSaveLifecycle,
+    Rounds,
+    UntilTurnEnd,
+    UntilTurnStart,
 )
 
 from ..rules import spell_duration_rounds
@@ -46,6 +52,12 @@ def build_ongoing_spell_effect(
 
     spell = context.spell
     duration_rounds = spell_duration_rounds(spell)
+    runtime_duration = _runtime_duration(
+        context,
+        resolved,
+        rules,
+        fallback_rounds=duration_rounds,
+    )
     has_turn_start_temporary_hit_points = any(
         temporary.trigger == "target_turn_start"
         for temporary in prepared.temporary_hit_point_effects
@@ -53,8 +65,11 @@ def build_ongoing_spell_effect(
     has_persistent_state = bool(
         prepared.conditions or rules.effects or has_turn_start_temporary_hit_points
     )
+    has_timed_parent_state = runtime_duration is not None and bool(
+        rules.effects or has_turn_start_temporary_hit_points
+    )
     has_lifecycle = bool(
-        duration_rounds is not None
+        has_timed_parent_state
         or spell.concentration
         or prepared.repeat_save is not None
     )
@@ -74,16 +89,38 @@ def build_ongoing_spell_effect(
             "definition_id": spell.id,
             "recast_ends_previous": spell.recast_ends_previous,
             "target_refs": [target.target_ref for target in resolved.affected_targets],
-            "duration_rounds": (
-                duration_rounds
-                if duration_rounds is not None
-                else effect_duration_rounds(rules.duration)
-            ),
         },
         effect_label=spell.name,
         lifecycle=_build_lifecycle(context, prepared),
         rule_effects=rules.effects,
+        duration=runtime_duration,
     )
+
+
+def _runtime_duration(
+    context: SpellActionContext,
+    resolved: ResolvedSpellTargets,
+    rules: PersistentRulePlan,
+    *,
+    fallback_rounds: int | None,
+) -> RuntimeEffectDuration | None:
+    """Resolve capability timing into encounter-owned turn or round duration."""
+
+    duration = rules.duration
+    if duration is not None and duration.kind in {"start_of_turn", "end_of_turn"}:
+        creature_ref = (
+            context.source_ref
+            if duration.creature == "source"
+            else resolved.affected_targets[0].target_ref
+        )
+        round_number = context.current_round + duration.turn_offset
+        if duration.kind == "start_of_turn":
+            return UntilTurnStart(creature_ref, round_number)
+        return UntilTurnEnd(creature_ref, round_number)
+    rounds = (
+        effect_duration_rounds(duration) if duration is not None else fallback_rounds
+    )
+    return Rounds(rounds) if rounds is not None else None
 
 
 def _build_lifecycle(

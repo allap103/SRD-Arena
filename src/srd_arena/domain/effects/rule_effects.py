@@ -341,6 +341,7 @@ def serialize_runtime_rule_effect(
             "subject": modifier.subject,
             "ignored_by_senses": list(modifier.ignored_by_senses),
             "ability": modifier.ability,
+            "consume_on_use": modifier.consume_on_use,
         }
     if isinstance(effect, ReactionProhibition):
         return {

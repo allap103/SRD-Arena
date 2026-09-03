@@ -16,6 +16,7 @@ from ..state_combat import automatic_save_failure_provider_ids_for
 from ..state_runtime import apply_encounter_effects, create_event
 from .removal import _remove_effect_target
 from .repeat_damage import resolve_repeat_failure_damage
+from .roll_usage import resolve_saving_throw_modifier
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -86,7 +87,11 @@ def _resolve_repeat_save(
         cast(Ability, repeat_save.ability),
         repeat_save.dc,
         mode=save_mode,
-        sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
+        sourced_modifier_override=resolve_saving_throw_modifier(
+            state,
+            creature_ref,
+            roll_rules,
+        ),
         sourced_mode_override=roll_rules.mode,
         roller=state.dice.roll_die,
         automatic_failure_reasons=automatic_save_failure_provider_ids_for(

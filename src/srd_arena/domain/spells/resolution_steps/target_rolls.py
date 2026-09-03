@@ -126,19 +126,21 @@ def _resolve_saving_throw(
         if ability == "dexterity"
         else 0
     )
+    sourced_mode = context.environment.saving_throw_mode(
+        target.target_ref,
+        ability,
+    )
+    sourced_modifier = context.environment.saving_throw_modifier(
+        target.target_ref,
+        ability,
+    )
     save = resolve_saving_throw(
         target.creature,
         cast(Ability, ability),
         context.creature.spellcasting.save_dc,
         mode=base_mode,
-        sourced_modifier_override=(
-            context.environment.saving_throw_modifier(target.target_ref, ability)
-            + cover_bonus
-        ),
-        sourced_mode_override=context.environment.saving_throw_mode(
-            target.target_ref,
-            ability,
-        ),
+        sourced_modifier_override=sourced_modifier + cover_bonus,
+        sourced_mode_override=sourced_mode,
         roller=context.environment.roll_die,
         automatic_failure_reasons=automatic_failure_reasons,
     )

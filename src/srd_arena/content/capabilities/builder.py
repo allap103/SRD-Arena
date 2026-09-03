@@ -228,6 +228,7 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             requirements=tuple(
                 build_requirement(requirement) for requirement in value.requirements
             ),
+            consume_on_use=value.consume_on_use,
         )
     if isinstance(value, effects.ControlEffectSchema):
         return domain.ControlEffect(

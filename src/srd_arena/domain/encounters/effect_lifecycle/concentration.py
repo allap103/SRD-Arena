@@ -12,6 +12,7 @@ from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 from ..event_stream import create_event
 from ..rule_queries.rolls import roll_modifiers
 from .removal import _remove_effect_tree
+from .roll_usage import resolve_saving_throw_modifier
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -115,7 +116,11 @@ def resolve_concentration_damage(
         creature,
         "constitution",
         dc,
-        sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
+        sourced_modifier_override=resolve_saving_throw_modifier(
+            state,
+            creature_ref,
+            roll_rules,
+        ),
         sourced_mode_override=combine_roll_modes(
             roll_rules.mode,
             *(contribution.mode for contribution in intrinsic_modes),

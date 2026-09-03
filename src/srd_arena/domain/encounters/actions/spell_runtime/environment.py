@@ -11,6 +11,7 @@ from srd_arena.domain.rolls.dice import D20RollMode, ResolvedRollModifier
 from srd_arena.domain.rolls.saving_throws import Ability
 from srd_arena.domain.spells.resolution import SpellTargetContext
 
+from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...rule_queries.defenses import apply_damage
 from ...rule_queries.health import apply_healing
 from ...rule_queries.rolls import roll_modifiers
@@ -91,12 +92,13 @@ class EncounterSpellResolutionEnvironment:
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve sourced saving-throw modifiers for one target."""
 
-        return roll_modifiers(
+        rules = roll_modifiers(
             self.state,
             target_ref,
             "saving_throw",
             ability=ability,
-        ).resolve_modifier(self.roll_die)
+        )
+        return resolve_saving_throw_modifier(self.state, target_ref, rules)
 
     def saving_throw_mode(self, target_ref: str, ability: str) -> D20RollMode:
         """Resolve sourced saving-throw modes for one target."""
