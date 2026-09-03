@@ -1,5 +1,6 @@
 """Exercise shared forced movement and the Repelling Blast decision flow."""
 
+from collections.abc import Sequence
 from pathlib import Path
 
 from srd_arena.content.encounters import load_encounter_directory
@@ -23,6 +24,7 @@ from srd_arena.domain.encounters.actions.forced_movement_choices import (
     forced_movement_request,
 )
 from srd_arena.domain.encounters.encounter import EncounterState
+from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.encounters.encounter_models.decisions import (
     DecisionFrame,
     ForcedMovementChoiceRequest,
@@ -45,6 +47,26 @@ WARLOCK_ENCOUNTER = (
 )
 DEFAULT_SOURCE_POSITION = Position(0, 1)
 DEFAULT_TARGET_POSITION = Position(2, 1)
+
+
+class _EldritchBlastSelector:
+    """Select the Ogre-targeted Eldritch Blast from public scripted options."""
+
+    def select_action(
+        self,
+        _state: EncounterState,
+        _creature_ref: str,
+        actions: Sequence[EncounterAction],
+    ) -> EncounterAction:
+        return next(
+            action
+            for action in actions
+            if is_spell_action(
+                action,
+                "eldritch_blast",
+                target_ref="ogre_target",
+            )
+        )
 
 
 def _creature_state(
@@ -245,6 +267,17 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     ]
     assert forced_movement_request(state.current_decision()).occurrence_index == 1
     assert len([event for event in cast.events if event.type == "decision_opened"]) == 1
+    first_projectile_index = next(
+        index
+        for index, event in enumerate(cast.events)
+        if event.type == "spell_projectile_resolved"
+    )
+    first_decision_index = next(
+        index
+        for index, event in enumerate(cast.events)
+        if event.type == "decision_opened"
+    )
+    assert first_projectile_index < first_decision_index
 
     observed_push = next(
         action
@@ -271,6 +304,9 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     second_opened = [event for event in moved.events if event.type == "decision_opened"]
     assert len(second_opened) == 1
     assert second_opened[0].data["occurrence_index"] == 2
+    assert [event.type for event in moved.events].index("spell_projectile_resolved") < [
+        event.type for event in moved.events
+    ].index("decision_opened")
 
     decline = next(
         action
@@ -282,7 +318,17 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
 
     assert state.interrupts.decision_stack == []
     assert state.current_decision().kind == "turn"
-    assert len([event for event in finished.events if event.type == "spell_cast"]) == 1
+    cast_messages = [*cast.messages, *moved.messages, *finished.messages]
+    assert (
+        sum("casts Eldritch Blast" in message for _channel, message in cast_messages)
+        == 1
+    )
+    [completed_cast] = [
+        event for event in finished.events if event.type == "spell_cast"
+    ]
+    assert completed_cast.data["projectile_count"] == 2
+    assert completed_cast.data["resolved_projectile_count"] == 2
+    assert "attack_roll_details" not in completed_cast.data
 
 
 def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
@@ -303,7 +349,7 @@ def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
         die_roller=lambda sides: 15 if sides == 20 else 3,
     )
 
-    _cast_two_beam_eldritch_blast(session, "ogre_target")
+    first = _cast_two_beam_eldritch_blast(session, "ogre_target")
     push = next(
         action
         for action in session.observe().scene.action_details
@@ -324,10 +370,17 @@ def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
         "target_ref": "ogre_target",
         "reason_code": "target_unavailable",
     }
-    cast = next(event for event in result.events if event.type == "spell_cast")
-    attack_roll_details = cast.data["attack_roll_details"]
+    projectile = next(
+        event for event in first.events if event.type == "spell_projectile_resolved"
+    )
+    attack_roll_details = projectile.data["attack_roll_details"]
     assert isinstance(attack_roll_details, list)
     assert len(attack_roll_details) == 1
+    completed_cast = next(
+        event for event in result.events if event.type == "spell_cast"
+    )
+    assert completed_cast.data["resolved_projectile_count"] == 1
+    assert "attack_roll_details" not in completed_cast.data
 
 
 def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
@@ -421,6 +474,45 @@ def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> 
     assert state.creatures["ogre_target"].position == Position(8, 3)
     assert state.interrupts.decision_stack == []
     assert [event.type for event in progress.events] == ["forced_movement_resolved"]
+
+
+def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
+    session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
+    session.read()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    participant = next(
+        participant
+        for participant in state.definition.participants
+        if participant.creature_id == "warlock"
+    )
+    participant.controller = "scripted"
+    state._action_selectors["warlock"] = _EldritchBlastSelector()
+    state.definition.grid = Grid(16, 9)
+    state.turn.index = state.initiative_order.index("warlock")
+    state.creatures["warlock"].position = Position(2, 3)
+    state.creatures["ogre_target"].position = Position(6, 3)
+    state.creatures["barbarian"].position = Position(0, 8)
+    state.creatures["goblin_1"].position = Position(3, 8)
+    state.creatures["goblin_2"].position = Position(6, 8)
+    state.creatures["goblin_3"].position = Position(9, 8)
+    use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 3,
+    )
+
+    update = session.advance_one_automatic_action()
+
+    assert state.creatures["ogre_target"].position == Position(10, 3)
+    assert state.interrupts.decision_stack == []
+    assert [event.type for event in update.events].count(
+        "spell_projectile_resolved"
+    ) == 2
+    assert [event.type for event in update.events].count(
+        "forced_movement_resolved"
+    ) == 2
+    [completed_cast] = [event for event in update.events if event.type == "spell_cast"]
+    assert completed_cast.data["resolved_projectile_count"] == 2
 
 
 def test_repelling_blast_does_not_offer_a_push_for_a_huge_target() -> None:

@@ -51,6 +51,7 @@ def build_spell_action_context(
     targets: tuple[SpellTargetContext, ...],
     area: AreaOfEffect | None,
     cast_level: int | None,
+    announce_cast: bool = True,
 ) -> SpellActionContext:
     """Supply encounter state needed by otherwise source-neutral resolution.
 
@@ -115,6 +116,7 @@ def build_spell_action_context(
             for candidate in targets
         },
         cast_level=cast_level,
+        announce_cast=announce_cast,
         save_roll_modes=_save_roll_modes(
             state,
             creature_ref,

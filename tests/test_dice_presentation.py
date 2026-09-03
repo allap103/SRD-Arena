@@ -222,6 +222,45 @@ def test_build_roll_views_extracts_spell_damage_dice() -> None:
     assert damage.total == 13
 
 
+def test_build_roll_views_extracts_projectile_damage_immediately() -> None:
+    event = GameEvent(
+        seq=1,
+        type="spell_projectile_resolved",
+        data={
+            "spell_name": "Eldritch Blast",
+            "attack_roll_details": (
+                {
+                    "target_label": "Ogre",
+                    "die": 15,
+                    "modifier": 7,
+                    "total": 22,
+                    "target_ac": 11,
+                    "hit": True,
+                },
+            ),
+            "damage_roll_details": (
+                {
+                    "target_label": "Ogre",
+                    "dice": "1d10",
+                    "dice_values": (7,),
+                    "die_rolls": ((7,),),
+                    "dice_total": 7,
+                    "modifier": 0,
+                    "total": 7,
+                },
+            ),
+        },
+    )
+
+    attack, damage = build_roll_views([event])
+
+    assert attack.label == "Eldritch Blast attacks Ogre"
+    assert attack.total == 22
+    assert attack.success is True
+    assert damage.label == "Ogre takes damage from Eldritch Blast"
+    assert damage.dice[0].value == 7
+
+
 def test_spell_damage_view_explains_save_and_defense_reductions() -> None:
     event = GameEvent(
         seq=1,

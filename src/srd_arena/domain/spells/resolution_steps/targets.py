@@ -43,6 +43,7 @@ def resolve_spell_targets(
     >>> context = SimpleNamespace(
     ...     creature=SimpleNamespace(name="Mage"),
     ...     spell=SimpleNamespace(name="Ward", removable_conditions=()),
+    ...     announce_cast=True,
     ... )
     >>> prepared = SimpleNamespace(definition=definition, targets=())
     >>> resolved = resolve_spell_targets(context, prepared)
@@ -55,12 +56,16 @@ def resolve_spell_targets(
         if prepared.definition.target.kind == "creature" and len(prepared.targets) == 1
         else ""
     )
-    messages = [
-        (
-            "system",
-            f"{context.creature.name} casts {context.spell.name}{target_suffix}.",
-        )
-    ]
+    messages = (
+        [
+            (
+                "system",
+                f"{context.creature.name} casts {context.spell.name}{target_suffix}.",
+            )
+        ]
+        if context.announce_cast
+        else []
+    )
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []

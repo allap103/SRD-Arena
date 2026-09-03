@@ -130,6 +130,7 @@ def resume_spell_projectiles(
                 targets=(target,),
                 area=None,
                 cast_level=invocation.cast_level,
+                announce_cast=not invocation.cast_announced,
             )
         )
         if result is None:
@@ -142,9 +143,20 @@ def resume_spell_projectiles(
             creature_ref=invocation.caster_ref,
             action_id=invocation.invocation_id,
             progress=progress,
-            include_cast_message=not invocation.cast_announced,
         )
         invocation.cast_announced = True
+        publish_spell_result(
+            state,
+            spellcasting=spellcasting,
+            spell=spell,
+            cast_level=invocation.cast_level,
+            creature_ref=invocation.caster_ref,
+            action_id=invocation.invocation_id,
+            result=result,
+            progress=progress,
+            event_type="spell_projectile_resolved",
+            additional_data={"projectile_index": projectile_index},
+        )
         if resolve_repelling_blast_hit(
             state,
             caster=caster,
@@ -166,6 +178,11 @@ def resume_spell_projectiles(
         action_id=invocation.invocation_id,
         result=_merge_projectile_results(invocation, spell),
         progress=progress,
+        include_resolution_details=False,
+        additional_data={
+            "projectile_count": len(invocation.target_refs),
+            "resolved_projectile_count": len(invocation.resolved_results),
+        },
     )
 
 
@@ -302,5 +319,10 @@ def _merge_projectile_results(
         spell.name,
         [],
         [effect for result in invocation.resolved_results for effect in result.effects],
+        resource_updates={
+            key: value
+            for result in invocation.resolved_results
+            for key, value in result.resource_updates.items()
+        },
         details=merged_details,
     )

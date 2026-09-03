@@ -100,13 +100,10 @@ def apply_spell_result_consequences(
     creature_ref: str,
     action_id: str,
     progress: EncounterProgress,
-    include_cast_message: bool = True,
 ) -> None:
     """Apply one complete or partial spell result without publishing its cast."""
 
-    progress.messages.extend(
-        result.messages if include_cast_message else result.messages[1:]
-    )
+    progress.messages.extend(result.messages)
     _apply_damage_lifecycle(
         state,
         result,
@@ -128,37 +125,39 @@ def publish_spell_result(
     action_id: str,
     result: ActionResolutionResult,
     progress: EncounterProgress,
+    event_type: str = "spell_cast",
+    include_resolution_details: bool = True,
+    additional_data: dict[str, object] | None = None,
 ) -> None:
-    """Publish the single completed-cast event for an accumulated spell result."""
+    """Publish a spell result as one typed encounter event."""
 
     details = result.details
     if not isinstance(details, SpellResolutionDetails):
         raise TypeError("Spell resolution returned non-spell details.")
-    progress.events.append(
-        create_event(
-            state,
-            "spell_cast",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "kind": "spell",
-                "spell_id": result.definition_id,
-                "spell_name": result.definition_name,
-                "spell_level": details.spell_level,
-                "target_ref": details.target_ref,
-                "target_label": details.target_label,
-                "target_refs": [ref for ref, _label in details.targets],
-                "target_labels": [label for _ref, label in details.targets],
-                "area": details.area,
-                "slot_level": details.slot_level,
-                "spell_slots_remaining": (
-                    spellcasting.spell_slots_remaining.get(
-                        cast_level if cast_level is not None else spell.level,
-                        0,
-                    )
-                    if spell.level > 0
-                    else None
-                ),
+    data: dict[str, object] = {
+        "kind": "spell",
+        "spell_id": result.definition_id,
+        "spell_name": result.definition_name,
+        "spell_level": details.spell_level,
+        "target_ref": details.target_ref,
+        "target_label": details.target_label,
+        "target_refs": [ref for ref, _label in details.targets],
+        "target_labels": [label for _ref, label in details.targets],
+        "area": details.area,
+        "slot_level": details.slot_level,
+        "spell_slots_remaining": (
+            spellcasting.spell_slots_remaining.get(
+                cast_level if cast_level is not None else spell.level,
+                0,
+            )
+            if spell.level > 0
+            else None
+        ),
+        "success": details.success,
+    }
+    if include_resolution_details:
+        data.update(
+            {
                 "save_detail": _first(details.save_details),
                 "save_details": list(details.save_details),
                 "attack_roll_detail": _first(details.attack_roll_details),
@@ -174,8 +173,17 @@ def publish_spell_result(
                     details.temporary_hit_point_details
                 ),
                 "effects": serialize_effects(result.effects),
-                "success": details.success,
-            },
+            }
+        )
+    if additional_data is not None:
+        data.update(additional_data)
+    progress.events.append(
+        create_event(
+            state,
+            event_type,
+            creature_ref=creature_ref,
+            action_id=action_id,
+            data=data,
         )
     )
 

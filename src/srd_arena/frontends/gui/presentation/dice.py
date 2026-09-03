@@ -107,7 +107,12 @@ def build_roll_views(events: list[GameEvent]) -> list[RollView]:
             views.extend(_invocation_start_roll_views(event))
             continue
 
-        if event.type in {"spell_cast", "ongoing_effect_resolved"}:
+        if event.type in {
+            "spell_cast",
+            "spell_projectile_resolved",
+            "ongoing_effect_resolved",
+        }:
+            views.extend(_spell_attack_roll_views(event))
             views.extend(_saving_throw_roll_views(event))
             views.extend(_spell_damage_roll_views(event))
     return views
@@ -313,6 +318,50 @@ def _saving_throw_roll_view(
         target=target if isinstance(target, int) else None,
         success=success if isinstance(success, bool) else None,
     )
+
+
+def _spell_attack_roll_views(event: GameEvent) -> list[RollView]:
+    raw_details = event.data.get("attack_roll_details")
+    if isinstance(raw_details, (list, tuple)):
+        details = raw_details
+    else:
+        detail = event.data.get("attack_roll_detail")
+        details = (detail,) if isinstance(detail, Mapping) else ()
+    views: list[RollView] = []
+    spell_name = event.data.get("spell_name")
+    for detail in details:
+        if not isinstance(detail, Mapping):
+            continue
+        die = detail.get("die")
+        modifier = detail.get("modifier")
+        total = detail.get("total")
+        target_ac = detail.get("target_ac")
+        hit = detail.get("hit")
+        if not (
+            isinstance(die, int)
+            and isinstance(modifier, int)
+            and isinstance(total, int)
+        ):
+            continue
+        target_label = detail.get("target_label")
+        label = "Spell Attack"
+        if isinstance(spell_name, str) and isinstance(target_label, str):
+            label = f"{spell_name} attacks {target_label}"
+        views.append(
+            RollView(
+                label=label,
+                dice=_attack_dice_views(
+                    die=die,
+                    dice=detail.get("dice"),
+                    selected_index=detail.get("selected_index"),
+                ),
+                modifier=modifier,
+                total=total,
+                target=target_ac if isinstance(target_ac, int) else None,
+                success=hit if isinstance(hit, bool) else None,
+            )
+        )
+    return views
 
 
 def _spell_damage_roll_views(event: GameEvent) -> list[RollView]:
