@@ -62,6 +62,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     DamageEffect, Outcome,
     ... )
+    >>> from srd_arena.domain.rolls.dice import ResolvedRollModifier
     >>> from ..definitions import Spell
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget('creature'),
@@ -72,7 +73,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
     ...     spell=spell,
     ...     environment=SimpleNamespace(
     ...         roll_die=lambda sides: 4,
-    ...         damage_roll_modifier=lambda: 0,
+    ...         damage_roll_modifier=lambda: ResolvedRollModifier(),
     ...     ),
     ...     cast_level=None,
     ...     creature=SimpleNamespace(attributes=SimpleNamespace(level=1)),

@@ -3,10 +3,12 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from srd_arena.domain.effects.triggered import ability_modifier_contributions
 from srd_arena.domain.geometry import build_radius_area
-from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.rolls.dice import D20RollMode, ResolvedRollModifier
+from srd_arena.domain.rolls.saving_throws import Ability
 from srd_arena.domain.spells.resolution import SpellTargetContext
 
 from ...rule_queries.defenses import apply_damage
@@ -17,6 +19,7 @@ from ..option_discovery.spell_areas import targets_in_area
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
+    from srd_arena.domain.spells import Spell
 
     from ...encounter import EncounterState
 
@@ -28,6 +31,7 @@ class EncounterSpellResolutionEnvironment:
     state: EncounterState
     actor: Creature
     actor_ref: str
+    spell: Spell
 
     def roll_die(self, sides: int) -> int:
         """Roll one die through the encounter's injected random source."""
@@ -43,14 +47,46 @@ class EncounterSpellResolutionEnvironment:
             "attack_roll",
         ).resolve_modifier(self.roll_die)
 
-    def damage_roll_modifier(self) -> int:
-        """Resolve sourced damage modifiers for the spell's caster."""
+    def damage_roll_modifier(self) -> ResolvedRollModifier:
+        """Resolve ongoing and intrinsic modifiers for this spell's damage."""
 
-        return roll_modifiers(
+        ongoing = roll_modifiers(
             self.state,
             self.actor_ref,
             "damage_roll",
-        ).resolve_modifier(self.roll_die)
+        )
+        intrinsic = ability_modifier_contributions(
+            self.actor.triggered_effects,
+            "spell_damage_roll",
+            {"spell_id": self.spell.id},
+            self._ability_modifier,
+        )
+        return ResolvedRollModifier(
+            value=ongoing.resolve_modifier(self.roll_die)
+            + sum(contribution.value for contribution in intrinsic),
+            source_ids=(
+                *(
+                    contribution.provider_state_id
+                    for contribution in ongoing.contributions
+                ),
+                *(contribution.source_id for contribution in intrinsic),
+            ),
+        )
+
+    def _ability_modifier(self, ability: str) -> int:
+        """Return the actor's modifier for one fully named ability."""
+
+        if ability not in {
+            "strength",
+            "dexterity",
+            "constitution",
+            "intelligence",
+            "wisdom",
+            "charisma",
+        }:
+            raise ValueError(f"Unknown ability for damage modifier: {ability!r}.")
+        score = self.actor.saving_throw_ability_score(cast(Ability, ability))
+        return self.actor.get_modifier(score)
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve sourced saving-throw modifiers for one target."""

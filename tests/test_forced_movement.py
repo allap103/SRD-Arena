@@ -278,6 +278,15 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
         if event.type == "decision_opened"
     )
     assert first_projectile_index < first_decision_index
+    first_projectile = cast.events[first_projectile_index]
+    first_damage_details = first_projectile.data["damage_roll_details"]
+    assert isinstance(first_damage_details, list)
+    first_damage = first_damage_details[0]
+    assert isinstance(first_damage, dict)
+    assert first_damage["dice_total"] == 3
+    assert first_damage["modifier"] == 4
+    assert first_damage["total"] == 7
+    assert first_damage["modifier_source_ids"] == ["agonizing_blast|xphb"]
 
     observed_push = next(
         action
@@ -307,6 +316,15 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     assert [event.type for event in moved.events].index("spell_projectile_resolved") < [
         event.type for event in moved.events
     ].index("decision_opened")
+    second_projectile = next(
+        event for event in moved.events if event.type == "spell_projectile_resolved"
+    )
+    second_damage_details = second_projectile.data["damage_roll_details"]
+    assert isinstance(second_damage_details, list)
+    second_damage = second_damage_details[0]
+    assert isinstance(second_damage, dict)
+    assert second_damage["modifier"] == 4
+    assert second_damage["modifier_source_ids"] == ["agonizing_blast|xphb"]
 
     decline = next(
         action

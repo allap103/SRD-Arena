@@ -217,13 +217,15 @@ def _resolve_spell_attack(
         count, sides = parse_damage_dice(damage.dice)
         if critical_hit:
             count *= 2
+        modifier = context.environment.damage_roll_modifier()
         damage_rolls.append(
             (
                 damage,
                 resolve_dice(
                     count,
                     sides,
-                    modifier=context.environment.damage_roll_modifier(),
+                    modifier=modifier.value,
+                    modifier_source_ids=modifier.source_ids,
                     roller=context.environment.roll_die,
                 ),
             )

@@ -1,6 +1,6 @@
 """Match conditional mechanics against events produced during resolution."""
 
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 
 from srd_arena.domain.rolls.dice import DicePoolResult
@@ -21,6 +21,15 @@ class TriggeredEffect:
     operation: str
     conditions: dict[str, object] = field(default_factory=dict)
     parameters: dict[str, object] = field(default_factory=dict)
+
+
+@dataclass(frozen=True)
+class TriggeredNumericContribution:
+    """Retain the source and value of one resolved numeric trigger."""
+
+    effect_id: str
+    source_id: str
+    value: int
 
 
 def matching_effects(
@@ -45,6 +54,43 @@ def matching_effects(
         for effect in effects
         if effect.trigger == trigger and _conditions_match(effect.conditions, context)
     ]
+
+
+def ability_modifier_contributions(
+    effects: Iterable[TriggeredEffect],
+    trigger: str,
+    context: Mapping[str, object],
+    ability_modifier: Callable[[str], int],
+) -> tuple[TriggeredNumericContribution, ...]:
+    """Resolve matching ``add_ability_modifier`` triggers with provenance.
+
+    >>> effect = TriggeredEffect(
+    ...     "agonizing_blast", "feature", "agonizing_blast|xphb",
+    ...     "spell_damage_roll", "add_ability_modifier",
+    ...     {"spell_id": "eldritch_blast"}, {"ability": "charisma"},
+    ... )
+    >>> ability_modifier_contributions(
+    ...     (effect,), "spell_damage_roll", {"spell_id": "eldritch_blast"},
+    ...     lambda ability: 3 if ability == "charisma" else 0,
+    ... )[0].value
+    3
+    """
+
+    contributions: list[TriggeredNumericContribution] = []
+    for effect in matching_effects(effects, trigger, context):
+        if effect.operation != "add_ability_modifier":
+            continue
+        ability = effect.parameters.get("ability")
+        if not isinstance(ability, str):
+            continue
+        contributions.append(
+            TriggeredNumericContribution(
+                effect_id=effect.id,
+                source_id=effect.source_id,
+                value=ability_modifier(ability),
+            )
+        )
+    return tuple(contributions)
 
 
 def reroll_eligible_indices(

@@ -78,7 +78,12 @@ def build_spell_action_context(
     attack_mode = _spell_attack_mode(definition.resolution)
     conditions = _spell_conditions(definition)
     save_advantage_against_opponents = _saves_favor_opponents(definition.resolution)
-    environment = EncounterSpellResolutionEnvironment(state, actor, creature_ref)
+    environment = EncounterSpellResolutionEnvironment(
+        state,
+        actor,
+        creature_ref,
+        spell,
+    )
     return SpellActionContext(
         creature=actor,
         spell=spell,

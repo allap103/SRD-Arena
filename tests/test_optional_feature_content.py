@@ -5,6 +5,7 @@ from srd_arena.content.character_options.classes import (
 )
 from srd_arena.content.common import SourceCatalog
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
+from srd_arena.domain.effects.triggered import ability_modifier_contributions
 
 
 def test_bundled_optional_features_load_as_typed_records() -> None:
@@ -59,6 +60,37 @@ def test_repelling_blast_normalizes_to_an_eldritch_blast_hit_trigger() -> None:
         "maximum_target_size": "L",
         "optional": True,
     }
+
+
+def test_agonizing_blast_normalizes_to_a_sourced_damage_modifier() -> None:
+    catalog = load_optional_feature_catalog(SYSTEM_CONTENT_ROOT)
+
+    [effect] = normalize_optional_feature_effects(
+        catalog.find("Agonizing Blast", "XPHB")
+    )
+
+    assert effect.id == "agonizing_blast"
+    assert effect.trigger == "spell_damage_roll"
+    assert effect.operation == "add_ability_modifier"
+    assert effect.conditions == {"spell_id": "eldritch_blast"}
+    assert effect.parameters == {"ability": "charisma"}
+    [contribution] = ability_modifier_contributions(
+        (effect,),
+        "spell_damage_roll",
+        {"spell_id": "eldritch_blast"},
+        lambda _ability: 4,
+    )
+    assert contribution.value == 4
+    assert contribution.source_id == "agonizing_blast|xphb"
+    assert (
+        ability_modifier_contributions(
+            (effect,),
+            "spell_damage_roll",
+            {"spell_id": "scorching_ray"},
+            lambda _ability: 4,
+        )
+        == ()
+    )
 
 
 def test_optional_feature_catalog_uses_srd_public_name() -> None:

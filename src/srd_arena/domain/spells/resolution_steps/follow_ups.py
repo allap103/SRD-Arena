@@ -86,17 +86,20 @@ def resolve_follow_up(
                 )
             )
         damage_definitions = tuple(scaled)
-    shared_rolls = [
-        (
-            damage,
-            resolve_dice(
-                *parse_damage_dice(damage.dice),
-                modifier=context.environment.damage_roll_modifier(),
-                roller=context.environment.roll_die,
-            ),
+    shared_rolls = []
+    for damage in damage_definitions:
+        modifier = context.environment.damage_roll_modifier()
+        shared_rolls.append(
+            (
+                damage,
+                resolve_dice(
+                    *parse_damage_dice(damage.dice),
+                    modifier=modifier.value,
+                    modifier_source_ids=modifier.source_ids,
+                    roller=context.environment.roll_die,
+                ),
+            )
         )
-        for damage in damage_definitions
-    ]
     save_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
     ability = follow_up.resolution.ability
@@ -159,6 +162,7 @@ def resolve_follow_up(
                     "dice_values": [die.result for die in roll.dice],
                     "dice_total": roll.subtotal,
                     "modifier": roll.modifier,
+                    "modifier_source_ids": list(roll.modifier_source_ids),
                     "total": roll.total,
                     "damage_type": damage.damage_type,
                     "saved": save.check.success,

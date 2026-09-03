@@ -60,4 +60,16 @@ def normalize_optional_feature_effects(
                 },
             )
         ]
+    if (name.casefold(), source.upper()) == ("agonizing blast", "XPHB"):
+        return [
+            TriggeredEffect(
+                id="agonizing_blast",
+                source_type="eldritch_invocation",
+                source_id=canonical_id,
+                trigger="spell_damage_roll",
+                operation="add_ability_modifier",
+                conditions={"spell_id": "eldritch_blast"},
+                parameters={"ability": "charisma"},
+            )
+        ]
     return []

@@ -69,6 +69,7 @@ def apply_target_damage(
                 "dice_values": [die.result for die in roll.dice],
                 "dice_total": roll.subtotal,
                 "modifier": roll.modifier,
+                "modifier_source_ids": list(roll.modifier_source_ids),
                 "total": roll.total,
                 "damage_type": damage.damage_type,
                 "saved": roll_outcome.successful_save,

@@ -9,7 +9,7 @@ from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.geometry import AreaOfEffect
-from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.rolls.dice import D20RollMode, ResolvedRollModifier
 
 from ..definitions import Spell
 
@@ -76,8 +76,8 @@ class SpellResolutionEnvironment(Protocol):
     def attack_roll_modifier(self, target_ref: str) -> int:
         """Resolve the caster's current sourced attack-roll modifier."""
 
-    def damage_roll_modifier(self) -> int:
-        """Resolve the caster's current sourced damage-roll modifier."""
+    def damage_roll_modifier(self) -> ResolvedRollModifier:
+        """Resolve the caster's current damage modifier and its sources."""
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve a target's current sourced saving-throw modifier."""
