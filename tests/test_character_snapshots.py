@@ -180,6 +180,7 @@ def test_warlock_snapshots_expose_pact_progression_and_selected_spells(
             == invocations
         )
         triggered_effect_ids = {effect.id for effect in creature.triggered_effects}
+        assert "eldritch_mind" in triggered_effect_ids
         assert ("agonizing_blast" in triggered_effect_ids) is (level >= 2)
         assert ("repelling_blast" in triggered_effect_ids) is (level >= 2)
 

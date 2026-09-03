@@ -3,7 +3,7 @@
 from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 
-from srd_arena.domain.rolls.dice import DicePoolResult
+from srd_arena.domain.rolls.dice import D20RollMode, DicePoolResult
 
 
 @dataclass(frozen=True)
@@ -30,6 +30,15 @@ class TriggeredNumericContribution:
     effect_id: str
     source_id: str
     value: int
+
+
+@dataclass(frozen=True)
+class TriggeredRollModeContribution:
+    """Retain the source and mode of one resolved d20-roll trigger."""
+
+    effect_id: str
+    source_id: str
+    mode: D20RollMode
 
 
 def matching_effects(
@@ -88,6 +97,46 @@ def ability_modifier_contributions(
                 effect_id=effect.id,
                 source_id=effect.source_id,
                 value=ability_modifier(ability),
+            )
+        )
+    return tuple(contributions)
+
+
+def roll_mode_contributions(
+    effects: Iterable[TriggeredEffect],
+    trigger: str,
+    context: Mapping[str, object],
+) -> tuple[TriggeredRollModeContribution, ...]:
+    """Resolve matching ``grant_roll_mode`` triggers with provenance.
+
+    >>> effect = TriggeredEffect(
+    ...     "eldritch_mind", "feature", "eldritch_mind|xphb",
+    ...     "saving_throw", "grant_roll_mode",
+    ...     {"purpose": "maintain_concentration"}, {"mode": "advantage"},
+    ... )
+    >>> roll_mode_contributions(
+    ...     (effect,), "saving_throw", {"purpose": "maintain_concentration"}
+    ... )[0].mode
+    'advantage'
+    """
+
+    contributions: list[TriggeredRollModeContribution] = []
+    for effect in matching_effects(effects, trigger, context):
+        if effect.operation != "grant_roll_mode":
+            continue
+        mode = effect.parameters.get("mode")
+        resolved_mode: D20RollMode
+        if mode == "advantage":
+            resolved_mode = "advantage"
+        elif mode == "disadvantage":
+            resolved_mode = "disadvantage"
+        else:
+            continue
+        contributions.append(
+            TriggeredRollModeContribution(
+                effect_id=effect.id,
+                source_id=effect.source_id,
+                mode=resolved_mode,
             )
         )
     return tuple(contributions)

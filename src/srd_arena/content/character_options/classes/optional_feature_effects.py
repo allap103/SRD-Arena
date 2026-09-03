@@ -44,6 +44,21 @@ def normalize_optional_feature_effects(
                 },
             )
         ]
+    if (name.casefold(), source.upper()) == ("eldritch mind", "XPHB"):
+        return [
+            TriggeredEffect(
+                id="eldritch_mind",
+                source_type="eldritch_invocation",
+                source_id=canonical_id,
+                trigger="saving_throw",
+                operation="grant_roll_mode",
+                conditions={
+                    "ability": "constitution",
+                    "purpose": "maintain_concentration",
+                },
+                parameters={"mode": "advantage"},
+            )
+        ]
     if (name.casefold(), source.upper()) == ("repelling blast", "XPHB"):
         return [
             TriggeredEffect(
