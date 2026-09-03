@@ -49,7 +49,11 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "stat_block_action_showcase"
 )
 
 

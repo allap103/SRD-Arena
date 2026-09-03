@@ -23,6 +23,7 @@ from .resources import (
 from .resources import (
     recover_resources as recover_creature_resources,
 )
+from .resources import refresh_daily_resources as refresh_creature_daily_resources
 from .resources import (
     spend_feature_use as spend_creature_feature_use,
 )
@@ -105,6 +106,15 @@ class Creature:
 
         return recover_creature_resources(self, rest)
 
+    def refresh_daily_resources(self) -> tuple[ResourceRecovery, ...]:
+        """Restore the creature's resources that renew once per day.
+
+        Daily refreshes are explicit because an authored per-day limit is not
+        inherently tied to either a Short or Long Rest.
+        """
+
+        return refresh_creature_daily_resources(self)
+
     def get_modifier(self, attribute_value: int) -> int:
         """Calculate the modifier for an ability score.
 
@@ -169,6 +179,35 @@ class Creature:
         """
 
         return self.statistics.saving_throw_bonuses.get(ability)
+
+    def skill_check_bonus(self, ability: Ability, skill: str) -> int:
+        """Return the intrinsic modifier for a named ability-based skill check.
+
+        Explicit stat-block totals take precedence. Player-style proficiency
+        adds the creature's proficiency bonus to the underlying ability.
+
+        >>> attributes = Attributes(20, 5, 14, 10, 10, 10, 10, 10, 10,
+        ...     proficiency_bonus=3, proficiencies={"skills": ["athletics"]})
+        >>> creature = Creature("hero", "Hero", "", Inventory(), attributes, Equipment())
+        >>> creature.skill_check_bonus("strength", "athletics")
+        5
+        """
+
+        normalized_skill = skill.casefold()
+        explicit = self.statistics.skill_bonuses.get(normalized_skill)
+        if explicit is not None:
+            return explicit
+        modifier = self.get_modifier(self.saving_throw_ability_score(ability))
+        skills = self.attributes.proficiencies.get("skills", ())
+        proficient = (
+            isinstance(skills, dict) and bool(skills.get(normalized_skill))
+        ) or (
+            isinstance(skills, (list, tuple, set, frozenset))
+            and normalized_skill in {str(authored).casefold() for authored in skills}
+        )
+        if bool(self.attributes.proficiencies.get(normalized_skill)):
+            proficient = True
+        return modifier + (self.attributes.proficiency_bonus if proficient else 0)
 
     def get_max_health(self) -> int:
         """Return the creature's intrinsic maximum health.

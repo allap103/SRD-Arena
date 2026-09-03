@@ -54,6 +54,7 @@ class Session:
         dice: DiceRoller | None = None,
         *,
         seed: int | None = None,
+        decision_epoch: int = 0,
     ):
         if dice is not None and seed is not None:
             raise ValueError("Provide either dice or seed, not both.")
@@ -71,6 +72,8 @@ class Session:
         self.encounter_state: EncounterState | None = None
         self._encounter_actions: list[EncounterAction] = []
         self.pending_encounter_completion: PendingEncounterCompletion | None = None
+        self._decision_epoch = decision_epoch
+        self._decision_revision = 0
 
     def read(self) -> SessionRead:
         """Return typed internal inputs used to construct an observation.
@@ -134,25 +137,41 @@ class Session:
         """
         if self.pending_encounter_completion is not None:
             if action_id == "system-restart-encounter":
-                return self._restart_encounter()
+                outcome = self._restart_encounter()
+            elif action_id == "system-exit":
+                outcome = self._exit_game()
+            else:
+                raise KeyError(
+                    f"Action '{action_id}' is unavailable for the completion prompt."
+                )
+        else:
+            self._ensure_encounter_state()
             if action_id == "system-exit":
-                return self._exit_game()
-            raise KeyError(
-                f"Action '{action_id}' is unavailable for the completion prompt."
-            )
-
-        self._ensure_encounter_state()
-        if action_id == "system-exit":
-            return self._exit_game()
-        if self.encounter_state is not None:
-            return self._choose_encounter(action_id)
-        raise RuntimeError("No encounter is active.")
+                outcome = self._exit_game()
+            elif self.encounter_state is not None:
+                outcome = self._choose_encounter(action_id)
+            else:
+                raise RuntimeError("No encounter is active.")
+        self._decision_revision += 1
+        return outcome
 
     @property
     def seed(self) -> int | None:
         """Return the seed governing this session's random stream, if any."""
 
         return self._dice.seed
+
+    @property
+    def decision_revision(self) -> int:
+        """Return the monotonic revision of the public decision surface."""
+
+        return self._decision_revision
+
+    @property
+    def decision_epoch(self) -> int:
+        """Return the namespace separating this session from prior episodes."""
+
+        return self._decision_epoch
 
     def reset(self, *, seed: int | None = None) -> GameObservation:
         """Restore the session to its initially loaded content and scene.
@@ -171,6 +190,7 @@ class Session:
         True
         """
         self._restore_initial_state(seed=seed)
+        self._decision_revision += 1
         return self.observe()
 
     def _exit_game(self) -> EngineOutcome:
@@ -221,7 +241,9 @@ class Session:
         KeyError: "Action 'missing' is unavailable."
         """
 
-        return configure_engine_action(self, action_id, configuration)
+        outcome = configure_engine_action(self, action_id, configuration)
+        self._decision_revision += 1
+        return outcome
 
     def _apply_encounter_action(
         self,
@@ -320,6 +342,7 @@ class Session:
                     ("system", self.pending_encounter_completion.message),
                 ]
 
+        self._decision_revision += 1
         return EngineOutcome(
             messages=tuple(progress.messages),
             events=tuple(progress.events),

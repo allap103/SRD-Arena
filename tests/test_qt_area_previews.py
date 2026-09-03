@@ -50,7 +50,9 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(
         ]
 
     monkeypatch.setattr(EncounterState, "roll_initiative", _tempo_archmage_first)
-    session = Session(load_encounter_directory(ENCOUNTERS_ROOT / "slow_showcase"))
+    session = Session(
+        load_encounter_directory(ENCOUNTERS_ROOT / "archive" / "slow_showcase")
+    )
     session.read()
     observation = observe_session(session)
     slow_action = next(

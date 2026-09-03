@@ -2,12 +2,19 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
+from typing import Literal, cast
+
+from srd_arena.domain.encounters.encounter_models.actions import (
+    EncounterAction,
+    GrappleEscapeSelection,
+)
 from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.queries import (
     ActionOptionDetails,
     DirectTargetOptionDetails,
     FeatureOptionDetails,
+    GrappleEscapeOptionDetails,
+    GrappleSaveOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SpellOptionDetails,
@@ -59,6 +66,21 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         return FeatureOptionDetails(feature_id=action.value)
     if action.kind == "move" and isinstance(action.value, str):
         return MovementOptionDetails(direction=action.value)
+    if action.kind == "escape_grapple" and isinstance(
+        action.value, GrappleEscapeSelection
+    ):
+        return GrappleEscapeOptionDetails(
+            source_ref=action.value.source_ref,
+            ability=action.value.ability,
+        )
+    if action.kind == "grapple_save" and action.value in {
+        "strength",
+        "dexterity",
+        "fail",
+    }:
+        return GrappleSaveOptionDetails(
+            cast(Literal["strength", "dexterity", "fail"], action.value)
+        )
     if action.kind == "set_spell_resource_allocation" and isinstance(
         action.value,
         str,
@@ -78,7 +100,14 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
 
 
 def _direct_target_ref(
-    value: str | int | tuple[float, float] | SpellActionPayload | None,
+    value: (
+        str
+        | int
+        | tuple[float, float]
+        | SpellActionPayload
+        | GrappleEscapeSelection
+        | None
+    ),
 ) -> str | None:
     if isinstance(value, str):
         return value

@@ -115,6 +115,12 @@ class CommandResult:
     update: GameUpdate | None = None
     failure: CommandFailure | None = None
 
+    def __post_init__(self) -> None:
+        """Require exactly one accepted update or rejection failure."""
+
+        if (self.update is None) == (self.failure is None):
+            raise ValueError("A command result requires exactly one update or failure.")
+
     @property
     def accepted(self) -> bool:
         """Return whether the command produced an engine update.

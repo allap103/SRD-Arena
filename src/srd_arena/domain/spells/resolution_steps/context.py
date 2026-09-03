@@ -76,9 +76,6 @@ class SpellResolutionEnvironment(Protocol):
     def attack_roll_modifier(self, target_ref: str) -> int:
         """Resolve the caster's current sourced attack-roll modifier."""
 
-    def attack_roll_mode(self, target_ref: str) -> D20RollMode:
-        """Resolve the caster's current sourced attack-roll mode."""
-
     def damage_roll_modifier(self) -> int:
         """Resolve the caster's current sourced damage-roll modifier."""
 

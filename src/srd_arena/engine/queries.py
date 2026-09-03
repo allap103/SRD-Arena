@@ -54,6 +54,21 @@ class DirectTargetOptionDetails:
 
 
 @dataclass(frozen=True)
+class GrappleEscapeOptionDetails:
+    """Identify the grapple source and skill selected for an escape check."""
+
+    source_ref: str
+    ability: Literal["strength", "dexterity"]
+
+
+@dataclass(frozen=True)
+class GrappleSaveOptionDetails:
+    """Identify the target's response to one Grapple saving throw."""
+
+    choice: Literal["strength", "dexterity", "fail"]
+
+
+@dataclass(frozen=True)
 class FeatureOptionDetails:
     """Identify the creature feature selected by an executable option."""
 
@@ -78,6 +93,8 @@ ActionOptionDetails = (
     SpellOptionDetails
     | StatBlockOptionDetails
     | DirectTargetOptionDetails
+    | GrappleEscapeOptionDetails
+    | GrappleSaveOptionDetails
     | FeatureOptionDetails
     | MovementOptionDetails
     | ResourceAllocationOptionDetails
@@ -178,6 +195,8 @@ class SessionRead:
     requires_automatic_advance: bool
     completion_reason: EncounterTerminationReason | None = None
     winning_team_id: str | None = None
+    decision_epoch: int = 0
+    decision_revision: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(

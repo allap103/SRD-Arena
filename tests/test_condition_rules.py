@@ -69,6 +69,18 @@ def test_prone_exposes_distance_sensitive_attack_traits() -> None:
         assert effective.providers_for_trait(trait) == (prone.id,)
 
 
+def test_poisoned_exposes_attack_and_ability_check_disadvantage() -> None:
+    poisoned = _applied(Condition.POISONED, "venom")
+
+    effective = effective_conditions((poisoned,))
+
+    for trait in (
+        CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+        CombatTrait.ABILITY_CHECKS_HAVE_DISADVANTAGE,
+    ):
+        assert effective.providers_for_trait(trait) == (poisoned.id,)
+
+
 def test_restrained_exposes_speed_attack_and_dexterity_save_traits() -> None:
     restrained = _applied(Condition.RESTRAINED, "web")
 

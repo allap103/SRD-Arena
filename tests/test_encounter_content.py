@@ -30,7 +30,11 @@ from srd_arena.engine.session import Session
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 
 

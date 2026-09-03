@@ -12,8 +12,14 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 pytest.importorskip("PySide6")
 
-from PySide6.QtCore import QTimer
-from PySide6.QtWidgets import QApplication, QLabel, QMessageBox, QPushButton
+from PySide6.QtCore import Qt, QTimer
+from PySide6.QtWidgets import (
+    QApplication,
+    QLabel,
+    QMessageBox,
+    QTreeWidget,
+    QTreeWidgetItem,
+)
 
 import srd_arena.frontends.gui.launcher as launcher
 from srd_arena.content.encounters import (
@@ -97,8 +103,12 @@ def test_encounter_picker_loads_content_then_creates_session(
         session_factory=create_session,
     )
 
-    buttons = picker.findChildren(QPushButton)
-    assert [button.text() for button in buttons] == [
+    tree = picker.findChild(QTreeWidget, "encounterTree")
+    assert tree is not None
+    assert [
+        cast(QTreeWidgetItem, tree.topLevelItem(index)).text(0)
+        for index in range(tree.topLevelItemCount())
+    ] == [
         "alpha Demo",
         "Example Encounter",
         "Zulu Demo",
@@ -118,6 +128,52 @@ def test_encounter_picker_loads_content_then_creates_session(
     assert created_windows[0].presentation_config == encounter.presentation
     assert created_windows[0].pause_between_automatic_actions is False
     assert created_windows[0].was_shown is True
+    picker.deleteLater()
+    app.processEvents()
+
+
+def test_encounter_picker_groups_nested_encounters_in_collapsed_folders() -> None:
+    app = QApplication.instance() or QApplication([])
+    catalog = Mock(spec=EncounterCatalog)
+    catalog.available_encounters.return_value = (
+        EncounterSummary("root", "Root Encounter"),
+        EncounterSummary(
+            "archive/alpha",
+            "Alpha Encounter",
+            folder=("archive",),
+        ),
+        EncounterSummary(
+            "archive/nested/beta",
+            "Beta Encounter",
+            folder=("archive", "nested"),
+        ),
+    )
+
+    picker = launcher.EncounterPickerWindow(catalog)
+    tree = picker.findChild(QTreeWidget, "encounterTree")
+    assert tree is not None
+    assert tree.topLevelItemCount() == 2
+
+    root = cast(QTreeWidgetItem, tree.topLevelItem(0))
+    archive = cast(QTreeWidgetItem, tree.topLevelItem(1))
+    assert root.text(0) == "Root Encounter"
+    assert root.data(0, Qt.ItemDataRole.UserRole) == "root"
+    assert archive.text(0) == "Archive"
+    assert archive.isExpanded() is False
+    assert archive.childCount() == 2
+
+    nested = archive.child(0)
+    alpha = archive.child(1)
+    assert nested.text(0) == "Nested"
+    assert nested.isExpanded() is False
+    assert nested.child(0).text(0) == "Beta Encounter"
+    assert alpha.text(0) == "Alpha Encounter"
+    assert alpha.data(0, Qt.ItemDataRole.UserRole) == "archive/alpha"
+
+    archive.setExpanded(True)
+    assert archive.isExpanded() is True
+    archive.setExpanded(False)
+    assert archive.isExpanded() is False
     picker.deleteLater()
     app.processEvents()
 

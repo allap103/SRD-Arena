@@ -10,6 +10,7 @@ ENCOUNTER_DIR = (
     Path(__file__).parents[1]
     / "content"
     / "encounters"
+    / "archive"
     / "mass_heal_allocation_showcase"
 )
 _ORCHESTRATOR = EncounterOrchestrator()

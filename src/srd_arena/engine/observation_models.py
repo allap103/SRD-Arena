@@ -48,6 +48,8 @@ class ActionObservation:
     feature_id: str | None = None
     movement_direction: str | None = None
     target_ref: str | None = None
+    grapple_source_ref: str | None = None
+    grapple_choice: str | None = None
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
 

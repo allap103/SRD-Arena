@@ -142,7 +142,6 @@ def resolve_automatic_opportunity_attacks(
                 (mover.position,),
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-            sourced_attack_roll_mode=attack_roll_rules.mode,
             target_armor_class=effective_armor_class(
                 state,
                 mover_ref,
@@ -290,7 +289,6 @@ def apply_reaction_action(
                 (target.position,),
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-            sourced_attack_roll_mode=attack_roll_rules.mode,
             target_armor_class=effective_armor_class(
                 state,
                 target_ref,

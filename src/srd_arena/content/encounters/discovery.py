@@ -19,27 +19,42 @@ class EncounterSource:
 
     id: str
     directory: Path
+    folder: tuple[str, ...]
     schema: EncounterConfigSchema
 
 
 def discover_encounters(root: Path = ENCOUNTERS_ROOT) -> tuple[EncounterSource, ...]:
-    """Return directories containing valid config and encounter documents."""
+    """Return valid encounter directories at any depth beneath the root.
+
+    The root-relative POSIX path is the stable catalog ID. Its parent parts
+    preserve authoring folders for presentation without coupling loading to a
+    particular frontend.
+    """
 
     if not root.exists():
         return ()
     discovered: list[EncounterSource] = []
-    for directory in sorted(path for path in root.iterdir() if path.is_dir()):
+    directories = sorted(
+        {path.parent for path in root.rglob("encounter.json") if path.is_file()},
+        key=lambda path: (
+            tuple(part.casefold() for part in path.relative_to(root).parts),
+            path.relative_to(root).parts,
+        ),
+    )
+    for directory in directories:
         config_path = directory / "config.json"
-        if not (directory / "encounter.json").is_file() or not config_path.is_file():
+        if not config_path.is_file():
             continue
         try:
             schema = EncounterConfigSchema.model_validate(load_json(config_path))
         except OSError, ValueError, ValidationError:
             continue
+        relative = directory.relative_to(root)
         discovered.append(
             EncounterSource(
-                id=directory.name,
+                id=relative.as_posix(),
                 directory=directory.resolve(),
+                folder=relative.parts[:-1],
                 schema=schema,
             )
         )

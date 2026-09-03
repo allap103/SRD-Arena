@@ -40,6 +40,16 @@ class OpportunityAttackRequest(DecisionRequest):
 
 
 @dataclass(frozen=True)
+class GrappleSaveRequest(DecisionRequest):
+    """Ask one target how to resist an exact grapple attempt."""
+
+    action_id: str
+    grappler_ref: CreatureRef
+    target_ref: CreatureRef
+    save_dc: int
+
+
+@dataclass(frozen=True)
 class ResumeMovement(DecisionContinuation):
     """Resume a suspended movement after its reaction decision closes."""
 

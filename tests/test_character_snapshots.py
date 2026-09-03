@@ -20,6 +20,10 @@ from srd_arena.content.creatures import (
 from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import load_spell_catalog
 
+WARLOCK_TRAINING_ENCOUNTER_DIR = (
+    Path(__file__).parents[1] / "content" / "encounters" / "warlock_training"
+)
+
 
 @pytest.fixture(scope="module")
 def snapshot_catalog() -> CharacterSnapshotCatalog:
@@ -82,11 +86,74 @@ def test_warlock_snapshots_expose_pact_progression_and_selected_spells(
     spells = load_spell_catalog(SYSTEM_CONTENT_ROOT)
     expected_slots = ({1: 1}, {1: 2}, {2: 2}, {2: 2}, {3: 2})
     expected_save_dcs = (13, 13, 13, 14, 15)
+    expected_spell_ids = (
+        ("eldritch_blast", "mind_sliver", "hex", "hideous_laughter"),
+        (
+            "eldritch_blast",
+            "mind_sliver",
+            "hex",
+            "hideous_laughter",
+            "armor_of_agathys",
+        ),
+        (
+            "eldritch_blast",
+            "mind_sliver",
+            "hex",
+            "hideous_laughter",
+            "armor_of_agathys",
+            "hold_person",
+            "burning_hands",
+            "command",
+            "scorching_ray",
+        ),
+        (
+            "eldritch_blast",
+            "mind_sliver",
+            "hex",
+            "hideous_laughter",
+            "armor_of_agathys",
+            "hold_person",
+            "misty_step",
+            "burning_hands",
+            "command",
+            "scorching_ray",
+        ),
+        (
+            "eldritch_blast",
+            "mind_sliver",
+            "hex",
+            "hideous_laughter",
+            "armor_of_agathys",
+            "hold_person",
+            "misty_step",
+            "hypnotic_pattern",
+            "burning_hands",
+            "command",
+            "scorching_ray",
+            "fireball",
+            "stinking_cloud",
+        ),
+    )
+    expected_invocations = (
+        ("Eldritch Mind",),
+        ("Eldritch Mind", "Agonizing Blast", "Repelling Blast"),
+        ("Eldritch Mind", "Agonizing Blast", "Repelling Blast"),
+        ("Eldritch Mind", "Agonizing Blast", "Repelling Blast"),
+        (
+            "Eldritch Mind",
+            "Agonizing Blast",
+            "Repelling Blast",
+            "Fiendish Vigor",
+            "Lessons of the First Ones",
+        ),
+    )
 
-    for level, slots, save_dc in zip(
+    for level, slots, save_dc, spell_ids, invocations in zip(
         range(1, 6),
         expected_slots,
         expected_save_dcs,
+        expected_spell_ids,
+        expected_invocations,
         strict=True,
     ):
         creature = build_creature(
@@ -102,6 +169,16 @@ def test_warlock_snapshots_expose_pact_progression_and_selected_spells(
         assert creature.spellcasting.spell_slots_max == slots
         assert creature.spellcasting.spell_slots_remaining == slots
         assert creature.spellcasting.save_dc == save_dc
+        assert tuple(spell.id for spell in creature.spellcasting.learned_spells) == (
+            spell_ids
+        )
+        assert creature.character_profile is not None
+        assert (
+            tuple(
+                feature.name for feature in creature.character_profile.selected_features
+            )
+            == invocations
+        )
 
     level_five = build_creature(
         snapshot_catalog.creature_template("warlock", 5),
@@ -142,9 +219,43 @@ def test_barbarian_level_five_reuses_existing_extra_attack_support(
         "Greatsword",
     )
     assert barbarian.combat_profile.attacks_per_attack_action == 2
+    assert barbarian.skill_check_bonus("strength", "athletics") == 7
     assert barbarian.equipment.right_hand == "maul"
     assert barbarian.equipment.left_hand == "javelin"
     assert snapshot.weapon_masteries == ("Maul", "Javelin", "Greatsword")
+
+
+def test_barbarian_snapshots_expose_selected_progression_at_each_level(
+    snapshot_catalog: CharacterSnapshotCatalog,
+) -> None:
+    classes = load_class_catalog(SYSTEM_CONTENT_ROOT)
+    expected_masteries = (
+        ("Maul", "Javelin"),
+        ("Maul", "Javelin"),
+        ("Maul", "Javelin"),
+        ("Maul", "Javelin", "Greatsword"),
+        ("Maul", "Javelin", "Greatsword"),
+    )
+
+    for level, masteries in zip(range(1, 6), expected_masteries, strict=True):
+        barbarian = build_creature(
+            snapshot_catalog.creature_template("barbarian", level),
+            classes=classes,
+        )
+        assert barbarian.character_profile is not None
+        assert barbarian.character_profile.weapon_masteries == masteries
+        assert tuple(feat.name for feat in barbarian.character_profile.feats) == (
+            "Savage Attacker",
+            "Alert",
+        )
+        assert (
+            barbarian.character_profile.subclass.name
+            if barbarian.character_profile.subclass is not None
+            else None
+        ) == ("Path of the Berserker" if level >= 3 else None)
+        assert barbarian.combat_profile.attacks_per_attack_action == (
+            2 if level == 5 else 1
+        )
 
 
 def test_snapshot_templates_are_independent_copies(
@@ -225,6 +336,41 @@ def test_encounter_directory_resolves_canonical_snapshot_references(
     assert ally.name == "Ally"
     assert ally.attributes.level == 5
     assert ally.combat_profile.attacks_per_attack_action == 2
+
+
+def test_warlock_training_scenario_uses_the_canonical_level_five_party() -> None:
+    encounter = load_encounter_directory(WARLOCK_TRAINING_ENCOUNTER_DIR)
+
+    warlock = encounter.get_creature("warlock")
+    barbarian = encounter.get_creature("barbarian")
+    assert warlock.character_profile is not None
+    assert warlock.character_profile.build_id == "warlock"
+    assert warlock.attributes.level == 5
+    assert barbarian.character_profile is not None
+    assert barbarian.character_profile.build_id == "barbarian"
+    assert barbarian.attributes.level == 5
+    assert {creature.id for creature in encounter.creatures} == {
+        "warlock",
+        "barbarian",
+        "goblin_1",
+        "goblin_2",
+        "goblin_3",
+    }
+    controllers = {
+        participant.creature_id: participant.controller
+        for participant in encounter.participants
+    }
+    assert controllers == {
+        "warlock": "external",
+        "barbarian": "scripted",
+        "goblin_1": None,
+        "goblin_2": None,
+        "goblin_3": None,
+    }
+    assert {team.id: team.controller for team in encounter.teams} == {
+        "heroes": "external",
+        "goblins": "scripted",
+    }
 
 
 def test_character_build_validation_rejects_level_gaps() -> None:

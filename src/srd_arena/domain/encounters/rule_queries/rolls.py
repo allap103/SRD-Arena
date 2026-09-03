@@ -71,8 +71,14 @@ def _condition_roll_contributions(
     ability: str | None,
     subject: ModifierSubject,
 ) -> tuple[RollRuleContribution, ...]:
-    if roll != "saving_throw" or ability != "dexterity" or subject != "target":
+    trait_and_modifier = _condition_roll_trait(
+        roll=roll,
+        ability=ability,
+        subject=subject,
+    )
+    if trait_and_modifier is None:
         return ()
+    trait, modifier = trait_and_modifier
     applied_conditions = tuple(
         condition
         for condition in state.conditions
@@ -87,16 +93,42 @@ def _condition_roll_contributions(
         RollRuleContribution(
             provider_state_id,
             providers_by_id[provider_state_id].identity.source,
+            modifier,
+        )
+        for provider_state_id in conditions.providers_for_trait(trait)
+    )
+
+
+def _condition_roll_trait(
+    *,
+    roll: RollKind,
+    ability: str | None,
+    subject: ModifierSubject,
+) -> tuple[CombatTrait, RollModifier] | None:
+    """Map a roll context to the reusable condition trait that adjusts it."""
+
+    if subject != "target":
+        return None
+    if roll == "attack_roll":
+        return (
+            CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+            RollModifier("attack_roll", "disadvantage"),
+        )
+    if roll == "ability_check":
+        return (
+            CombatTrait.ABILITY_CHECKS_HAVE_DISADVANTAGE,
+            RollModifier("ability_check", "disadvantage", ability=ability),
+        )
+    if roll == "saving_throw" and ability == "dexterity":
+        return (
+            CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE,
             RollModifier(
                 "saving_throw",
                 "disadvantage",
                 ability="dexterity",
             ),
         )
-        for provider_state_id in conditions.providers_for_trait(
-            CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE
-        )
-    )
+    return None
 
 
 def _modifier_applies(

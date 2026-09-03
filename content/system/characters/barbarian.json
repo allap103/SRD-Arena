@@ -26,7 +26,8 @@
           "wisdom": 8,
           "intelligence": 8,
           "charisma": 8,
-          "base_armor_class": 13
+          "base_armor_class": 13,
+          "proficiencies": {"skills": ["athletics", "intimidation"]}
         },
         "inventory": [
           {"name": "Maul", "source": "XPHB"},
@@ -62,7 +63,8 @@
           "wisdom": 8,
           "intelligence": 8,
           "charisma": 8,
-          "base_armor_class": 13
+          "base_armor_class": 13,
+          "proficiencies": {"skills": ["athletics", "intimidation"]}
         },
         "inventory": [
           {"name": "Maul", "source": "XPHB"},
@@ -100,7 +102,8 @@
           "wisdom": 8,
           "intelligence": 8,
           "charisma": 8,
-          "base_armor_class": 13
+          "base_armor_class": 13,
+          "proficiencies": {"skills": ["athletics", "intimidation"]}
         },
         "inventory": [
           {"name": "Maul", "source": "XPHB"},
@@ -138,7 +141,8 @@
           "wisdom": 8,
           "intelligence": 8,
           "charisma": 8,
-          "base_armor_class": 13
+          "base_armor_class": 13,
+          "proficiencies": {"skills": ["athletics", "intimidation"]}
         },
         "inventory": [
           {"name": "Maul", "source": "XPHB"},
@@ -177,7 +181,8 @@
           "wisdom": 8,
           "intelligence": 8,
           "charisma": 8,
-          "base_armor_class": 13
+          "base_armor_class": 13,
+          "proficiencies": {"skills": ["athletics", "intimidation"]}
         },
         "inventory": [
           {"name": "Maul", "source": "XPHB"},

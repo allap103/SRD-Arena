@@ -55,29 +55,42 @@ def recover_resources(
 ) -> tuple[ResourceRecovery, ...]:
     """Restore every creature resource affected by a completed rest."""
 
+    refreshes = {rest.value}
+    if rest is RestType.LONG:
+        refreshes.add(RestType.SHORT.value)
     recoveries = (
         list(creature.spellcasting.recover_slots(rest))
         if creature.spellcasting is not None
         else []
     )
-    recoveries.extend(_recover_feature_uses(creature, rest))
-    recoveries.extend(_recover_stat_block_uses(creature, rest))
+    recoveries.extend(_recover_feature_uses(creature, frozenset(refreshes)))
+    recoveries.extend(_recover_stat_block_uses(creature, frozenset(refreshes)))
+    return tuple(recoveries)
+
+
+def refresh_daily_resources(creature: Creature) -> tuple[ResourceRecovery, ...]:
+    """Restore limited uses whose authored refresh boundary is one day."""
+
+    refreshes = frozenset({"day"})
+    recoveries = _recover_feature_uses(creature, refreshes)
+    recoveries.extend(_recover_stat_block_uses(creature, refreshes))
     return tuple(recoveries)
 
 
 def _recover_feature_uses(
     creature: Creature,
-    rest: RestType,
+    refreshes: frozenset[str],
 ) -> list[ResourceRecovery]:
     recoveries: list[ResourceRecovery] = []
     for feature_id, maximum in sorted(creature.combat_profile.feature_uses_max.items()):
-        rule = creature.combat_profile.feature_recharge.get(feature_id, {}).get(
-            rest.value
-        )
-        if rule is None:
+        rules = creature.combat_profile.feature_recharge.get(feature_id, {})
+        matching_rules = [rules[key] for key in sorted(refreshes) if key in rules]
+        if not matching_rules:
             continue
         previous = creature.feature_uses_remaining.get(feature_id, maximum)
-        current = maximum if rule == "all" else min(previous + int(rule), maximum)
+        current = previous
+        for rule in matching_rules:
+            current = maximum if rule == "all" else min(current + int(rule), maximum)
         if current == previous:
             continue
         creature.feature_uses_remaining[feature_id] = current
@@ -93,16 +106,14 @@ def _recover_feature_uses(
 
 def _recover_stat_block_uses(
     creature: Creature,
-    rest: RestType,
+    refreshes: frozenset[str],
 ) -> list[ResourceRecovery]:
     recoveries: list[ResourceRecovery] = []
     for action_name, definition in sorted(creature.stat_block_actions.items()):
         pool = getattr(definition, "resource_pool", None)
         if not isinstance(pool, LimitedUsePool):
             continue
-        if pool.refresh != rest.value and not (
-            rest is RestType.LONG and pool.refresh == "short_rest"
-        ):
+        if pool.refresh not in refreshes:
             continue
         previous = creature.stat_block_action_resources.get(
             action_name,

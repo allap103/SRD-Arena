@@ -6,7 +6,11 @@ from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
 
 ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "spell_condition_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "spell_condition_showcase"
 )
 
 

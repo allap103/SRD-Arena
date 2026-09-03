@@ -6,7 +6,6 @@ from typing import cast
 from srd_arena.domain.capabilities import AttackResolution, SavingThrowResolution
 from srd_arena.domain.rolls.dice import (
     DicePoolResult,
-    combine_roll_modes,
     resolve_check,
     resolve_d20,
     resolve_dice,
@@ -193,10 +192,7 @@ def _resolve_spell_attack(
             context.creature.spellcasting.attack_bonus
             + context.environment.attack_roll_modifier(target.target_ref)
         ),
-        mode=combine_roll_modes(
-            context.attack_roll_modes.get(target.target_ref, "normal"),
-            context.environment.attack_roll_mode(target.target_ref),
-        ),
+        mode=context.attack_roll_modes.get(target.target_ref, "normal"),
         roller=context.environment.roll_die,
     )
     target_ac = context.target_armor_classes.get(

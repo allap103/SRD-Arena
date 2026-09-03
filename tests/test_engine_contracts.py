@@ -9,6 +9,7 @@ from srd_arena.engine.api import (
     AimAction,
     CancelTargeting,
     ChangeTarget,
+    CommandFailure,
     CommandResult,
     ConfirmTargeting,
     GameEvent,
@@ -103,6 +104,28 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
 
     for value in boundary_values:
         json.dumps(_to_json_value(value))
+
+
+def test_command_result_requires_exactly_one_outcome() -> None:
+    update = GameUpdate(
+        observation=GameObservation(
+            scene=SceneObservation("example", ()),
+            encounter=None,
+            completion=None,
+            requires_automatic_advance=False,
+        ),
+        messages=(),
+        events=(),
+        selected_action_id=None,
+        selected_choice_text=None,
+        should_exit=False,
+    )
+    failure = CommandFailure("rejected", "Rejected")
+
+    with pytest.raises(ValueError, match="exactly one"):
+        CommandResult()
+    with pytest.raises(ValueError, match="exactly one"):
+        CommandResult(update=update, failure=failure)
 
 
 def _to_json_value(value: object) -> object:

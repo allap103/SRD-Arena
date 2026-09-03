@@ -4,7 +4,11 @@ from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.engine.session import Session
 
 ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "spell_damage_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "spell_damage_showcase"
 )
 
 

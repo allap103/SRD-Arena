@@ -27,6 +27,8 @@ from srd_arena.engine.queries import (
     ActionOption,
     DirectTargetOptionDetails,
     FeatureOptionDetails,
+    GrappleEscapeOptionDetails,
+    GrappleSaveOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SessionRead,
@@ -51,6 +53,8 @@ class _ActionSemantics:
     feature_id: str | None = None
     movement_direction: str | None = None
     target_ref: str | None = None
+    grapple_source_ref: str | None = None
+    grapple_choice: str | None = None
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
 
@@ -117,6 +121,8 @@ def _observe_action(
         feature_id=semantics.feature_id,
         movement_direction=semantics.movement_direction,
         target_ref=semantics.target_ref,
+        grapple_source_ref=semantics.grapple_source_ref,
+        grapple_choice=semantics.grapple_choice,
         aim_point=semantics.aim_point,
         area_preview=semantics.area_preview,
     )
@@ -165,6 +171,13 @@ def _action_semantics(
         return _ActionSemantics(feature_id=details.feature_id)
     if isinstance(details, MovementOptionDetails):
         return _ActionSemantics(movement_direction=details.direction)
+    if isinstance(details, GrappleEscapeOptionDetails):
+        return _ActionSemantics(
+            grapple_source_ref=details.source_ref,
+            grapple_choice=details.ability,
+        )
+    if isinstance(details, GrappleSaveOptionDetails):
+        return _ActionSemantics(grapple_choice=details.choice)
     if isinstance(details, ResourceAllocationOptionDetails):
         return _ActionSemantics(target_ref=details.target_ref)
     if isinstance(details, DirectTargetOptionDetails):

@@ -9,6 +9,7 @@ from ..encounter_models.actions import EncounterAction
 from ..participants import creature_controller
 from ..reaction_runtime.damage_rerolls import reroll_damage_actions
 from ..reaction_runtime.opportunity_offers import reaction_actions
+from .grapple_saves import grapple_save_actions
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,
@@ -76,6 +77,8 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
         return reroll_damage_actions(state)
     if decision.kind == "reaction":
         return reaction_actions(state)
+    if decision.kind == "grapple_save":
+        return grapple_save_actions(state)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)

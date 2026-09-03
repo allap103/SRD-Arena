@@ -5,18 +5,16 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature, can_grapple
-from srd_arena.domain.effects.application import condition_from_effect_with_origin
-from srd_arena.domain.effects.results import EffectResult
-from srd_arena.domain.rolls.dice import resolve_d20
 
 from ..attack_economy import spend_attack
 from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import EncounterAction
+from ..encounter_models.decisions import DecisionFrame, GrappleSaveRequest
 from ..encounter_models.resolution import EncounterProgress
-from ..grappling_state import apply_grapple
-from ..rule_queries.rolls import roll_modifiers
-from ..state_runtime import create_event, creature_label
+from ..participants import creature_controller
+from ..state_runtime import create_event, next_frame_id
 from .attack_resolution import has_free_hand
+from .grapple_saves import preferred_grapple_save_ability, resolve_grapple_save
 from .rejections import reject_action
 
 if TYPE_CHECKING:
@@ -30,7 +28,7 @@ def resolve_grapple_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> None:
-    """Route a grapple or escape action through its contested-check resolver.
+    """Start a target-chosen saving throw against one Grapple attempt.
 
     >>> from types import SimpleNamespace
     >>> creature_state = SimpleNamespace(actions_remaining=0, attacks_remaining=0)
@@ -128,97 +126,52 @@ def resolve_grapple_action(
         creature_ref,
         base_attacks=actor.combat_profile.attacks_per_attack_action,
     )
-
-    actor_roll_rules = roll_modifiers(
-        state,
-        creature_ref,
-        "ability_check",
-        ability="strength",
+    save_dc = (
+        8
+        + actor.get_modifier(actor.attributes.strength)
+        + actor.attributes.proficiency_bonus
     )
-    target_roll_rules = roll_modifiers(
-        state,
-        target_ref,
-        "ability_check",
-        ability="strength",
+    request = GrappleSaveRequest(
+        action_id=action_id,
+        grappler_ref=creature_ref,
+        target_ref=target_ref,
+        save_dc=save_dc,
     )
-    roll_die = state.dice.roll_die
-    actor_roll = resolve_d20(
-        modifier=(
-            actor.get_modifier(actor.attributes.strength)
-            + actor_roll_rules.resolve_modifier(roll_die)
-        ),
-        mode=actor_roll_rules.mode,
-        roller=roll_die,
-    )
-    target_roll = resolve_d20(
-        modifier=(
-            target.creature.get_modifier(target.creature.attributes.strength)
-            + target_roll_rules.resolve_modifier(roll_die)
-        ),
-        mode=target_roll_rules.mode,
-        roller=roll_die,
-    )
-    success = actor_roll.total >= target_roll.total
-    target_label = creature_label(state, target_ref)
-
-    progress.events.append(
-        create_event(
+    if creature_controller(state, target_ref) == "scripted":
+        resolve_grapple_save(
             state,
-            "grapple_resolved",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "target_ref": target_ref,
-                "target_label": target_label,
-                "actor_roll": actor_roll.total,
-                "target_roll": target_roll.total,
-                "actor_die": actor_roll.selected,
-                "target_die": target_roll.selected,
-                "success": success,
-            },
-        )
-    )
-
-    if not success:
-        progress.messages.append(
-            ("system", f"{actor.name} fails to grapple {target_label}.")
-        )
-        progress.events.append(
-            create_event(
-                state,
-                "action_resolved",
-                creature_ref=creature_ref,
-                action_id=action_id,
-                data={"kind": "grapple", "success": False},
-            )
+            request,
+            preferred_grapple_save_ability(target.creature),
+            progress,
         )
         return
 
-    progress.messages.append(("system", f"{actor.name} grapples {target_label}."))
-    progress.messages.append(("system", f"{target_label} is grappled."))
-    apply_grapple(
-        state,
-        condition_from_effect_with_origin(
-            EffectResult(
-                kind="apply_condition",
-                target_ref=target_ref,
-                data={
-                    "condition": "grappled",
-                    "source_ref": creature_ref,
-                    "source_label": actor.name,
-                    "source_kind": "action",
-                    "definition_id": "grapple",
-                },
-            ),
-            origin_id=action_id,
-        ),
+    frame_id = next_frame_id(state, prefix="grapple_save")
+    current_frame = state.current_decision()
+    state.interrupts.decision_stack.append(
+        DecisionFrame(
+            id=frame_id,
+            creature_ref=target_ref,
+            kind="grapple_save",
+            reason="grapple_attempt",
+            parent_frame_id=current_frame.id,
+            parent_action_id=action_id,
+            request=request,
+        )
     )
+    progress.paused_for_decision = True
     progress.events.append(
         create_event(
             state,
-            "action_resolved",
-            creature_ref=creature_ref,
+            "decision_opened",
+            creature_ref=target_ref,
+            frame_id=frame_id,
             action_id=action_id,
-            data={"kind": "grapple", "success": True, "target_ref": target_ref},
+            data={
+                "kind": "grapple_save",
+                "grappler_ref": creature_ref,
+                "target_ref": target_ref,
+                "save_dc": save_dc,
+            },
         )
     )

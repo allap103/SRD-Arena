@@ -8,6 +8,7 @@ ENCOUNTER_DIR = (
     Path(__file__).parents[1]
     / "content"
     / "encounters"
+    / "archive"
     / "eldritch_blast_scaling_showcase"
 )
 

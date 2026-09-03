@@ -25,7 +25,9 @@ ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 
 def test_game_window_delegates_encounter_controls_to_panel_renderer() -> None:
     app = QApplication.instance() or QApplication([])
-    session = Session(load_encounter_directory(ENCOUNTERS_ROOT / "slow_showcase"))
+    session = Session(
+        load_encounter_directory(ENCOUNTERS_ROOT / "archive" / "slow_showcase")
+    )
 
     window = GameWindow(
         GamePresenter(session),

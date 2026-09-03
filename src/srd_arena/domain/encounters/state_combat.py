@@ -53,9 +53,13 @@ def attack_roll_mode_for(
     )
     if base_mode != "normal":
         modes.append(base_mode)
-    attacker_effective = state.effective_conditions_for(attacker_ref)
-    if attacker_effective.has_trait(CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE):
-        modes.append("disadvantage")
+    modes.append(
+        roll_modifiers(
+            state,
+            attacker_ref,
+            "attack_roll",
+        ).mode
+    )
     target_effective = state.effective_conditions_for(target_ref)
     modes.append(
         roll_modifiers(

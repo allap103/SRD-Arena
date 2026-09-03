@@ -27,13 +27,25 @@ ORCHESTRATOR = EncounterOrchestrator()
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 MULTIATTACK_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "multiattack_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "multiattack_showcase"
 )
 STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "stat_block_action_showcase"
 )
 CONDITIONS_SHOWCASE_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "conditions_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "conditions_showcase"
 )
 ROLL_INITIATIVE = EncounterState.roll_initiative
 

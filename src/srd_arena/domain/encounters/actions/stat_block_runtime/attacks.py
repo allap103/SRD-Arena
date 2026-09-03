@@ -123,7 +123,6 @@ def resolve_attack_action(
             nearby_opponent_positions,
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-        sourced_attack_roll_mode=attack_roll_rules.mode,
         target_armor_class=effective_armor_class(
             state,
             target_ref,

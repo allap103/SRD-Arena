@@ -116,7 +116,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
         grid=GridObservation(width=grid.width, height=grid.height),
         round_number=state.round.number,
         decision=DecisionObservation(
-            id=decision.id,
+            id=f"{decision.id}@{read.decision_epoch}:{read.decision_revision}",
             kind=decision.kind,
             creature_ref=decision.creature_ref,
         ),

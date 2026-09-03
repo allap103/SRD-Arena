@@ -11,7 +11,6 @@ from srd_arena.domain.rolls.dice import (
     CheckResult,
     D20RollMode,
     D20RollResult,
-    combine_roll_modes,
     resolve_check,
     resolve_d20,
 )
@@ -44,7 +43,6 @@ def resolve_attack_roll(
     nearby_opponent_positions: tuple[Position, ...],
     attack_roll_mode_override: D20RollMode | None,
     sourced_modifier_override: int | None,
-    sourced_roll_mode_override: D20RollMode | None,
     target_armor_class: int | None,
     roller: Callable[[int], int],
     automatic_critical_provider_ids: tuple[str, ...],
@@ -61,7 +59,7 @@ def resolve_attack_roll(
     >>> resolved = resolve_attack_roll(
     ...     attacker, defender, source, attacker_position=Position(0, 0),
     ...     nearby_opponent_positions=(), attack_roll_mode_override=None,
-    ...     sourced_modifier_override=None, sourced_roll_mode_override=None,
+    ...     sourced_modifier_override=None,
     ...     target_armor_class=None, roller=lambda sides: 12,
     ...     automatic_critical_provider_ids=(),
     ... )
@@ -71,14 +69,10 @@ def resolve_attack_roll(
     attack_type = attack_source.attack_modes[0]
     sourced_modifier = sourced_modifier_override or 0
     attack_modifier = attack_source.attack_bonus + sourced_modifier
-    roll_mode = combine_roll_modes(
-        attack_roll_mode_override
-        or proximity_attack_roll_mode(
-            attack_type,
-            attacker_position,
-            nearby_opponent_positions,
-        ),
-        sourced_roll_mode_override or "normal",
+    roll_mode = attack_roll_mode_override or proximity_attack_roll_mode(
+        attack_type,
+        attacker_position,
+        nearby_opponent_positions,
     )
     attack_result = resolve_d20(
         modifier=attack_modifier,

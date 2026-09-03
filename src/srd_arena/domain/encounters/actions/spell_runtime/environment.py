@@ -43,15 +43,6 @@ class EncounterSpellResolutionEnvironment:
             "attack_roll",
         ).resolve_modifier(self.roll_die)
 
-    def attack_roll_mode(self, _target_ref: str) -> D20RollMode:
-        """Resolve sourced attack modes for the spell's caster."""
-
-        return roll_modifiers(
-            self.state,
-            self.actor_ref,
-            "attack_roll",
-        ).mode
-
     def damage_roll_modifier(self) -> int:
         """Resolve sourced damage modifiers for the spell's caster."""
 

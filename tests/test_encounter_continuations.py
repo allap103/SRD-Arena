@@ -13,7 +13,11 @@ from srd_arena.domain.encounters.encounter_models.resolution import EncounterPro
 from srd_arena.engine.session import Session
 
 FULL_CONTROL_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 
 

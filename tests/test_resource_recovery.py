@@ -9,7 +9,9 @@ from srd_arena.content.character_options.classes import (
 )
 from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.creatures import (
+    CreatureSchema,
     build_creature,
+    load_bestiary_catalog,
     load_character_snapshot_catalog,
 )
 from srd_arena.content.encounters import load_encounter_directory
@@ -54,6 +56,28 @@ def test_ordinary_spell_slots_require_a_long_rest() -> None:
     assert casting.recover_slots(RestType.SHORT) == ()
     assert casting.spell_slots_remaining == {1: 1}
     assert casting.recover_slots(RestType.LONG)[0].current == 2
+
+
+def test_daily_stat_block_uses_refresh_only_at_the_explicit_daily_boundary() -> None:
+    aboleth = build_creature(
+        CreatureSchema.model_validate(
+            {
+                "id": "aboleth",
+                "stat_block": {"name": "Aboleth", "source": "XMM"},
+            }
+        ),
+        bestiary=load_bestiary_catalog(SYSTEM_CONTENT_ROOT),
+    )
+    resource_id = "Dominate Mind (2/Day)"
+    aboleth.stat_block_action_resources[resource_id] = 0
+
+    assert aboleth.recover_resources(RestType.LONG) == ()
+    recovery = aboleth.refresh_daily_resources()
+
+    assert aboleth.stat_block_action_resources[resource_id] == 2
+    assert [(item.resource_id, item.previous, item.current) for item in recovery] == [
+        ("stat_block_action:Dominate Mind (2/Day)", 0, 2)
+    ]
 
 
 def test_rage_uses_follow_level_progression_and_rest_recovery() -> None:

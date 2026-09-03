@@ -159,6 +159,7 @@ class HeadlessGameAdapter:
 
     catalog: EncounterCatalog
     _session: Session | None = field(default=None, init=False, repr=False)
+    _episode_sequence: int = field(default=0, init=False, repr=False)
     _truncation_reason: EpisodeTruncationReason | None = field(
         default=None,
         init=False,
@@ -213,7 +214,12 @@ class HeadlessGameAdapter:
         )
         if summary is None:
             raise KeyError(f"Unknown encounter '{encounter_id}'.")
-        session = Session(self.catalog.load_encounter(summary.id), seed=seed)
+        self._episode_sequence += 1
+        session = Session(
+            self.catalog.load_encounter(summary.id),
+            seed=seed,
+            decision_epoch=self._episode_sequence,
+        )
         observation = session.observe()
         self._session = session
         self._truncation_reason = None
@@ -405,7 +411,7 @@ class HeadlessGameAdapter:
 
         >>> from unittest.mock import Mock
         >>> session = Mock()
-        >>> expected = CommandResult()
+        >>> expected = CommandResult(failure=CommandFailure("example", "Example"))
         >>> session.execute.return_value = expected
         >>> adapter = HeadlessGameAdapter(Mock())
         >>> adapter._session = session
@@ -507,6 +513,8 @@ class HeadlessGameAdapter:
         status = self.episode_status()
         if status.terminated:
             raise RuntimeError("A terminated encounter cannot be truncated.")
+        if status.truncated:
+            raise RuntimeError("A truncated encounter must be reset before reuse.")
         self._truncation_reason = reason
         return self.episode_status()
 

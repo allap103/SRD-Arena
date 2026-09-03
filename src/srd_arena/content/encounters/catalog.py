@@ -35,6 +35,7 @@ class EncounterCatalog:
                     grid_color=source.schema.grid_color,
                     grid_opacity=source.schema.grid_opacity,
                 ),
+                folder=source.folder,
             )
             for source in discover_encounters(self.encounter_root)
         )

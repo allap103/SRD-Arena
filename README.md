@@ -45,11 +45,17 @@ while GUI and headless clients drive the same public application API.
 
 ## Implemented player-character scope
 
-Player-character support is intentionally limited to the combat mechanics used
-by the bundled Fighter examples: weapon attacks from a fixed hand loadout,
-Extra Attack, Second Wind, Action Surge, and Great Weapon Fighting. Inventory
-supports healing potions. Changing equipment, armor-derived AC, subclasses,
-and general class-feature coverage are outside the current project scope.
+Player-character support includes fixed Fighter examples and validated,
+combat-ready Warlock and Barbarian snapshots for levels 1-5. The snapshots
+resolve their selected ability scores, combat equipment, armor class, class and
+subclass identity, feats, invocations or weapon masteries, known spells, and
+level-dependent resources through the normal encounter loader. A recorded
+selection does not imply that all of its rule effects are executable yet.
+
+General character creation, unrestricted equipment changes, and broad class,
+species, background, feat, and magic-item coverage remain outside the current
+milestone. Inventory supports the combat-relevant fixed equipment and healing
+potions used by authored encounters.
 
 Monster attacks remain self-contained stat-block actions. A monster's named
 weapon attack does not depend on the player-character item/loadout model.

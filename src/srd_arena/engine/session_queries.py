@@ -46,7 +46,7 @@ def read_session(session: Session) -> SessionRead:
     ...     ),
     ...     encounter_state=None,
     ...     encounter=SimpleNamespace(id="demo", teams=[]),
-    ...     item_templates={})
+    ...     item_templates={}, decision_epoch=0, decision_revision=0)
     >>> [option.label for option in read_session(session).action_options]
     ['Restart encounter', 'Exit game']
     """
@@ -153,6 +153,8 @@ def _session_read(
             if session.pending_encounter_completion is not None
             else None
         ),
+        decision_epoch=session.decision_epoch,
+        decision_revision=session.decision_revision,
     )
 
 

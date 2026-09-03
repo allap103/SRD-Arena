@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from srd_arena.domain.geometry import MovementCost
 
@@ -11,6 +11,14 @@ if TYPE_CHECKING:
     from srd_arena.domain.spells.action_payloads import SpellActionPayload
 
 CreatureRef = str
+
+
+@dataclass(frozen=True)
+class GrappleEscapeSelection:
+    """Select a grapple source and the skill used to escape it."""
+
+    source_ref: CreatureRef
+    ability: Literal["strength", "dexterity"]
 
 
 @dataclass
@@ -36,7 +44,14 @@ class EncounterAction:
 
     label: str
     kind: str
-    value: str | int | tuple[float, float] | SpellActionPayload | None = None
+    value: (
+        str
+        | int
+        | tuple[float, float]
+        | SpellActionPayload
+        | GrappleEscapeSelection
+        | None
+    ) = None
     id: str = ""
     creature_ref: CreatureRef | None = None
     source_trigger_id: str | None = None

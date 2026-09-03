@@ -1273,7 +1273,7 @@ def test_aboleth_tentacle_grapples_and_exposes_fixed_dc_escape() -> None:
     )
     result = _ORCHESTRATOR.submit(state, escape)
 
-    assert escape.label == "Escape The Deep One (DC 14)"
+    assert escape.label == "Escape The Deep One with Athletics (DC 14)"
     assert state.has_condition("air_elemental", Condition.GRAPPLED) is False
     assert grappling_targets_for(state, "aboleth") == ()
     assert any("escapes The Deep One's grapple" in text for _, text in result.messages)
@@ -1406,7 +1406,7 @@ def test_grapple_action_is_available_in_the_combat_menu() -> None:
     state.creatures["goblin_1"].position.x = 4
     state.creatures["goblin_1"].position.y = 3
 
-    rolls = iter([20, 1])
+    rolls = iter([1])
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
     scene_view = session.read()
@@ -1422,16 +1422,67 @@ def test_grapple_action_is_available_in_the_combat_menu() -> None:
     grapple_event = next(
         event for event in result.events if event.type == "grapple_resolved"
     )
-    assert grapple_event.data["actor_roll"] == 24
-    assert grapple_event.data["actor_die"] == 20
-    assert "player_roll" not in grapple_event.data
-    assert "player_die" not in grapple_event.data
+    assert grapple_event.data["save_dc"] == 17
+    assert grapple_event.data["save_ability"] == "dexterity"
+    assert grapple_event.data["save_die"] == 1
+    assert grapple_event.data["save_succeeded"] is False
+    assert "actor_roll" not in grapple_event.data
+    assert "target_roll" not in grapple_event.data
     assert any(
         action.kind == "grapple"
         and isinstance(action.details, DirectTargetOptionDetails)
         and action.details.target_ref == "goblin_1"
         for action in scene_view.action_options
     )
+
+
+def test_external_grapple_target_chooses_its_saving_throw() -> None:
+    session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
+    session.read()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    next(
+        team for team in state.definition.teams if team.id == "goblins"
+    ).controller = "external"
+    state.active_position.x = 4
+    state.active_position.y = 4
+    state.creatures["goblin_1"].position.x = 4
+    state.creatures["goblin_1"].position.y = 3
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
+
+    started = session.choose(_action_id(session, "grapple", "goblin_1"))
+
+    assert any(event.type == "decision_opened" for event in started.events)
+    observation = session.observe()
+    decision = observation.encounter
+    assert decision is not None
+    assert decision.decision.kind == "grapple_save"
+    assert decision.decision.creature_ref == "goblin_1"
+    labels = _action_labels(session)
+    assert "Strength saving throw" in labels
+    assert "Dexterity saving throw" in labels
+    assert "Fail saving throw" in labels
+    assert {
+        option.label: option.grapple_choice
+        for option in observation.scene.action_details
+        if option.kind == "grapple_save"
+    } == {
+        "Strength saving throw": "strength",
+        "Dexterity saving throw": "dexterity",
+        "Fail saving throw": "fail",
+    }
+
+    result = session.choose(_action_id_by_label(session, "Fail saving throw"))
+
+    assert state.has_condition("goblin_1", Condition.GRAPPLED)
+    grapple_event = next(
+        event for event in result.events if event.type == "grapple_resolved"
+    )
+    assert grapple_event.data["save_ability"] is None
+    assert grapple_event.data["save_dc"] == 17
+    assert grapple_event.data["voluntarily_failed"] is True
+    assert "save_die" not in grapple_event.data
 
 
 def test_grapple_replaces_only_one_attack_in_multiattack() -> None:

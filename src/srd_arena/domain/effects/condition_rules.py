@@ -79,6 +79,14 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
             }
         ),
     ),
+    Condition.POISONED: ConditionDefinition(
+        traits=frozenset(
+            {
+                CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+                CombatTrait.ABILITY_CHECKS_HAVE_DISADVANTAGE,
+            }
+        ),
+    ),
     Condition.RESTRAINED: ConditionDefinition(
         traits=frozenset(
             {

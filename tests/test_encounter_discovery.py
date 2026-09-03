@@ -30,9 +30,19 @@ def test_catalog_lists_only_valid_encounter_directories(tmp_path: Path) -> None:
         json.dumps({"display_name": "Invalid", "grid_opacity": 2.0}),
         encoding="utf-8",
     )
+    nested = tmp_path / "archive" / "nested"
+    nested.mkdir(parents=True)
+    (nested / "encounter.json").write_text("{}", encoding="utf-8")
+    (nested / "config.json").write_text(
+        json.dumps({"display_name": "Nested Encounter"}),
+        encoding="utf-8",
+    )
 
     encounters = EncounterCatalog(encounter_root=tmp_path).available_encounters()
 
-    assert [(encounter.id, encounter.label) for encounter in encounters] == [
-        ("valid", "Valid Encounter")
+    assert [
+        (encounter.id, encounter.label, encounter.folder) for encounter in encounters
+    ] == [
+        ("archive/nested", "Nested Encounter", ("archive",)),
+        ("valid", "Valid Encounter", ()),
     ]

@@ -19,24 +19,41 @@ from srd_arena.engine.api import (
 from srd_arena.engine.session import PendingEncounterCompletion
 
 FULL_CONTROL_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 MASS_HEAL_ENCOUNTER_DIR = (
     Path(__file__).parents[1]
     / "content"
     / "encounters"
+    / "archive"
     / "mass_heal_allocation_showcase"
 )
 SPELL_DAMAGE_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "spell_damage_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "spell_damage_showcase"
 )
 STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "stat_block_action_showcase"
 )
 
 
 def _session(encounter_id: str) -> Session:
     return Session(EncounterCatalog().load_encounter(encounter_id))
+
+
+def _archived_id(encounter_directory: Path) -> str:
+    return f"archive/{encounter_directory.name}"
 
 
 def _advance_to_actor(
@@ -64,7 +81,7 @@ def _advance_to_actor(
 
 
 def test_session_exposes_frontend_neutral_observations_and_commands() -> None:
-    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(FULL_CONTROL_ENCOUNTER_DIR))
     observation = session.observe()
     assert observation.encounter is not None
     wait = next(
@@ -85,7 +102,7 @@ def test_session_exposes_frontend_neutral_observations_and_commands() -> None:
 
 
 def test_observation_exposes_combat_identity_defenses_and_resources() -> None:
-    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(FULL_CONTROL_ENCOUNTER_DIR))
     session.observe()
     assert session.encounter_state is not None
     player = session.encounter_state.creatures["player"].creature
@@ -128,7 +145,7 @@ def test_observation_exposes_combat_identity_defenses_and_resources() -> None:
 
 
 def test_observation_exposes_stat_block_resources_and_relationships() -> None:
-    session = _session(STAT_BLOCK_ACTION_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(STAT_BLOCK_ACTION_ENCOUNTER_DIR))
     session.observe()
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -170,7 +187,7 @@ def test_observation_exposes_stat_block_resources_and_relationships() -> None:
 
 def test_restart_rewinds_seeded_encounter_randomness() -> None:
     session = Session(
-        EncounterCatalog().load_encounter(FULL_CONTROL_ENCOUNTER_DIR.name),
+        EncounterCatalog().load_encounter(_archived_id(FULL_CONTROL_ENCOUNTER_DIR)),
         dice=DiceRoller.seeded(42),
     )
     session.observe()
@@ -199,7 +216,9 @@ def test_restart_rewinds_seeded_encounter_randomness() -> None:
 
 
 def test_reset_can_replace_and_then_replay_the_session_seed() -> None:
-    encounter = EncounterCatalog().load_encounter(FULL_CONTROL_ENCOUNTER_DIR.name)
+    encounter = EncounterCatalog().load_encounter(
+        _archived_id(FULL_CONTROL_ENCOUNTER_DIR)
+    )
     session = Session(encounter, seed=41)
 
     first_observation = session.observe()
@@ -218,7 +237,7 @@ def test_reset_can_replace_and_then_replay_the_session_seed() -> None:
 
 
 def test_completion_without_survivors_reports_no_winner() -> None:
-    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(FULL_CONTROL_ENCOUNTER_DIR))
     session.observe()
     assert session.encounter_state is not None
     for creature_state in session.encounter_state.creatures.values():
@@ -233,7 +252,7 @@ def test_completion_without_survivors_reports_no_winner() -> None:
 
 
 def test_session_rejects_stale_commands_before_execution() -> None:
-    session = _session(FULL_CONTROL_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(FULL_CONTROL_ENCOUNTER_DIR))
     observation = session.observe()
     assert observation.encounter is not None
     wait = next(
@@ -251,7 +270,7 @@ def test_session_rejects_stale_commands_before_execution() -> None:
 
 
 def test_session_aims_an_advertised_area_action() -> None:
-    session = _session(SPELL_DAMAGE_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(SPELL_DAMAGE_ENCOUNTER_DIR))
     observation = _advance_to_actor(session, "spectrum_adept")
     assert observation.encounter is not None
     fireball = next(
@@ -281,7 +300,7 @@ def test_session_aims_an_advertised_area_action() -> None:
 
 
 def test_session_controls_numeric_target_allocation() -> None:
-    session = _session(MASS_HEAL_ENCOUNTER_DIR.name)
+    session = _session(_archived_id(MASS_HEAL_ENCOUNTER_DIR))
     observation = session.observe()
     assert observation.encounter is not None
     cast = next(

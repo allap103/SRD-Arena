@@ -44,6 +44,7 @@ class CombatTrait(StrEnum):
     SPEED_ZERO = "speed_zero"
     ATTACKERS_HAVE_ADVANTAGE = "attackers_have_advantage"
     ATTACK_ROLLS_HAVE_DISADVANTAGE = "attack_rolls_have_disadvantage"
+    ABILITY_CHECKS_HAVE_DISADVANTAGE = "ability_checks_have_disadvantage"
     DEXTERITY_SAVES_HAVE_DISADVANTAGE = "dexterity_saves_have_disadvantage"
     NEARBY_ATTACKERS_HAVE_ADVANTAGE = "nearby_attackers_have_advantage"
     DISTANT_ATTACKERS_HAVE_DISADVANTAGE = "distant_attackers_have_disadvantage"

@@ -6,7 +6,11 @@ from pydantic import ValidationError
 from srd_arena.content.encounters import load_encounter_directory
 
 EXAMPLE_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "invalid_encounter_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "invalid_encounter_showcase"
 )
 
 

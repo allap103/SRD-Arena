@@ -7,7 +7,9 @@ ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 
 
 def test_spell_modifier_showcase_loads_new_modifier_spells() -> None:
-    encounter = load_encounter_directory(ENCOUNTERS_ROOT / "spell_modifier_showcase")
+    encounter = load_encounter_directory(
+        ENCOUNTERS_ROOT / "archive" / "spell_modifier_showcase"
+    )
     session = Session(encounter)
     session.read()
 
@@ -36,7 +38,7 @@ def test_spell_modifier_showcase_loads_new_modifier_spells() -> None:
 
 def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None:
     encounter = load_encounter_directory(
-        ENCOUNTERS_ROOT / "spell_effect_lifecycle_showcase"
+        ENCOUNTERS_ROOT / "archive" / "spell_effect_lifecycle_showcase"
     )
     session = Session(encounter)
     session.read()
@@ -57,7 +59,7 @@ def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None
 
 
 def test_slow_showcase_exposes_six_of_seven_rules_subjects() -> None:
-    encounter = load_encounter_directory(ENCOUNTERS_ROOT / "slow_showcase")
+    encounter = load_encounter_directory(ENCOUNTERS_ROOT / "archive" / "slow_showcase")
     session = Session(encounter)
     session.read()
 
@@ -78,9 +80,9 @@ def test_slow_showcase_exposes_six_of_seven_rules_subjects() -> None:
     assert {team.controller for team in state.definition.teams} == {"external"}
 
 
-def test_bundled_encounter_directories_are_all_showcases() -> None:
+def test_archived_encounter_directories_are_all_showcases() -> None:
+    archive = ENCOUNTERS_ROOT / "archive"
+
     assert all(
-        path.name.endswith("_showcase")
-        for path in ENCOUNTERS_ROOT.iterdir()
-        if path.is_dir()
+        path.name.endswith("_showcase") for path in archive.iterdir() if path.is_dir()
     )
