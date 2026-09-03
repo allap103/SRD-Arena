@@ -104,6 +104,15 @@ class GridObservation:
 
 
 @dataclass(frozen=True)
+class TerrainCellObservation:
+    """Expose one authored terrain cell to GUI and headless clients."""
+
+    position: PositionObservation
+    traversal: str
+    cover: str
+
+
+@dataclass(frozen=True)
 class PositionObservation:
     """One creature's grid-cell position."""
 
@@ -298,6 +307,7 @@ class EncounterObservation:
     team_ids: tuple[str, ...]
     targeting: TargetingObservation | None
     relationships: tuple[CreatureRelationshipObservation, ...] = ()
+    terrain: tuple[TerrainCellObservation, ...] = ()
 
     def creature(self, creature_ref: str) -> CreatureObservation:
         """Return a combatant by its stable encounter reference.

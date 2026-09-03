@@ -72,7 +72,7 @@ def execute_movement(
     direction = str(action.value)
     dx, dy = DIRECTION_DELTAS[direction]
     destination = Position(mover.position.x + dx, mover.position.y + dy)
-    movement_cost = movement_step_cost(state, decision.creature_ref)
+    movement_cost = movement_step_cost(state, decision.creature_ref, destination)
     remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
     grappled_refs = grappling_targets_for(state, decision.creature_ref)
     grappled_positions = {

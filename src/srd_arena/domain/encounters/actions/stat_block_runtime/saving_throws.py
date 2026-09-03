@@ -30,6 +30,7 @@ from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...rule_queries.defenses import apply_damage, has_condition_save_advantage
+from ...rule_queries.obstructions import cells_with_line_of_effect, cover_between
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_intersects_cells
 from ...state_combat import automatic_save_failure_provider_ids_for
@@ -115,7 +116,14 @@ def resolve_saving_throw_stat_block_action(
                 )
                 else "normal"
             ),
-            sourced_modifier_override=roll_rules.resolve_modifier(roll_die),
+            sourced_modifier_override=(
+                roll_rules.resolve_modifier(roll_die)
+                + (
+                    cover_between(state, creature_ref, target_ref).bonus
+                    if ability == "dexterity"
+                    else 0
+                )
+            ),
             sourced_mode_override=roll_rules.mode,
             roller=roll_die,
             automatic_failure_reasons=(
@@ -277,7 +285,8 @@ def stat_block_target_refs(
     )
     if area is None:
         raise NotImplementedError(f"Area shape '{target.shape}' is not executable.")
-    occupied = {(cell.x, cell.y) for cell in area.cells}
+    visible_cells = cells_with_line_of_effect(state, area.origin, area.cells)
+    occupied = {(cell.x, cell.y) for cell in visible_cells}
     return tuple(
         target_ref
         for target_ref, target_state in state.creatures.items()

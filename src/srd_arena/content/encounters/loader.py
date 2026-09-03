@@ -18,10 +18,13 @@ from srd_arena.content.creatures import (
 from srd_arena.content.spells import SpellCatalog
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import (
+    CoverDegree,
     EncounterBehavior,
     EncounterDefinition,
     EncounterParticipant,
     EncounterTeam,
+    TerrainCell,
+    TerrainTraversal,
 )
 from srd_arena.domain.encounters.spatial import validate_placements
 from srd_arena.domain.geometry import Grid, Position
@@ -91,6 +94,14 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
             for creature in schema.creatures
         ],
         teams=teams,
+        terrain=tuple(
+            TerrainCell(
+                position=_build_position(cell.position),
+                traversal=TerrainTraversal(cell.traversal),
+                cover=CoverDegree(cell.cover),
+            )
+            for cell in schema.terrain
+        ),
     )
 
 
@@ -161,6 +172,11 @@ def load_encounter_file(
                 creatures_by_id[participant.creature_id].size,
             )
             for participant in definition.participants
+        ),
+        blocked_cells=(
+            terrain.position
+            for terrain in definition.terrain
+            if terrain.traversal is TerrainTraversal.BLOCKED
         ),
     )
     return LoadedEncounter(definition=definition, creatures=creatures)

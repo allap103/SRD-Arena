@@ -6,9 +6,10 @@ from srd_arena.domain.creatures import is_two_sizes_smaller
 from srd_arena.domain.effects.condition_rules import effective_conditions
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.runtime import RelationshipKind
-from srd_arena.domain.geometry import MovementCost
+from srd_arena.domain.geometry import MovementCost, Position
 
 from ..encounter_models.actions import CreatureRef
+from ..spatial import footprint_enters_difficult_terrain
 from .context import MovementRuleQueryContext
 from .defenses import condition_suppressions
 from .numeric import effective_speed
@@ -17,6 +18,7 @@ from .numeric import effective_speed
 def movement_step_cost(
     state: MovementRuleQueryContext,
     creature_ref: CreatureRef,
+    destination: Position | None = None,
 ) -> MovementCost:
     """Return the composed grid cost of one step.
 
@@ -27,6 +29,12 @@ def movement_step_cost(
     """
 
     cost = 1
+    if destination is not None and footprint_enters_difficult_terrain(
+        state,
+        creature_ref,
+        destination,
+    ):
+        cost += 1
     applied_conditions = tuple(
         condition
         for condition in state.conditions

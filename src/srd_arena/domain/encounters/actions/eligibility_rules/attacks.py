@@ -10,6 +10,7 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...rule_queries.obstructions import cover_between
 from ...rule_queries.permissions import (
     TargetingKind,
     target_eligibility,
@@ -147,6 +148,11 @@ class AttackRule:
         if not range_band.contains(creature_distance(state, actor_ref, action.value)):
             return EligibilityFailure(
                 "target_out_of_range", "The target is out of range."
+            )
+        if not cover_between(state, actor_ref, action.value).has_line_of_effect:
+            return EligibilityFailure(
+                "target_has_total_cover",
+                "The target has Total Cover.",
             )
         return None
 

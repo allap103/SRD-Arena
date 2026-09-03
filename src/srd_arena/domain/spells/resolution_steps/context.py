@@ -136,6 +136,7 @@ class SpellActionContext:
     )
     cast_level: int | None = None
     save_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
+    saving_throw_cover_bonuses: Mapping[str, int] = field(default_factory=dict)
     healing_allocations: Mapping[str, int] = field(default_factory=dict)
 
     def __post_init__(self) -> None:
@@ -146,6 +147,7 @@ class SpellActionContext:
             "target_armor_classes",
             "automatic_critical_providers",
             "save_roll_modes",
+            "saving_throw_cover_bonuses",
             "healing_allocations",
         ):
             values = getattr(self, name)

@@ -11,6 +11,7 @@ from srd_arena.domain.encounters.actions.attack_resolution import (
 from srd_arena.domain.encounters.actions.eligibility_rules.attacks import AttackRule
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
+from srd_arena.domain.encounters.terrain import CoverDegree, TerrainCell
 from srd_arena.domain.geometry import Grid, GridDistance, Position
 
 
@@ -87,7 +88,7 @@ def test_attack_eligibility_uses_the_maximum_range() -> None:
                 "target": target,
             },
             item_templates={},
-            definition=SimpleNamespace(grid=Grid(30, 30)),
+            definition=SimpleNamespace(grid=Grid(30, 30), terrain=()),
         ),
     )
     action = EncounterAction(
@@ -113,3 +114,57 @@ def test_attack_eligibility_uses_the_maximum_range() -> None:
         failure = AttackRule().check(state, "ogre", action)
 
     assert failure is None
+
+
+def test_attack_eligibility_rejects_a_target_behind_total_cover() -> None:
+    actor_creature = _javelin_attacker()
+    actor = SimpleNamespace(
+        creature=actor_creature,
+        actions_remaining=1,
+        attacks_remaining=0,
+        pending_multiattack=[],
+    )
+    state = cast(
+        EncounterState,
+        SimpleNamespace(
+            creatures={
+                "ogre": SimpleNamespace(**vars(actor), position=Position(0, 0)),
+                "target": SimpleNamespace(
+                    creature=SimpleNamespace(size="M"),
+                    position=Position(12, 0),
+                ),
+            },
+            item_templates={},
+            definition=SimpleNamespace(
+                grid=Grid(30, 30),
+                terrain=(
+                    TerrainCell(Position(6, 0), cover=CoverDegree.TOTAL),
+                    TerrainCell(Position(6, 1), cover=CoverDegree.TOTAL),
+                ),
+            ),
+        ),
+    )
+    action = EncounterAction(
+        "Javelin",
+        "attack",
+        "target",
+        preferred_attack_name="Javelin",
+        preferred_attack_type="ranged",
+    )
+
+    with (
+        patch(
+            "srd_arena.domain.encounters.actions.eligibility_rules.attacks."
+            "opposing_target_failure",
+            return_value=None,
+        ),
+        patch(
+            "srd_arena.domain.encounters.actions.eligibility_rules.attacks."
+            "target_eligibility",
+            return_value=SimpleNamespace(allowed=True, failures=()),
+        ),
+    ):
+        failure = AttackRule().check(state, "ogre", action)
+
+    assert failure is not None
+    assert failure.code == "target_has_total_cover"

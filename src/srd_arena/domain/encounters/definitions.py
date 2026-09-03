@@ -6,6 +6,8 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig, Grid, Position
 
+from .terrain import TerrainCell
+
 
 @dataclass
 class EncounterBehavior:
@@ -55,6 +57,7 @@ class EncounterDefinition:
     creatures: tuple[Creature, ...] = ()
     items: tuple[Item, ...] = ()
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
+    terrain: tuple[TerrainCell, ...] = ()
 
     def get_creature(self, creature_id: str) -> Creature:
         """Return a creature template by its authored identifier."""

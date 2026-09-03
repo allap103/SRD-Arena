@@ -14,6 +14,7 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...rule_queries.obstructions import cover_between
 from ...rule_queries.permissions import TargetingKind, target_eligibility
 from ...spatial import creature_distance
 from ..stat_block import (
@@ -156,6 +157,11 @@ class StatBlockActionRule:
         )
         if requirement_failure is not None:
             return requirement_failure
+        if not cover_between(state, actor_ref, action.value).has_line_of_effect:
+            return EligibilityFailure(
+                "target_has_total_cover",
+                "The target has Total Cover.",
+            )
         range_feet = definition.target.range_feet or 0
         range_squares = state.definition.grid.covering_distance_from_feet(range_feet)
         if creature_distance(state, actor_ref, action.value) > range_squares:

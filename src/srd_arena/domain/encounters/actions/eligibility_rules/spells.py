@@ -4,12 +4,14 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells.rules import (
     SpellActionPayload,
     spell_chooses_area_targets,
 )
 
 from ...encounter_models.actions import CreatureRef, EncounterAction
+from ...rule_queries.obstructions import creature_has_line_of_effect_to_cell
 from ..capability_support import capability_runtime_issue
 from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
@@ -110,6 +112,20 @@ class SpellActionRule:
             )
             if requirement_failure is not None:
                 return requirement_failure
+        if spell.geometry_mode == "point_area" and payload.aim_point is not None:
+            aim_position = Position(
+                int(payload.aim_point[0]),
+                int(payload.aim_point[1]),
+            )
+            if not creature_has_line_of_effect_to_cell(
+                state,
+                actor_ref,
+                aim_position,
+            ):
+                return EligibilityFailure(
+                    "aim_has_total_cover",
+                    "The chosen point is behind Total Cover.",
+                )
         if payload.aim_point is not None and not spell_chooses_area_targets(spell):
             for selected_target in spell_area_targets(
                 state,

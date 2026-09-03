@@ -21,7 +21,12 @@ from srd_arena.domain.spells.rules import SpellActionPayload
 from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import has_condition_save_advantage
 from ...rule_queries.numeric import effective_armor_class
-from ...spatial import creature_position
+from ...rule_queries.obstructions import (
+    CoverResult,
+    cover_between,
+    cover_from_position,
+)
+from ...spatial import creature_occupied_cells, creature_position
 from ...state_combat import (
     attack_roll_mode_for,
     automatic_critical_provider_ids_for,
@@ -92,10 +97,15 @@ def build_spell_action_context(
             attack_mode,
         ),
         target_armor_classes={
-            candidate.target_ref: effective_armor_class(
-                state,
-                candidate.target_ref,
-            ).value
+            candidate.target_ref: (
+                effective_armor_class(state, candidate.target_ref).value
+                + _cover_for_target(
+                    state,
+                    creature_ref,
+                    candidate.target_ref,
+                    area,
+                ).bonus
+            )
             for candidate in targets
         },
         automatic_critical_providers={
@@ -112,7 +122,38 @@ def build_spell_action_context(
             conditions,
             save_advantage_against_opponents,
         ),
+        saving_throw_cover_bonuses={
+            candidate.target_ref: _cover_for_target(
+                state,
+                creature_ref,
+                candidate.target_ref,
+                area,
+            ).bonus
+            for candidate in targets
+        },
         healing_allocations=dict(payload.healing_allocations),
+    )
+
+
+def _cover_for_target(
+    state: EncounterState,
+    source_ref: str,
+    target_ref: str,
+    area: AreaOfEffect | None,
+) -> CoverResult:
+    """Return cover measured from a direct caster or an area's point of origin."""
+
+    if area is None:
+        return cover_between(state, source_ref, target_ref)
+    return cover_from_position(
+        state,
+        area.origin,
+        target_ref,
+        source_ref=(
+            source_ref
+            if area.origin in creature_occupied_cells(state, source_ref)
+            else None
+        ),
     )
 
 

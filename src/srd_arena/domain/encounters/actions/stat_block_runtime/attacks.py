@@ -16,6 +16,7 @@ from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import apply_damage
 from ...rule_queries.numeric import effective_armor_class
+from ...rule_queries.obstructions import cover_between
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_distance
 from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
@@ -121,6 +122,7 @@ def resolve_attack_action(
     range_roll_mode = range_band.roll_mode(
         creature_distance(state, creature_ref, target_ref)
     )
+    cover = cover_between(state, creature_ref, target_ref)
     roll_die = state.dice.roll_die
     outcome = resolve_attack(
         creature,
@@ -148,7 +150,8 @@ def resolve_attack_action(
         target_armor_class=effective_armor_class(
             state,
             target_ref,
-        ).value,
+        ).value
+        + cover.bonus,
         sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
             roll_die
         ),
@@ -164,6 +167,8 @@ def resolve_attack_action(
     )
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)
+    outcome.attack_roll_detail["cover_degree"] = cover.degree.value
+    outcome.attack_roll_detail["cover_bonus"] = cover.bonus
     apply_attack_damage(
         outcome,
         defender,

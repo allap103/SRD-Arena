@@ -41,6 +41,7 @@ from .observation_models import (
     TargetingObservation,
     TargetResourceAllocationObservation,
     TargetResourceLimitObservation,
+    TerrainCellObservation,
 )
 
 __all__ = [
@@ -67,6 +68,7 @@ __all__ = [
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",
     "TargetingObservation",
+    "TerrainCellObservation",
     "observe_session",
 ]
 
@@ -146,6 +148,17 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
                 source_definition_id=relationship.identity.source.definition_id,
             )
             for relationship in state.relationships
+        ),
+        terrain=tuple(
+            TerrainCellObservation(
+                position=PositionObservation(
+                    x=terrain.position.x,
+                    y=terrain.position.y,
+                ),
+                traversal=terrain.traversal.value,
+                cover=terrain.cover.value,
+            )
+            for terrain in state.definition.terrain
         ),
     )
 

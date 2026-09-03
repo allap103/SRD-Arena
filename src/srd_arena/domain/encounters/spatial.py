@@ -2,8 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Collection, Iterable
-from typing import TYPE_CHECKING
+from collections.abc import Collection, Iterable, Mapping
+from typing import Protocol
 
 from srd_arena.domain.creatures import footprint_width
 from srd_arena.domain.geometry import (
@@ -13,19 +13,31 @@ from srd_arena.domain.geometry import (
     grid_distance_between,
 )
 
+from .definitions import EncounterDefinition
 from .encounter_models.actions import CreatureRef
+from .encounter_models.state import EncounterCreatureState
+from .terrain import TerrainCell, TerrainTraversal
 
-if TYPE_CHECKING:
-    from .encounter import EncounterState
+
+class SpatialContext(Protocol):
+    """Expose only encounter data required by ground spatial queries."""
+
+    @property
+    def definition(self) -> EncounterDefinition:
+        """Return the authored grid and terrain definition."""
+
+    @property
+    def creatures(self) -> Mapping[CreatureRef, EncounterCreatureState]:
+        """Return runtime creatures keyed by stable encounter reference."""
 
 
-def creature_position(state: EncounterState, creature_ref: CreatureRef) -> Position:
+def creature_position(state: SpatialContext, creature_ref: CreatureRef) -> Position:
     """Return the anchor position of one runtime creature."""
 
     return state.creatures[creature_ref].position
 
 
-def creature_size(state: EncounterState, creature_ref: CreatureRef) -> str:
+def creature_size(state: SpatialContext, creature_ref: CreatureRef) -> str:
     """Return the normalized size code stored by one runtime creature."""
 
     return state.creatures[creature_ref].creature.size
@@ -50,7 +62,7 @@ def occupied_cells(position: Position, size: str) -> tuple[Position, ...]:
 
 
 def creature_occupied_cells(
-    state: EncounterState,
+    state: SpatialContext,
     creature_ref: CreatureRef,
     *,
     position: Position | None = None,
@@ -95,7 +107,7 @@ def minimum_cell_distance(
 
 
 def creature_distance(
-    state: EncounterState,
+    state: SpatialContext,
     source_ref: CreatureRef,
     target_ref: CreatureRef,
     *,
@@ -114,7 +126,7 @@ def creature_distance(
 
 
 def creatures_are_adjacent(
-    state: EncounterState,
+    state: SpatialContext,
     source_ref: CreatureRef,
     target_ref: CreatureRef,
     *,
@@ -136,7 +148,7 @@ def creatures_are_adjacent(
 
 
 def footprint_is_within_grid(
-    state: EncounterState,
+    state: SpatialContext,
     creature_ref: CreatureRef,
     position: Position,
 ) -> bool:
@@ -150,7 +162,7 @@ def footprint_is_within_grid(
 
 
 def placement_is_free(
-    state: EncounterState,
+    state: SpatialContext,
     creature_ref: CreatureRef,
     position: Position,
     *,
@@ -169,7 +181,7 @@ def placement_is_free(
     ...     creature=SimpleNamespace(size="M"),
     ... )
     >>> state = SimpleNamespace(
-    ...     definition=SimpleNamespace(grid=grid),
+    ...     definition=SimpleNamespace(grid=grid, terrain=()),
     ...     creatures={"large": large, "blocker": blocker},
     ... )
     >>> placement_is_free(state, "large", Position(2, 1), ignored_refs={"large"})
@@ -180,6 +192,12 @@ def placement_is_free(
 
     proposed = creature_occupied_cells(state, creature_ref, position=position)
     if not footprint_is_within_grid(state, creature_ref, position):
+        return False
+    if any(
+        terrain is not None and terrain.traversal is TerrainTraversal.BLOCKED
+        for cell in proposed
+        if (terrain := terrain_at(state, cell)) is not None
+    ):
         return False
     proposed_coordinates = {(cell.x, cell.y) for cell in proposed}
     for other_ref, other_state in state.creatures.items():
@@ -197,8 +215,69 @@ def placement_is_free(
     return True
 
 
+def terrain_at(state: SpatialContext, position: Position) -> TerrainCell | None:
+    """Return authored terrain occupying ``position``, if any."""
+
+    return next(
+        (
+            terrain
+            for terrain in state.definition.terrain
+            if terrain.position == position
+        ),
+        None,
+    )
+
+
+def footprint_enters_difficult_terrain(
+    state: SpatialContext,
+    creature_ref: CreatureRef,
+    position: Position,
+) -> bool:
+    """Return whether any cell in a proposed footprint is Difficult Terrain."""
+
+    return any(
+        terrain is not None and terrain.traversal is TerrainTraversal.DIFFICULT
+        for cell in creature_occupied_cells(state, creature_ref, position=position)
+        if (terrain := terrain_at(state, cell)) is not None
+    )
+
+
+def diagonal_terrain_step_is_clear(
+    state: SpatialContext,
+    creature_ref: CreatureRef,
+    source: Position,
+    destination: Position,
+) -> bool:
+    """Return whether a diagonal footprint move avoids blocked terrain corners.
+
+    Both orthogonal sweeps must remain clear. This treats a filled terrain cell
+    as occupying its complete square, so a diagonal may not clip either corner.
+    """
+
+    dx = destination.x - source.x
+    dy = destination.y - source.y
+    if abs(dx) != 1 or abs(dy) != 1:
+        return True
+    intermediate_anchors = (
+        Position(source.x + dx, source.y),
+        Position(source.x, source.y + dy),
+    )
+    return all(
+        all(
+            terrain is None or terrain.traversal is not TerrainTraversal.BLOCKED
+            for cell in creature_occupied_cells(
+                state,
+                creature_ref,
+                position=intermediate,
+            )
+            if (terrain := terrain_at(state, cell)) is not None
+        )
+        for intermediate in intermediate_anchors
+    )
+
+
 def creature_intersects_cells(
-    state: EncounterState,
+    state: SpatialContext,
     creature_ref: CreatureRef,
     cells: Collection[tuple[int, int]],
 ) -> bool:
@@ -210,7 +289,7 @@ def creature_intersects_cells(
     )
 
 
-def validate_creature_placements(state: EncounterState) -> None:
+def validate_creature_placements(state: SpatialContext) -> None:
     """Reject initial footprints that leave the grid or overlap another creature."""
 
     validate_placements(
@@ -223,12 +302,19 @@ def validate_creature_placements(state: EncounterState) -> None:
             )
             for creature_ref in state.creatures
         ),
+        blocked_cells=(
+            terrain.position
+            for terrain in state.definition.terrain
+            if terrain.traversal is TerrainTraversal.BLOCKED
+        ),
     )
 
 
 def validate_placements(
     grid: Grid,
     placements: Iterable[tuple[CreatureRef, Position, str]],
+    *,
+    blocked_cells: Iterable[Position] = (),
 ) -> None:
     """Reject authored footprints that leave ``grid`` or overlap each other.
 
@@ -236,6 +322,7 @@ def validate_placements(
     invalid authored encounters fail early without weakening the runtime guard.
     """
 
+    blocked_coordinates = {(cell.x, cell.y) for cell in blocked_cells}
     occupied_by: dict[tuple[int, int], CreatureRef] = {}
     for creature_ref, position, size in placements:
         cells = occupied_cells(position, size)
@@ -248,6 +335,11 @@ def validate_placements(
             )
         for cell in cells:
             coordinate = (cell.x, cell.y)
+            if coordinate in blocked_coordinates:
+                raise ValueError(
+                    f"Creature '{creature_ref}' overlaps blocked terrain at "
+                    f"{coordinate}."
+                )
             other_ref = occupied_by.get(coordinate)
             if other_ref is not None:
                 raise ValueError(

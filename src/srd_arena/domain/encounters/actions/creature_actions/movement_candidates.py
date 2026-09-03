@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.geometry import Position
+
 from ...behaviors import DIRECTION_DELTAS
 from ...encounter_models.actions import (
     ActionCost,
@@ -13,6 +15,7 @@ from ...encounter_models.actions import (
 from ...grappling_state import is_grappled
 from ...rule_queries.movement import movement_step_cost
 from ...rule_queries.numeric import movement_budget
+from ...spatial import creature_position
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -26,7 +29,9 @@ def movement_action_candidates(
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.geometry import MovementBudget, MovementCost
-    >>> actor = SimpleNamespace(movement_remaining=MovementBudget(6))
+    >>> actor = SimpleNamespace(
+    ...     movement_remaining=MovementBudget(6), position=Position(1, 1)
+    ... )
     >>> state = SimpleNamespace(creatures={"hero": actor}, conditions=[])
     >>> from unittest.mock import patch
     >>> with patch(
@@ -40,7 +45,6 @@ def movement_action_candidates(
     """
 
     actor = state.creatures[creature_ref]
-    movement_cost = movement_step_cost(state, creature_ref)
     if actor.movement_remaining is None:
         actor.movement_remaining = movement_budget(
             state,
@@ -48,14 +52,20 @@ def movement_action_candidates(
         ).budget
     if is_grappled(state, creature_ref):
         return []
-    return [
-        EncounterAction(
-            f"Move {direction}",
-            "move",
-            direction,
-            id=f"{creature_ref}-move-{direction}",
-            creature_ref=creature_ref,
-            cost=ActionCost(movement=movement_cost),
+    actions: list[EncounterAction] = []
+    source = creature_position(state, creature_ref)
+    for direction, (dx, dy) in DIRECTION_DELTAS.items():
+        destination = Position(source.x + dx, source.y + dy)
+        actions.append(
+            EncounterAction(
+                f"Move {direction}",
+                "move",
+                direction,
+                id=f"{creature_ref}-move-{direction}",
+                creature_ref=creature_ref,
+                cost=ActionCost(
+                    movement=movement_step_cost(state, creature_ref, destination)
+                ),
+            )
         )
-        for direction in DIRECTION_DELTAS
-    ]
+    return actions

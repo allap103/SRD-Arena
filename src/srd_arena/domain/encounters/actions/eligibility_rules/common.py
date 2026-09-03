@@ -17,7 +17,11 @@ from ...grappling_state import grappling_targets_for
 from ...participants import creatures_are_opponents
 from ...rule_queries.movement import movement_step_cost
 from ...rule_queries.numeric import effective_speed
-from ...spatial import creature_position, placement_is_free
+from ...spatial import (
+    creature_position,
+    diagonal_terrain_step_is_clear,
+    placement_is_free,
+)
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -133,7 +137,16 @@ class MovementRule:
                 "invalid_direction",
                 "Movement requires a valid direction.",
             )
-        movement_cost = movement_step_cost(state, actor_ref)
+        dx, dy = DIRECTION_DELTAS[action.value]
+        moving_refs = {actor_ref, *grappling_targets_for(state, actor_ref)}
+        destinations = {
+            moving_ref: Position(
+                creature_position(state, moving_ref).x + dx,
+                creature_position(state, moving_ref).y + dy,
+            )
+            for moving_ref in moving_refs
+        }
+        movement_cost = movement_step_cost(state, actor_ref, destinations[actor_ref])
         actor = state.creatures[actor_ref]
         effective = state.effective_conditions_for(actor_ref)
         if effective_speed(state, actor_ref).value == 0 and not effective.has_trait(
@@ -149,21 +162,20 @@ class MovementRule:
                 "insufficient_movement",
                 "Not enough movement remains.",
             )
-        dx, dy = DIRECTION_DELTAS[action.value]
-        moving_refs = {actor_ref, *grappling_targets_for(state, actor_ref)}
-        destinations = {
-            moving_ref: Position(
-                creature_position(state, moving_ref).x + dx,
-                creature_position(state, moving_ref).y + dy,
-            )
-            for moving_ref in moving_refs
-        }
         if any(
             not placement_is_free(
                 state,
                 moving_ref,
                 destination,
                 ignored_refs=moving_refs,
+            )
+            for moving_ref, destination in destinations.items()
+        ) or any(
+            not diagonal_terrain_step_is_clear(
+                state,
+                moving_ref,
+                creature_position(state, moving_ref),
+                destination,
             )
             for moving_ref, destination in destinations.items()
         ):

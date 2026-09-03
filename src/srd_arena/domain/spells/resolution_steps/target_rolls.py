@@ -121,14 +121,19 @@ def _resolve_saving_throw(
             else "normal"
         ),
     )
+    cover_bonus = (
+        context.saving_throw_cover_bonuses.get(target.target_ref, 0)
+        if ability == "dexterity"
+        else 0
+    )
     save = resolve_saving_throw(
         target.creature,
         cast(Ability, ability),
         context.creature.spellcasting.save_dc,
         mode=base_mode,
-        sourced_modifier_override=context.environment.saving_throw_modifier(
-            target.target_ref,
-            ability,
+        sourced_modifier_override=(
+            context.environment.saving_throw_modifier(target.target_ref, ability)
+            + cover_bonus
         ),
         sourced_mode_override=context.environment.saving_throw_mode(
             target.target_ref,
@@ -148,6 +153,7 @@ def _resolve_saving_throw(
             "ability": ability,
             "die": save.check.roll.selected,
             "modifier": save.modifiers.total,
+            "cover_bonus": cover_bonus,
             "total": save.check.roll.total,
             "target_dc": save.check.target,
             "success": save.check.success,

@@ -37,6 +37,15 @@ from .numeric import (
     effective_speed,
     movement_budget,
 )
+from .obstructions import (
+    CoverResult,
+    cell_has_line_of_effect,
+    cells_with_line_of_effect,
+    cover_between,
+    cover_from_position,
+    creature_has_line_of_effect_to_cell,
+    grid_ray_cells,
+)
 from .permissions import (
     TargetingKind,
     action_compatibility,
@@ -47,6 +56,7 @@ from .rolls import roll_modifiers
 from .senses import sense_range
 
 __all__ = [
+    "CoverResult",
     "InvocationFailureChanceContribution",
     "InvocationStartContext",
     "InvocationStartQueryResult",
@@ -67,14 +77,20 @@ __all__ = [
     "apply_damage",
     "apply_healing",
     "attack_limit",
+    "cell_has_line_of_effect",
+    "cells_with_line_of_effect",
     "condition_immunities",
     "condition_suppressions",
+    "cover_between",
+    "cover_from_position",
+    "creature_has_line_of_effect_to_cell",
     "damage_immunities",
     "damage_resistances",
     "damage_vulnerabilities",
     "effective_armor_class",
     "effective_maximum_health",
     "effective_speed",
+    "grid_ray_cells",
     "has_condition_save_advantage",
     "invocation_start_checks",
     "movement_budget",

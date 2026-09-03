@@ -9,8 +9,10 @@ from .definitions import (
 from .encounter import EncounterState
 from .encounter_models.actions import EncounterAction
 from .orchestration import EncounterOrchestrator
+from .terrain import CoverDegree, TerrainCell, TerrainTraversal
 
 __all__ = [
+    "CoverDegree",
     "EncounterAction",
     "EncounterBehavior",
     "EncounterDefinition",
@@ -18,4 +20,6 @@ __all__ = [
     "EncounterParticipant",
     "EncounterState",
     "EncounterTeam",
+    "TerrainCell",
+    "TerrainTraversal",
 ]
