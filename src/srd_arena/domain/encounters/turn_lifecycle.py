@@ -14,6 +14,7 @@ from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
 from .grappling_state import is_grappled
 from .participants import creature_team_id
+from .prone_state import apply_shared_space_prone
 from .rule_queries import movement_budget, reset_damage_reductions
 
 if TYPE_CHECKING:
@@ -127,6 +128,9 @@ def advance_turn(
     ...         "expire_conditions_for_turn_end"
     ...     ),
     ...     patch(
+    ...         "srd_arena.domain.encounters.turn_lifecycle.apply_shared_space_prone"
+    ...     ),
+    ...     patch(
     ...         "srd_arena.domain.encounters.turn_lifecycle._advance_initiative"
     ...     ),
     ...     patch(
@@ -140,6 +144,7 @@ def advance_turn(
     ending_creature_ref = state.current_decision().creature_ref
     resolve_end_turn_effects(state, ending_creature_ref, progress)
     expire_conditions_for_turn_end(state, ending_creature_ref)
+    apply_shared_space_prone(state, ending_creature_ref, progress)
     _advance_initiative(state)
     _begin_turn_if_alive(state, progress)
 

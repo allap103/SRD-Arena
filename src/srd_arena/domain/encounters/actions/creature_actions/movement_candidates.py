@@ -10,7 +10,8 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
-from ...grappling_state import movement_cost_for
+from ...grappling_state import is_grappled
+from ...rule_queries.movement import movement_step_cost
 from ...rule_queries.numeric import movement_budget
 
 if TYPE_CHECKING:
@@ -26,11 +27,11 @@ def movement_action_candidates(
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.geometry import MovementBudget, MovementCost
     >>> actor = SimpleNamespace(movement_remaining=MovementBudget(6))
-    >>> state = SimpleNamespace(creatures={"hero": actor})
+    >>> state = SimpleNamespace(creatures={"hero": actor}, conditions=[])
     >>> from unittest.mock import patch
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions."
-    ...     "movement_candidates.movement_cost_for",
+    ...     "movement_candidates.movement_step_cost",
     ...     return_value=MovementCost(1),
     ... ):
     ...     actions = movement_action_candidates(state, "hero")
@@ -39,13 +40,13 @@ def movement_action_candidates(
     """
 
     actor = state.creatures[creature_ref]
-    movement_cost = movement_cost_for(state, creature_ref)
+    movement_cost = movement_step_cost(state, creature_ref)
     if actor.movement_remaining is None:
         actor.movement_remaining = movement_budget(
             state,
             creature_ref,
         ).budget
-    if movement_cost is None:
+    if is_grappled(state, creature_ref):
         return []
     return [
         EncounterAction(

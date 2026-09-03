@@ -14,11 +14,12 @@ from ...encounter_models.resolution import (
     ActionExecutionOutcome,
     ActionExecutionResult,
 )
-from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...grappling_state import grappling_targets_for
 from ...reaction_runtime.opportunity_execution import (
     resolve_automatic_opportunity_attacks,
 )
 from ...reaction_runtime.opportunity_offers import queue_opportunity_attack
+from ...rule_queries.movement import movement_step_cost
 from ...state_runtime import create_event
 
 if TYPE_CHECKING:
@@ -50,7 +51,7 @@ def execute_movement(
     >>> from unittest.mock import patch
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
-    ...     "movement_cost_for", return_value=MovementCost(1)
+    ...     "movement_step_cost", return_value=MovementCost(1)
     ... ), patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
     ...     "grappling_targets_for", return_value=()
@@ -71,9 +72,7 @@ def execute_movement(
     direction = str(action.value)
     dx, dy = DIRECTION_DELTAS[direction]
     destination = Position(mover.position.x + dx, mover.position.y + dy)
-    movement_cost = movement_cost_for(state, decision.creature_ref)
-    if movement_cost is None:
-        raise RuntimeError("Movement is unavailable for this creature.")
+    movement_cost = movement_step_cost(state, decision.creature_ref)
     remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
     grappled_refs = grappling_targets_for(state, decision.creature_ref)
     grappled_positions = {

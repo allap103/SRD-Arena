@@ -17,6 +17,7 @@ from .eligibility_rules.common import (
     MovementRule,
     ResourceRule,
 )
+from .eligibility_rules.conditions import ProneActionRule
 from .eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
@@ -31,6 +32,7 @@ if TYPE_CHECKING:
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ResourceRule(),
     MovementRule(),
+    ProneActionRule(),
     AttackRule(),
     GrappleRule(),
     StatBlockActionRule(),
@@ -71,6 +73,7 @@ __all__ = [
     "FeatureActionRule",
     "GrappleRule",
     "MovementRule",
+    "ProneActionRule",
     "ResourceRule",
     "SpellActionRule",
     "SpellTargetSelectionRule",

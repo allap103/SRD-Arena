@@ -22,6 +22,7 @@ from .actions.creature_actions.lifecycle import (
     finish_action_execution,
 )
 from .actions.creature_actions.movement import execute_movement
+from .actions.creature_actions.prone import execute_prone_action
 from .actions.creature_actions.spell_invocation import execute_spell_invocation
 from .actions.creature_actions.spell_selection import (
     execute_spell_selection_action,
@@ -107,18 +108,28 @@ def execute_creature_action(
             progress,
             action_id,
         )
-    elif execute_spell_selection_action(
-        state,
-        actor,
-        action,
-        progress,
-        action_id,
-    ) or execute_standard_action(
-        state,
-        action,
-        decision,
-        progress,
-        action_id,
+    elif (
+        execute_prone_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
+        or execute_spell_selection_action(
+            state,
+            actor,
+            action,
+            progress,
+            action_id,
+        )
+        or execute_standard_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
     ):
         pass
     else:

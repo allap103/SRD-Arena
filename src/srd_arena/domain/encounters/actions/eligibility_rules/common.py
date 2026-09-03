@@ -13,8 +13,10 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
-from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...grappling_state import grappling_targets_for
 from ...participants import creatures_are_opponents
+from ...rule_queries.movement import movement_step_cost
+from ...rule_queries.numeric import effective_speed
 from ...state_runtime import creature_position, position_is_free
 from .models import EligibilityFailure
 
@@ -131,9 +133,18 @@ class MovementRule:
                 "invalid_direction",
                 "Movement requires a valid direction.",
             )
-        movement_cost = movement_cost_for(state, actor_ref)
+        movement_cost = movement_step_cost(state, actor_ref)
         actor = state.creatures[actor_ref]
-        if movement_cost is None or (actor.movement_remaining or 0) < movement_cost:
+        effective = state.effective_conditions_for(actor_ref)
+        if effective_speed(state, actor_ref).value == 0 and not effective.has_trait(
+            CombatTrait.CANNOT_TAKE_ACTIONS
+        ):
+            return EligibilityFailure(
+                "movement.speed_zero",
+                "A creature whose Speed is 0 cannot move.",
+                effective.providers_for_trait(CombatTrait.SPEED_ZERO),
+            )
+        if (actor.movement_remaining or 0) < movement_cost:
             return EligibilityFailure(
                 "insufficient_movement",
                 "Not enough movement remains.",

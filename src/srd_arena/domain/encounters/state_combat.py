@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.effects.triggered import TriggeredEffect, matching_effects
-from srd_arena.domain.geometry import Position
+from srd_arena.domain.geometry import Position, grid_distance_between
 from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
 from .attack_rules import proximity_attack_roll_mode
@@ -36,6 +36,7 @@ def attack_roll_mode_for(
     >>> state = SimpleNamespace(
     ...     effective_conditions_for=lambda ref: effective, conditions=[],
     ...     ongoing_effects=[],
+    ...     creatures={"goblin": SimpleNamespace(position=Position(2, 0))},
     ... )
     >>> attack_roll_mode_for(
     ...     state, "archer", "goblin", "ranged", Position(0, 0),
@@ -52,6 +53,9 @@ def attack_roll_mode_for(
     )
     if base_mode != "normal":
         modes.append(base_mode)
+    attacker_effective = state.effective_conditions_for(attacker_ref)
+    if attacker_effective.has_trait(CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE):
+        modes.append("disadvantage")
     target_effective = state.effective_conditions_for(target_ref)
     modes.append(
         roll_modifiers(
@@ -64,6 +68,22 @@ def attack_roll_mode_for(
     )
     if target_effective.has_trait(CombatTrait.ATTACKERS_HAVE_ADVANTAGE):
         modes.append("advantage")
+    attacker_is_nearby = (
+        attacker_position is not None
+        and grid_distance_between(
+            attacker_position,
+            creature_position(state, target_ref),
+        )
+        <= 1
+    )
+    if attacker_is_nearby and target_effective.has_trait(
+        CombatTrait.NEARBY_ATTACKERS_HAVE_ADVANTAGE
+    ):
+        modes.append("advantage")
+    if not attacker_is_nearby and target_effective.has_trait(
+        CombatTrait.DISTANT_ATTACKERS_HAVE_DISADVANTAGE
+    ):
+        modes.append("disadvantage")
     context = {
         "attacker_ref": attacker_ref,
         "target_ref": target_ref,

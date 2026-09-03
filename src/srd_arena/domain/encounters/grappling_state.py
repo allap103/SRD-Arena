@@ -4,14 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.creatures import is_two_sizes_smaller
 from srd_arena.domain.effects.conditions import AppliedCondition, Condition
 from srd_arena.domain.effects.runtime import (
     CreatureRelationship,
     RelationshipKind,
     RuntimeStateIdentity,
 )
-from srd_arena.domain.geometry import MovementCost
 
 from .condition_state import (
     ConditionApplicationResult,
@@ -20,7 +18,6 @@ from .condition_state import (
 )
 from .effect_lifecycle.concentration import end_concentration
 from .encounter_models.actions import CreatureRef
-from .state_runtime import creature_size
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -196,38 +193,3 @@ def is_grappled(state: EncounterState, creature_ref: CreatureRef) -> bool:
     """
 
     return bool(grappled_sources_for(state, creature_ref))
-
-
-def movement_cost_for(
-    state: EncounterState,
-    creature_ref: CreatureRef,
-) -> MovementCost | None:
-    """Include the cost of dragging grappled creatures in a movement step.
-
-    >>> from types import SimpleNamespace
-    >>> relationship = SimpleNamespace(
-    ...     kind=RelationshipKind.GRAPPLING,
-    ...     source_ref="ogre", target_ref="hero",
-    ... )
-    >>> state = SimpleNamespace(
-    ...     conditions=[], relationships=[relationship],
-    ...     creatures={
-    ...         "ogre": SimpleNamespace(creature=SimpleNamespace(size="L")),
-    ...         "hero": SimpleNamespace(creature=SimpleNamespace(size="M")),
-    ...     },
-    ... )
-    >>> movement_cost_for(state, "ogre")
-    2
-    """
-
-    if is_grappled(state, creature_ref):
-        return None
-    cost = 1
-    grappler_size = creature_size(state, creature_ref)
-    for target_ref in grappling_targets_for(state, creature_ref):
-        if not is_two_sizes_smaller(
-            creature_size(state, target_ref),
-            grappler_size,
-        ):
-            cost += 1
-    return MovementCost(cost)

@@ -14,6 +14,7 @@ from ..consumables import healing_potions_in_inventory
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
 from ..option_discovery.standard import available_feature_actions
+from .prone import prone_action_candidates
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -33,6 +34,9 @@ def special_action_candidates(
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
+    ...     effective_conditions_for=lambda ref: SimpleNamespace(
+    ...         has=lambda condition: False
+    ...     ),
     ... )
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.special."
@@ -46,11 +50,12 @@ def special_action_candidates(
     ... ):
     ...     actions = special_action_candidates(state, "hero")
     >>> [(action.label, action.kind) for action in actions]
-    [('Wait', 'wait')]
+    [('Drop Prone', 'drop_prone'), ('Wait', 'wait')]
     """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
+    actions.extend(prone_action_candidates(state, creature_ref))
     actions.extend(available_feature_actions(state, actor.creature))
     actions.extend(available_spell_actions(state, actor.creature))
 

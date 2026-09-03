@@ -6,7 +6,7 @@ from collections.abc import Mapping, Sequence
 from typing import Protocol
 
 from srd_arena.domain.effects.conditions import AppliedCondition
-from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from ..definitions import EncounterDefinition
@@ -44,6 +44,10 @@ class MovementRuleQueryContext(ConditionRuleQueryContext, Protocol):
     @property
     def definition(self) -> EncounterDefinition:
         """Return the authored encounter definition containing the grid."""
+
+    @property
+    def relationships(self) -> Sequence[CreatureRelationship]:
+        """Return directional creature relationships relevant to movement."""
 
 
 class DamageRuleQueryContext(CreatureEffectQueryContext, Protocol):

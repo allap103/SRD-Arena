@@ -30,6 +30,7 @@ from .models import (
     SourcedEligibilityFailure,
     SourcedRuleContribution,
 )
+from .movement import movement_step_cost, stand_up_movement_cost
 from .numeric import (
     attack_limit,
     effective_armor_class,
@@ -71,10 +72,12 @@ __all__ = [
     "has_condition_save_advantage",
     "invocation_start_checks",
     "movement_budget",
+    "movement_step_cost",
     "reaction_eligibility",
     "reset_damage_reductions",
     "resolve_damage_reduction",
     "resolve_invocation_start",
     "roll_modifiers",
     "sense_range",
+    "stand_up_movement_cost",
 ]
