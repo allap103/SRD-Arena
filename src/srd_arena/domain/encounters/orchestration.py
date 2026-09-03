@@ -211,7 +211,7 @@ class EncounterOrchestrator:
         state: EncounterState,
         progress: EncounterProgress,
     ) -> None:
-        if not progress.completed:
+        if not progress.completed and not state.interrupts.decision_stack:
             progress.completed = encounter_is_complete(state)
 
     def _finish_turn(

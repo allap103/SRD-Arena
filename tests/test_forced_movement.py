@@ -12,33 +12,37 @@ from srd_arena.domain.effects.results import (
 from srd_arena.domain.encounters import (
     EncounterBehavior,
     EncounterDefinition,
-    EncounterOrchestrator,
     TerrainCell,
     TerrainTraversal,
 )
 from srd_arena.domain.encounters.actions.feature_runtime.repelling_blast import (
-    resolve_repelling_blast_hits,
+    resolve_repelling_blast_hit,
 )
 from srd_arena.domain.encounters.actions.forced_movement_choices import (
     forced_movement_actions,
     forced_movement_request,
 )
 from srd_arena.domain.encounters.encounter import EncounterState
-from srd_arena.domain.encounters.encounter_models.actions import (
-    ForcedMovementSelection,
+from srd_arena.domain.encounters.encounter_models.decisions import (
+    DecisionFrame,
+    ForcedMovementChoiceRequest,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.encounters.forced_movement import apply_forced_movement
 from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.domain.geometry import Grid, MovementBudget, MovementCost, Position
+from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.session import Session
-from tests.encounter_runtime_support import is_spell_action, use_deterministic_dice
+from tests.encounter_runtime_support import (
+    choose_advertised_action,
+    is_spell_action,
+    use_deterministic_dice,
+)
 
 WARLOCK_ENCOUNTER = (
     Path(__file__).parents[1] / "content" / "encounters" / "warlock_training"
 )
-ORCHESTRATOR = EncounterOrchestrator()
 DEFAULT_SOURCE_POSITION = Position(0, 1)
 DEFAULT_TARGET_POSITION = Position(2, 1)
 
@@ -87,6 +91,34 @@ def _state(
         EncounterDefinition("forced", Grid(12, 8), terrain=terrain),
         creatures,
     )
+
+
+def _cast_two_beam_eldritch_blast(
+    session: Session,
+    target_ref: str,
+) -> EngineOutcome:
+    state = session.encounter_state
+    assert state is not None
+    initial = next(
+        action
+        for action in state.available_actions()
+        if is_spell_action(action, "eldritch_blast", target_ref=target_ref)
+    )
+    choose_advertised_action(session, initial)
+    add_second_beam = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "toggle_spell_target"
+        and action.value == target_ref
+        and action.id.endswith("-add")
+    )
+    choose_advertised_action(session, add_second_beam)
+    confirm = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "confirm_spell_targets"
+    )
+    return choose_advertised_action(session, confirm)
 
 
 def test_forced_movement_ignores_speed_and_difficult_terrain_cost() -> None:
@@ -146,6 +178,31 @@ def test_forced_movement_can_pull_a_target_toward_its_source() -> None:
     assert state.creatures["target"].position == Position(2, 1)
 
 
+def test_forced_movement_uses_a_pull_label_for_toward_choices() -> None:
+    state = _state(target=Position(4, 1))
+    state.interrupts.decision_stack.append(
+        DecisionFrame(
+            "pull-1",
+            "source",
+            "forced_movement",
+            "test",
+            request=ForcedMovementChoiceRequest(
+                "action-1",
+                "source",
+                "target",
+                "toward",
+                10,
+                "test_pull",
+                "Test Pull",
+            ),
+        )
+    )
+
+    labels = [action.label for action in forced_movement_actions(state)]
+
+    assert "Pull Target (target) 5 ft." in labels
+
+
 def test_forced_movement_ends_a_grapple_after_separation() -> None:
     state = _state(source=Position(0, 1), target=Position(3, 1))
     state.creatures["grappler"] = _creature_state("grappler", Position(2, 1))
@@ -181,35 +238,13 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
         die_roller=lambda sides: 15 if sides == 20 else 3,
     )
 
-    initial = next(
-        action
-        for action in state.available_actions()
-        if is_spell_action(action, "eldritch_blast", target_ref="ogre_target")
-    )
-    ORCHESTRATOR.submit(state, initial)
-    add_second_beam = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value == "ogre_target"
-        and action.id.endswith("-add")
-    )
-    ORCHESTRATOR.submit(state, add_second_beam)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
+    cast = _cast_two_beam_eldritch_blast(session, "ogre_target")
 
-    cast = ORCHESTRATOR.submit(state, confirm)
-
-    assert cast.paused_for_decision is True
     assert [frame.kind for frame in state.interrupts.decision_stack] == [
-        "forced_movement",
-        "forced_movement",
+        "forced_movement"
     ]
     assert forced_movement_request(state.current_decision()).occurrence_index == 1
-    assert len([event for event in cast.events if event.type == "decision_opened"]) == 2
+    assert len([event for event in cast.events if event.type == "decision_opened"]) == 1
 
     observed_push = next(
         action
@@ -221,11 +256,10 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     assert observed_push.source_id == "repelling_blast"
     push = next(
         action
-        for action in forced_movement_actions(state)
-        if isinstance(action.value, ForcedMovementSelection)
-        and action.value.distance_feet == 10
+        for action in session.read().action_options
+        if action.id == observed_push.id
     )
-    moved = ORCHESTRATOR.submit(state, push)
+    moved = session.choose(push.id)
 
     assert state.creatures["ogre_target"].position == Position(8, 3)
     movement_event = next(
@@ -234,17 +268,159 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     assert movement_event.data["source_id"] == "repelling_blast"
     assert movement_event.data["moved_distance_feet"] == 10
     assert forced_movement_request(state.current_decision()).occurrence_index == 2
+    second_opened = [event for event in moved.events if event.type == "decision_opened"]
+    assert len(second_opened) == 1
+    assert second_opened[0].data["occurrence_index"] == 2
 
     decline = next(
         action
-        for action in forced_movement_actions(state)
-        if isinstance(action.value, ForcedMovementSelection)
-        and action.value.distance_feet == 0
+        for action in session.observe().scene.action_details
+        if action.kind == "forced_movement_choice"
+        and action.movement_distance_feet == 0
     )
-    ORCHESTRATOR.submit(state, decline)
+    finished = session.choose(decline.id)
 
     assert state.interrupts.decision_stack == []
     assert state.current_decision().kind == "turn"
+    assert len([event for event in finished.events if event.type == "spell_cast"]) == 1
+
+
+def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
+    session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
+    session.read()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.definition.grid = Grid(30, 9)
+    state.turn.index = state.initiative_order.index("warlock")
+    state.creatures["warlock"].position = Position(0, 3)
+    state.creatures["ogre_target"].position = Position(23, 3)
+    state.creatures["barbarian"].position = Position(0, 8)
+    state.creatures["goblin_1"].position = Position(5, 8)
+    state.creatures["goblin_2"].position = Position(7, 8)
+    state.creatures["goblin_3"].position = Position(9, 8)
+    use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 3,
+    )
+
+    _cast_two_beam_eldritch_blast(session, "ogre_target")
+    push = next(
+        action
+        for action in session.observe().scene.action_details
+        if action.kind == "forced_movement_choice"
+        and action.movement_distance_feet == 10
+    )
+
+    result = session.choose(push.id)
+
+    assert state.creatures["ogre_target"].position == Position(25, 3)
+    assert state.interrupts.decision_stack == []
+    skipped = next(
+        event for event in result.events if event.type == "spell_projectile_skipped"
+    )
+    assert skipped.data == {
+        "spell_id": "eldritch_blast",
+        "projectile_index": 2,
+        "target_ref": "ogre_target",
+        "reason_code": "target_unavailable",
+    }
+    cast = next(event for event in result.events if event.type == "spell_cast")
+    attack_roll_details = cast.data["attack_roll_details"]
+    assert isinstance(attack_roll_details, list)
+    assert len(attack_roll_details) == 1
+
+
+def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
+    session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
+    session.read()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.turn.index = state.initiative_order.index("warlock")
+    state.creatures["warlock"].position = Position(2, 3)
+    state.creatures["ogre_target"].position = Position(6, 3)
+    state.creatures["ogre_target"].creature.current_health = 1
+    for target_ref in ("goblin_1", "goblin_2", "goblin_3"):
+        state.creatures[target_ref].creature.current_health = 0
+    use_deterministic_dice(
+        session,
+        die_roller=lambda sides: 15 if sides == 20 else 3,
+    )
+
+    _cast_two_beam_eldritch_blast(session, "ogre_target")
+
+    assert session.pending_encounter_completion is None
+    assert state.current_decision().kind == "forced_movement"
+    push = next(
+        action
+        for action in session.observe().scene.action_details
+        if action.kind == "forced_movement_choice"
+        and action.movement_distance_feet == 10
+    )
+    result = session.choose(push.id)
+
+    assert state.interrupts.decision_stack == []
+    assert session.pending_encounter_completion is not None
+    assert any(event.type == "spell_cast" for event in result.events)
+
+
+def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> None:
+    session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
+    session.read()
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    participant = next(
+        participant
+        for participant in state.definition.participants
+        if participant.creature_id == "warlock"
+    )
+    participant.controller = "scripted"
+    state.definition.grid = Grid(12, 8)
+    state.creatures["warlock"].position = Position(2, 3)
+    state.creatures["ogre_target"].position = Position(6, 3)
+    state.creatures["goblin_1"].position = Position(0, 7)
+    state.creatures["goblin_2"].position = Position(2, 7)
+    state.creatures["goblin_3"].position = Position(4, 7)
+    caster = state.creatures["warlock"].creature
+    assert caster.spellcasting is not None
+    spell = next(
+        spell
+        for spell in caster.spellcasting.learned_spells
+        if spell.id == "eldritch_blast"
+    )
+    result = ActionResolutionResult(
+        "eldritch_blast",
+        "Eldritch Blast",
+        [],
+        [],
+        details=SpellResolutionDetails(
+            "ogre_target",
+            "Training Ogre",
+            (("ogre_target", "Training Ogre"),),
+            ("ogre_target",),
+            None,
+            0,
+            0,
+            attack_roll_details=(
+                {"hit": True, "target_ref": "ogre_target", "projectile_index": 1},
+            ),
+        ),
+    )
+    progress = EncounterProgress()
+
+    paused = resolve_repelling_blast_hit(
+        state,
+        caster=caster,
+        spell=spell,
+        caster_ref="warlock",
+        action_id="cast-1",
+        result=result,
+        progress=progress,
+    )
+
+    assert paused is False
+    assert state.creatures["ogre_target"].position == Position(8, 3)
+    assert state.interrupts.decision_stack == []
+    assert [event.type for event in progress.events] == ["forced_movement_resolved"]
 
 
 def test_repelling_blast_does_not_offer_a_push_for_a_huge_target() -> None:
@@ -279,7 +455,7 @@ def test_repelling_blast_does_not_offer_a_push_for_a_huge_target() -> None:
     )
     progress = EncounterProgress()
 
-    resolve_repelling_blast_hits(
+    resolve_repelling_blast_hit(
         state,
         caster=caster,
         spell=spell,

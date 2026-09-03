@@ -26,6 +26,10 @@ from .rejections import reject_action
 from .spell_runtime.aftermath import apply_spell_result
 from .spell_runtime.context import build_spell_action_context
 from .spell_runtime.invocation import begin_spell_invocation
+from .spell_runtime.projectiles import (
+    begin_spell_projectiles,
+    spell_requires_projectile_staging,
+)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -184,6 +188,20 @@ def resolve_spell_action(
     ):
         return
 
+    if spell_requires_projectile_staging(actor, spell):
+        begin_spell_projectiles(
+            state,
+            caster=actor,
+            spell=spell,
+            payload=payload,
+            targets=targets,
+            cast_level=cast_level,
+            caster_ref=creature_ref,
+            action_id=action_id,
+            progress=progress,
+        )
+        return
+
     result = _resolve_spell_action_impl(
         build_spell_action_context(
             state,
@@ -211,7 +229,6 @@ def resolve_spell_action(
 
     apply_spell_result(
         state,
-        caster=actor,
         spellcasting=spellcasting,
         spell=spell,
         cast_level=cast_level,

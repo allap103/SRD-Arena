@@ -5,7 +5,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Literal
 
+from srd_arena.domain.effects.results import ActionResolutionResult
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+from srd_arena.domain.spells.action_payloads import SpellActionPayload
 
 from .actions import CreatureRef, EncounterAction
 
@@ -64,11 +66,34 @@ class ForcedMovementChoiceRequest(DecisionRequest):
     occurrence_index: int = 1
 
 
+@dataclass
+class PendingSpellProjectiles:
+    """Preserve one started spell while its projectiles and choices resolve."""
+
+    invocation_id: str
+    caster_ref: CreatureRef
+    spell_id: str
+    cast_level: int | None
+    payload: SpellActionPayload
+    target_refs: tuple[CreatureRef, ...]
+    target_labels: tuple[str, ...]
+    remaining_target_refs: list[CreatureRef]
+    resolved_results: list[ActionResolutionResult] = field(default_factory=list)
+    cast_announced: bool = False
+
+
 @dataclass(frozen=True)
 class ResumeMovement(DecisionContinuation):
     """Resume a suspended movement after its reaction decision closes."""
 
     movement: PendingMovement
+
+
+@dataclass(frozen=True)
+class ResumeSpellProjectiles(DecisionContinuation):
+    """Resume the exact spell invocation after an interrupting choice closes."""
+
+    invocation: PendingSpellProjectiles
 
 
 @dataclass(frozen=True)

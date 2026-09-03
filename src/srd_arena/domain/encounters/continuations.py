@@ -4,10 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .actions.spell_runtime.projectiles import resume_spell_projectiles
 from .encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
     ResumeMovement,
+    ResumeSpellProjectiles,
 )
 from .encounter_models.resolution import EncounterProgress
 from .reaction_runtime.movement_continuation import resume_movement
@@ -67,7 +69,7 @@ class ContinuationRunner:
                     )
             elif continuation is not None and not isinstance(
                 continuation,
-                ResumeMovement,
+                (ResumeMovement, ResumeSpellProjectiles),
             ):
                 raise TypeError(
                     "ContinuationRunner has no handler for continuation "
@@ -88,6 +90,12 @@ class ContinuationRunner:
                 resume_movement(
                     state,
                     continuation.movement,
+                    progress,
+                )
+            elif isinstance(continuation, ResumeSpellProjectiles):
+                resume_spell_projectiles(
+                    state,
+                    continuation.invocation,
                     progress,
                 )
             return

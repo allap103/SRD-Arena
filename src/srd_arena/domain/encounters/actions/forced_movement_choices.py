@@ -58,7 +58,9 @@ def forced_movement_actions(state: EncounterState) -> list[EncounterAction]:
     ]
     actions.extend(
         EncounterAction(
-            f"Push {creature_label(state, request.target_ref)} {state.definition.grid.feet_for_squares(steps)} ft.",
+            f"{'Push' if request.direction == 'away' else 'Pull'} "
+            f"{creature_label(state, request.target_ref)} "
+            f"{state.definition.grid.feet_for_squares(steps)} ft.",
             "forced_movement_choice",
             ForcedMovementSelection(
                 request.target_ref,

@@ -14,10 +14,9 @@ from ...effect_lifecycle.concentration import resolve_concentration_damage
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
 from ...state_runtime import apply_encounter_effects, create_event
-from ..feature_runtime.repelling_blast import resolve_repelling_blast_hits
 
 if TYPE_CHECKING:
-    from srd_arena.domain.creatures import Creature, Spellcasting
+    from srd_arena.domain.creatures import Spellcasting
     from srd_arena.domain.spells.definitions import Spell
 
     from ...encounter import EncounterState
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
 def apply_spell_result(
     state: EncounterState,
     *,
-    caster: Creature,
     spellcasting: Spellcasting,
     spell: Spell,
     cast_level: int | None,
@@ -48,7 +46,6 @@ def apply_spell_result(
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> from srd_arena.domain.spells import Spell
     >>> state = SimpleNamespace(event_sequence=1)
-    >>> caster = SimpleNamespace(triggered_effects=())
     >>> details = SpellResolutionDetails(
     ...     "dummy", "Dummy", (("dummy", "Dummy"),), (), None, 0, 0
     ... )
@@ -62,7 +59,6 @@ def apply_spell_result(
     ... ):
     ...     apply_spell_result(
     ...         state,
-    ...         caster=caster,
     ...         spellcasting=SimpleNamespace(spell_slots_remaining={}),
     ...         spell=Spell("fire-bolt", "Fire Bolt", None, 0),
     ...         cast_level=None,
@@ -78,7 +74,39 @@ def apply_spell_result(
     details = result.details
     if not isinstance(details, SpellResolutionDetails):
         raise TypeError("Spell resolution returned non-spell details.")
-    progress.messages.extend(result.messages)
+    apply_spell_result_consequences(
+        state,
+        result=result,
+        creature_ref=creature_ref,
+        action_id=action_id,
+        progress=progress,
+    )
+    publish_spell_result(
+        state,
+        spellcasting=spellcasting,
+        spell=spell,
+        cast_level=cast_level,
+        creature_ref=creature_ref,
+        action_id=action_id,
+        result=result,
+        progress=progress,
+    )
+
+
+def apply_spell_result_consequences(
+    state: EncounterState,
+    *,
+    result: ActionResolutionResult,
+    creature_ref: str,
+    action_id: str,
+    progress: EncounterProgress,
+    include_cast_message: bool = True,
+) -> None:
+    """Apply one complete or partial spell result without publishing its cast."""
+
+    progress.messages.extend(
+        result.messages if include_cast_message else result.messages[1:]
+    )
     _apply_damage_lifecycle(
         state,
         result,
@@ -88,6 +116,24 @@ def apply_spell_result(
     progress.messages.extend(
         apply_encounter_effects(state, result.effects, origin_id=action_id)
     )
+
+
+def publish_spell_result(
+    state: EncounterState,
+    *,
+    spellcasting: Spellcasting,
+    spell: Spell,
+    cast_level: int | None,
+    creature_ref: str,
+    action_id: str,
+    result: ActionResolutionResult,
+    progress: EncounterProgress,
+) -> None:
+    """Publish the single completed-cast event for an accumulated spell result."""
+
+    details = result.details
+    if not isinstance(details, SpellResolutionDetails):
+        raise TypeError("Spell resolution returned non-spell details.")
     progress.events.append(
         create_event(
             state,
@@ -131,15 +177,6 @@ def apply_spell_result(
                 "success": details.success,
             },
         )
-    )
-    resolve_repelling_blast_hits(
-        state,
-        caster=caster,
-        spell=spell,
-        caster_ref=creature_ref,
-        action_id=action_id,
-        result=result,
-        progress=progress,
     )
 
 
