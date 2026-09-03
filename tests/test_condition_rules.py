@@ -69,6 +69,20 @@ def test_prone_exposes_distance_sensitive_attack_traits() -> None:
         assert effective.providers_for_trait(trait) == (prone.id,)
 
 
+def test_restrained_exposes_speed_attack_and_dexterity_save_traits() -> None:
+    restrained = _applied(Condition.RESTRAINED, "web")
+
+    effective = effective_conditions((restrained,))
+
+    for trait in (
+        CombatTrait.SPEED_ZERO,
+        CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+        CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+        CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE,
+    ):
+        assert effective.providers_for_trait(trait) == (restrained.id,)
+
+
 def test_effective_condition_preserves_all_independent_providers() -> None:
     paralyzed = _applied(Condition.PARALYZED, "hold_person")
     stunned = _applied(Condition.STUNNED, "mind_blast")

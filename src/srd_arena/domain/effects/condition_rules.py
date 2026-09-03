@@ -79,6 +79,16 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
             }
         ),
     ),
+    Condition.RESTRAINED: ConditionDefinition(
+        traits=frozenset(
+            {
+                CombatTrait.SPEED_ZERO,
+                CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+                CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE,
+            }
+        ),
+    ),
 }
 
 
