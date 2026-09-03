@@ -11,7 +11,8 @@ from srd_arena.domain.effects.runtime import EffectSourceKind
 from .condition_state import apply_condition
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
-from .state_runtime import create_event, creature_size
+from .spatial import creature_intersects_cells, creature_occupied_cells, creature_size
+from .state_runtime import create_event
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -31,12 +32,15 @@ def apply_shared_space_prone(
         or state.effective_conditions_for(creature_ref).has(Condition.PRONE)
     ):
         return False
+    occupied = {
+        (cell.x, cell.y) for cell in creature_occupied_cells(state, creature_ref)
+    }
     co_occupants = tuple(
         other_ref
         for other_ref, other_state in state.creatures.items()
         if other_ref != creature_ref
         and other_state.is_alive
-        and other_state.position == creature_state.position
+        and creature_intersects_cells(state, other_ref, occupied)
     )
     if not any(
         size_rank(creature_size(state, creature_ref))

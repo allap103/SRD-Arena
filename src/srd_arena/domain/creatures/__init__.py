@@ -18,7 +18,13 @@ from .multiattack import (
     MultiattackStep,
 )
 from .resources import ResourceRecovery, RestType
-from .size import can_grapple, is_two_sizes_smaller, normalize_size, size_rank
+from .size import (
+    can_grapple,
+    footprint_width,
+    is_two_sizes_smaller,
+    normalize_size,
+    size_rank,
+)
 from .spellcasting import Spellcasting
 from .stat_block_actions import (
     AttackActionDefinition,
@@ -61,6 +67,7 @@ __all__ = [
     "SpellcastingActionDefinition",
     "StatBlockActionDefinition",
     "can_grapple",
+    "footprint_width",
     "is_two_sizes_smaller",
     "normalize_size",
     "size_rank",

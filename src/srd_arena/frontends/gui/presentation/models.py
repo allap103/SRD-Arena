@@ -102,6 +102,7 @@ class BattlefieldCreatureView:
     team_color: str
     position: GridPositionView
     health: int
+    occupied_cells: tuple[GridPositionView, ...] = ()
     conditions: tuple[str, ...] = ()
     is_concentrating: bool = False
     buffs: tuple[str, ...] = ()
@@ -112,6 +113,7 @@ class BattlefieldCreatureView:
         """Detach displayed status labels from mutable builder storage."""
 
         object.__setattr__(self, "conditions", tuple(self.conditions))
+        object.__setattr__(self, "occupied_cells", tuple(self.occupied_cells))
         object.__setattr__(self, "buffs", tuple(self.buffs))
         object.__setattr__(self, "debuffs", tuple(self.debuffs))
 

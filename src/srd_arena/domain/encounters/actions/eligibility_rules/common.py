@@ -17,7 +17,7 @@ from ...grappling_state import grappling_targets_for
 from ...participants import creatures_are_opponents
 from ...rule_queries.movement import movement_step_cost
 from ...rule_queries.numeric import effective_speed
-from ...state_runtime import creature_position, position_is_free
+from ...spatial import creature_position, placement_is_free
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -151,21 +151,21 @@ class MovementRule:
             )
         dx, dy = DIRECTION_DELTAS[action.value]
         moving_refs = {actor_ref, *grappling_targets_for(state, actor_ref)}
-        destinations = [
-            Position(
+        destinations = {
+            moving_ref: Position(
                 creature_position(state, moving_ref).x + dx,
                 creature_position(state, moving_ref).y + dy,
             )
             for moving_ref in moving_refs
-        ]
+        }
         if any(
-            not position_is_free(
+            not placement_is_free(
                 state,
-                destination.x,
-                destination.y,
+                moving_ref,
+                destination,
                 ignored_refs=moving_refs,
             )
-            for destination in destinations
+            for moving_ref, destination in destinations.items()
         ):
             return EligibilityFailure(
                 "destination_blocked",

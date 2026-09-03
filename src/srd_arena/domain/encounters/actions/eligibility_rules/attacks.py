@@ -5,7 +5,6 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import AttackActionDefinition, can_grapple
-from srd_arena.domain.geometry import grid_distance_between
 
 from ...encounter_models.actions import (
     CreatureRef,
@@ -15,7 +14,7 @@ from ...rule_queries.permissions import (
     TargetingKind,
     target_eligibility,
 )
-from ...state_runtime import creature_position
+from ...spatial import creature_distance
 from ..attack_resolution import attack_range_squares, has_free_hand
 from ..stat_block import (
     executable_multiattack_slot_plans,
@@ -145,13 +144,7 @@ class AttackRule:
             preferred_attack_type=action.preferred_attack_type,
             preferred_attack_name=preferred_attack_name,
         )
-        if (
-            grid_distance_between(
-                actor.position,
-                creature_position(state, action.value),
-            )
-            > reach
-        ):
+        if creature_distance(state, actor_ref, action.value) > reach:
             return EligibilityFailure(
                 "target_out_of_range", "The target is out of range."
             )
@@ -193,7 +186,7 @@ class GrappleRule:
         if not targeting.allowed:
             return targeting.failures[0]
         target = state.creatures[action.value]
-        if grid_distance_between(actor.position, target.position) != 1:
+        if creature_distance(state, actor_ref, action.value) != 1:
             return EligibilityFailure(
                 "target_out_of_range", "The target is out of reach."
             )

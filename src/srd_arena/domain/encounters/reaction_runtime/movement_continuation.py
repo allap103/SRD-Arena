@@ -8,7 +8,8 @@ from srd_arena.domain.geometry import MovementCost, Position
 
 from ..encounter_models.decisions import PendingMovement
 from ..encounter_models.resolution import EncounterProgress
-from ..state_runtime import create_event, position_is_free
+from ..spatial import placement_is_free
+from ..state_runtime import create_event
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -38,7 +39,7 @@ def resume_movement(
     >>> from unittest.mock import patch
     >>> with patch(
     ...     "srd_arena.domain.encounters.reaction_runtime."
-    ...     "movement_continuation.position_is_free", return_value=True
+    ...     "movement_continuation.placement_is_free", return_value=True
     ... ):
     ...     resume_movement(state, movement, progress)
     >>> (mover.position, int(mover.movement_remaining))
@@ -46,11 +47,19 @@ def resume_movement(
     """
 
     mover = state.creatures[movement.creature_ref]
-    if mover.is_alive and position_is_free(
-        state,
-        movement.to_position.x,
-        movement.to_position.y,
-        ignored_refs={movement.creature_ref},
+    moving_refs = {movement.creature_ref, *movement.companion_destinations}
+    destinations = {
+        movement.creature_ref: movement.to_position,
+        **movement.companion_destinations,
+    }
+    if mover.is_alive and all(
+        placement_is_free(
+            state,
+            moving_ref,
+            destination,
+            ignored_refs=moving_refs,
+        )
+        for moving_ref, destination in destinations.items()
     ):
         mover.position = Position(
             movement.to_position.x,

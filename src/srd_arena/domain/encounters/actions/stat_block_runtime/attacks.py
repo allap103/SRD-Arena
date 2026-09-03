@@ -83,11 +83,14 @@ def resolve_attack_action(
         raise ValueError("Attack target must belong to an opposing team.")
     defender = state.creatures[target_ref].creature
     target_label = creature_label(state, target_ref)
-    nearby_opponent_positions = tuple(
-        candidate.position
+    nearby_opponent_refs = tuple(
+        opponent_ref
         for opponent_ref, candidate in state.creatures.items()
         if candidate.is_alive
         and creatures_are_opponents(state, creature_ref, opponent_ref)
+    )
+    nearby_opponent_positions = tuple(
+        state.creatures[opponent_ref].position for opponent_ref in nearby_opponent_refs
     )
     attack_roll_rules = roll_modifiers(
         state,
@@ -121,6 +124,7 @@ def resolve_attack_action(
             ),
             creature_state.position,
             nearby_opponent_positions,
+            nearby_opponent_refs=nearby_opponent_refs,
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
         target_armor_class=effective_armor_class(

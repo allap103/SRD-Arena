@@ -13,6 +13,16 @@ SIZE_ALIASES = {
     "colossal": "C",
 }
 
+FOOTPRINT_WIDTHS = {
+    "T": 1,
+    "S": 1,
+    "M": 1,
+    "L": 2,
+    "H": 3,
+    "G": 4,
+    "C": 4,
+}
+
 
 def normalize_size(value: object, default: str = "M") -> str:
     """Normalize a size name or abbreviation to its canonical code.
@@ -68,3 +78,20 @@ def can_grapple(target_size: str, grappler_size: str) -> bool:
     """
 
     return size_rank(target_size) <= size_rank(grappler_size) + 1
+
+
+def footprint_width(size: str) -> int:
+    """Return the number of grid cells occupied along either horizontal axis.
+
+    The top-left encounter position anchors a square footprint. Tiny through
+    Medium creatures occupy one cell, while larger SRD sizes occupy increasingly
+    wide spaces. ``C`` remains a supported legacy alias and uses the largest
+    footprint.
+
+    >>> tuple(footprint_width(size) for size in ("T", "M", "L", "H", "G"))
+    (1, 1, 2, 3, 4)
+    >>> footprint_width("large")
+    2
+    """
+
+    return FOOTPRINT_WIDTHS[normalize_size(size)]

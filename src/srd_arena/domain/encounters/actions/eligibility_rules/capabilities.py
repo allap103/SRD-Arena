@@ -9,13 +9,13 @@ from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from srd_arena.domain.geometry import grid_distance_between
 
 from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
 from ...rule_queries.permissions import TargetingKind, target_eligibility
+from ...spatial import creature_distance
 from ..stat_block import (
     stat_block_action_resource_available,
     stat_block_action_runtime_issue,
@@ -148,7 +148,6 @@ class StatBlockActionRule:
             )
             if not targeting.allowed:
                 return targeting.failures[0]
-        target = state.creatures[action.value]
         requirement_failure = target_requirement_failure(
             state,
             actor_ref,
@@ -159,7 +158,7 @@ class StatBlockActionRule:
             return requirement_failure
         range_feet = definition.target.range_feet or 0
         range_squares = state.definition.grid.covering_distance_from_feet(range_feet)
-        if grid_distance_between(actor.position, target.position) > range_squares:
+        if creature_distance(state, actor_ref, action.value) > range_squares:
             return EligibilityFailure(
                 "target_out_of_range",
                 "The target is out of range.",

@@ -6,14 +6,13 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.effects.triggered import TriggeredEffect, matching_effects
-from srd_arena.domain.geometry import Position, grid_distance_between
+from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
 from .attack_rules import proximity_attack_roll_mode
-from .behaviors import is_adjacent
 from .encounter_models.actions import CreatureRef
 from .rule_queries.rolls import roll_modifiers
-from .state_runtime import creature_position
+from .spatial import creature_distance
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -26,6 +25,8 @@ def attack_roll_mode_for(
     attack_type: str,
     attacker_position: Position | None,
     nearby_opponent_positions: tuple[Position, ...],
+    *,
+    nearby_opponent_refs: tuple[CreatureRef, ...] = (),
 ) -> D20RollMode:
     """Resolve advantage or disadvantage for an attacker-target pair.
 
@@ -36,7 +37,14 @@ def attack_roll_mode_for(
     >>> state = SimpleNamespace(
     ...     effective_conditions_for=lambda ref: effective, conditions=[],
     ...     ongoing_effects=[],
-    ...     creatures={"goblin": SimpleNamespace(position=Position(2, 0))},
+    ...     creatures={
+    ...         "archer": SimpleNamespace(
+    ...             position=Position(0, 0), creature=SimpleNamespace(size="M")
+    ...         ),
+    ...         "goblin": SimpleNamespace(
+    ...             position=Position(2, 0), creature=SimpleNamespace(size="M")
+    ...         ),
+    ...     },
     ... )
     >>> attack_roll_mode_for(
     ...     state, "archer", "goblin", "ranged", Position(0, 0),
@@ -46,11 +54,21 @@ def attack_roll_mode_for(
     """
 
     modes: list[D20RollMode] = []
-    base_mode = proximity_attack_roll_mode(
-        attack_type,
-        attacker_position,
-        nearby_opponent_positions,
-    )
+    if nearby_opponent_refs and attack_type == "ranged":
+        base_mode: D20RollMode = (
+            "disadvantage"
+            if any(
+                creature_distance(state, attacker_ref, opponent_ref) == 1
+                for opponent_ref in nearby_opponent_refs
+            )
+            else "normal"
+        )
+    else:
+        base_mode = proximity_attack_roll_mode(
+            attack_type,
+            attacker_position,
+            nearby_opponent_positions,
+        )
     if base_mode != "normal":
         modes.append(base_mode)
     modes.append(
@@ -74,11 +92,7 @@ def attack_roll_mode_for(
         modes.append("advantage")
     attacker_is_nearby = (
         attacker_position is not None
-        and grid_distance_between(
-            attacker_position,
-            creature_position(state, target_ref),
-        )
-        <= 1
+        and creature_distance(state, attacker_ref, target_ref) <= 1
     )
     if attacker_is_nearby and target_effective.has_trait(
         CombatTrait.NEARBY_ATTACKERS_HAVE_ADVANTAGE
@@ -123,22 +137,23 @@ def automatic_critical_provider_ids_for(
     >>> effective = SimpleNamespace(
     ...     providers_for_trait=lambda trait: ("paralyzed:spell",)
     ... )
-    >>> positions = {"hero": Position(0, 0), "target": Position(1, 0)}
-    >>> state = SimpleNamespace(effective_conditions_for=lambda ref: effective)
-    >>> from unittest.mock import patch
-    >>> with patch(
-    ...     "srd_arena.domain.encounters.state_combat.creature_position",
-    ...     side_effect=lambda state, ref: positions[ref],
-    ... ):
-    ...     providers = automatic_critical_provider_ids_for(state, "hero", "target")
+    >>> state = SimpleNamespace(
+    ...     effective_conditions_for=lambda ref: effective,
+    ...     creatures={
+    ...         "hero": SimpleNamespace(
+    ...             position=Position(0, 0), creature=SimpleNamespace(size="M")
+    ...         ),
+    ...         "target": SimpleNamespace(
+    ...             position=Position(1, 0), creature=SimpleNamespace(size="M")
+    ...         ),
+    ...     },
+    ... )
+    >>> providers = automatic_critical_provider_ids_for(state, "hero", "target")
     >>> providers
     ('paralyzed:spell',)
     """
 
-    if not is_adjacent(
-        creature_position(state, attacker_ref),
-        creature_position(state, target_ref),
-    ):
+    if creature_distance(state, attacker_ref, target_ref) != 1:
         return ()
     return state.effective_conditions_for(target_ref).providers_for_trait(
         CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL

@@ -12,6 +12,7 @@ from srd_arena.domain.encounters.encounter_models.actions import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
+from srd_arena.domain.encounters.spatial import creature_occupied_cells
 from srd_arena.engine.protocols import GameEngine
 from srd_arena.engine.queries import SessionRead
 
@@ -311,11 +312,12 @@ def _observe_creature(
         creature_type=creature.statistics.creature_type,
         type_tags=creature.statistics.type_tags,
         size=creature.size,
-        occupied_cells=(
+        occupied_cells=tuple(
             PositionObservation(
-                x=creature_state.position.x,
-                y=creature_state.position.y,
-            ),
+                x=cell.x,
+                y=cell.y,
+            )
+            for cell in creature_occupied_cells(state, creature_ref)
         ),
         resource_pools=_observe_resource_pools(creature),
         defenses=CreatureDefenseObservation(

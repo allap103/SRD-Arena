@@ -23,6 +23,7 @@ from srd_arena.domain.encounters import (
     EncounterParticipant,
     EncounterTeam,
 )
+from srd_arena.domain.encounters.spatial import validate_placements
 from srd_arena.domain.geometry import Grid, Position
 
 from .schema import EncounterDefinitionSchema, PositionSchema
@@ -126,29 +127,40 @@ def load_encounter_file(
     """
 
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
-    return LoadedEncounter(
-        definition=_build_encounter(schema),
-        creatures=tuple(
-            build_creature(
-                CreatureSchema.model_validate(
-                    creature.model_dump(
-                        exclude_unset=True,
-                        exclude={
-                            "start",
-                            "team_id",
-                            "controller",
-                            "behavior",
-                            "takes_turns",
-                        },
-                    )
-                ),
-                bestiary,
-                classes,
-                player_characters,
-                optional_features,
-                spells,
-                character_snapshots,
+    definition = _build_encounter(schema)
+    creatures = tuple(
+        build_creature(
+            CreatureSchema.model_validate(
+                creature.model_dump(
+                    exclude_unset=True,
+                    exclude={
+                        "start",
+                        "team_id",
+                        "controller",
+                        "behavior",
+                        "takes_turns",
+                    },
+                )
+            ),
+            bestiary,
+            classes,
+            player_characters,
+            optional_features,
+            spells,
+            character_snapshots,
+        )
+        for creature in schema.creatures
+    )
+    creatures_by_id = {creature.id: creature for creature in creatures}
+    validate_placements(
+        definition.grid,
+        (
+            (
+                participant.creature_id,
+                participant.start,
+                creatures_by_id[participant.creature_id].size,
             )
-            for creature in schema.creatures
+            for participant in definition.participants
         ),
     )
+    return LoadedEncounter(definition=definition, creatures=creatures)

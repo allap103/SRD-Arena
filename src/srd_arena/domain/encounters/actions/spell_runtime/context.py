@@ -21,11 +21,11 @@ from srd_arena.domain.spells.rules import SpellActionPayload
 from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import has_condition_save_advantage
 from ...rule_queries.numeric import effective_armor_class
+from ...spatial import creature_position
 from ...state_combat import (
     attack_roll_mode_for,
     automatic_critical_provider_ids_for,
 )
-from ...state_runtime import creature_position
 from .environment import EncounterSpellResolutionEnvironment
 
 if TYPE_CHECKING:
@@ -158,11 +158,14 @@ def _attack_roll_modes(
 
     if attack_mode is None:
         return {}
-    opponent_positions = tuple(
-        creature_state.position
+    opponent_refs = tuple(
+        opponent_ref
         for opponent_ref, creature_state in state.creatures.items()
         if creature_state.is_alive
         and creatures_are_opponents(state, creature_ref, opponent_ref)
+    )
+    opponent_positions = tuple(
+        state.creatures[opponent_ref].position for opponent_ref in opponent_refs
     )
     actor_position = creature_position(state, creature_ref)
     return {
@@ -173,6 +176,7 @@ def _attack_roll_modes(
             attack_mode,
             actor_position,
             opponent_positions,
+            nearby_opponent_refs=opponent_refs,
         )
         for target in targets
     }

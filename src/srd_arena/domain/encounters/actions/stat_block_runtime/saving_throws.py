@@ -31,6 +31,7 @@ from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...rule_queries.defenses import apply_damage, has_condition_save_advantage
 from ...rule_queries.rolls import roll_modifiers
+from ...spatial import creature_intersects_cells
 from ...state_combat import automatic_save_failure_provider_ids_for
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
@@ -281,7 +282,7 @@ def stat_block_target_refs(
         target_ref
         for target_ref, target_state in state.creatures.items()
         if target_state.is_alive
-        and (target_state.position.x, target_state.position.y) in occupied
+        and creature_intersects_cells(state, target_ref, occupied)
     )
 
 

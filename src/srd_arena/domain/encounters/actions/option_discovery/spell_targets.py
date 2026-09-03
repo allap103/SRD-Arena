@@ -12,14 +12,13 @@ from srd_arena.domain.capabilities import (
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.effects.conditions import CombatTrait
 from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
-from srd_arena.domain.geometry import grid_distance_between
 from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.resolution import SpellTargetContext
 from srd_arena.domain.spells.rules import spell_target_disposition
 
 from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import condition_immunities
-from ...state_runtime import creature_position
+from ...spatial import creature_distance
 from .spellcasting import spell_range_squares_for, spell_targets_self_only_for
 
 if TYPE_CHECKING:
@@ -34,16 +33,12 @@ def spell_action_targets(
     """Return target sets for direct, self, area, and staged spell selection.
 
     >>> from types import SimpleNamespace
-    >>> from srd_arena.domain.geometry import Position
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
     ...     creatures={},
     ... )
     >>> from unittest.mock import patch
     >>> with patch(
-    ...     "srd_arena.domain.encounters.actions.option_discovery.spell_targets."
-    ...     "creature_position", return_value=Position(0, 0)
-    ... ), patch(
     ...     "srd_arena.domain.encounters.actions.option_discovery.spell_targets."
     ...     "spell_range_squares_for", return_value=None
     ... ), patch(
@@ -58,7 +53,6 @@ def spell_action_targets(
     """
 
     creature_ref = state.current_decision().creature_ref
-    actor_position = creature_position(state, creature_ref)
     if spell.removable_effect_kinds and not (
         any(
             isinstance(effect, (HealingEffect, TemporaryHitPointsEffect))
@@ -72,8 +66,7 @@ def spell_action_targets(
                 continue
             if (
                 max_range is not None
-                and grid_distance_between(actor_position, target_state.position)
-                > max_range
+                and creature_distance(state, creature_ref, target_ref) > max_range
             ):
                 continue
             target = spell_target_context(state, actor, target_ref)
@@ -89,8 +82,7 @@ def spell_action_targets(
             for target_ref, target_state in state.creatures.items()
             if target_state.is_alive
             and creatures_are_opponents(state, creature_ref, target_ref)
-            and grid_distance_between(actor_position, target_state.position)
-            <= max_range
+            and creature_distance(state, creature_ref, target_ref) <= max_range
             and (target := spell_target_context(state, actor, target_ref)) is not None
         ]
     if spell_targets_self_only_for(state, spell):
@@ -112,11 +104,7 @@ def spell_action_targets(
             continue
         if (
             max_range is not None
-            and grid_distance_between(
-                actor_position,
-                target_state.position,
-            )
-            > max_range
+            and creature_distance(state, creature_ref, target_ref) > max_range
         ):
             continue
         target = spell_target_context(state, actor, target_ref)

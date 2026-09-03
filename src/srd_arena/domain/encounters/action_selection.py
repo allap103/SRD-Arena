@@ -17,7 +17,8 @@ from .encounter_models.state import (
     EncounterCreatureState,
 )
 from .participants import creatures_are_opponents
-from .state_runtime import creature_position, living_creature_refs
+from .spatial import creature_distance
+from .state_runtime import living_creature_refs
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -75,9 +76,6 @@ class ScriptedActionSelector:
         >>> selector = ScriptedActionSelector(participant)
         >>> state = Mock()
         >>> with patch(
-        ...     "srd_arena.domain.encounters.action_selection.creature_position",
-        ...     return_value=Position(0, 0),
-        ... ), patch(
         ...     "srd_arena.domain.encounters.action_selection.living_creature_refs",
         ...     return_value=[],
         ... ):
@@ -132,7 +130,6 @@ class ScriptedActionSelector:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> CreatureRef | None:
-        actor_position = creature_position(state, creature_ref)
         opponents = [
             target_ref
             for target_ref in living_creature_refs(state)
@@ -142,10 +139,7 @@ class ScriptedActionSelector:
             return None
         return min(
             opponents,
-            key=lambda target_ref: (
-                abs(creature_position(state, target_ref).x - actor_position.x)
-                + abs(creature_position(state, target_ref).y - actor_position.y)
-            ),
+            key=lambda target_ref: creature_distance(state, creature_ref, target_ref),
         )
 
 

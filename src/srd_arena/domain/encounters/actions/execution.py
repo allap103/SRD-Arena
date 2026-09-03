@@ -7,11 +7,11 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.creatures import Creature, can_grapple
 
 from ..attack_economy import spend_attack
-from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import DecisionFrame, GrappleSaveRequest
 from ..encounter_models.resolution import EncounterProgress
 from ..participants import creature_controller
+from ..spatial import creatures_are_adjacent
 from ..state_runtime import create_event, next_frame_id
 from .attack_resolution import has_free_hand
 from .grapple_saves import preferred_grapple_save_ability, resolve_grapple_save
@@ -84,7 +84,7 @@ def resolve_grapple_action(
             details={"target_ref": target_ref},
         )
         return
-    if not _is_adjacent(creature_state.position, target.position):
+    if not creatures_are_adjacent(state, creature_ref, target_ref):
         reject_action(
             state,
             progress,

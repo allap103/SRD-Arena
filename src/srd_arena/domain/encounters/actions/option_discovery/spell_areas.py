@@ -18,7 +18,7 @@ from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.resolution import SpellTargetContext
 from srd_arena.domain.spells.rules import spell_area_shape
 
-from ...state_runtime import creature_position
+from ...spatial import creature_intersects_cells, creature_position
 from .spell_targets import spell_target_context
 from .spellcasting import spell_range_squares_for
 
@@ -153,8 +153,14 @@ def targets_in_area(
     >>> target = SimpleNamespace(target_ref="goblin")
     >>> state = SimpleNamespace(
     ...     creatures={
-    ...         "goblin": SimpleNamespace(is_alive=True, position=Position(1, 1)),
-    ...         "fallen": SimpleNamespace(is_alive=False, position=Position(1, 1)),
+    ...         "goblin": SimpleNamespace(
+    ...             is_alive=True, position=Position(1, 1),
+    ...             creature=SimpleNamespace(size="M"),
+    ...         ),
+    ...         "fallen": SimpleNamespace(
+    ...             is_alive=False, position=Position(1, 1),
+    ...             creature=SimpleNamespace(size="M"),
+    ...         ),
     ...     },
     ... )
     >>> from unittest.mock import patch
@@ -172,7 +178,7 @@ def targets_in_area(
     for target_ref, target_state in state.creatures.items():
         if not target_state.is_alive:
             continue
-        if (target_state.position.x, target_state.position.y) not in occupied_cells:
+        if not creature_intersects_cells(state, target_ref, occupied_cells):
             continue
         target = spell_target_context(state, actor, target_ref)
         if target is not None:

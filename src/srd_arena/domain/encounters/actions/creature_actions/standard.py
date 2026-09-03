@@ -5,11 +5,11 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...attack_economy import consume_action
-from ...behaviors import is_adjacent
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
+from ...spatial import creatures_are_adjacent
 from ...state_runtime import create_event
 from ..rejections import reject_action
 
@@ -68,7 +68,11 @@ def execute_standard_action(
                 details={"target_ref": action.value},
             )
             return True
-        if not is_adjacent(actor.position, target.position):
+        if not creatures_are_adjacent(
+            state,
+            decision.creature_ref,
+            action.value,
+        ):
             reject_action(
                 state,
                 progress,

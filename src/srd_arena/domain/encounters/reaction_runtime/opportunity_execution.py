@@ -14,7 +14,6 @@ from ..actions.attack_resolution import (
     matching_damage_reroll_rule,
     resolve_attack,
 )
-from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     CloseParentDecision,
@@ -34,6 +33,7 @@ from ..rule_queries.permissions import (
     target_eligibility,
 )
 from ..rule_queries.rolls import roll_modifiers
+from ..spatial import creature_distance
 from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
@@ -118,8 +118,20 @@ def resolve_automatic_opportunity_attacks(
             reactor.creature,
             state.item_templates,
         )
-        and _is_adjacent(from_position, reactor.position)
-        and not _is_adjacent(to_position, reactor.position)
+        and creature_distance(
+            state,
+            reactor_ref,
+            mover_ref,
+            target_position=from_position,
+        )
+        == 1
+        and creature_distance(
+            state,
+            reactor_ref,
+            mover_ref,
+            target_position=to_position,
+        )
+        != 1
     ]
     for reactor_ref, reactor in reactors:
         reactor.reaction_available = False

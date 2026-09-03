@@ -86,6 +86,61 @@ def test_renderer_returns_hit_regions_from_the_same_completed_paint() -> None:
     app.processEvents()
 
 
+def test_renderer_centers_a_large_token_over_its_complete_footprint() -> None:
+    app = QApplication.instance() or QApplication([])
+    creature = BattlefieldCreatureView(
+        creature_ref="ogre",
+        creature_id="ogre",
+        name="Ogre",
+        label="O",
+        token_image=None,
+        team_color="#d64545",
+        position=GridPositionView(1, 1),
+        health=68,
+        occupied_cells=(
+            GridPositionView(1, 1),
+            GridPositionView(2, 1),
+            GridPositionView(1, 2),
+            GridPositionView(2, 2),
+        ),
+    )
+    battlefield = BattlefieldView(4, 4, (creature,), "")
+    geometry = BattlefieldRenderGeometry(
+        viewport=(0, 0, 400, 400),
+        origin_x=0,
+        origin_y=0,
+        cell_size=100,
+        columns=4,
+        rows=4,
+    )
+    render_input = BattlefieldRenderInput(
+        battlefield=battlefield,
+        geometry=geometry,
+        area_overlay=None,
+        movement_plan=None,
+        hover_cell=(2, 2),
+        targetable_creature_refs=frozenset(),
+        selected_creature_ref=None,
+        target_allocation_counts=(),
+        targeting_label=None,
+        visible_status_tooltip=None,
+        status_tooltip_anchor=None,
+        show_team_outlines=True,
+        always_show_creature_names=False,
+        viewport_width=400,
+        viewport_height=400,
+    )
+    image = QImage(400, 400, QImage.Format.Format_ARGB32)
+    painter = QPainter(image)
+
+    result = BattlefieldRenderer().paint(painter, render_input)
+    painter.end()
+
+    hit = result.creature_hits[0]
+    assert (hit.center_x, hit.center_y, hit.radius) == (200, 200, 76)
+    app.processEvents()
+
+
 def test_battlefield_render_input_rejects_transient_state_mutation() -> None:
     cells = [{"x": 0, "y": 0}]
     overlay: dict[str, object] = {"shape": "radius", "cells": cells}

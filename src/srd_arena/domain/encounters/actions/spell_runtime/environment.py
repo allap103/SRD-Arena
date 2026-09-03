@@ -12,7 +12,7 @@ from srd_arena.domain.spells.resolution import SpellTargetContext
 from ...rule_queries.defenses import apply_damage
 from ...rule_queries.health import apply_healing
 from ...rule_queries.rolls import roll_modifiers
-from ...state_runtime import creature_position
+from ...spatial import creature_position
 from ..option_discovery.spell_areas import targets_in_area
 
 if TYPE_CHECKING:

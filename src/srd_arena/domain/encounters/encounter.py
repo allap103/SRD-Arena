@@ -39,6 +39,7 @@ from .encounter_models.state import (
     RoundState,
     TurnState,
 )
+from .spatial import validate_creature_placements
 from .state_initialization import (
     initialize_action_selectors as _initialize_action_selectors_impl,
 )
@@ -329,6 +330,7 @@ class EncounterState(EncounterStateData):
             geometry_config=geometry_config or GeometryConfig(),
             dice=dice or DiceRoller(),
         )
+        validate_creature_placements(state)
         state.roll_initiative()
         _initialize_action_selectors_impl(state)
         return state

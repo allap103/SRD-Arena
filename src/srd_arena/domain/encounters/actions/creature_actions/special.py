@@ -4,12 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...behaviors import is_adjacent as _is_adjacent
 from ...encounter_models.actions import (
     ActionCost,
     CreatureRef,
     EncounterAction,
 )
+from ...spatial import creatures_are_adjacent
 from ..consumables import healing_potions_in_inventory
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
@@ -73,7 +73,7 @@ def special_action_candidates(
                 or target_ref == creature_ref
             ):
                 continue
-            if not _is_adjacent(actor.position, wake_target_state.position):
+            if not creatures_are_adjacent(state, creature_ref, target_ref):
                 continue
             actions.append(
                 EncounterAction(

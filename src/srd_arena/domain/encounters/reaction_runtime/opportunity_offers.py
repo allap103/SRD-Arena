@@ -8,7 +8,6 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 
 from ..actions.attack_resolution import can_make_opportunity_attack
-from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import (
     ActionCost,
     EncounterAction,
@@ -26,6 +25,7 @@ from ..rule_queries.permissions import (
     reaction_eligibility,
     target_eligibility,
 )
+from ..spatial import creature_distance
 from ..state_runtime import create_event, next_frame_id
 
 if TYPE_CHECKING:
@@ -86,8 +86,20 @@ def queue_opportunity_attack(
             creature_state.creature,
             state.item_templates,
         )
-        and _is_adjacent(from_position, creature_state.position)
-        and not _is_adjacent(to_position, creature_state.position)
+        and creature_distance(
+            state,
+            creature_ref,
+            mover_ref,
+            target_position=from_position,
+        )
+        == 1
+        and creature_distance(
+            state,
+            creature_ref,
+            mover_ref,
+            target_position=to_position,
+        )
+        != 1
     ]
     if not reactors:
         return False

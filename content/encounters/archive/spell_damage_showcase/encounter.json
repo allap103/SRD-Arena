@@ -70,7 +70,7 @@
         "name": "Animated Armor",
         "source": "XMM"
       },
-      "start": {"x": 10, "y": 5},
+      "start": {"x": 8, "y": 5},
       "team_id": "targets",
       "behavior": {"type": "wait"}
     },
@@ -82,7 +82,7 @@
         "name": "Warrior Veteran",
         "source": "XMM"
       },
-      "start": {"x": 11, "y": 5},
+      "start": {"x": 12, "y": 5},
       "team_id": "targets",
       "behavior": {"type": "wait"}
     },
@@ -94,7 +94,7 @@
         "name": "Goblin Warrior",
         "source": "XMM"
       },
-      "start": {"x": 9, "y": 6},
+      "start": {"x": 8, "y": 6},
       "team_id": "targets",
       "behavior": {"type": "wait"}
     },
@@ -106,7 +106,7 @@
         "name": "Goblin Warrior",
         "source": "XMM"
       },
-      "start": {"x": 10, "y": 6},
+      "start": {"x": 12, "y": 6},
       "team_id": "targets",
       "behavior": {"type": "wait"}
     },
@@ -118,7 +118,7 @@
         "name": "Goblin Warrior",
         "source": "XMM"
       },
-      "start": {"x": 11, "y": 6},
+      "start": {"x": 8, "y": 7},
       "team_id": "targets",
       "behavior": {"type": "wait"}
     }
