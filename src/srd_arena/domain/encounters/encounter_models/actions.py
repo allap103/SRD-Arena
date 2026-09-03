@@ -21,6 +21,15 @@ class GrappleEscapeSelection:
     ability: Literal["strength", "dexterity"]
 
 
+@dataclass(frozen=True)
+class ForcedMovementSelection:
+    """Select the target, direction, and distance of one imposed movement."""
+
+    target_ref: CreatureRef
+    direction: Literal["away", "toward"]
+    distance_feet: int
+
+
 @dataclass
 class ActionCost:
     """Count movement and turn resources consumed by an encounter action."""
@@ -50,6 +59,7 @@ class EncounterAction:
         | tuple[float, float]
         | SpellActionPayload
         | GrappleEscapeSelection
+        | ForcedMovementSelection
         | None
     ) = None
     id: str = ""

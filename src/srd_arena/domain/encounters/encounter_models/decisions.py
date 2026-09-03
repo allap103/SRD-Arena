@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
+from typing import Literal
 
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 
@@ -47,6 +48,20 @@ class GrappleSaveRequest(DecisionRequest):
     grappler_ref: CreatureRef
     target_ref: CreatureRef
     save_dc: int
+
+
+@dataclass(frozen=True)
+class ForcedMovementChoiceRequest(DecisionRequest):
+    """Ask a source whether and how far to move one target after a trigger."""
+
+    action_id: str
+    source_ref: CreatureRef
+    target_ref: CreatureRef
+    direction: Literal["away", "toward"]
+    maximum_distance_feet: int
+    source_id: str
+    source_label: str
+    occurrence_index: int = 1
 
 
 @dataclass(frozen=True)

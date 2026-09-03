@@ -47,6 +47,7 @@ class ActionObservation:
     resource_level: int | None = None
     feature_id: str | None = None
     movement_direction: str | None = None
+    movement_distance_feet: int | None = None
     target_ref: str | None = None
     grapple_source_ref: str | None = None
     grapple_choice: str | None = None

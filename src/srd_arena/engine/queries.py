@@ -83,6 +83,16 @@ class MovementOptionDetails:
 
 
 @dataclass(frozen=True)
+class ForcedMovementOptionDetails:
+    """Expose one optional forced-movement outcome to an engine client."""
+
+    target_ref: str
+    direction: Literal["away", "toward"]
+    distance_feet: int
+    source_id: str | None
+
+
+@dataclass(frozen=True)
 class ResourceAllocationOptionDetails:
     """Identify a target whose share of a staged resource can be changed."""
 
@@ -97,6 +107,7 @@ ActionOptionDetails = (
     | GrappleSaveOptionDetails
     | FeatureOptionDetails
     | MovementOptionDetails
+    | ForcedMovementOptionDetails
     | ResourceAllocationOptionDetails
 )
 

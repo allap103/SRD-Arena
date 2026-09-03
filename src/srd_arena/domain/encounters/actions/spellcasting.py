@@ -211,6 +211,7 @@ def resolve_spell_action(
 
     apply_spell_result(
         state,
+        caster=actor,
         spellcasting=spellcasting,
         spell=spell,
         cast_level=cast_level,

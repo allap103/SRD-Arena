@@ -43,6 +43,24 @@ def test_optional_feature_normalization_builds_triggered_effect() -> None:
     assert effect.operation == "reroll_matching_dice"
 
 
+def test_repelling_blast_normalizes_to_an_eldritch_blast_hit_trigger() -> None:
+    catalog = load_optional_feature_catalog(SYSTEM_CONTENT_ROOT)
+
+    [effect] = normalize_optional_feature_effects(
+        catalog.find("Repelling Blast", "XPHB")
+    )
+
+    assert effect.id == "repelling_blast"
+    assert effect.trigger == "spell_attack_hit"
+    assert effect.operation == "push_away"
+    assert effect.conditions == {"spell_id": "eldritch_blast"}
+    assert effect.parameters == {
+        "distance_feet": 10,
+        "maximum_target_size": "L",
+        "optional": True,
+    }
+
+
 def test_optional_feature_catalog_uses_srd_public_name() -> None:
     source_feature = OptionalFeatureSchema(
         name="Protected Feature",

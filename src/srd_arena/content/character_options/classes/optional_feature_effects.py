@@ -44,4 +44,20 @@ def normalize_optional_feature_effects(
                 },
             )
         ]
+    if (name.casefold(), source.upper()) == ("repelling blast", "XPHB"):
+        return [
+            TriggeredEffect(
+                id="repelling_blast",
+                source_type="eldritch_invocation",
+                source_id=canonical_id,
+                trigger="spell_attack_hit",
+                operation="push_away",
+                conditions={"spell_id": "eldritch_blast"},
+                parameters={
+                    "distance_feet": 10,
+                    "maximum_target_size": "L",
+                    "optional": True,
+                },
+            )
+        ]
     return []

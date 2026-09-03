@@ -27,6 +27,7 @@ from srd_arena.engine.queries import (
     ActionOption,
     DirectTargetOptionDetails,
     FeatureOptionDetails,
+    ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
     GrappleSaveOptionDetails,
     MovementOptionDetails,
@@ -52,6 +53,7 @@ class _ActionSemantics:
     resource_level: int | None = None
     feature_id: str | None = None
     movement_direction: str | None = None
+    movement_distance_feet: int | None = None
     target_ref: str | None = None
     grapple_source_ref: str | None = None
     grapple_choice: str | None = None
@@ -120,6 +122,7 @@ def _observe_action(
         resource_level=semantics.resource_level,
         feature_id=semantics.feature_id,
         movement_direction=semantics.movement_direction,
+        movement_distance_feet=semantics.movement_distance_feet,
         target_ref=semantics.target_ref,
         grapple_source_ref=semantics.grapple_source_ref,
         grapple_choice=semantics.grapple_choice,
@@ -172,6 +175,13 @@ def _action_semantics(
         return _ActionSemantics(feature_id=details.feature_id)
     if isinstance(details, MovementOptionDetails):
         return _ActionSemantics(movement_direction=details.direction)
+    if isinstance(details, ForcedMovementOptionDetails):
+        return _ActionSemantics(
+            source_id=details.source_id,
+            movement_direction=details.direction,
+            movement_distance_feet=details.distance_feet,
+            target_ref=details.target_ref,
+        )
     if isinstance(details, GrappleEscapeOptionDetails):
         return _ActionSemantics(
             grapple_source_ref=details.source_ref,

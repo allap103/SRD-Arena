@@ -6,6 +6,7 @@ from typing import Literal, cast
 
 from srd_arena.domain.encounters.encounter_models.actions import (
     EncounterAction,
+    ForcedMovementSelection,
     GrappleEscapeSelection,
 )
 from srd_arena.domain.spells.rules import SpellActionPayload
@@ -13,6 +14,7 @@ from srd_arena.engine.queries import (
     ActionOptionDetails,
     DirectTargetOptionDetails,
     FeatureOptionDetails,
+    ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
     GrappleSaveOptionDetails,
     MovementOptionDetails,
@@ -66,6 +68,15 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         return FeatureOptionDetails(feature_id=action.value)
     if action.kind == "move" and isinstance(action.value, str):
         return MovementOptionDetails(direction=action.value)
+    if action.kind == "forced_movement_choice" and isinstance(
+        action.value, ForcedMovementSelection
+    ):
+        return ForcedMovementOptionDetails(
+            target_ref=action.value.target_ref,
+            direction=action.value.direction,
+            distance_feet=action.value.distance_feet,
+            source_id=action.source_trigger_id,
+        )
     if action.kind == "escape_grapple" and isinstance(
         action.value, GrappleEscapeSelection
     ):
@@ -106,6 +117,7 @@ def _direct_target_ref(
         | tuple[float, float]
         | SpellActionPayload
         | GrappleEscapeSelection
+        | ForcedMovementSelection
         | None
     ),
 ) -> str | None:
