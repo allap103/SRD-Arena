@@ -14,6 +14,7 @@ from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spell_targets import spell_action_targets
 from .common import target_requirement_failure
 from .models import EligibilityFailure
+from .spell_targeting import spell_target_eligibility
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
@@ -142,6 +143,14 @@ def _check_target_toggle(
             "target_unavailable",
             "The target is not available for this spell.",
         )
+    targeting = spell_target_eligibility(
+        state,
+        actor_ref,
+        action.value,
+        selection.spell,
+    )
+    if not targeting.allowed:
+        return targeting.failures[0]
     return target_requirement_failure(
         state,
         actor_ref,
@@ -187,6 +196,14 @@ def _check_resource_allocation(
             "resource_pool_exceeded",
             "The allocation exceeds the remaining healing pool.",
         )
+    targeting = spell_target_eligibility(
+        state,
+        actor_ref,
+        target_ref,
+        selection.spell,
+    )
+    if not targeting.allowed:
+        return targeting.failures[0]
     return target_requirement_failure(
         state,
         actor_ref,
@@ -229,6 +246,14 @@ def _check_confirmation(
                 "target_unavailable",
                 "A selected target is no longer available for this spell.",
             )
+        targeting = spell_target_eligibility(
+            state,
+            actor_ref,
+            target_ref,
+            selection.spell,
+        )
+        if not targeting.allowed:
+            return targeting.failures[0]
         failure = target_requirement_failure(
             state,
             actor_ref,

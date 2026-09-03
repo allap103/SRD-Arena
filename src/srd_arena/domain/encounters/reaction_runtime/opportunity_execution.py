@@ -28,7 +28,11 @@ from ..encounter_models.resolution import (
 from ..participants import creature_controller, creatures_are_opponents
 from ..rule_queries.defenses import apply_damage
 from ..rule_queries.numeric import effective_armor_class
-from ..rule_queries.permissions import reaction_eligibility
+from ..rule_queries.permissions import (
+    TargetingKind,
+    reaction_eligibility,
+    target_eligibility,
+)
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
 from ..state_runtime import create_event, creature_label, next_action_id
@@ -103,6 +107,12 @@ def resolve_automatic_opportunity_attacks(
             state,
             reactor_ref,
             "opportunity_attack",
+        ).allowed
+        and target_eligibility(
+            state,
+            reactor_ref,
+            mover_ref,
+            TargetingKind.ATTACK,
         ).allowed
         and can_make_opportunity_attack(
             reactor.creature,
@@ -255,8 +265,16 @@ def apply_reaction_action(
         )
         if not eligibility.allowed:
             raise ValueError(eligibility.failures[0].message)
-        reactor.reaction_available = False
         target_ref = movement.creature_ref
+        targeting = target_eligibility(
+            state,
+            reactor_ref,
+            target_ref,
+            TargetingKind.ATTACK,
+        )
+        if not targeting.allowed:
+            raise ValueError(targeting.failures[0].message)
+        reactor.reaction_available = False
         target = state.creatures[target_ref]
         target_label = creature_label(state, target_ref)
         reactor_label = creature_label(state, reactor_ref)

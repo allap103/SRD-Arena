@@ -69,7 +69,12 @@ from .requirements import (
     RelationshipRequirement,
     SizeRequirement,
 )
-from .rules import capability_effects, primary_effects
+from .rules import (
+    all_capability_effects,
+    capability_can_damage,
+    capability_effects,
+    primary_effects,
+)
 from .targeting import CapabilityTarget, TargetCount
 
 __all__ = [
@@ -137,6 +142,8 @@ __all__ = [
     "TargetCount",
     "TemporaryHitPointsEffect",
     "TurnEconomyRestrictionEffect",
+    "all_capability_effects",
+    "capability_can_damage",
     "capability_effects",
     "primary_effects",
 ]

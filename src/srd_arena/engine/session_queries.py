@@ -184,6 +184,7 @@ def _action_option(
         eligibility=checked_eligibility,
         implemented=implemented,
         details=option_details(action),
+        required_configuration=(None if action.aim_committed else "aim"),
     )
 
 

@@ -37,7 +37,12 @@ from .numeric import (
     effective_speed,
     movement_budget,
 )
-from .permissions import action_compatibility, reaction_eligibility
+from .permissions import (
+    TargetingKind,
+    action_compatibility,
+    reaction_eligibility,
+    target_eligibility,
+)
 from .rolls import roll_modifiers
 from .senses import sense_range
 
@@ -57,6 +62,7 @@ __all__ = [
     "SetRuleResult",
     "SourcedEligibilityFailure",
     "SourcedRuleContribution",
+    "TargetingKind",
     "action_compatibility",
     "apply_damage",
     "apply_healing",
@@ -80,4 +86,5 @@ __all__ = [
     "roll_modifiers",
     "sense_range",
     "stand_up_movement_cost",
+    "target_eligibility",
 ]

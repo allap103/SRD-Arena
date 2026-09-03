@@ -356,6 +356,43 @@ def test_numeric_action_selection_rejects_an_illegal_or_unknown_index(
     assert unknown_result.failure.code == "invalid_action_index"
 
 
+def test_numeric_action_map_exposes_but_does_not_select_unconfigured_aims(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from unittest.mock import Mock
+
+    area = ActionObservation(
+        "fireball",
+        "Fireball",
+        "spell",
+        "mage",
+        required_configuration="aim",
+    )
+    encounter = Mock()
+    encounter.decision.id = "turn:1"
+    observation = GameObservation(
+        SceneObservation("fight", (area,)),
+        encounter,
+        None,
+        False,
+    )
+    catalog, session = Mock(), Mock()
+    catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+    catalog.load_encounter.return_value = Mock()
+    session.observe.return_value = observation
+    monkeypatch.setattr(
+        "srd_arena.frontends.headless.adapter.Session",
+        lambda _encounter, *, seed=None, decision_epoch=0: session,
+    )
+    adapter = HeadlessGameAdapter(catalog)
+    adapter.start_encounter("demo")
+
+    action_map = adapter.decision_action_map()
+
+    assert action_map.slots[0].required_configuration == "aim"
+    assert action_map.legal_action_mask == (False,)
+
+
 def _run_attack_and_wait_trace(
     adapter: HeadlessGameAdapter,
     *,

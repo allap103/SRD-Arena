@@ -215,6 +215,8 @@ class Session:
                 f"Action '{action_id}' is unavailable for encounter "
                 f"'{self.encounter.id}'."
             )
+        if not action.aim_committed:
+            raise ValueError(f"Action '{action_id}' requires aim configuration.")
         return self._apply_encounter_action(
             action,
             selected_choice_text=action.label,

@@ -125,6 +125,7 @@ def _observe_action(
         grapple_choice=semantics.grapple_choice,
         aim_point=semantics.aim_point,
         area_preview=semantics.area_preview,
+        required_configuration=option.required_configuration,
     )
 
 

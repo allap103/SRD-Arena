@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
@@ -14,9 +15,11 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...rule_queries.permissions import TargetingKind, target_eligibility
 from ..stat_block import (
     stat_block_action_resource_available,
     stat_block_action_runtime_issue,
+    stat_block_target_refs,
 )
 from .common import opposing_target_failure, target_requirement_failure
 from .models import EligibilityFailure
@@ -72,20 +75,51 @@ class StatBlockActionRule:
                 f"{definition.name} is not available.",
             )
         if definition.target.kind == "area" and definition.target.origin == "self":
-            if isinstance(action.value, tuple):
-                aim_x, aim_y = action.value
-                actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
-                if (
-                    abs(aim_x - actor_center[0]) < 1e-9
-                    and abs(aim_y - actor_center[1]) < 1e-9
-                ):
-                    return EligibilityFailure(
-                        "aim_required",
-                        "The area must be aimed away from its user.",
-                    )
+            if not action.aim_committed:
                 return None
-            if isinstance(action.value, str):
-                return opposing_target_failure(state, actor_ref, action)
+            if isinstance(action.value, (str, tuple)):
+                if isinstance(action.value, str):
+                    target_failure = opposing_target_failure(
+                        state,
+                        actor_ref,
+                        action,
+                    )
+                    if target_failure is not None:
+                        return target_failure
+                if isinstance(action.value, tuple):
+                    aim_x, aim_y = action.value
+                    actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
+                    if (
+                        abs(aim_x - actor_center[0]) < 1e-9
+                        and abs(aim_y - actor_center[1]) < 1e-9
+                    ):
+                        return EligibilityFailure(
+                            "aim_required",
+                            "The area must be aimed away from its user.",
+                        )
+                if isinstance(definition, SavingThrowActionDefinition):
+                    target_refs = stat_block_target_refs(
+                        state,
+                        actor_ref,
+                        action.value,
+                        definition,
+                    )
+                    if not target_refs:
+                        return EligibilityFailure(
+                            "target_unavailable",
+                            "The aimed area contains no valid targets.",
+                        )
+                    if _stat_block_action_can_damage(definition):
+                        for target_ref in target_refs:
+                            targeting = target_eligibility(
+                                state,
+                                actor_ref,
+                                target_ref,
+                                TargetingKind.DAMAGING_ABILITY,
+                            )
+                            if not targeting.allowed:
+                                return targeting.failures[0]
+                return None
             return EligibilityFailure(
                 "target_required",
                 "An aim point is required.",
@@ -105,6 +139,15 @@ class StatBlockActionRule:
         target_failure = opposing_target_failure(state, actor_ref, action)
         if target_failure is not None:
             return target_failure
+        if _stat_block_action_can_damage(definition):
+            targeting = target_eligibility(
+                state,
+                actor_ref,
+                action.value,
+                TargetingKind.DAMAGING_ABILITY,
+            )
+            if not targeting.allowed:
+                return targeting.failures[0]
         target = state.creatures[action.value]
         requirement_failure = target_requirement_failure(
             state,
@@ -122,6 +165,28 @@ class StatBlockActionRule:
                 "The target is out of range.",
             )
         return None
+
+
+def _stat_block_action_can_damage(
+    definition: AutomaticActionDefinition | SavingThrowActionDefinition,
+) -> bool:
+    """Return whether an automatic or save-based action can deal damage."""
+
+    if isinstance(definition, AutomaticActionDefinition):
+        effects = definition.effects
+    else:
+        effects = (
+            *(effect for stage in definition.failure for effect in stage.effects),
+            *(
+                effect
+                for stage in definition.failure
+                for repeat in stage.repeat_saves
+                for effect in repeat.failure_effects
+            ),
+            *definition.success,
+            *definition.always,
+        )
+    return any(isinstance(effect, DamageEffect) for effect in effects)
 
 
 class FeatureActionRule:

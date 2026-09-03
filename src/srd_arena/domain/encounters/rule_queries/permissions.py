@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+from enum import StrEnum
+
 from srd_arena.domain.effects.condition_rules import effective_conditions
-from srd_arena.domain.effects.conditions import CombatTrait
+from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
@@ -19,6 +21,81 @@ from .context import ConditionRuleQueryContext
 from .defenses import condition_suppressions
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
+
+
+class TargetingKind(StrEnum):
+    """Classify an interaction that Charmed can prohibit against its source."""
+
+    ATTACK = "attack"
+    DAMAGING_ABILITY = "damaging_ability"
+    DAMAGING_MAGICAL_EFFECT = "damaging_magical_effect"
+
+
+def target_eligibility(
+    state: ConditionRuleQueryContext,
+    actor_ref: CreatureRef,
+    target_ref: CreatureRef,
+    kind: TargetingKind,
+) -> ActionEligibility:
+    """Return sourced reasons the actor cannot target this particular creature.
+
+    Charmed is directional: each effective application protects only the
+    creature recorded as that application's source. Separate applications can
+    therefore prohibit separate targets, while suppressed applications have no
+    effect.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.effects.conditions import build_applied_condition
+    >>> charmed = build_applied_condition(
+    ...     condition=Condition.CHARMED, source_ref="mage",
+    ...     source_label="Mage", target_ref="guard",
+    ... )
+    >>> creature = SimpleNamespace(
+    ...     statistics=SimpleNamespace(condition_immunities=frozenset())
+    ... )
+    >>> state = SimpleNamespace(
+    ...     creatures={
+    ...         "guard": SimpleNamespace(creature=creature),
+    ...         "mage": SimpleNamespace(creature=creature),
+    ...     },
+    ...     conditions=[charmed], ongoing_effects=[],
+    ... )
+    >>> result = target_eligibility(
+    ...     state, "guard", "mage", TargetingKind.ATTACK
+    ... )
+    >>> (result.allowed, result.failures[0].state_ids)
+    (False, ('condition:charmed:source:mage:guard',))
+    """
+
+    conditions = effective_conditions(
+        tuple(
+            condition
+            for condition in state.conditions
+            if condition.target_ref == actor_ref
+        ),
+        condition_suppressions(state, actor_ref).values,
+    )
+    effective_provider_ids = frozenset(conditions.providers_for(Condition.CHARMED))
+    blocking = tuple(
+        condition
+        for condition in state.conditions
+        if condition.id in effective_provider_ids
+        and condition.condition is Condition.CHARMED
+        and condition.source_ref == target_ref
+    )
+    if not blocking:
+        return ActionEligibility()
+    interaction = kind.value.replace("_", " ")
+    return ActionEligibility(
+        (
+            SourcedEligibilityFailure(
+                "condition.charmed_target_prohibited",
+                f"A charmed creature cannot target its charmer with this {interaction}.",
+                tuple(condition.id for condition in blocking),
+                tuple(condition.identity.source for condition in blocking),
+            ),
+        )
+    )
 
 
 def reaction_eligibility(

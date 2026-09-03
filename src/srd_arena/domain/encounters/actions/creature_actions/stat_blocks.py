@@ -53,12 +53,7 @@ def stat_block_action_candidates(
         targets: list[str | tuple[float, float] | None] = (
             [creature_ref]
             if definition.target.kind == "self"
-            else [
-                (
-                    actor.position.x + 1.5,
-                    actor.position.y + 0.5,
-                )
-            ]
+            else [None]
             if definition.target.kind == "area"
             else [
                 target_ref
@@ -73,10 +68,10 @@ def stat_block_action_candidates(
         for target in targets:
             source_slug = definition.name.lower().replace(" ", "-")
             target_slug = (
-                target.replace(":", "-")
+                "aim"
+                if definition.target.kind == "area"
+                else target.replace(":", "-")
                 if isinstance(target, str)
-                else "aim"
-                if isinstance(target, tuple)
                 else "no-target"
             )
             actions.append(
@@ -87,6 +82,7 @@ def stat_block_action_candidates(
                     id=f"{creature_ref}-stat-block-{source_slug}-{target_slug}",
                     creature_ref=creature_ref,
                     preferred_attack_name=definition.name,
+                    aim_committed=definition.target.kind != "area",
                     cost=ActionCost(action=1),
                 )
             )

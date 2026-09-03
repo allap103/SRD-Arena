@@ -11,6 +11,10 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...rule_queries.permissions import (
+    TargetingKind,
+    target_eligibility,
+)
 from ...state_runtime import creature_position
 from ..attack_resolution import attack_range_squares, has_free_hand
 from ..stat_block import (
@@ -88,6 +92,14 @@ class AttackRule:
         if target_failure is not None:
             return target_failure
         assert isinstance(action.value, str)
+        targeting = target_eligibility(
+            state,
+            actor_ref,
+            action.value,
+            TargetingKind.ATTACK,
+        )
+        if not targeting.allowed:
+            return targeting.failures[0]
         preferred_attack_name = action.preferred_attack_name
         if isinstance(preferred_attack_name, str):
             definition = actor.creature.stat_block_actions.get(preferred_attack_name)
@@ -172,6 +184,14 @@ class GrappleRule:
         if target_failure is not None:
             return target_failure
         assert isinstance(action.value, str)
+        targeting = target_eligibility(
+            state,
+            actor_ref,
+            action.value,
+            TargetingKind.ATTACK,
+        )
+        if not targeting.allowed:
+            return targeting.failures[0]
         target = state.creatures[action.value]
         if grid_distance_between(actor.position, target.position) != 1:
             return EligibilityFailure(

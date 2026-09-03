@@ -68,7 +68,7 @@ def configure_action(
     else:
         raise TypeError(f"Unsupported action configuration: {configuration!r}")
 
-    configured = replace(action, value=value)
+    configured = replace(action, value=value, aim_committed=True)
     return session._apply_encounter_action(
         configured,
         selected_choice_text=configured.label,

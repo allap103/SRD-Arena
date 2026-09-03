@@ -57,4 +57,5 @@ class EncounterAction:
     source_trigger_id: str | None = None
     preferred_attack_type: str | None = None
     preferred_attack_name: str | None = None
+    aim_committed: bool = True
     cost: ActionCost = field(default_factory=ActionCost)

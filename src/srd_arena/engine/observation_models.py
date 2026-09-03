@@ -28,7 +28,7 @@ class ActionReasonObservation:
 
 @dataclass(frozen=True)
 class ActionObservation:
-    """A stable selectable option advertised at one decision point."""
+    """A stable action option advertised at one decision point."""
 
     id: str
     label: str
@@ -52,6 +52,7 @@ class ActionObservation:
     grapple_choice: str | None = None
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
+    required_configuration: Literal["aim"] | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cost", freeze_mapping(self.cost))

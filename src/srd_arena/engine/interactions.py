@@ -149,6 +149,11 @@ def _select_advertised(
             "action_unavailable",
             f"Action '{action_id}' is not available.",
         )
+    if option.required_configuration is not None:
+        raise _CommandRejected(
+            "action_configuration_required",
+            f"Action '{action_id}' requires {option.required_configuration} configuration.",
+        )
     return session.choose(action_id)
 
 
@@ -165,7 +170,7 @@ def _aim_action(
         ),
         None,
     )
-    if option is None or option.kind not in {"spell", "stat_block"}:
+    if option is None or option.required_configuration != "aim":
         raise _CommandRejected(
             "action_unavailable",
             f"Aimable action '{command.action_id}' is not available.",

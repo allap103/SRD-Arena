@@ -283,7 +283,17 @@ def test_session_aims_an_advertised_area_action() -> None:
     assert fireball.target_ref is None
     assert fireball.area_preview is not None
     assert fireball.area_preview["shape"] == "radius"
+    assert fireball.required_configuration == "aim"
     assert not hasattr(fireball, "value")
+
+    unconfigured = session.execute(
+        SelectAction(
+            action_id=fireball.id,
+            expected_decision_id=observation.encounter.decision.id,
+        )
+    )
+    assert unconfigured.failure is not None
+    assert unconfigured.failure.code == "action_configuration_required"
 
     result = session.execute(
         AimAction(

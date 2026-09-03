@@ -6,7 +6,8 @@ from .definitions import (
     CapabilityDefinition,
     SavingThrowResolution,
 )
-from .effects import CapabilityEffect
+from .effects import CapabilityEffect, DamageEffect
+from .resolutions import CapabilityResolution
 
 
 def capability_effects(
@@ -35,6 +36,89 @@ def capability_effects(
     if isinstance(resolution, SavingThrowResolution):
         return (
             *(effect for stage in resolution.failure for effect in stage.effects),
+            *resolution.success.effects,
+            *resolution.always.effects,
+        )
+    return ()
+
+
+def all_capability_effects(
+    definition: CapabilityDefinition | None,
+) -> tuple[CapabilityEffect, ...]:
+    """Return effects from primary, repeated, triggered, and follow-up resolution.
+
+    >>> from .definitions import CapabilityTrigger, Outcome
+    >>> from .effects import DamageEffect
+    >>> from .targeting import CapabilityTarget
+    >>> delayed = DamageEffect("1d6", 0, "fire")
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget(kind="creature"),
+    ...     AutomaticResolution(Outcome()),
+    ...     triggers=(CapabilityTrigger(
+    ...         "turn_end", AutomaticResolution(Outcome((delayed,)))
+    ...     ),),
+    ... )
+    >>> all_capability_effects(definition) == (delayed,)
+    True
+    """
+
+    if definition is None:
+        return ()
+    return (
+        *_resolution_effects(definition.resolution),
+        *(
+            effect
+            for trigger in definition.triggers
+            for effect in _resolution_effects(trigger.resolution)
+        ),
+        *(
+            effect
+            for follow_up in definition.follow_ups
+            for effect in _resolution_effects(follow_up.resolution)
+        ),
+    )
+
+
+def capability_can_damage(definition: CapabilityDefinition | None) -> bool:
+    """Return whether any executable path in a capability can deal damage.
+
+    >>> from .definitions import Outcome
+    >>> from .targeting import CapabilityTarget
+    >>> damage = DamageEffect("1d4", 0, "force")
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget(kind="creature"),
+    ...     AutomaticResolution(Outcome((damage,))),
+    ... )
+    >>> capability_can_damage(definition)
+    True
+    >>> capability_can_damage(None)
+    False
+    """
+
+    return any(
+        isinstance(effect, DamageEffect)
+        for effect in all_capability_effects(definition)
+    )
+
+
+def _resolution_effects(
+    resolution: CapabilityResolution,
+) -> tuple[CapabilityEffect, ...]:
+    """Return immediate and repeat-save effects reachable from a resolution."""
+
+    if isinstance(resolution, AutomaticResolution):
+        return resolution.outcome.effects
+    if isinstance(resolution, AttackResolution):
+        return (*resolution.hit.effects, *resolution.miss.effects)
+    if isinstance(resolution, SavingThrowResolution):
+        return (
+            *(effect for stage in resolution.failure for effect in stage.effects),
+            *(
+                effect
+                for stage in resolution.failure
+                for repeat in stage.repeat_saves
+                for effect in repeat.failure_effects
+            ),
             *resolution.success.effects,
             *resolution.always.effects,
         )

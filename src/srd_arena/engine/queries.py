@@ -145,6 +145,7 @@ class ActionOption:
     eligibility: ActionEligibility = field(default_factory=ActionEligibility)
     implemented: bool = True
     details: ActionOptionDetails | None = None
+    required_configuration: Literal["aim"] | None = None
 
     @property
     def enabled(self) -> bool:

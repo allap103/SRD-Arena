@@ -67,6 +67,7 @@ def available_spell_actions(
                     spell_action_payload(spell.id),
                     id=spell_action_id(spell),
                     creature_ref=creature_ref,
+                    aim_committed=False,
                     cost=cost,
                 ),
             )
@@ -233,6 +234,7 @@ def _append_spell_action_variants(
                 ),
                 id=f"{action.id}-level-{slot_level}",
                 creature_ref=action.creature_ref,
+                aim_committed=action.aim_committed,
                 cost=action.cost,
             )
         )

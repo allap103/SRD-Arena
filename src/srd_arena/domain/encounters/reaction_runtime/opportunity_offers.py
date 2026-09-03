@@ -21,7 +21,11 @@ from ..encounter_models.decisions import (
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..participants import creature_controller, creatures_are_opponents
-from ..rule_queries.permissions import reaction_eligibility
+from ..rule_queries.permissions import (
+    TargetingKind,
+    reaction_eligibility,
+    target_eligibility,
+)
 from ..state_runtime import create_event, next_frame_id
 
 if TYPE_CHECKING:
@@ -71,6 +75,12 @@ def queue_opportunity_attack(
             state,
             creature_ref,
             "opportunity_attack",
+        ).allowed
+        and target_eligibility(
+            state,
+            creature_ref,
+            mover_ref,
+            TargetingKind.ATTACK,
         ).allowed
         and can_make_opportunity_attack(
             creature_state.creature,
@@ -168,6 +178,12 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
             state,
             reactor_ref,
             "opportunity_attack",
+        ).allowed
+        and target_eligibility(
+            state,
+            reactor_ref,
+            target_ref,
+            TargetingKind.ATTACK,
         ).allowed
         and target.is_alive
     ):

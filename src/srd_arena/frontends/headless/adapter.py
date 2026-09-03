@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 from enum import StrEnum
+from typing import Literal
 
 from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
@@ -97,6 +98,7 @@ class NumericActionSlot:
     action_id: str
     label: str
     kind: str
+    required_configuration: Literal["aim"] | None = None
 
 
 @dataclass(frozen=True)
@@ -318,6 +320,7 @@ class HeadlessGameAdapter:
                 action_id=action.id,
                 label=action.label,
                 kind=action.kind,
+                required_configuration=action.required_configuration,
             )
             for index, action in enumerate(actions)
         )
@@ -325,7 +328,10 @@ class HeadlessGameAdapter:
             observation.completion is None and self._truncation_reason is None
         )
         legal_action_mask = tuple(
-            accepts_actions and action.enabled and action.availability == "available"
+            accepts_actions
+            and action.enabled
+            and action.availability == "available"
+            and action.required_configuration is None
             for action in actions
         )
         return DecisionActionMap(

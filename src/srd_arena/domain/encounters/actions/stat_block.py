@@ -31,6 +31,7 @@ from .stat_block_runtime.resources import (
 )
 from .stat_block_runtime.saving_throws import (
     resolve_saving_throw_stat_block_action,
+    stat_block_target_refs,
 )
 from .stat_block_runtime.validation import stat_block_action_runtime_issue
 
@@ -47,6 +48,7 @@ __all__ = [
     "resolve_stat_block_action",
     "stat_block_action_resource_available",
     "stat_block_action_runtime_issue",
+    "stat_block_target_refs",
 ]
 
 

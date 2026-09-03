@@ -4,14 +4,19 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.spells.rules import SpellActionPayload
+from srd_arena.domain.spells.rules import (
+    SpellActionPayload,
+    spell_chooses_area_targets,
+)
 
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ..capability_support import capability_runtime_issue
+from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
 from .models import EligibilityFailure
 from .spell_selection import check_staged_spell_selection
+from .spell_targeting import spell_target_eligibility
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -89,6 +94,14 @@ class SpellActionRule:
                     "target_unavailable",
                     "The target is not available.",
                 )
+            targeting = spell_target_eligibility(
+                state,
+                actor_ref,
+                selected_target_ref,
+                spell,
+            )
+            if not targeting.allowed:
+                return targeting.failures[0]
             requirement_failure = target_requirement_failure(
                 state,
                 actor_ref,
@@ -97,6 +110,21 @@ class SpellActionRule:
             )
             if requirement_failure is not None:
                 return requirement_failure
+        if payload.aim_point is not None and not spell_chooses_area_targets(spell):
+            for selected_target in spell_area_targets(
+                state,
+                actor,
+                spell,
+                aim_point=payload.aim_point,
+            ):
+                targeting = spell_target_eligibility(
+                    state,
+                    actor_ref,
+                    selected_target.target_ref,
+                    spell,
+                )
+                if not targeting.allowed:
+                    return targeting.failures[0]
         if (
             spell.geometry_mode not in {"directional_area", "point_area"}
             and not payload.target_refs
