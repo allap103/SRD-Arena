@@ -8,11 +8,14 @@ from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.domain.capabilities import CompelledTurnEffect, capability_effects
+from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.rule_effects import CompelledTurn
 from srd_arena.domain.effects.runtime import UntilTurnEnd
+from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.effect_lifecycle.turn_end import (
     expire_ongoing_effects_for_turn_end,
 )
+from srd_arena.domain.encounters.rule_queries.compulsions import active_compelled_turn
 from srd_arena.engine.queries import ActionOption, SpellOptionDetails
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
@@ -142,4 +145,60 @@ def test_successful_command_save_creates_no_instruction() -> None:
     assert not any(
         effect.identity.source.definition_id == "command"
         for effect in session.encounter_state.ongoing_effects
+    )
+
+
+def _make_target_current(session: Session, target_ref: str) -> None:
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.turn.index = state.initiative_order.index(target_ref)
+    state.interrupts.decision_stack.clear()
+
+
+def test_halt_replaces_scripted_action_menu_and_ends_the_commanded_turn() -> None:
+    session = _session(save_roll=1)
+    _cast_command(session, target_ref="goblin_1", instruction="halt")
+    _make_target_current(session, "goblin_1")
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    candidates = creature_action_candidates(state, "goblin_1")
+    compelled = next(
+        action for action in candidates if action.kind == "obey_compelled_turn"
+    )
+    normal_wait = next(action for action in candidates if action.kind == "wait")
+
+    assert state.action_eligibility(compelled).allowed
+    assert state.action_eligibility(normal_wait).failures[0].code == "compelled_turn"
+
+    update = session.advance_one_automatic_action()
+
+    assert any(
+        event.type == "compelled_turn_resolved" and event.data["instruction"] == "halt"
+        for event in update.events
+    )
+    assert active_compelled_turn(state, "goblin_1") is None
+
+
+def test_grovel_applies_persistent_sourced_prone_and_ends_the_commanded_turn() -> None:
+    session = _session(save_roll=1)
+    _cast_command(session, target_ref="goblin_1", instruction="grovel")
+    _make_target_current(session, "goblin_1")
+
+    update = session.advance_one_automatic_action()
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    prone = next(
+        applied
+        for applied in state.conditions_for("goblin_1")
+        if applied.condition is Condition.PRONE
+    )
+    assert prone.source_ref == "warlock"
+    assert prone.identity.source.definition_id == "command"
+    assert active_compelled_turn(state, "goblin_1") is None
+    assert any(
+        event.type == "compelled_turn_resolved"
+        and event.data["instruction"] == "grovel"
+        for event in update.events
     )

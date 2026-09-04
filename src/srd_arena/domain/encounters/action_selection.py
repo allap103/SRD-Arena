@@ -85,6 +85,12 @@ class ScriptedActionSelector:
         >>> result.kind
         'wait'
         """
+        forced = next(
+            (action for action in actions if action.kind == "obey_compelled_turn"),
+            None,
+        )
+        if forced is not None:
+            return forced
         wait = next(action for action in actions if action.kind == "wait")
         target_ref = self._nearest_opponent(state, creature_ref)
         if target_ref is None:

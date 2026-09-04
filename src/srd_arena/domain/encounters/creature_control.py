@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from .actions.creature_actions.capability_execution import (
     execute_capability_action,
 )
+from .actions.creature_actions.compelled import execute_compelled_turn_action
 from .actions.creature_actions.discovery import (
     _stat_block_display_name,
     available_creature_actions,
@@ -116,6 +117,13 @@ def execute_creature_action(
             progress,
             action_id,
         )
+        or execute_compelled_turn_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
         or execute_spell_selection_action(
             state,
             actor,
@@ -137,7 +145,7 @@ def execute_creature_action(
 
     return finish_action_execution(
         context,
-        action_ends_turn=action.kind == "wait",
+        action_ends_turn=action.kind in {"wait", "obey_compelled_turn"},
     )
 
 

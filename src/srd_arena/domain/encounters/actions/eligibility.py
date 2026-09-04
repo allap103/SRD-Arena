@@ -17,6 +17,7 @@ from .eligibility_rules.common import (
     MovementRule,
     ResourceRule,
 )
+from .eligibility_rules.compulsions import CompelledTurnRule
 from .eligibility_rules.conditions import ProneActionRule
 from .eligibility_rules.models import (
     ActionEligibility,
@@ -30,6 +31,7 @@ if TYPE_CHECKING:
 
 
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
+    CompelledTurnRule(),
     ResourceRule(),
     MovementRule(),
     ProneActionRule(),

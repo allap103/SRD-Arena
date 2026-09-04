@@ -1,5 +1,6 @@
 """Typed, source-aware questions asked by encounter orchestration."""
 
+from .compulsions import active_compelled_turn, compelled_turns
 from .damage_riders import attack_hit_damage
 from .defenses import (
     apply_damage,
@@ -75,12 +76,14 @@ __all__ = [
     "SourcedRuleContribution",
     "TargetingKind",
     "action_compatibility",
+    "active_compelled_turn",
     "apply_damage",
     "apply_healing",
     "attack_hit_damage",
     "attack_limit",
     "cell_has_line_of_effect",
     "cells_with_line_of_effect",
+    "compelled_turns",
     "condition_immunities",
     "condition_suppressions",
     "cover_between",
