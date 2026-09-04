@@ -6,6 +6,9 @@ from dataclasses import dataclass
 
 from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_rules.weapon_mastery import (
+    selected_weapon_mastery,
+)
 from srd_arena.domain.creatures.stat_block_actions import AttackActionDefinition
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import Grid, GridDistance
@@ -168,6 +171,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
         weapon_id=weapon.id,
         weapon_name=weapon.name,
         weapon_properties=tuple(weapon.weapon_stat.properties),
+        weapon_mastery=selected_weapon_mastery(attacker, weapon),
         ability="dexterity" if attack_type == "ranged" else "strength",
     )
 
@@ -351,6 +355,7 @@ def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
         hit_effects=source.hit_effects,
         reach_feet=source.reach_feet,
         ability=source.ability,
+        weapon_mastery=source.weapon_mastery,
     )
 
 

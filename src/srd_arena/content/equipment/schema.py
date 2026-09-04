@@ -30,6 +30,7 @@ class ItemSchema(SourceModel):
         default_factory=list,
         alias="property",
     )
+    mastery: list[str] = Field(default_factory=list)
     weapon_category: str = Field(default="", alias="weaponCategory")
     range: str | None = None
     misc_tags: list[str] = Field(default_factory=list, alias="miscTags")

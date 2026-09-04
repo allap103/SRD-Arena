@@ -45,6 +45,20 @@ def test_item_builder_creates_combat_ready_weapon() -> None:
     assert longbow.weapon_stat.range_long == 600
 
 
+def test_item_builder_preserves_weapon_mastery_identity() -> None:
+    """Carry the source-authored mastery property into the domain weapon."""
+
+    catalog = load_item_catalog(SYSTEM_CONTENT_ROOT)
+
+    maul = build_item(catalog.find("Maul", "XPHB"))
+    javelin = build_item(catalog.find("Javelin", "XPHB"))
+
+    assert maul.weapon_stat is not None
+    assert javelin.weapon_stat is not None
+    assert maul.weapon_stat.mastery == "Topple"
+    assert javelin.weapon_stat.mastery == "Slow"
+
+
 def test_item_catalog_and_builder_use_srd_public_name() -> None:
     source_item = ItemSchema.model_validate(
         {

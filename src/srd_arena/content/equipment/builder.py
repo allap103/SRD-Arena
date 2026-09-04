@@ -36,6 +36,11 @@ def build_item(source_item: ItemSchema) -> Item:
                 range_normal=normal_range,
                 range_long=long_range,
                 weapon_category=source_item.weapon_category,
+                mastery=(
+                    _reference_name(source_item.mastery[0])
+                    if source_item.mastery
+                    else None
+                ),
             ),
             item_type=source_item.type,
             misc_tags=source_item.misc_tags,
@@ -99,3 +104,9 @@ def _property_name(value: str) -> str:
         "T": "thrown",
         "2H": "two-handed",
     }.get(value.split("|", 1)[0], value.lower())
+
+
+def _reference_name(value: str) -> str:
+    """Return the public name portion of a source-qualified reference."""
+
+    return value.split("|", 1)[0]

@@ -260,6 +260,13 @@ def _normalize_class_feature(
             source_class=class_name,
             level=feature_level,
         )
+    if feature_name == "Weapon Mastery":
+        return ClassFeature(
+            id="weapon_mastery",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
     return None
 
 

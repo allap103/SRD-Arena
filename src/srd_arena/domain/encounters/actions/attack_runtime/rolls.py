@@ -109,6 +109,8 @@ def resolve_attack_roll(
         detail["weapon_id"] = attack_source.weapon_id
     if attack_source.weapon_name is not None:
         detail["weapon_name"] = attack_source.weapon_name
+    if attack_source.weapon_mastery is not None:
+        detail["weapon_mastery"] = attack_source.weapon_mastery
     return AttackRollResolution(
         result=attack_result,
         check=attack_check,

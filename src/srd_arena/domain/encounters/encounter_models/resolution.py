@@ -144,6 +144,7 @@ class AttackOutcome:
     weapon_id: str | None = None
     weapon_name: str | None = None
     weapon_properties: tuple[str, ...] = ()
+    weapon_mastery: str | None = None
     additional_damage: int = 0
     additional_damage_details: tuple[dict[str, object], ...] = ()
     hit_effects: tuple[CapabilityEffect, ...] = ()
@@ -189,3 +190,4 @@ class AttackSource:
     hit_effects: tuple[CapabilityEffect, ...] = ()
     reach_feet: int | None = None
     ability: str | None = None
+    weapon_mastery: str | None = None

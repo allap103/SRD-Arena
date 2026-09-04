@@ -234,6 +234,8 @@ def damage_roll_detail(
         detail["weapon_id"] = attack.weapon_id
     if attack.weapon_name is not None:
         detail["weapon_name"] = attack.weapon_name
+    if attack.weapon_mastery is not None:
+        detail["weapon_mastery"] = attack.weapon_mastery
     return detail
 
 

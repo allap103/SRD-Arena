@@ -26,6 +26,10 @@ from .warlock import (
     FIENDISH_VIGOR_GRANT_ID,
     dark_ones_blessing_temporary_hit_points,
 )
+from .weapon_mastery import (
+    WEAPON_MASTERY_FEATURE_ID,
+    selected_weapon_mastery,
+)
 
 __all__ = [
     "FIENDISH_VIGOR_GRANT_ID",
@@ -33,6 +37,7 @@ __all__ = [
     "LUCKY_FEATURE_ID",
     "RECKLESS_ATTACK_FEATURE_ID",
     "SAVAGE_ATTACKER_EFFECT_ID",
+    "WEAPON_MASTERY_FEATURE_ID",
     "can_use_alert_initiative_swap",
     "creature_has_feat",
     "dark_ones_blessing_temporary_hit_points",
@@ -44,6 +49,7 @@ __all__ = [
     "initiative_modifier",
     "reckless_attack_result",
     "resolve_feature_action",
+    "selected_weapon_mastery",
     "spell_invocation_grant",
     "spell_invocation_grants",
 ]
