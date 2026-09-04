@@ -37,7 +37,7 @@ from .ui.encounter.targeting import (
     cancel_targeting_action,
     mode_for_action,
     mode_is_available,
-    pending_area_action,
+    pending_aim_action,
     pending_area_overlay,
     selection_modes,
     target_creature_ref,
@@ -193,7 +193,7 @@ class GameWindow(QMainWindow):
             self.presenter.clear_target_mode()
             pending_target_mode = None
         battlefield.set_cell_targeting_enabled(
-            pending_area_action(
+            pending_aim_action(
                 encounter.non_movement_actions,
                 pending_target_mode,
             )
@@ -419,7 +419,7 @@ class GameWindow(QMainWindow):
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
         if self._presentation is None or self._presentation.encounter is None:
             return
-        action = pending_area_action(
+        action = pending_aim_action(
             self._presentation.encounter.non_movement_actions,
             self.presenter.pending_target_mode,
         )

@@ -778,6 +778,7 @@ def test_directional_spell_target_mode_stays_available_without_creature_target_m
             cost={"action": 1},
             source_id="color_spray",
             area_preview={"shape": "cone"},
+            required_configuration="aim",
         )
     ]
 

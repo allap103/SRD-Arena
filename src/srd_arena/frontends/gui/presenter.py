@@ -134,7 +134,7 @@ class GamePresenter:
         return ActionSelection(update=update, selected_action=selected_action)
 
     def aim_action(self, action_id: str, x: float, y: float) -> GameUpdate | None:
-        """Aim one currently advertised area action.
+        """Aim one currently advertised battlefield-point action.
 
         >>> from unittest.mock import Mock
         >>> observation = Mock(encounter=Mock(decision=Mock(id="turn:1")))

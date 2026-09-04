@@ -215,27 +215,27 @@ def cancel_targeting_action(
     )
 
 
-def pending_area_action(
+def pending_aim_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
-    """Return the area action represented by the active targeting mode.
+    """Return the point-aimed action represented by the active targeting mode.
 
     >>> action = ActionObservation(
     ...     "fireball", "Fireball", "spell", "mage", source_id="fireball",
-    ...     area_preview={"shape": "radius"},
+    ...     required_configuration="aim",
     ... )
-    >>> pending_area_action((action,), TargetSelectionMode("spell", "fireball")) is action
+    >>> pending_aim_action((action,), TargetSelectionMode("spell", "fireball")) is action
     True
     """
 
-    return pending_area_spell_action(
+    return pending_aim_spell_action(
         actions,
         mode,
-    ) or pending_area_stat_block_action(actions, mode)
+    ) or pending_aim_stat_block_action(actions, mode)
 
 
-def pending_area_spell_action(
+def pending_aim_spell_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
@@ -244,10 +244,10 @@ def pending_area_spell_action(
     >>> action = ActionObservation(
     ...     "fireball-5", "Fireball (Level 5)", "spell", "mage",
     ...     source_id="fireball", resource_level=5,
-    ...     area_preview={"shape": "radius"},
+    ...     required_configuration="aim",
     ... )
     >>> mode = TargetSelectionMode("spell", "fireball", "Level 5")
-    >>> pending_area_spell_action((action,), mode) is action
+    >>> pending_aim_spell_action((action,), mode) is action
     True
     """
 
@@ -260,13 +260,13 @@ def pending_area_spell_action(
             if action.kind == "spell"
             and action.source_id == mode.source_trigger_id
             and _spell_slot_variant(action) == mode.variant_id
-            and is_area_spell_action(action)
+            and action.required_configuration == "aim"
         ),
         None,
     )
 
 
-def pending_area_stat_block_action(
+def pending_aim_stat_block_action(
     actions: Sequence[ActionObservation],
     mode: TargetSelectionMode | None,
 ) -> ActionObservation | None:
@@ -275,9 +275,10 @@ def pending_area_stat_block_action(
     >>> action = ActionObservation(
     ...     "breath", "Fire Breath", "stat_block", "dragon",
     ...     preferred_attack_name="Fire Breath", area_preview={"shape": "cone"},
+    ...     required_configuration="aim",
     ... )
     >>> mode = TargetSelectionMode("stat_block", "Fire Breath")
-    >>> pending_area_stat_block_action((action,), mode) is action
+    >>> pending_aim_stat_block_action((action,), mode) is action
     True
     """
 
@@ -289,7 +290,7 @@ def pending_area_stat_block_action(
             for action in actions
             if action.kind == "stat_block"
             and action.preferred_attack_name == mode.source_trigger_id
-            and is_area_stat_block_action(action)
+            and action.required_configuration == "aim"
         ),
         None,
     )
@@ -303,7 +304,7 @@ def pending_area_overlay(
 
     >>> action = ActionObservation(
     ...     "fireball", "Fireball", "spell", "mage", source_id="fireball",
-    ...     area_preview={"shape": "radius"},
+    ...     area_preview={"shape": "radius"}, required_configuration="aim",
     ... )
     >>> dict(pending_area_overlay(
     ...     (action,), TargetSelectionMode("spell", "fireball")
@@ -311,7 +312,7 @@ def pending_area_overlay(
     {'shape': 'radius'}
     """
 
-    action = pending_area_action(actions, mode)
+    action = pending_aim_action(actions, mode)
     return action.area_preview if action is not None else None
 
 
@@ -333,7 +334,7 @@ def mode_is_available(
         return False
     if pending_mode in modes:
         return True
-    return pending_area_action(actions, pending_mode) is not None
+    return pending_aim_action(actions, pending_mode) is not None
 
 
 def completed_allocation_action(

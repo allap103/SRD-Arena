@@ -21,6 +21,7 @@ from srd_arena.content.capabilities import (
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
     SpeedMultiplierEffectSchema,
+    TeleportEffectSchema,
     TurnEconomyRestrictionEffectSchema,
 )
 from srd_arena.content.capabilities import (
@@ -214,6 +215,7 @@ class SpellEffectSchema(
             | CompelledTurnEffectSchema
             | ForcedMovementEffectSchema
             | SpeedMultiplierEffectSchema
+            | TeleportEffectSchema
             | ProhibitReactionEffectSchema
             | TurnEconomyRestrictionEffectSchema
             | RollModifierEffectSchema

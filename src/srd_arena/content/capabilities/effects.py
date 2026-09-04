@@ -84,6 +84,14 @@ class ForcedMovementEffectSchema(CapabilitySchemaModel):
     up_to: bool = True
 
 
+class TeleportEffectSchema(CapabilitySchemaModel):
+    """Encode teleportation to a selected destination space."""
+
+    type: Literal["teleport"]
+    distance_feet: PositiveInt
+    line_of_sight: bool = False
+
+
 class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
     """Encode the ``speed_multiplier`` capability-effect variant with numerator."""
 
@@ -179,6 +187,7 @@ ActionEffectSchema = Annotated[
     | AttackHitRetaliationEffectSchema
     | ConditionEffectSchema
     | ForcedMovementEffectSchema
+    | TeleportEffectSchema
     | SpeedMultiplierEffectSchema
     | ProhibitReactionEffectSchema
     | TurnEconomyRestrictionEffectSchema

@@ -15,10 +15,27 @@ from srd_arena.frontends.gui.ui.encounter.area_previews import (
 )
 from srd_arena.frontends.gui.ui.encounter.targeting import (
     mode_for_action,
+    pending_aim_action,
     pending_area_overlay,
 )
 
 ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
+
+
+def test_point_aiming_does_not_require_an_area_preview() -> None:
+    from srd_arena.engine.api import ActionObservation
+
+    action = ActionObservation(
+        "misty-step",
+        "Misty Step",
+        "spell",
+        "warlock",
+        source_id="misty_step",
+        required_configuration="aim",
+    )
+
+    assert pending_aim_action((action,), mode_for_action(action)) is action
+    assert pending_area_overlay((action,), mode_for_action(action)) is None
 
 
 def test_area_overlay_readers_ignore_malformed_geometry() -> None:

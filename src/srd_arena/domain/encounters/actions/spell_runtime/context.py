@@ -13,7 +13,7 @@ from srd_arena.domain.capabilities import (
     SavingThrowResolution,
     primary_effects,
 )
-from srd_arena.domain.geometry import AreaOfEffect
+from srd_arena.domain.geometry import AreaOfEffect, Position
 from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.spells.resolution import SpellActionContext, SpellTargetContext
 from srd_arena.domain.spells.rules import SpellActionPayload
@@ -91,6 +91,11 @@ def build_spell_action_context(
         current_round=state.round.number,
         targets=targets,
         area=area,
+        destination=(
+            Position(int(payload.aim_point[0]), int(payload.aim_point[1]))
+            if payload.aim_point is not None
+            else None
+        ),
         source_ref=creature_ref,
         environment=environment,
         selected_condition=payload.selected_condition,

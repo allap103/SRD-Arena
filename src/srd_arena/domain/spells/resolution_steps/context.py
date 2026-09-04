@@ -9,7 +9,7 @@ from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.effects.results import AttackHitRetaliationApplication
-from srd_arena.domain.geometry import AreaOfEffect
+from srd_arena.domain.geometry import AreaOfEffect, Position
 from srd_arena.domain.rolls.dice import (
     D20RollMode,
     DicePoolResult,
@@ -146,6 +146,7 @@ class SpellActionContext:
     environment: SpellResolutionEnvironment
     targets: tuple[SpellTargetContext, ...] = ()
     area: AreaOfEffect | None = None
+    destination: Position | None = None
     selected_condition: str | None = None
     selected_damage_type: str | None = None
     selected_ability: str | None = None

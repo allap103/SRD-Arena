@@ -104,7 +104,7 @@ def apply_forced_movement(
     path = forced_movement_path(state, source_ref, target_ref, direction, steps)
     if path:
         state.creatures[target_ref].position = path[-1]
-    ended_grapples = _end_separated_grapples(state, target_ref) if path else ()
+    ended_grapples = end_separated_grapples(state, target_ref) if path else ()
     return ForcedMovementResult(
         target_ref=target_ref,
         start=start,
@@ -144,10 +144,12 @@ def _relative_step(
     return dx, dy
 
 
-def _end_separated_grapples(
+def end_separated_grapples(
     state: EncounterState,
     moved_ref: CreatureRef,
 ) -> tuple[tuple[CreatureRef, CreatureRef], ...]:
+    """End grapple relationships broken by one creature changing position."""
+
     separated = tuple(
         (relationship.source_ref, relationship.target_ref)
         for relationship in state.relationships

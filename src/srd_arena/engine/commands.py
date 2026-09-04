@@ -20,7 +20,7 @@ class SelectAction:
 
 @dataclass(frozen=True)
 class AimAction:
-    """Choose an advertised area action and place its origin on the grid."""
+    """Choose a destination or origin for an advertised point-aimed action."""
 
     action_id: str
     x: float

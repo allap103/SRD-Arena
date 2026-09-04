@@ -15,6 +15,7 @@ _SHARED_EFFECT_TYPES = (
     effects.ConditionEffectSchema,
     effects.CompelledTurnEffectSchema,
     effects.ForcedMovementEffectSchema,
+    effects.TeleportEffectSchema,
     effects.SpeedMultiplierEffectSchema,
     effects.ProhibitReactionEffectSchema,
     effects.TurnEconomyRestrictionEffectSchema,
@@ -215,6 +216,11 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             value.direction,
             value.distance_feet,
             value.up_to,
+        )
+    if isinstance(value, effects.TeleportEffectSchema):
+        return domain.TeleportEffect(
+            value.distance_feet,
+            value.line_of_sight,
         )
     if isinstance(value, effects.SpeedMultiplierEffectSchema):
         return domain.SpeedMultiplierEffect(

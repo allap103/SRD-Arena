@@ -13,6 +13,7 @@ ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
 ApplyOngoingEffect = Callable[[EffectResult, str], object]
 RemoveOngoingEffects = Callable[[EffectResult], object]
+ApplyTeleport = Callable[[str, int, int], object]
 
 
 def apply_effects(
@@ -22,6 +23,7 @@ def apply_effects(
     remove_condition: RemoveCondition,
     apply_ongoing_effect: ApplyOngoingEffect | None = None,
     remove_ongoing_effects: RemoveOngoingEffects | None = None,
+    apply_teleport: ApplyTeleport | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
     """Dispatch resolved effects through the supplied state-mutation services.
@@ -65,6 +67,14 @@ def apply_effects(
             remove_ongoing_effects(effect)
         elif effect.kind == "message":
             messages.extend(message_effects(effect))
+        elif effect.kind == "teleport":
+            if apply_teleport is None:
+                raise ValueError("No teleport application service provided.")
+            x = effect.data.get("x")
+            y = effect.data.get("y")
+            if not isinstance(x, int) or not isinstance(y, int):
+                raise ValueError("teleport effect requires integer coordinates.")
+            apply_teleport(effect.target_ref, x, y)
         else:
             raise ValueError(f"Unsupported effect kind: {effect.kind}")
     return messages

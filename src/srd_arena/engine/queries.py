@@ -124,7 +124,7 @@ ActionOptionDetails = (
 
 @dataclass(frozen=True)
 class ActionAim:
-    """Request that an advertised area action be aimed at a battlefield point."""
+    """Request that an advertised action be aimed at a battlefield point."""
 
     x: float
     y: float

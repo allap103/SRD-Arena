@@ -192,6 +192,14 @@ class ForcedMovementEffect:
 
 
 @dataclass(frozen=True)
+class TeleportEffect:
+    """Move a target instantly to a selected destination space."""
+
+    distance_feet: int
+    line_of_sight: bool = False
+
+
+@dataclass(frozen=True)
 class SpeedMultiplierEffect:
     """Multiply effective Speed by a rational value for a duration."""
 
@@ -276,6 +284,7 @@ CapabilityEffect = (
     | HitPointMaximumModifierEffect
     | ConditionEffect
     | ForcedMovementEffect
+    | TeleportEffect
     | SpeedMultiplierEffect
     | ProhibitReactionsEffect
     | TurnEconomyRestrictionEffect

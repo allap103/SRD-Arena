@@ -35,5 +35,25 @@
   "miscTags": [
     "SGT",
     "TP"
-  ]
+  ],
+  "capability": {
+    "target": {
+      "type": "self"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "teleport",
+            "distance_feet": 30,
+            "line_of_sight": true
+          }
+        ]
+      }
+    }
+  },
+  "implementation": {
+    "status": "complete"
+  }
 }

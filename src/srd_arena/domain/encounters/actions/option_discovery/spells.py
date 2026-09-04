@@ -11,6 +11,7 @@ from srd_arena.domain.capabilities import (
     DamageReductionEffect,
     DamageResistanceEffect,
     RollModifierEffect,
+    TeleportEffect,
     capability_effects,
     primary_effects,
 )
@@ -21,7 +22,6 @@ from srd_arena.domain.spells.rules import (
     spell_action_id,
     spell_action_label,
     spell_action_payload,
-    spell_supports_higher_level,
 )
 
 from ...encounter_models.actions import (
@@ -219,6 +219,10 @@ def _append_spell_option(
             id=spell_action_id(spell, target_ref=target_ref) + selection_id,
             creature_ref=creature_ref,
             cost=cost,
+            aim_committed=not any(
+                isinstance(effect, TeleportEffect)
+                for effect in primary_effects(spell.definition)
+            ),
         ),
     )
 
@@ -231,8 +235,6 @@ def _append_spell_action_variants(
 ) -> None:
     actions.append(action)
     if spell.level == 0:
-        return
-    if not spell_supports_higher_level(spell):
         return
     payload = action.value
     if not isinstance(payload, SpellActionPayload):

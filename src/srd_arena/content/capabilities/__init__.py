@@ -15,6 +15,7 @@ from .effects import (
     ProhibitReactionEffectSchema,
     RollModifierEffectSchema,
     SpeedMultiplierEffectSchema,
+    TeleportEffectSchema,
     TurnEconomyRestrictionEffectSchema,
 )
 from .errors import CapabilityBuildError
@@ -76,6 +77,7 @@ __all__ = [
     "SelfTargetSchema",
     "SizeRequirementSchema",
     "SpeedMultiplierEffectSchema",
+    "TeleportEffectSchema",
     "TimedDurationSchema",
     "TurnEconomyRestrictionEffectSchema",
 ]

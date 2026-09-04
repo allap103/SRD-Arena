@@ -22,6 +22,7 @@ from .common import target_requirement_failure
 from .models import EligibilityFailure
 from .spell_selection import check_staged_spell_selection
 from .spell_targeting import spell_target_eligibility
+from .teleportation import teleport_destination_failure
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -88,6 +89,15 @@ class SpellActionRule:
                     runtime_issue.code,
                     runtime_issue.message,
                 )
+            teleport_failure = teleport_destination_failure(
+                state,
+                actor_ref,
+                spell.definition,
+                payload.aim_point,
+                aim_committed=action.aim_committed,
+            )
+            if teleport_failure is not None:
+                return teleport_failure
         reason = spell_cast_block_reason_for(
             state,
             actor.spellcasting,

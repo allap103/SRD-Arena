@@ -48,6 +48,7 @@ from .effects import (
     SenseEffect,
     SpeedModifierEffect,
     SpeedMultiplierEffect,
+    TeleportEffect,
     TemporaryHitPointsEffect,
     TurnEconomyRestrictionEffect,
 )
@@ -148,6 +149,7 @@ __all__ = [
     "SpellSlotCost",
     "SpellSlotPool",
     "TargetCount",
+    "TeleportEffect",
     "TemporaryHitPointsEffect",
     "TurnEconomyRestrictionEffect",
     "all_capability_effects",

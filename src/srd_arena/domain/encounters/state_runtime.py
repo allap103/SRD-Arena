@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.application import apply_effects
 from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.geometry import Position
 
 from .condition_state import apply_condition, remove_condition
 from .effect_lifecycle.application import start_ongoing_effect
@@ -13,6 +14,7 @@ from .effect_lifecycle.removal import remove_ongoing_effects
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
 from .event_stream import create_event as create_event
+from .teleportation import apply_teleport
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -46,6 +48,11 @@ def apply_encounter_effects(
             state, effect, origin
         ),
         remove_ongoing_effects=lambda effect: remove_ongoing_effects(state, effect),
+        apply_teleport=lambda target_ref, x, y: apply_teleport(
+            state,
+            target_ref,
+            Position(x, y),
+        ),
         origin_id=resolved_origin_id,
     )
 
