@@ -33,6 +33,7 @@ from .actions.d20_roll_modifiers import (
     action_d20_occurrences,
     open_d20_roll_modifier_decision,
 )
+from .actions.reckless_attack import open_reckless_attack_decision
 from .encounter_models.actions import EncounterAction
 from .encounter_models.decisions import DecisionFrame, ResumeActionExecution
 from .encounter_models.resolution import ActionExecutionContext, ActionExecutionResult
@@ -63,6 +64,7 @@ def execute_creature_action(
     ...     progress=SimpleNamespace(),
     ...     action_id="action-1",
     ...     rejection=None,
+    ...     reckless_attack_decision_checked=True,
     ...     d20_decisions_checked=True,
     ... )
     >>> marker = object()
@@ -105,6 +107,17 @@ def continue_creature_action(
     action = context.action
     decision = context.decision
     action_id = context.action_id
+    if not context.reckless_attack_decision_checked:
+        context.reckless_attack_decision_checked = True
+        if open_reckless_attack_decision(
+            state,
+            action,
+            actor_ref=context.actor_ref,
+            action_id=action_id,
+            continuation=ResumeActionExecution(context),
+            progress=progress,
+        ):
+            return finish_action_execution(context, action_ends_turn=False)
     if not context.d20_decisions_checked:
         context.d20_decisions_checked = True
         if open_d20_roll_modifier_decision(

@@ -36,6 +36,8 @@ def _prepared_session(
     )
     participant.controller = "external" if external_barbarian else "scripted"
     state.turn.index = state.initiative_order.index("barbarian")
+    # This fixture isolates the post-hit feat after the first-roll choice.
+    state.creatures["barbarian"].attack_rolls_made_this_turn = 1
     state.creatures["barbarian"].position = Position(4, 4)
     state.creatures["ogre_target"].position = Position(5, 4)
     state.creatures["warlock"].position = Position(0, 0)

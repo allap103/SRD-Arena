@@ -8,7 +8,7 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.rolls.dice import combine_roll_modes
 from srd_arena.domain.rolls.occurrences import attack_roll_occurrence_id
 
-from ...attack_economy import spend_attack, spend_current_attack
+from ...attack_economy import record_attack_rolls, spend_attack, spend_current_attack
 from ...defeat import resolve_creature_defeat
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
@@ -32,6 +32,7 @@ from ..attack_resolution import (
     attack_range_band_squares,
     matching_damage_reroll_rule,
     resolve_attack,
+    selected_attack_ability,
     selected_attack_type,
 )
 from ..d20_roll_modifiers import (
@@ -107,10 +108,17 @@ def resolve_attack_action(
     nearby_opponent_positions = tuple(
         state.creatures[opponent_ref].position for opponent_ref in nearby_opponent_refs
     )
+    attack_ability = selected_attack_ability(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
     attack_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "attack_roll",
+        attack_ability,
     )
     attack_type = selected_attack_type(
         creature,
@@ -130,6 +138,7 @@ def resolve_attack_action(
     )
     cover = cover_between(state, creature_ref, target_ref)
     roll_die = state.dice.roll_die
+    record_attack_rolls(state, creature_ref)
     outcome = resolve_attack(
         creature,
         defender,
@@ -149,6 +158,7 @@ def resolve_attack_action(
                 creature_state.position,
                 nearby_opponent_positions,
                 nearby_opponent_refs=nearby_opponent_refs,
+                attack_ability=attack_ability,
             ),
             range_roll_mode,
             consume_d20_roll_mode(

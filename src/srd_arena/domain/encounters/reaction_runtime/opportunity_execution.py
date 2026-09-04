@@ -14,7 +14,9 @@ from ..actions.attack_resolution import (
     can_make_opportunity_attack,
     matching_damage_reroll_rule,
     resolve_attack,
+    selected_attack_ability,
 )
+from ..attack_economy import record_attack_rolls
 from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
@@ -158,11 +160,18 @@ def resolve_automatic_opportunity_attacks(
     ]
     for reactor_ref, reactor in reactors:
         reactor.reaction_available = False
+        attack_ability = selected_attack_ability(
+            reactor.creature,
+            state.item_templates,
+            preferred_attack_type="melee",
+        )
         attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
+            attack_ability,
         )
+        record_attack_rolls(state, reactor_ref)
         attack = resolve_attack(
             reactor.creature,
             mover.creature,
@@ -180,6 +189,7 @@ def resolve_automatic_opportunity_attacks(
                 "melee",
                 reactor.position,
                 (mover.position,),
+                attack_ability=attack_ability,
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
             target_armor_class=effective_armor_class(
@@ -319,11 +329,18 @@ def apply_reaction_action(
         target = state.creatures[target_ref]
         target_label = creature_label(state, target_ref)
         reactor_label = creature_label(state, reactor_ref)
+        attack_ability = selected_attack_ability(
+            reactor.creature,
+            state.item_templates,
+            preferred_attack_type="melee",
+        )
         attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
+            attack_ability,
         )
+        record_attack_rolls(state, reactor_ref)
         attack = resolve_attack(
             reactor.creature,
             target.creature,
@@ -341,6 +358,7 @@ def apply_reaction_action(
                 "melee",
                 reactor.position,
                 (target.position,),
+                attack_ability=attack_ability,
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
             target_armor_class=effective_armor_class(

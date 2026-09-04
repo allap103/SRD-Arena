@@ -120,6 +120,14 @@ class D20RollModifierRequest(DecisionRequest):
     pending: PendingD20RollModifiers
 
 
+@dataclass(frozen=True)
+class RecklessAttackRequest(DecisionRequest):
+    """Ask whether the actor makes its first eligible attack recklessly."""
+
+    action_id: str
+    actor_ref: CreatureRef
+
+
 @dataclass
 class PendingSpellProjectiles:
     """Preserve one started spell while its projectiles and choices resolve."""

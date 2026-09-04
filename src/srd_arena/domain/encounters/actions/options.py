@@ -37,6 +37,7 @@ from .option_discovery.standard import (
     available_feature_actions,
     feature_action_available,
 )
+from .reckless_attack import reckless_attack_actions
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -95,6 +96,8 @@ def decision_actions(state: EncounterState) -> list[EncounterAction]:
         return initiative_swap_actions(state)
     if decision.kind == "d20_roll_modifier":
         return d20_roll_modifier_actions(state)
+    if decision.kind == "reckless_attack":
+        return reckless_attack_actions(state)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)

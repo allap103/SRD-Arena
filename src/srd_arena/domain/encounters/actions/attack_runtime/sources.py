@@ -382,6 +382,24 @@ def selected_attack_type(
     return attack_source.attack_modes[0]
 
 
+def selected_attack_ability(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
+) -> str | None:
+    """Return the ability used by the exact selected attack source."""
+
+    attack_source = select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    return "strength" if attack_source is None else attack_source.ability
+
+
 def can_make_opportunity_attack(
     attacker: Creature,
     items_by_id: dict[str, Item],

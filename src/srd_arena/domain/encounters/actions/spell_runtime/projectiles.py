@@ -17,6 +17,7 @@ from srd_arena.domain.spells.resolution import (
     resolve_spell_action,
 )
 
+from ...attack_economy import record_attack_rolls
 from ...encounter_models.decisions import (
     PendingSpellProjectiles,
     ResumeSpellProjectiles,
@@ -138,6 +139,12 @@ def resume_spell_projectiles(
         )
         if result is None:
             raise RuntimeError("A staged spell projectile could not be resolved.")
+        if isinstance(result.details, SpellResolutionDetails):
+            record_attack_rolls(
+                state,
+                invocation.caster_ref,
+                len(result.details.attack_roll_details),
+            )
         result = _set_projectile_index(result, projectile_index)
         invocation.resolved_results.append(result)
         apply_spell_result_consequences(

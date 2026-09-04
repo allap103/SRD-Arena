@@ -13,11 +13,13 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.creatures.feature_rules import (
     spell_invocation_grant,
 )
+from srd_arena.domain.effects.results import SpellResolutionDetails
 from srd_arena.domain.spells.resolution import (
     resolve_spell_action as _resolve_spell_action_impl,
 )
 from srd_arena.domain.spells.rules import SpellActionPayload
 
+from ..attack_economy import record_attack_rolls
 from ..encounter_models.resolution import EncounterProgress
 from .d20_roll_modifiers import clear_d20_roll_modes
 from .option_discovery.spell_areas import spell_area, spell_area_targets
@@ -246,6 +248,13 @@ def resolve_spell_action(
             spell_id=spell.id,
         )
         return
+
+    if isinstance(result.details, SpellResolutionDetails):
+        record_attack_rolls(
+            state,
+            creature_ref,
+            len(result.details.attack_roll_details),
+        )
 
     apply_spell_result(
         state,

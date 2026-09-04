@@ -138,6 +138,26 @@ def spend_current_attack(
     reconcile_remaining_attacks(state, (creature_ref,))
 
 
+def record_attack_rolls(
+    state: EncounterState,
+    creature_ref: CreatureRef,
+    count: int = 1,
+) -> None:
+    """Record attack rolls made during the named creature's own turn.
+
+    Reactions outside the creature's turn do not consume its next turn's
+    first-attack opportunity.
+    """
+
+    if count < 0:
+        raise ValueError("Attack-roll count cannot be negative.")
+    if (
+        state.initiative_order
+        and state.initiative_order[state.turn.index] == creature_ref
+    ):
+        state.creatures[creature_ref].attack_rolls_made_this_turn += count
+
+
 def clear_attack_action(creature_state: EncounterCreatureState) -> None:
     """Clear both the visible attack count and its progress metadata.
 

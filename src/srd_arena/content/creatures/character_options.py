@@ -199,6 +199,13 @@ def _normalize_class_feature(
             source_class=class_name,
             level=feature_level,
         )
+    if feature_name == "Reckless Attack":
+        return ClassFeature(
+            id="reckless_attack",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
     return None
 
 

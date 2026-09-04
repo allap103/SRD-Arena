@@ -17,10 +17,68 @@ from srd_arena.domain.effects.runtime import (
     ExtendEventRule,
     OngoingEffectLifecycle,
     UntilTurnEnd,
+    UntilTurnStart,
 )
 from srd_arena.domain.rolls.dice import DieRoller
 
 from ..model import Creature
+
+RECKLESS_ATTACK_FEATURE_ID = "reckless_attack"
+
+
+def has_reckless_attack(creature: Creature) -> bool:
+    """Return whether the creature owns the Reckless Attack feature."""
+
+    return any(
+        feature.id == RECKLESS_ATTACK_FEATURE_ID for feature in creature.class_features
+    )
+
+
+def reckless_attack_result(
+    creature: Creature,
+    actor_ref: str,
+    round_number: int,
+) -> ActionResolutionResult:
+    """Create the sourced advantage and exposure state for Reckless Attack."""
+
+    return ActionResolutionResult(
+        definition_id=RECKLESS_ATTACK_FEATURE_ID,
+        definition_name="Reckless Attack",
+        messages=[("system", f"{creature.name} attacks recklessly.")],
+        effects=[
+            EffectResult(
+                kind="start_ongoing_effect",
+                target_ref=actor_ref,
+                data={
+                    "source_ref": actor_ref,
+                    "source_label": creature.name,
+                    "source_kind": "feature",
+                    "definition_id": RECKLESS_ATTACK_FEATURE_ID,
+                    "effect_kind": "generic",
+                    "polarity": EffectPolarity.NEUTRAL.value,
+                    "dispellable": False,
+                },
+                effect_label="Reckless Attack",
+                duration=UntilTurnStart(actor_ref, round_number + 1),
+                rule_effects=(
+                    RollAdjustment(
+                        RollModifier(
+                            "attack_roll",
+                            "advantage",
+                            ability="strength",
+                        )
+                    ),
+                    RollAdjustment(
+                        RollModifier(
+                            "attack_roll",
+                            "advantage",
+                            subject="attacks_against_target",
+                        )
+                    ),
+                ),
+            )
+        ],
+    )
 
 
 def resolve_barbarian_feature(

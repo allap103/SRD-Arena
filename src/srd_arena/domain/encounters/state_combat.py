@@ -54,6 +54,7 @@ def attack_roll_mode_for(
     nearby_opponent_positions: tuple[Position, ...],
     *,
     nearby_opponent_refs: tuple[CreatureRef, ...] = (),
+    attack_ability: str | None = None,
 ) -> D20RollMode:
     """Resolve advantage or disadvantage for an attacker-target pair.
 
@@ -111,6 +112,7 @@ def attack_roll_mode_for(
             state,
             attacker_ref,
             "attack_roll",
+            attack_ability,
         ).mode
     )
     target_effective = state.effective_conditions_for(target_ref)

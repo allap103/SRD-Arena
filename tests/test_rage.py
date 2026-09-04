@@ -198,6 +198,13 @@ def test_rage_adds_two_to_strength_based_weapon_damage() -> None:
     )
 
     result = session._choose(attack_id)
+    if state.current_decision().kind == "reckless_attack":
+        decline = next(
+            option
+            for option in session._read().action_options
+            if option.kind == "decline_reckless_attack"
+        )
+        result = session._choose(decline.id)
 
     attack = next(event for event in result.events if event.type == "attack_resolved")
     assert attack.data["damage"] == 14

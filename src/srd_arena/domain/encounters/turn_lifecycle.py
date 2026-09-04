@@ -209,6 +209,7 @@ def _begin_turn_if_alive(
     creature_state.action_used_this_turn = False
     creature_state.magic_actions_remaining = 1
     clear_attack_action(creature_state)
+    creature_state.attack_rolls_made_this_turn = 0
     creature_state.bonus_action_available = True
     creature_state.bonus_action_used_this_turn = False
     if progress is not None:
