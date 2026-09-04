@@ -15,6 +15,7 @@ from srd_arena.domain.capabilities import (
     SavingThrowResolution,
     TargetCount,
 )
+from srd_arena.domain.creatures import Spellcasting
 from srd_arena.domain.encounters.actions.capability_support import (
     capability_runtime_issue,
     capability_target_runtime_issue,
@@ -206,7 +207,14 @@ def test_spell_eligibility_rejects_unsupported_semantics_before_resolution() -> 
         5,
         definition=definition,
     )
-    spellcasting = SimpleNamespace(learned_spells=(spell,))
+    spellcasting = Spellcasting(
+        "int",
+        3,
+        13,
+        5,
+        "full",
+        learned_spells=[spell],
+    )
     state = SimpleNamespace(
         creatures={
             "mage": SimpleNamespace(creature=SimpleNamespace(spellcasting=spellcasting))

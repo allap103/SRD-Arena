@@ -5,6 +5,9 @@ from __future__ import annotations
 from dataclasses import replace
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grant,
+)
 from srd_arena.domain.effects.results import (
     ActionResolutionResult,
     SpellResolutionDetails,
@@ -85,14 +88,8 @@ def resume_spell_projectiles(
     spellcasting = caster.spellcasting
     if spellcasting is None:
         raise RuntimeError("A staged spell invocation lost its spellcasting source.")
-    spell = next(
-        (
-            candidate
-            for candidate in spellcasting.learned_spells
-            if candidate.id == invocation.spell_id
-        ),
-        None,
-    )
+    grant = spell_invocation_grant(caster, invocation.payload.grant_id)
+    spell = spellcasting.spell_for_grant(invocation.spell_id, grant)
     if spell is None or spell.definition is None:
         raise RuntimeError("A staged spell invocation lost its spell definition.")
 
@@ -131,6 +128,9 @@ def resume_spell_projectiles(
                 area=None,
                 cast_level=invocation.cast_level,
                 announce_cast=not invocation.cast_announced,
+                maximize_temporary_hit_point_dice=(
+                    grant is not None and grant.temporary_hit_point_dice == "maximum"
+                ),
             )
         )
         if result is None:
@@ -156,6 +156,10 @@ def resume_spell_projectiles(
             progress=progress,
             event_type="spell_projectile_resolved",
             additional_data={"projectile_index": projectile_index},
+            grant_id=grant.id if grant is not None else None,
+            consumes_spell_slot=(
+                grant.consumes_spell_slot if grant is not None else True
+            ),
         )
         if resolve_repelling_blast_hit(
             state,
@@ -183,6 +187,8 @@ def resume_spell_projectiles(
             "projectile_count": len(invocation.target_refs),
             "resolved_projectile_count": len(invocation.resolved_results),
         },
+        grant_id=grant.id if grant is not None else None,
+        consumes_spell_slot=(grant.consumes_spell_slot if grant is not None else True),
     )
 
 

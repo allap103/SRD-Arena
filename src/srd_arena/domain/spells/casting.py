@@ -45,6 +45,7 @@ def spell_cast_block_reason(
     bonus_action_available: bool,
     reaction_available: bool,
     cast_level: int | None = None,
+    consumes_spell_slot: bool = True,
 ) -> str | None:
     """Return the first missing turn resource or spell slot preventing a cast.
 
@@ -67,6 +68,10 @@ def spell_cast_block_reason(
     if economy.reaction > 0 and not reaction_available:
         return "You have already used your Reaction."
     slot_level = cast_level if cast_level is not None else spell.level
-    if spell.level > 0 and spellcasting.spell_slots_remaining.get(slot_level, 0) <= 0:
+    if (
+        consumes_spell_slot
+        and spell.level > 0
+        and spellcasting.spell_slots_remaining.get(slot_level, 0) <= 0
+    ):
         return f"You have no level {slot_level} spell slots remaining."
     return None

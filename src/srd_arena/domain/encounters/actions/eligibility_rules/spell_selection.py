@@ -5,6 +5,10 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grant,
+)
+from srd_arena.domain.spells import SpellInvocationGrant
 from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.rules import SpellActionPayload, spell_chooses_area_targets
 
@@ -72,17 +76,23 @@ def _resolve_staged_selection(
             "No spell target selection is active.",
         )
     actor = state.creatures[actor_ref].creature
-    spell = _known_spell(actor, pending.spell_id)
-    if spell is None:
-        return EligibilityFailure(
-            "spell_unavailable",
-            "The staged spell is no longer available.",
-        )
     payload = pending.action.value
     if not isinstance(payload, SpellActionPayload):
         return EligibilityFailure(
             "spell_selection_unavailable",
             "The staged action has no spell payload.",
+        )
+    grant = spell_invocation_grant(actor, payload.grant_id)
+    if payload.grant_id is not None and grant is None:
+        return EligibilityFailure(
+            "spell_grant_unavailable",
+            "The staged spell invocation is no longer available.",
+        )
+    spell = _known_spell(actor, pending.spell_id, grant)
+    if spell is None:
+        return EligibilityFailure(
+            "spell_unavailable",
+            "The staged spell is no longer available.",
         )
     candidates = (
         spell_area_targets(state, actor, spell, aim_point=payload.aim_point)
@@ -96,15 +106,16 @@ def _resolve_staged_selection(
     )
 
 
-def _known_spell(actor: Creature, spell_id: str) -> Spell | None:
+def _known_spell(
+    actor: Creature,
+    spell_id: str,
+    grant: SpellInvocationGrant | None = None,
+) -> Spell | None:
     """Return the actor's currently known spell with the requested ID."""
 
     if actor.spellcasting is None:
         return None
-    return next(
-        (spell for spell in actor.spellcasting.learned_spells if spell.id == spell_id),
-        None,
-    )
+    return actor.spellcasting.spell_for_grant(spell_id, grant)
 
 
 def _check_target_toggle(

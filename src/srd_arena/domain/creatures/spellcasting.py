@@ -11,6 +11,7 @@ from .resources import ResourceRecovery, RestType
 
 if TYPE_CHECKING:
     from srd_arena.domain.spells.definitions import Spell
+    from srd_arena.domain.spells.invocation_grants import SpellInvocationGrant
 
 
 @dataclass
@@ -33,6 +34,27 @@ class Spellcasting:
     spell_slots_max: dict[int, int] = field(default_factory=dict)
     spell_slots_remaining: dict[int, int] = field(default_factory=dict)
     learned_spells: list[Spell] = field(default_factory=list)
+    feature_spells: list[Spell] = field(default_factory=list)
+
+    def spell_for_grant(
+        self,
+        spell_id: str,
+        grant: SpellInvocationGrant | None = None,
+    ) -> Spell | None:
+        """Resolve a spell through its ordinary or feature-granted source.
+
+        A feature spell is deliberately not included in ``learned_spells``:
+        owning Fiendish Vigor, for example, does not also teach False Life for
+        ordinary spell-slot casting.
+        """
+
+        if grant is not None and grant.spell_id != spell_id:
+            return None
+        candidates = self.feature_spells if grant is not None else self.learned_spells
+        return next(
+            (spell for spell in candidates if spell.id == spell_id),
+            None,
+        )
 
     @property
     def spell_slot_pool(self) -> SpellSlotPool:

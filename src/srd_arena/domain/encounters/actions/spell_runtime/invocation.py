@@ -34,6 +34,7 @@ def begin_spell_invocation(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None,
+    consumes_spell_slot: bool = True,
     creature_ref: str,
     action_id: str,
     progress: EncounterProgress,
@@ -78,7 +79,14 @@ def begin_spell_invocation(
     (True, 1)
     """
 
-    spend_spell_resources(state, spellcasting, spell, cost, cast_level)
+    spend_spell_resources(
+        state,
+        spellcasting,
+        spell,
+        cost,
+        cast_level,
+        consumes_spell_slot,
+    )
     if spell.concentration:
         _end_replaced_concentration(
             state,

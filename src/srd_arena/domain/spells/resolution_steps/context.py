@@ -162,6 +162,7 @@ class SpellActionContext:
     save_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
     saving_throw_cover_bonuses: Mapping[str, int] = field(default_factory=dict)
     healing_allocations: Mapping[str, int] = field(default_factory=dict)
+    maximize_temporary_hit_point_dice: bool = False
 
     def __post_init__(self) -> None:
         """Detach all mapping facts from their mutable construction inputs."""

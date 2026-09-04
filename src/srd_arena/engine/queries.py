@@ -37,6 +37,7 @@ class SpellOptionDetails:
     selected_ability: str | None
     selected_option: str | None
     healing_allocations: tuple[tuple[str, int], ...]
+    grant_id: str | None = None
 
 
 @dataclass(frozen=True)

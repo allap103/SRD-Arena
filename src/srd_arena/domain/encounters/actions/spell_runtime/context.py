@@ -51,6 +51,7 @@ def build_spell_action_context(
     targets: tuple[SpellTargetContext, ...],
     area: AreaOfEffect | None,
     cast_level: int | None,
+    maximize_temporary_hit_point_dice: bool = False,
     announce_cast: bool = True,
 ) -> SpellActionContext:
     """Supply encounter state needed by otherwise source-neutral resolution.
@@ -145,6 +146,7 @@ def build_spell_action_context(
             for candidate in targets
         },
         healing_allocations=dict(payload.healing_allocations),
+        maximize_temporary_hit_point_dice=maximize_temporary_hit_point_dice,
     )
 
 

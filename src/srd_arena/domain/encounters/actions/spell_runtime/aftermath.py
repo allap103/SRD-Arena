@@ -36,6 +36,8 @@ def apply_spell_result(
     action_id: str,
     result: ActionResolutionResult,
     progress: EncounterProgress,
+    grant_id: str | None = None,
+    consumes_spell_slot: bool = True,
 ) -> None:
     """Publish resolved effects and record the completed cast.
 
@@ -94,6 +96,8 @@ def apply_spell_result(
         action_id=action_id,
         result=result,
         progress=progress,
+        grant_id=grant_id,
+        consumes_spell_slot=consumes_spell_slot,
     )
 
 
@@ -133,6 +137,8 @@ def publish_spell_result(
     event_type: str = "spell_cast",
     include_resolution_details: bool = True,
     additional_data: dict[str, object] | None = None,
+    grant_id: str | None = None,
+    consumes_spell_slot: bool = True,
 ) -> None:
     """Publish a spell result as one typed encounter event."""
 
@@ -155,9 +161,10 @@ def publish_spell_result(
                 cast_level if cast_level is not None else spell.level,
                 0,
             )
-            if spell.level > 0
+            if consumes_spell_slot and spell.level > 0
             else None
         ),
+        "grant_id": grant_id,
         "success": details.success,
     }
     if include_resolution_details:

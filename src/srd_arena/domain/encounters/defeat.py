@@ -70,21 +70,17 @@ def _resolve_dark_ones_blessing(
 ) -> None:
     range_squares = state.definition.grid.distance_from_feet(10, minimum=1)
     for beneficiary_ref, beneficiary_state in state.creatures.items():
-        if (
-            not beneficiary_state.is_alive
-            or not creatures_are_opponents(state, beneficiary_ref, defeated_ref)
+        if not beneficiary_state.is_alive or not creatures_are_opponents(
+            state, beneficiary_ref, defeated_ref
         ):
             continue
-        amount = dark_ones_blessing_temporary_hit_points(
-            beneficiary_state.creature
-        )
+        amount = dark_ones_blessing_temporary_hit_points(beneficiary_state.creature)
         if amount is None:
             continue
         caused_defeat = beneficiary_ref == defeated_by_ref
         witnessed_nearby_defeat = (
             defeated_by_ref is not None
-            and creature_distance(state, beneficiary_ref, defeated_ref)
-            <= range_squares
+            and creature_distance(state, beneficiary_ref, defeated_ref) <= range_squares
         )
         if not caused_defeat and not witnessed_nearby_defeat:
             continue

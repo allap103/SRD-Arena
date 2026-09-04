@@ -20,6 +20,7 @@ class SpellActionPayload:
     selected_option: str | None = None
     slot_level: int | None = None
     healing_allocations: tuple[tuple[str, int], ...] = ()
+    grant_id: str | None = None
 
     @property
     def target_ref(self) -> str | None:
@@ -46,6 +47,7 @@ def serialize_spell_action_payload(payload: SpellActionPayload) -> dict[str, obj
 
     return {
         "spell_id": payload.spell_id,
+        "grant_id": payload.grant_id,
         "target_refs": list(payload.target_refs),
         "aim_point": payload.aim_point,
         "selected_condition": payload.selected_condition,
@@ -78,7 +80,12 @@ def spell_action_label(
     return f"Cast {spell.name} on {target_label[:1].lower()}{target_label[1:]}"
 
 
-def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
+def spell_action_id(
+    spell: Spell,
+    *,
+    target_ref: str | None = None,
+    grant_id: str | None = None,
+) -> str:
     """Build a stable selectable-action ID for a spell and optional target.
 
     >>> spell = Spell("fire_bolt", "Fire Bolt", "XPHB", 0)
@@ -86,11 +93,15 @@ def spell_action_id(spell: Spell, *, target_ref: str | None = None) -> str:
     'spell-fire_bolt-goblin'
     """
 
-    if target_ref is None:
-        return f"spell-{spell.id}"
-    if target_ref.startswith("participant:"):
-        return f"spell-{spell.id}-{target_ref.removeprefix('participant:')}"
-    return f"spell-{spell.id}-{target_ref.replace(':', '-')}"
+    base = f"spell-{spell.id}"
+    if target_ref is not None:
+        target_id = (
+            target_ref.removeprefix("participant:")
+            if target_ref.startswith("participant:")
+            else target_ref.replace(":", "-")
+        )
+        base = f"{base}-{target_id}"
+    return f"{base}-via-{grant_id}" if grant_id is not None else base
 
 
 def spell_action_payload(
@@ -103,6 +114,7 @@ def spell_action_payload(
     selected_option: str | None = None,
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
+    grant_id: str | None = None,
 ) -> SpellActionPayload:
     """Build the complete typed selection for one spell invocation.
 
@@ -132,6 +144,7 @@ def spell_action_payload(
     )
     return SpellActionPayload(
         spell_id=spell_id,
+        grant_id=grant_id,
         target_refs=target_refs,
         aim_point=aim_point,
         selected_condition=selected_condition,

@@ -16,7 +16,11 @@ from srd_arena.domain.capabilities import (
     primary_effects,
 )
 from srd_arena.domain.creatures import Creature, Spellcasting
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grants,
+)
 from srd_arena.domain.spells.definitions import Spell
+from srd_arena.domain.spells.invocation_grants import SpellInvocationGrant
 from srd_arena.domain.spells.rules import (
     SpellActionPayload,
     spell_action_id,
@@ -55,22 +59,38 @@ def available_spell_actions(
     if spellcasting is None:
         return []
     actions: list[EncounterAction] = []
-    for spell in spellcasting.learned_spells:
+    invocations: list[tuple[Spell, SpellInvocationGrant | None]] = [
+        (spell, None) for spell in spellcasting.learned_spells
+    ]
+    invocations.extend(
+        (spell, grant)
+        for grant in spell_invocation_grants(actor)
+        if (spell := spellcasting.spell_for_grant(grant.spell_id, grant)) is not None
+    )
+    for spell, grant in invocations:
         cost = spell_action_cost(state, spell)
+        grant_label = f" ({grant.source_name})" if grant is not None else ""
+        grant_id = grant.id if grant is not None else None
+        cast_level = grant.fixed_cast_level if grant is not None else None
         if spell.geometry_mode in {"directional_area", "point_area"}:
             _append_spell_action_variants(
                 actions,
                 spellcasting,
                 spell,
                 EncounterAction(
-                    spell_action_label(spell, actor_ref=creature_ref),
+                    spell_action_label(spell, actor_ref=creature_ref) + grant_label,
                     "spell",
-                    spell_action_payload(spell.id),
-                    id=spell_action_id(spell),
+                    spell_action_payload(
+                        spell.id,
+                        slot_level=cast_level,
+                        grant_id=grant_id,
+                    ),
+                    id=spell_action_id(spell, grant_id=grant_id),
                     creature_ref=creature_ref,
                     aim_committed=False,
                     cost=cost,
                 ),
+                grant,
             )
             continue
         targets = spell_action_targets(state, actor, spell)
@@ -153,6 +173,7 @@ def available_spell_actions(
                                 damage_type_selection,
                                 ability_selection,
                                 option_selection,
+                                grant,
                             )
         if not targets:
             _append_spell_action_variants(
@@ -160,13 +181,18 @@ def available_spell_actions(
                 spellcasting,
                 spell,
                 EncounterAction(
-                    spell_action_label(spell, actor_ref=creature_ref),
+                    spell_action_label(spell, actor_ref=creature_ref) + grant_label,
                     "spell",
-                    spell_action_payload(spell.id),
-                    id=spell_action_id(spell),
+                    spell_action_payload(
+                        spell.id,
+                        slot_level=cast_level,
+                        grant_id=grant_id,
+                    ),
+                    id=spell_action_id(spell, grant_id=grant_id),
                     creature_ref=creature_ref,
                     cost=cost,
                 ),
+                grant,
             )
     return actions
 
@@ -183,6 +209,7 @@ def _append_spell_option(
     damage_type_selection: str | None,
     ability_selection: str | None,
     option_selection: str | None,
+    grant: SpellInvocationGrant | None,
 ) -> None:
     selection_display = next(
         (label for choice, label in removal_choices if choice == selection),
@@ -206,7 +233,9 @@ def _append_spell_option(
         spellcasting,
         spell,
         EncounterAction(
-            spell_action_label(spell, actor_ref=creature_ref) + selection_label,
+            spell_action_label(spell, actor_ref=creature_ref)
+            + selection_label
+            + (f" ({grant.source_name})" if grant is not None else ""),
             "spell",
             spell_action_payload(
                 spell.id,
@@ -215,8 +244,15 @@ def _append_spell_option(
                 selected_damage_type=damage_type_selection,
                 selected_ability=ability_selection,
                 selected_option=option_selection,
+                slot_level=grant.fixed_cast_level if grant is not None else None,
+                grant_id=grant.id if grant is not None else None,
             ),
-            id=spell_action_id(spell, target_ref=target_ref) + selection_id,
+            id=spell_action_id(
+                spell,
+                target_ref=target_ref,
+                grant_id=grant.id if grant is not None else None,
+            )
+            + selection_id,
             creature_ref=creature_ref,
             cost=cost,
             aim_committed=not any(
@@ -224,6 +260,7 @@ def _append_spell_option(
                 for effect in primary_effects(spell.definition)
             ),
         ),
+        grant,
     )
 
 
@@ -232,9 +269,10 @@ def _append_spell_action_variants(
     spellcasting: Spellcasting,
     spell: Spell,
     action: EncounterAction,
+    grant: SpellInvocationGrant | None = None,
 ) -> None:
     actions.append(action)
-    if spell.level == 0:
+    if spell.level == 0 or grant is not None:
         return
     payload = action.value
     if not isinstance(payload, SpellActionPayload):

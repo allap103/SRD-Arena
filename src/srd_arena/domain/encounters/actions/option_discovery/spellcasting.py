@@ -50,6 +50,7 @@ def spell_cast_block_reason_for(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None = None,
+    consumes_spell_slot: bool = True,
 ) -> str | None:
     """Return the rule reason that prevents this creature from casting a spell."""
 
@@ -78,6 +79,7 @@ def spell_cast_block_reason_for(
             "spell",
         ).allowed,
         cast_level=cast_level,
+        consumes_spell_slot=consumes_spell_slot,
     )
 
 
@@ -118,6 +120,7 @@ def spend_spell_resources(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None = None,
+    consumes_spell_slot: bool = True,
 ) -> None:
     """Commit turn economy and spell-slot cost for an accepted casting.
 
@@ -148,6 +151,6 @@ def spend_spell_resources(
         state.active_bonus_action_available = False
     if cost.reaction > 0:
         state.active_reaction_available = False
-    if spell.level > 0:
+    if consumes_spell_slot and spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
         spellcasting.spend_slot(slot_level)

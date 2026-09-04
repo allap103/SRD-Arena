@@ -10,6 +10,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grant,
+)
 from srd_arena.domain.spells.resolution import (
     resolve_spell_action as _resolve_spell_action_impl,
 )
@@ -73,18 +76,23 @@ def resolve_spell_action(
         return
 
     spell_id = payload.spell_id
+    grant = spell_invocation_grant(actor, payload.grant_id)
+    if payload.grant_id is not None and grant is None:
+        _record_failed_spell_action(
+            state,
+            progress,
+            creature_ref=creature_ref,
+            action_id=action_id,
+            message="That spell invocation is not available.",
+            reason_code="spell_grant_unavailable",
+            spell_id=spell_id,
+        )
+        return
     target_ref = payload.target_ref
     aim_point = payload.aim_point
     selected_target_refs = payload.target_refs
-    cast_level = payload.slot_level
-    spell = next(
-        (
-            candidate
-            for candidate in spellcasting.learned_spells
-            if candidate.id == spell_id
-        ),
-        None,
-    )
+    cast_level = grant.fixed_cast_level if grant is not None else payload.slot_level
+    spell = spellcasting.spell_for_grant(spell_id, grant)
     if spell is None:
         _record_failed_spell_action(
             state,
@@ -99,8 +107,13 @@ def resolve_spell_action(
 
     cost = spell_action_cost(state, spell)
     block_reason: str | None
-    if cast_level is not None and (
-        spell.level == 0 or cast_level <= spell.level or cast_level > 9
+    invalid_grant_level = bool(
+        grant is not None and payload.slot_level != grant.fixed_cast_level
+    )
+    if invalid_grant_level or (
+        grant is None
+        and cast_level is not None
+        and (spell.level == 0 or cast_level <= spell.level or cast_level > 9)
     ):
         block_reason = "That spell slot level is not available for this spell."
     else:
@@ -110,6 +123,7 @@ def resolve_spell_action(
             spell,
             cost,
             cast_level,
+            grant.consumes_spell_slot if grant is not None else True,
         )
     if block_reason is not None:
         _record_failed_spell_action(
@@ -182,6 +196,7 @@ def resolve_spell_action(
         spell=spell,
         cost=cost,
         cast_level=cast_level,
+        consumes_spell_slot=(grant.consumes_spell_slot if grant is not None else True),
         creature_ref=creature_ref,
         action_id=action_id,
         progress=progress,
@@ -213,6 +228,9 @@ def resolve_spell_action(
             targets=targets,
             area=area,
             cast_level=cast_level,
+            maximize_temporary_hit_point_dice=(
+                grant is not None and grant.temporary_hit_point_dice == "maximum"
+            ),
         )
     )
     if result is None:
@@ -236,6 +254,8 @@ def resolve_spell_action(
         action_id=action_id,
         result=result,
         progress=progress,
+        grant_id=grant.id if grant is not None else None,
+        consumes_spell_slot=(grant.consumes_spell_slot if grant is not None else True),
     )
 
 

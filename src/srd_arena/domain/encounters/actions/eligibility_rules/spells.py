@@ -4,6 +4,9 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grant,
+)
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.spells.rules import (
     SpellActionPayload,
@@ -64,14 +67,13 @@ class SpellActionRule:
                 "This creature cannot cast spells.",
             )
         spell_id = payload.spell_id
-        spell = next(
-            (
-                known
-                for known in actor.spellcasting.learned_spells
-                if known.id == spell_id
-            ),
-            None,
-        )
+        grant = spell_invocation_grant(actor, payload.grant_id)
+        if payload.grant_id is not None and grant is None:
+            return EligibilityFailure(
+                "spell_grant_unavailable",
+                "This spell invocation is not available.",
+            )
+        spell = actor.spellcasting.spell_for_grant(spell_id, grant)
         if spell is None:
             return EligibilityFailure(
                 "spell_unavailable",
@@ -104,6 +106,7 @@ class SpellActionRule:
             spell,
             action.cost,
             payload.slot_level,
+            grant.consumes_spell_slot if grant is not None else True,
         )
         if reason is not None:
             return EligibilityFailure("spell_blocked", reason)

@@ -40,6 +40,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         payload = action.value
         return SpellOptionDetails(
             source_id=payload.spell_id,
+            grant_id=payload.grant_id,
             target_ref=payload.target_ref,
             target_refs=payload.target_refs,
             aim_point=payload.aim_point,
@@ -53,6 +54,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
     if action.kind == "toggle_spell_target":
         return SpellOptionDetails(
             source_id=action.source_trigger_id,
+            grant_id=None,
             target_ref=action.value if isinstance(action.value, str) else None,
             target_refs=((action.value,) if isinstance(action.value, str) else ()),
             aim_point=None,

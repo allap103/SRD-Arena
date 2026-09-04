@@ -6,6 +6,9 @@ from dataclasses import dataclass, replace
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.capabilities import HealingEffect, capability_effects
+from srd_arena.domain.creatures.feature_rules import (
+    spell_invocation_grant,
+)
 from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.rules import (
     SpellActionPayload,
@@ -64,13 +67,11 @@ def plan_spell_invocation(
 
     spell_id = payload.spell_id
     aim_point = payload.aim_point
+    grant = spell_invocation_grant(actor, payload.grant_id)
     spell = (
-        next(
-            candidate
-            for candidate in actor.spellcasting.learned_spells
-            if candidate.id == spell_id
-        )
+        actor.spellcasting.spell_for_grant(spell_id, grant)
         if actor.spellcasting is not None
+        and (payload.grant_id is None or grant is not None)
         else None
     )
     slot_level = payload.slot_level

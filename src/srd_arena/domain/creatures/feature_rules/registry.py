@@ -6,13 +6,50 @@ from collections.abc import Callable
 
 from srd_arena.domain.effects.results import ActionResolutionResult
 from srd_arena.domain.rolls.dice import DieRoller
+from srd_arena.domain.spells import SpellInvocationGrant
 
 from ..model import Creature
 from .fighter import resolve_fighter_feature
+from .warlock import warlock_spell_invocation_grants
 
 CLASS_FEATURE_RESOLVERS = {
     "fighter": resolve_fighter_feature,
 }
+
+SPELL_INVOCATION_GRANT_PROVIDERS = {
+    "warlock": warlock_spell_invocation_grants,
+}
+
+
+def spell_invocation_grants(
+    creature: Creature,
+) -> tuple[SpellInvocationGrant, ...]:
+    """Return alternate spell invocations granted by the creature's class.
+
+    Encounter code asks this source-neutral registry rather than naming a
+    particular class. New class implementations can therefore supply grants
+    without changing spell discovery or execution.
+    """
+
+    class_name = (
+        creature.class_ref.name.casefold() if creature.class_ref is not None else ""
+    )
+    provider = SPELL_INVOCATION_GRANT_PROVIDERS.get(class_name)
+    return provider(creature) if provider is not None else ()
+
+
+def spell_invocation_grant(
+    creature: Creature,
+    grant_id: str | None,
+) -> SpellInvocationGrant | None:
+    """Resolve one currently authoritative feature grant by stable ID."""
+
+    if grant_id is None:
+        return None
+    return next(
+        (grant for grant in spell_invocation_grants(creature) if grant.id == grant_id),
+        None,
+    )
 
 
 def resolve_feature_action(
