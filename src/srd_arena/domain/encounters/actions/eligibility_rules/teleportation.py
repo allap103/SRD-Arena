@@ -12,7 +12,7 @@ from srd_arena.domain.capabilities import (
 from srd_arena.domain.geometry import Position, grid_distance_between
 
 from ...encounter_models.actions import CreatureRef
-from ...rule_queries.obstructions import creature_has_line_of_effect_to_cell
+from ...rule_queries.visibility import creature_can_see_cell
 from ...spatial import creature_position, placement_is_free
 from .models import EligibilityFailure
 
@@ -71,7 +71,7 @@ def teleport_destination_failure(
             "teleport_destination_blocked",
             "The teleport destination must be an unoccupied legal space.",
         )
-    if teleport.line_of_sight and not creature_has_line_of_effect_to_cell(
+    if teleport.line_of_sight and not creature_can_see_cell(
         state,
         actor_ref,
         destination,

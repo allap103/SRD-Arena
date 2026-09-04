@@ -60,8 +60,8 @@
     "resolver": "stinking_cloud",
     "omissions": [
       {
-        "mechanic": "heavy obscuration and strong-wind dispersal",
-        "reason": "Persistent area state is executable; vision and environmental wind hooks are the next part of this slice."
+        "mechanic": "strong-wind dispersal",
+        "reason": "Persistent area state and heavy-obscuration sight rules are executable; environmental wind hooks remain deferred within this slice."
       }
     ]
   },

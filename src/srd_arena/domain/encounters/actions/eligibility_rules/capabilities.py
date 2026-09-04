@@ -16,6 +16,7 @@ from ...encounter_models.actions import (
 )
 from ...rule_queries.obstructions import cover_between
 from ...rule_queries.permissions import TargetingKind, target_eligibility
+from ...rule_queries.visibility import creature_can_see_creature
 from ...spatial import creature_distance
 from ..stat_block import (
     stat_block_action_resource_available,
@@ -161,6 +162,15 @@ class StatBlockActionRule:
             return EligibilityFailure(
                 "target_has_total_cover",
                 "The target has Total Cover.",
+            )
+        if definition.target.line_of_sight and not creature_can_see_creature(
+            state,
+            actor_ref,
+            action.value,
+        ):
+            return EligibilityFailure(
+                "target_not_visible",
+                "The target is not visible.",
             )
         range_feet = definition.target.range_feet or 0
         range_squares = state.definition.grid.covering_distance_from_feet(range_feet)

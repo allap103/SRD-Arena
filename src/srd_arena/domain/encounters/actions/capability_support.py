@@ -6,10 +6,9 @@ between those two concerns: definitions remain lossless, while action
 eligibility rejects combinations that would otherwise run with different
 semantics.
 
-Line-of-sight declarations need no rejection yet because the current spatial
-model has no opaque terrain or hidden entities; every represented target is
-visible by construction. That invariant should be replaced by a rule query
-when visibility enters the encounter model.
+Line-of-sight declarations are enforced by encounter visibility queries at
+action eligibility time. This module remains concerned only with capability
+semantics that have no faithful runtime interpretation at all.
 """
 
 from __future__ import annotations

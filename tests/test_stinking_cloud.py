@@ -1,11 +1,15 @@
 """Verify Stinking Cloud placement and its reusable turn-start area lifecycle."""
 
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
 
 from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.effects import ActionProhibition, Condition, OngoingEffect
+from srd_arena.domain.encounters.actions.eligibility_rules.spell_targeting import (
+    spell_target_eligibility,
+)
 from srd_arena.domain.encounters.effect_lifecycle.area_turn_start import (
     resolve_turn_start_area_effects,
 )
@@ -20,6 +24,11 @@ from srd_arena.domain.encounters.encounter_models.actions import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
+from srd_arena.domain.encounters.rule_queries.obstructions import cover_between
+from srd_arena.domain.encounters.rule_queries.visibility import (
+    creature_can_see_creature,
+)
+from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.turn_lifecycle import expire_conditions_for_turn_end
 from srd_arena.engine.commands import AimAction, CommandResult
 from srd_arena.engine.observation_models import ActionObservation
@@ -97,6 +106,70 @@ def test_cast_creates_observable_area_without_affecting_initial_occupants() -> N
     assert observed.area is not None
     assert observed.area["shape"] == "radius"
     assert observed.obscures_vision is True
+
+
+def test_cloud_blocks_sight_without_blocking_line_of_effect() -> None:
+    session = _session()
+    _cast_cloud(session)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    warlock = state.creatures["warlock"].creature
+    assert warlock.spellcasting is not None
+    hold_person = next(
+        spell
+        for spell in warlock.spellcasting.learned_spells
+        if spell.id == "hold_person"
+    )
+
+    assert not creature_can_see_creature(state, "warlock", "goblin_1")
+    assert not creature_can_see_creature(state, "goblin_1", "warlock")
+    assert cover_between(state, "warlock", "goblin_1").has_line_of_effect
+    eligibility = spell_target_eligibility(
+        state,
+        "warlock",
+        "goblin_1",
+        hold_person,
+    )
+    assert "target_not_visible" in {failure.code for failure in eligibility.failures}
+
+
+def test_mutual_obscuration_cancels_attack_modes_but_blindsight_breaks_the_tie() -> (
+    None
+):
+    session = _session()
+    _cast_cloud(session)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    warlock_position = state.creatures["warlock"].position
+
+    assert (
+        attack_roll_mode_for(
+            state,
+            "warlock",
+            "goblin_1",
+            "ranged",
+            warlock_position,
+            (),
+        )
+        == "normal"
+    )
+    goblin = state.creatures["goblin_1"].creature
+    goblin.statistics = replace(
+        goblin.statistics,
+        senses=("Blindsight 60 ft.",),
+    )
+    assert creature_can_see_creature(state, "goblin_1", "warlock")
+    assert (
+        attack_roll_mode_for(
+            state,
+            "warlock",
+            "goblin_1",
+            "ranged",
+            warlock_position,
+            (),
+        )
+        == "disadvantage"
+    )
 
 
 def test_failed_turn_start_save_poisons_and_prohibits_actions_for_that_turn() -> None:

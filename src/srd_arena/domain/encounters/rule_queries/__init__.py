@@ -56,6 +56,7 @@ from .permissions import (
 )
 from .rolls import roll_modifiers
 from .senses import sense_range
+from .visibility import creature_can_see_cell, creature_can_see_creature
 
 __all__ = [
     "CoverResult",
@@ -88,6 +89,8 @@ __all__ = [
     "condition_suppressions",
     "cover_between",
     "cover_from_position",
+    "creature_can_see_cell",
+    "creature_can_see_creature",
     "creature_has_line_of_effect_to_cell",
     "damage_immunities",
     "damage_resistances",

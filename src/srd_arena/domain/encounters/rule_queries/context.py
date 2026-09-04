@@ -30,6 +30,14 @@ class CreatureEffectQueryContext(EffectQueryContext, Protocol):
         """Return encounter combatants keyed by stable creature reference."""
 
 
+class VisibilityQueryContext(CreatureEffectQueryContext, Protocol):
+    """Add grid configuration needed for sight and special-sense range."""
+
+    @property
+    def definition(self) -> EncounterDefinition:
+        """Return the authored encounter definition containing the grid."""
+
+
 class ConditionRuleQueryContext(CreatureEffectQueryContext, Protocol):
     """Add sourced conditions needed by permission and speed queries."""
 

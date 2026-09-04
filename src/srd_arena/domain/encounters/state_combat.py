@@ -15,6 +15,7 @@ from .effect_lifecycle.retargeting import mark_retargetable_effects_for_defeat
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import apply_damage
 from .rule_queries.rolls import roll_modifiers
+from .rule_queries.visibility import creature_can_see_creature
 from .spatial import creature_distance
 
 if TYPE_CHECKING:
@@ -63,6 +64,7 @@ def attack_roll_mode_for(
     >>> state = SimpleNamespace(
     ...     effective_conditions_for=lambda ref: effective, conditions=[],
     ...     ongoing_effects=[],
+    ...     definition=SimpleNamespace(terrain=()),
     ...     creatures={
     ...         "archer": SimpleNamespace(
     ...             position=Position(0, 0), creature=SimpleNamespace(size="M")
@@ -97,6 +99,10 @@ def attack_roll_mode_for(
         )
     if base_mode != "normal":
         modes.append(base_mode)
+    if not creature_can_see_creature(state, attacker_ref, target_ref):
+        modes.append("disadvantage")
+    if not creature_can_see_creature(state, target_ref, attacker_ref):
+        modes.append("advantage")
     modes.append(
         roll_modifiers(
             state,

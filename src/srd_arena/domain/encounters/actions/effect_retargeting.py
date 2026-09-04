@@ -12,7 +12,7 @@ from ..encounter_models.actions import (
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..participants import creatures_are_opponents
-from ..rule_queries.obstructions import cover_between
+from ..rule_queries.visibility import creature_can_see_creature
 from ..spatial import creature_distance
 from ..state_runtime import create_event
 
@@ -181,11 +181,4 @@ def _target_is_legal(
         maximum = int(state.definition.grid.distance_from_feet(range_feet, minimum=1))
         if creature_distance(state, source_ref, target_ref) > maximum:
             return False
-    return (
-        not line_of_sight
-        or cover_between(
-            state,
-            source_ref,
-            target_ref,
-        ).has_line_of_effect
-    )
+    return not line_of_sight or creature_can_see_creature(state, source_ref, target_ref)

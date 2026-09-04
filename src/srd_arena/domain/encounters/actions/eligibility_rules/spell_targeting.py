@@ -11,6 +11,7 @@ from srd_arena.domain.spells.rules import (
 from ...encounter_models.actions import CreatureRef
 from ...rule_queries.obstructions import cover_between
 from ...rule_queries.permissions import TargetingKind, target_eligibility
+from ...rule_queries.visibility import creature_can_see_creature
 from .models import ActionEligibility, EligibilityFailure
 
 if TYPE_CHECKING:
@@ -48,6 +49,18 @@ def spell_target_eligibility(
             EligibilityFailure(
                 "target_has_total_cover",
                 "The target has Total Cover.",
+            )
+        )
+    if (
+        actor_ref != target_ref
+        and spell.definition is not None
+        and spell.definition.target.line_of_sight
+        and not creature_can_see_creature(state, actor_ref, target_ref)
+    ):
+        failures.append(
+            EligibilityFailure(
+                "target_not_visible",
+                "The target is not visible.",
             )
         )
     return ActionEligibility(tuple(failures))
