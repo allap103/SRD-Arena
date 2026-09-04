@@ -12,6 +12,7 @@ from srd_arena.domain.capabilities import CompelledTurnEffect, capability_effect
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.rule_effects import CompelledTurn
 from srd_arena.domain.effects.runtime import UntilTurnEnd
+from srd_arena.domain.encounters import TerrainCell, TerrainTraversal
 from srd_arena.domain.encounters.creature_control import (
     available_creature_actions,
     creature_action_candidates,
@@ -21,6 +22,7 @@ from srd_arena.domain.encounters.effect_lifecycle.turn_end import (
 )
 from srd_arena.domain.encounters.rule_queries.compulsions import active_compelled_turn
 from srd_arena.domain.encounters.spatial import creature_distance
+from srd_arena.domain.geometry import Position
 from srd_arena.engine.queries import ActionOption, SpellOptionDetails
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
@@ -251,3 +253,28 @@ def test_movement_instruction_constrains_each_step_and_completes_turn(
         assert distances[-1] <= 1
     else:
         assert all(after > before for before, after in pairwise(distances))
+
+
+def test_approach_uses_a_shortest_route_around_blocked_terrain() -> None:
+    session = _session(save_roll=1)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.creatures["warlock"].position = Position(1, 2)
+    state.creatures["goblin_1"].position = Position(5, 2)
+    state.creatures["barbarian"].position = Position(10, 8)
+    state.definition.terrain = tuple(
+        TerrainCell(Position(4, y), traversal=TerrainTraversal.BLOCKED)
+        for y in (1, 2, 3)
+    )
+    _cast_command(session, target_ref="goblin_1", instruction="approach")
+    _make_target_current(session, "goblin_1")
+
+    available = available_creature_actions(state, "goblin_1")
+
+    assert {action.value for action in available} == {"up", "down"}
+    completion = next(
+        action
+        for action in creature_action_candidates(state, "goblin_1")
+        if action.kind == "obey_compelled_turn"
+    )
+    assert not state.action_eligibility(completion).allowed

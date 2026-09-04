@@ -9,6 +9,7 @@ from srd_arena.domain.geometry import Position
 
 from ...behaviors import DIRECTION_DELTAS
 from ...encounter_models.actions import CreatureRef, EncounterAction
+from ...movement_routing import shortest_approach_directions
 from ...rule_queries.models import SourcedRuleContribution
 from ...spatial import creature_distance, creature_position
 from ..eligibility_rules.common import MovementRule, ResourceRule
@@ -43,7 +44,12 @@ def legal_compelled_movement_actions(
         return ()
 
     current_distance = creature_distance(state, creature_ref, source_ref)
-    if instruction == "approach" and current_distance <= 1:
+    approach_directions = (
+        shortest_approach_directions(state, creature_ref, source_ref)
+        if instruction == "approach"
+        else frozenset()
+    )
+    if instruction == "approach" and not approach_directions:
         return ()
 
     movement_rule = MovementRule()
@@ -69,16 +75,17 @@ def legal_compelled_movement_actions(
                 source_position=destination,
             )
         )
-        if (instruction == "approach" and distance < current_distance) or (
+        if (instruction == "approach" and direction in approach_directions) or (
             instruction == "flee" and distance > current_distance
         ):
             measured.append((action, distance))
 
     if not measured:
         return ()
-    best_distance = (
-        min(distance for _, distance in measured)
-        if instruction == "approach"
-        else max(distance for _, distance in measured)
-    )
+    if instruction == "approach":
+        best_distance = min(distance for _, distance in measured)
+        return tuple(
+            action for action, distance in measured if distance == best_distance
+        )
+    best_distance = max(distance for _, distance in measured)
     return tuple(action for action, distance in measured if distance == best_distance)
