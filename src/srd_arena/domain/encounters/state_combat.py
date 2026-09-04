@@ -10,6 +10,7 @@ from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
 from .attack_rules import proximity_attack_roll_mode
+from .effect_lifecycle.removal import _remove_effect_target
 from .effect_lifecycle.retargeting import mark_retargetable_effects_for_defeat
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import apply_damage
@@ -26,11 +27,18 @@ def apply_combat_damage(
     amount: int,
     damage_type: str | None = None,
 ) -> int:
-    """Apply defensive rules and arm defeat-triggered persistent effects."""
+    """Apply defenses, expire depleted temporary-HP effects, and arm defeat rules."""
 
     creature = state.creatures[creature_ref].creature
     was_alive = creature.get_health() > 0
     applied = apply_damage(state, creature_ref, amount, damage_type)
+    if creature.temporary_hit_points <= 0:
+        for effect in tuple(state.ongoing_effects):
+            if (
+                creature_ref in effect.target_refs
+                and effect.lifecycle.ends_when_temporary_hit_points_depleted
+            ):
+                _remove_effect_target(state, effect, creature_ref)
     if was_alive and creature.get_health() <= 0:
         mark_retargetable_effects_for_defeat(state, creature_ref)
     return applied

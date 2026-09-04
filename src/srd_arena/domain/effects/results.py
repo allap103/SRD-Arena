@@ -42,6 +42,18 @@ class DamageApplication:
 
 
 @dataclass(frozen=True)
+class AttackHitRetaliationApplication:
+    """Capture sourced retaliation before its triggering hit mutates state."""
+
+    protected_target_ref: str
+    provider_state_id: str
+    source_definition_id: str
+    source_ref: str | None
+    damage: int
+    damage_type: str
+
+
+@dataclass(frozen=True)
 class SpellResolutionDetails:
     """Describe one spell result before it is serialized as a combat event."""
 
@@ -58,6 +70,7 @@ class SpellResolutionDetails:
     healing_roll_details: tuple[dict[str, object], ...] = ()
     temporary_hit_point_details: tuple[dict[str, object], ...] = ()
     damage_applications: tuple[DamageApplication, ...] = ()
+    attack_hit_retaliations: tuple[AttackHitRetaliationApplication, ...] = ()
     success: bool = False
 
 

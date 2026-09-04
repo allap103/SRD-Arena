@@ -2,7 +2,10 @@
 
 from typing import cast
 
-from srd_arena.domain.capabilities import CapabilityDefinition
+from srd_arena.domain.capabilities import (
+    AttackHitRetaliationEffect,
+    CapabilityDefinition,
+)
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.runtime import (
@@ -195,6 +198,11 @@ def _build_lifecycle(
                 if temporary.trigger == "target_turn_start"
             ),
             0,
+        ),
+        ends_when_temporary_hit_points_depleted=any(
+            effect.end_effect_when_depleted
+            for effect in prepared.definition_effects
+            if isinstance(effect, AttackHitRetaliationEffect)
         ),
         retarget_on_defeat=(
             RetargetOnDefeatLifecycle(

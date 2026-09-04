@@ -5,6 +5,7 @@ from .durations import EffectDurationSchema, TimedDurationSchema
 from .effects import (
     ActionEffectSchema,
     AttackHitDamageEffectSchema,
+    AttackHitRetaliationEffectSchema,
     ConditionEffectSchema,
     ControlEffectSchema,
     DamageEffectSchema,
@@ -46,6 +47,7 @@ __all__ = [
     "ActionTargetSchema",
     "AreaTargetSchema",
     "AttackHitDamageEffectSchema",
+    "AttackHitRetaliationEffectSchema",
     "AutomaticResolutionSchema",
     "CapabilityBuildError",
     "CapabilitySchemaModel",

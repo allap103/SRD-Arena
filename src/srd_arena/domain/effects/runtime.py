@@ -178,6 +178,7 @@ class OngoingEffectLifecycle:
     repeat_save: RepeatSaveLifecycle | None = None
     end_events: tuple[EndEventRule, ...] = ()
     turn_start_temporary_hit_points: int = 0
+    ends_when_temporary_hit_points_depleted: bool = False
     retarget_on_defeat: RetargetOnDefeatLifecycle | None = None
 
 

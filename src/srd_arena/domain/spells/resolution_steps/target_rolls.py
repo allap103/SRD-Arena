@@ -1,9 +1,10 @@
 """Resolve the save or attack roll for one spell target."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import cast
 
 from srd_arena.domain.capabilities import AttackResolution, SavingThrowResolution
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
 from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     DicePoolResult,
@@ -31,6 +32,9 @@ class TargetRollOutcome:
     damage_rolls: list[tuple[SpellDamage, DicePoolResult]]
     save_detail: dict[str, object] | None = None
     attack_detail: dict[str, object] | None = None
+    attack_hit_retaliations: tuple[AttackHitRetaliationApplication, ...] = field(
+        default_factory=tuple
+    )
 
 
 def resolve_target_roll(
@@ -195,6 +199,7 @@ def _resolve_spell_attack(
     """Resolve one target's spell attack and any per-projectile damage dice."""
 
     assert context.creature.spellcasting is not None
+    assert isinstance(prepared.resolution, AttackResolution)
     attack = resolve_d20(
         modifier=(
             context.creature.spellcasting.attack_bonus
@@ -256,4 +261,12 @@ def _resolve_spell_attack(
             "critical_hit": critical_hit,
             "automatic_critical_provider_ids": list(automatic_critical),
         },
+        attack_hit_retaliations=(
+            context.environment.attack_hit_retaliations(
+                target.target_ref,
+                prepared.resolution.modes[0],
+            )
+            if hit
+            else ()
+        ),
     )

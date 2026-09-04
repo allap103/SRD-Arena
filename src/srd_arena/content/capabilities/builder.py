@@ -11,6 +11,7 @@ from .durations import EffectDurationSchema
 _SHARED_EFFECT_TYPES = (
     effects.DamageEffectSchema,
     effects.AttackHitDamageEffectSchema,
+    effects.AttackHitRetaliationEffectSchema,
     effects.ConditionEffectSchema,
     effects.ForcedMovementEffectSchema,
     effects.SpeedMultiplierEffectSchema,
@@ -184,6 +185,14 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
         )
     if isinstance(value, effects.AttackHitDamageEffectSchema):
         return domain.AttackHitDamageEffect(value.dice, value.damage_type)
+    if isinstance(value, effects.AttackHitRetaliationEffectSchema):
+        return domain.AttackHitRetaliationEffect(
+            value.value,
+            value.damage_type,
+            tuple(value.attack_types),
+            value.requires_temporary_hit_points,
+            value.end_effect_when_depleted,
+        )
     if isinstance(value, effects.ConditionEffectSchema):
         return domain.ConditionEffect(
             condition=value.condition,

@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from typing import TYPE_CHECKING, cast
 
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
 from srd_arena.domain.effects.triggered import ability_modifier_contributions
 from srd_arena.domain.geometry import build_radius_area
 from srd_arena.domain.rolls import parse_dice_expression
@@ -21,6 +22,7 @@ from srd_arena.domain.spells.resolution import SpellTargetContext
 from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.health import apply_healing
+from ...rule_queries.retaliation import attack_hit_retaliations
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_position
 from ...state_combat import apply_combat_damage
@@ -114,6 +116,29 @@ class EncounterSpellResolutionEnvironment:
                 )
             )
         return tuple(results)
+
+    def attack_hit_retaliations(
+        self,
+        target_ref: str,
+        attack_type: str,
+    ) -> tuple[AttackHitRetaliationApplication, ...]:
+        """Snapshot sourced retaliation before one successful spell attack hits."""
+
+        return tuple(
+            AttackHitRetaliationApplication(
+                protected_target_ref=target_ref,
+                provider_state_id=contribution.provider_state_id,
+                source_definition_id=contribution.source.definition_id,
+                source_ref=contribution.source.applied_by_ref,
+                damage=contribution.value.damage,
+                damage_type=contribution.value.damage_type,
+            )
+            for contribution in attack_hit_retaliations(
+                self.state,
+                target_ref,
+                attack_type,
+            )
+        )
 
     def _ability_modifier(self, ability: str) -> int:
         """Return the actor's modifier for one fully named ability."""

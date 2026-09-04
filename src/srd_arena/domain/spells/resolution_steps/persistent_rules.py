@@ -6,6 +6,7 @@ from typing import cast
 from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
     AttackHitDamageEffect,
+    AttackHitRetaliationEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
     DamageImmunityEffect,
@@ -21,6 +22,7 @@ from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModif
 from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
     AttackHitDamage,
+    AttackHitRetaliation,
     ConditionImmunity,
     ConditionSaveAdvantage,
     DamageImmunity,
@@ -211,6 +213,23 @@ def _translate_rule_effects(
         AttackHitDamage(effect.dice, effect.damage_type)
         for effect in prepared.definition_effects
         if isinstance(effect, AttackHitDamageEffect)
+    )
+    effects.extend(
+        AttackHitRetaliation(
+            damage=(
+                effect.value
+                + resource_int_increment(
+                    prepared.definition,
+                    "attack_hit_retaliation",
+                )
+                * prepared.levels_above
+            ),
+            damage_type=effect.damage_type,
+            attack_types=frozenset(effect.attack_types),
+            requires_temporary_hit_points=effect.requires_temporary_hit_points,
+        )
+        for effect in prepared.definition_effects
+        if isinstance(effect, AttackHitRetaliationEffect)
     )
     if maximum_hit_point_modifier:
         effects.append(

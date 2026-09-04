@@ -8,15 +8,15 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.rolls.dice import combine_roll_modes
 
 from ...attack_economy import spend_attack, spend_current_attack
-from ...effect_lifecycle.concentration import resolve_concentration_damage
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
+from ...reaction_runtime.attack_lifecycle import resolve_attack_lifecycle
 from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.numeric import effective_armor_class
 from ...rule_queries.obstructions import cover_between
+from ...rule_queries.retaliation import attack_hit_retaliations
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_distance
 from ...state_combat import (
@@ -175,6 +175,9 @@ def resolve_attack_action(
     )
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)
+    retaliations = (
+        attack_hit_retaliations(state, target_ref, attack_type) if outcome.hit else ()
+    )
     outcome.attack_roll_detail["cover_degree"] = cover.degree.value
     outcome.attack_roll_detail["cover_bonus"] = cover.bonus
     apply_attack_damage(
@@ -189,29 +192,15 @@ def resolve_attack_action(
             damage_type,
         ),
     )
-    resolve_spell_lifecycle_event(
+    resolve_attack_lifecycle(
         state,
-        "target_makes_attack",
-        actor_ref=creature_ref,
+        attacker_ref=creature_ref,
         target_ref=target_ref,
+        damage=outcome.damage,
         progress=progress,
+        retaliations=retaliations,
+        action_id=action_id,
     )
-    if outcome.damage > 0:
-        resolve_spell_lifecycle_event(
-            state,
-            "target_damaged",
-            actor_ref=creature_ref,
-            target_ref=target_ref,
-            progress=progress,
-        )
-        resolve_spell_lifecycle_event(
-            state,
-            "target_deals_damage",
-            actor_ref=creature_ref,
-            target_ref=target_ref,
-            progress=progress,
-        )
-    resolve_concentration_damage(state, target_ref, outcome.damage, progress)
     if outcome.hit and defender.get_health() > 0:
         apply_attack_hit_effects(
             state,

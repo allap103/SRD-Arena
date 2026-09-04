@@ -32,6 +32,7 @@ from ..rule_queries.permissions import (
     reaction_eligibility,
     target_eligibility,
 )
+from ..rule_queries.retaliation import attack_hit_retaliations
 from ..rule_queries.rolls import roll_modifiers
 from ..spatial import creature_distance
 from ..state_combat import (
@@ -190,6 +191,9 @@ def resolve_automatic_opportunity_attacks(
                 for contribution in attack_hit_damage(state, reactor_ref, mover_ref)
             ),
         )
+        retaliations = (
+            attack_hit_retaliations(state, mover_ref, "melee") if attack.hit else ()
+        )
         apply_attack_damage(
             attack,
             mover.creature,
@@ -207,6 +211,8 @@ def resolve_automatic_opportunity_attacks(
             target_ref=mover_ref,
             damage=attack.damage,
             progress=progress,
+            retaliations=retaliations,
+            action_id=action_id,
         )
         messages.extend(attack.messages)
         progress.events.append(
@@ -371,6 +377,9 @@ def apply_reaction_action(
                 action_id=resolved_action_id,
                 completed=False,
             )
+        retaliations = (
+            attack_hit_retaliations(state, target_ref, "melee") if attack.hit else ()
+        )
         apply_attack_damage(
             attack,
             target.creature,
@@ -388,6 +397,9 @@ def apply_reaction_action(
             target_ref=target_ref,
             damage=attack.damage,
             progress=progress,
+            retaliations=retaliations,
+            action_id=resolved_action_id,
+            frame_id=decision.id,
         )
         progress.messages.extend(attack.messages)
         progress.events.append(

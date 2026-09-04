@@ -20,6 +20,7 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id
+from ..rule_queries.retaliation import attack_hit_retaliations
 from ..state_combat import apply_combat_damage
 from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
@@ -315,7 +316,7 @@ def finalize_damage_reroll(
     ...     creatures={
     ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
     ...         "goblin": SimpleNamespace(creature=object(), is_alive=True),
-    ...     }, event_sequence=1,
+    ...     }, ongoing_effects=[], event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> frame = DecisionFrame("reroll", "hero", "reroll_dice", "gwm")
@@ -333,6 +334,11 @@ def finalize_damage_reroll(
 
     attacker = state.creatures[request.attacker_ref].creature
     target = state.creatures[request.target_ref]
+    retaliations = attack_hit_retaliations(
+        state,
+        request.target_ref,
+        request.attack.attack_type,
+    )
     apply_attack_damage(
         request.attack,
         target.creature,
@@ -351,6 +357,9 @@ def finalize_damage_reroll(
         target_ref=request.target_ref,
         damage=request.attack.damage,
         progress=progress,
+        retaliations=retaliations,
+        action_id=request.action_id,
+        frame_id=decision.id,
     )
     progress.messages.extend(request.attack.messages)
     progress.events.append(

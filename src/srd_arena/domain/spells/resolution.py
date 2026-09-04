@@ -125,6 +125,7 @@ def _resolve_declarative_spell(
                 )
                 for detail in damage_details
             ),
+            attack_hit_retaliations=tuple(resolved_targets.attack_hit_retaliations),
             success=bool(effects)
             or bool(healing_details)
             or bool(temporary_hit_point_details)

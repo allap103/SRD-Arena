@@ -13,6 +13,9 @@ from srd_arena.domain.effects.results import (
 from ...effect_lifecycle.concentration import resolve_concentration_damage
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
+from ...reaction_runtime.attack_lifecycle import (
+    resolve_attack_hit_retaliations,
+)
 from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:
@@ -108,6 +111,7 @@ def apply_spell_result_consequences(
         state,
         result,
         creature_ref=creature_ref,
+        action_id=action_id,
         progress=progress,
     )
     progress.messages.extend(
@@ -193,6 +197,7 @@ def _apply_damage_lifecycle(
     result: ActionResolutionResult,
     *,
     creature_ref: str,
+    action_id: str,
     progress: EncounterProgress,
 ) -> None:
     details = result.details
@@ -220,6 +225,14 @@ def _apply_damage_lifecycle(
             damage.amount,
             progress,
         )
+    resolve_attack_hit_retaliations(
+        state,
+        attacker_ref=creature_ref,
+        applications=details.attack_hit_retaliations,
+        progress=progress,
+        action_id=action_id,
+        frame_id=None,
+    )
 
 
 def _first(

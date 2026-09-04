@@ -33,6 +33,29 @@ class AttackHitDamageEffectSchema(CapabilitySchemaModel):
     damage_type: str = Field(min_length=1)
 
 
+class AttackHitRetaliationEffectSchema(CapabilitySchemaModel):
+    """Deal fixed damage to a creature that hits the protected target."""
+
+    type: Literal["attack_hit_retaliation"]
+    value: PositiveInt
+    damage_type: str = Field(min_length=1)
+    attack_types: list[Literal["melee", "ranged"]] = Field(min_length=1)
+    requires_temporary_hit_points: bool = False
+    end_effect_when_depleted: bool = False
+
+    @model_validator(mode="after")
+    def validate_temporary_hit_point_lifecycle(
+        self,
+    ) -> AttackHitRetaliationEffectSchema:
+        """Only end on depletion when temporary Hit Points gate the effect."""
+
+        if self.end_effect_when_depleted and not self.requires_temporary_hit_points:
+            raise ValueError(
+                "Depletion ending requires requires_temporary_hit_points=true."
+            )
+        return self
+
+
 class ConditionEffectSchema(CapabilitySchemaModel):
     """Encode the ``condition`` capability-effect variant with condition and duration."""
 
@@ -143,6 +166,7 @@ class GainMemoriesEffectSchema(CapabilitySchemaModel):
 ActionEffectSchema = Annotated[
     DamageEffectSchema
     | AttackHitDamageEffectSchema
+    | AttackHitRetaliationEffectSchema
     | ConditionEffectSchema
     | ForcedMovementEffectSchema
     | SpeedMultiplierEffectSchema

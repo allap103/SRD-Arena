@@ -49,6 +49,17 @@ class AttackHitDamageEffect:
 
 
 @dataclass(frozen=True)
+class AttackHitRetaliationEffect:
+    """Damage an attacker after it hits the protected target with an attack."""
+
+    value: int
+    damage_type: str
+    attack_types: tuple[Literal["melee", "ranged"], ...]
+    requires_temporary_hit_points: bool = False
+    end_effect_when_depleted: bool = False
+
+
+@dataclass(frozen=True)
 class HealingEffect:
     """Restore Hit Points from dice, a pool, or damage already dealt."""
 
@@ -242,6 +253,7 @@ class GainMemoriesEffect:
 CapabilityEffect = (
     DamageEffect
     | AttackHitDamageEffect
+    | AttackHitRetaliationEffect
     | HealingEffect
     | TemporaryHitPointsEffect
     | ArmorClassModifierEffect

@@ -196,7 +196,7 @@ def test_warlock_snapshots_expose_pact_progression_and_selected_spells(
         learned
     )
     assert learned["mind_sliver"].definition is not None
-    assert learned["armor_of_agathys"].definition is None
+    assert learned["armor_of_agathys"].definition is not None
     assert "suggestion" not in learned
     assert "minor_illusion" not in learned
 

@@ -193,6 +193,35 @@ class AttackHitDamage:
 
 
 @dataclass(frozen=True)
+class AttackHitRetaliation:
+    """Deal fixed typed damage after a qualifying attack hits a protected target."""
+
+    damage: int
+    damage_type: str
+    attack_types: frozenset[str]
+    requires_temporary_hit_points: bool = False
+
+    def __post_init__(self) -> None:
+        if self.damage <= 0:
+            raise ValueError("Attack-hit retaliation damage must be positive.")
+        normalized_damage_type = self.damage_type.casefold()
+        if not normalized_damage_type:
+            raise ValueError("Attack-hit retaliation requires a damage type.")
+        normalized_attack_types = frozenset(
+            attack_type.casefold() for attack_type in self.attack_types
+        )
+        if not normalized_attack_types or not normalized_attack_types <= {
+            "melee",
+            "ranged",
+        }:
+            raise ValueError(
+                "Attack-hit retaliation requires melee and/or ranged attack types."
+            )
+        object.__setattr__(self, "damage_type", normalized_damage_type)
+        object.__setattr__(self, "attack_types", normalized_attack_types)
+
+
+@dataclass(frozen=True)
 class ReactionProhibition:
     """Prohibit all reactions, or only the named reaction kinds."""
 
@@ -264,6 +293,7 @@ type RuntimeRuleEffect = (
     | GrantedSense
     | RollAdjustment
     | AttackHitDamage
+    | AttackHitRetaliation
     | ReactionProhibition
     | ActionEconomyRestriction
     | AttackLimit
@@ -357,6 +387,14 @@ def serialize_runtime_rule_effect(
             "type": "attack_hit_damage",
             "dice": effect.dice,
             "damage_type": effect.damage_type,
+        }
+    if isinstance(effect, AttackHitRetaliation):
+        return {
+            "type": "attack_hit_retaliation",
+            "damage": effect.damage,
+            "damage_type": effect.damage_type,
+            "attack_types": sorted(effect.attack_types),
+            "requires_temporary_hit_points": effect.requires_temporary_hit_points,
         }
     if isinstance(effect, ReactionProhibition):
         return {

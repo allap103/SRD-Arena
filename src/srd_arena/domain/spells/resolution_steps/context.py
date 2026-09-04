@@ -8,6 +8,7 @@ from types import MappingProxyType
 from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
 from srd_arena.domain.geometry import AreaOfEffect
 from srd_arena.domain.rolls.dice import (
     D20RollMode,
@@ -90,6 +91,13 @@ class SpellResolutionEnvironment(Protocol):
         critical_hit: bool,
     ) -> tuple[tuple[SpellDamage, DicePoolResult], ...]:
         """Roll source-bound damage added by hitting this target."""
+
+    def attack_hit_retaliations(
+        self,
+        target_ref: str,
+        attack_type: str,
+    ) -> tuple[AttackHitRetaliationApplication, ...]:
+        """Snapshot sourced retaliation before one successful attack deals damage."""
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve a target's current sourced saving-throw modifier."""
