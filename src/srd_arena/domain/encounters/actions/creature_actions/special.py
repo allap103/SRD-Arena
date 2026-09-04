@@ -68,10 +68,10 @@ def special_action_candidates(
         ):
             continue
         for target_ref in effect.target_refs:
-            wake_target_state = state.creatures.get(target_ref)
+            rouse_target_state = state.creatures.get(target_ref)
             if (
-                wake_target_state is None
-                or not wake_target_state.is_alive
+                rouse_target_state is None
+                or not rouse_target_state.is_alive
                 or target_ref == creature_ref
             ):
                 continue
@@ -79,10 +79,10 @@ def special_action_candidates(
                 continue
             actions.append(
                 EncounterAction(
-                    f"Wake {wake_target_state.creature.name}",
-                    "wake_spell_target",
+                    f"Rouse {rouse_target_state.creature.name}",
+                    "rouse_spell_target",
                     target_ref,
-                    id=f"{creature_ref}-wake-{target_ref.replace(':', '-')}",
+                    id=f"{creature_ref}-rouse-{target_ref.replace(':', '-')}",
                     creature_ref=creature_ref,
                     cost=ActionCost(action=1),
                 )

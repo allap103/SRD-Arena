@@ -17,6 +17,7 @@ from srd_arena.domain.capabilities import (
     HitPointMaximumModifierEffect,
     SenseEffect,
     SpeedModifierEffect,
+    SpeedMultiplierEffect,
 )
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
@@ -35,6 +36,7 @@ from srd_arena.domain.effects.rule_effects import (
     RollAdjustment,
     RuntimeRuleEffect,
     SpeedAdjustment,
+    SpeedMultiplier,
 )
 
 from .context import SpellActionContext
@@ -273,6 +275,11 @@ def _translate_rule_effects(
         SpeedAdjustment(effect.feet)
         for effect in prepared.definition_effects
         if isinstance(effect, SpeedModifierEffect)
+    )
+    effects.extend(
+        SpeedMultiplier(effect.numerator, effect.denominator)
+        for effect in prepared.definition_effects
+        if isinstance(effect, SpeedMultiplierEffect)
     )
     for effect in prepared.roll_modifier_effects:
         abilities = effect.ability_options or (effect.ability,)

@@ -35,6 +35,7 @@ class SpellTargetContext:
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
+    effective_conditions: tuple[str, ...] = ()
     condition_immunities: frozenset[str] = frozenset()
     automatic_save_failures: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 

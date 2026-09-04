@@ -9,6 +9,7 @@ from srd_arena.domain.capabilities import (
     CapabilityResolution,
     ConditionEffect,
     ConditionImmunityRequirement,
+    ConditionRequirement,
     CreatureTraitRequirement,
     CreatureTypeRequirement,
     DamageEffect,
@@ -29,6 +30,7 @@ class PreparedSpellRules:
     conditions: tuple[str, ...]
     automatic_failure_creature_types: tuple[str, ...]
     automatic_success_condition_immunities: tuple[str, ...]
+    automatic_success_conditions: tuple[ConditionRequirement, ...]
     automatic_success_traits: tuple[str, ...]
     disadvantage_creature_types: tuple[str, ...]
     expires_on_source_turn_end: bool
@@ -92,6 +94,13 @@ def prepare_spell_rules(
                 saving_throw.automatic_success if saving_throw is not None else ()
             )
             if isinstance(requirement, ConditionImmunityRequirement)
+        ),
+        automatic_success_conditions=tuple(
+            requirement
+            for requirement in (
+                saving_throw.automatic_success if saving_throw is not None else ()
+            )
+            if isinstance(requirement, ConditionRequirement)
         ),
         automatic_success_traits=tuple(
             requirement.trait

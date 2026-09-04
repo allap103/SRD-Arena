@@ -6,6 +6,7 @@ from srd_arena.domain.capabilities import (
     CapabilityDefinition,
     CapabilityEffect,
     CapabilityResolution,
+    ConditionRequirement,
     HealingEffect,
     RepeatSave,
     RollModifierEffect,
@@ -36,6 +37,7 @@ class PreparedSpellResolution:
     conditions: tuple[str, ...]
     automatic_failure_creature_types: tuple[str, ...]
     automatic_success_condition_immunities: tuple[str, ...]
+    automatic_success_conditions: tuple[ConditionRequirement, ...]
     automatic_success_traits: tuple[str, ...]
     disadvantage_creature_types: tuple[str, ...]
     expires_on_source_turn_end: bool
@@ -128,6 +130,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         automatic_success_condition_immunities=(
             rules.automatic_success_condition_immunities
         ),
+        automatic_success_conditions=rules.automatic_success_conditions,
         automatic_success_traits=rules.automatic_success_traits,
         disadvantage_creature_types=rules.disadvantage_creature_types,
         expires_on_source_turn_end=rules.expires_on_source_turn_end,

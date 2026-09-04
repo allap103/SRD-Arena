@@ -25,7 +25,7 @@ def execute_standard_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Execute wake/wait actions and report whether this handler recognized one.
+    """Execute rouse/wait actions and report whether this handler recognized one.
 
     >>> from types import SimpleNamespace
     >>> actor = SimpleNamespace(creature=SimpleNamespace(name="Hero"))
@@ -46,7 +46,7 @@ def execute_standard_action(
     actor = state.creatures[decision.creature_ref]
     if execute_effect_retarget(state, action, progress, action_id):
         return True
-    if action.kind == "wake_spell_target":
+    if action.kind == "rouse_spell_target":
         if not isinstance(action.value, str):
             reject_action(
                 state,
@@ -54,7 +54,7 @@ def execute_standard_action(
                 actor_ref=decision.creature_ref,
                 action_id=action_id,
                 action_kind=action.kind,
-                message="Wake action requires a creature reference.",
+                message="Rouse action requires a creature reference.",
                 reason_code="target_required",
             )
             return True
@@ -87,15 +87,15 @@ def execute_standard_action(
                 details={"target_ref": action.value},
             )
             return True
-        if not _can_wake_spell_target(state, action.value):
+        if not _can_rouse_spell_target(state, action.value):
             reject_action(
                 state,
                 progress,
                 actor_ref=decision.creature_ref,
                 action_id=action_id,
                 action_kind=action.kind,
-                message="That magical sleep effect is no longer active.",
-                reason_code="wake_unavailable",
+                message="That magical stupor is no longer active.",
+                reason_code="rouse_unavailable",
                 details={"target_ref": action.value},
             )
             return True
@@ -110,7 +110,7 @@ def execute_standard_action(
         progress.messages.append(
             (
                 "system",
-                f"{actor.creature.name} wakes {target.creature.name}.",
+                f"{actor.creature.name} rouses {target.creature.name}.",
             )
         )
         progress.events.append(
@@ -119,7 +119,7 @@ def execute_standard_action(
                 "action_resolved",
                 creature_ref=decision.creature_ref,
                 action_id=action_id,
-                data={"kind": "wake_spell_target", "target_ref": action.value},
+                data={"kind": "rouse_spell_target", "target_ref": action.value},
             )
         )
     elif action.kind == "wait":
@@ -138,8 +138,8 @@ def execute_standard_action(
     return True
 
 
-def _can_wake_spell_target(state: EncounterState, target_ref: str) -> bool:
-    """Return whether an active effect lets an adjacent creature wake a target."""
+def _can_rouse_spell_target(state: EncounterState, target_ref: str) -> bool:
+    """Return whether an active effect lets an adjacent creature rouse a target."""
 
     return any(
         target_ref in effect.target_refs

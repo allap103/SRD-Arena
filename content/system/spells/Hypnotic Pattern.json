@@ -46,5 +46,78 @@
   ],
   "areaTags": [
     "C"
-  ]
+  ],
+  "implementation": {
+    "status": "complete"
+  },
+  "capability": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {
+        "shape": "cube",
+        "length_feet": 30
+      },
+      "occupants": "all"
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "wis",
+      "automatic_success": [
+        {
+          "type": "condition_immunity",
+          "condition": "charmed"
+        },
+        {
+          "type": "condition",
+          "conditions": [
+            "blinded"
+          ],
+          "match": "any"
+        }
+      ],
+      "failure": {
+        "effects": [
+          {
+            "type": "condition",
+            "condition": "charmed"
+          },
+          {
+            "type": "condition",
+            "condition": "incapacitated"
+          },
+          {
+            "type": "speed_multiplier",
+            "numerator": 0,
+            "denominator": 1,
+            "duration": {
+              "type": "timed",
+              "amount": 1,
+              "unit": "minute"
+            }
+          }
+        ]
+      }
+    },
+    "outcome_triggers": [
+      {
+        "event": "target_damaged",
+        "resolution": {
+          "type": "automatic",
+          "outcome": {
+            "end_spell": true
+          }
+        }
+      },
+      {
+        "event": "adjacent_creature_wakes_target",
+        "resolution": {
+          "type": "automatic",
+          "outcome": {
+            "end_spell": true
+          }
+        }
+      }
+    ]
+  }
 }

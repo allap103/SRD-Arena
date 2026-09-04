@@ -181,12 +181,25 @@ def _automatic_success_reasons(
         for condition in prepared.automatic_success_condition_immunities
         if condition in target.condition_immunities
     )
+    target_conditions = frozenset(target.effective_conditions)
+    condition_reasons = tuple(
+        f"{context.spell.name}: {', '.join(requirement.conditions)}"
+        for requirement in prepared.automatic_success_conditions
+        if requirement.applied_by == "any"
+        and (
+            all(condition in target_conditions for condition in requirement.conditions)
+            if requirement.match == "all"
+            else any(
+                condition in target_conditions for condition in requirement.conditions
+            )
+        )
+    )
     trait_reasons = tuple(
         f"{context.spell.name}: {trait}"
         for trait in prepared.automatic_success_traits
         if trait in target.creature.statistics.mechanical_traits
     )
-    return immunity_reasons + trait_reasons
+    return immunity_reasons + condition_reasons + trait_reasons
 
 
 def _resolve_spell_attack(

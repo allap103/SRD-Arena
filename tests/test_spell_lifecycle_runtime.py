@@ -960,7 +960,7 @@ def test_charm_person_save_has_advantage_against_opponent() -> None:
     assert save["die"] == 20
 
 
-def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
+def test_adjacent_creature_can_spend_action_to_rouse_sleep_target() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
     session._read()
     assert session.encounter_state is not None
@@ -1005,13 +1005,13 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
     action = next(
         action
         for action in creature_action_candidates(state, "goblin_2")
-        if action.kind == "wake_spell_target" and action.value == "goblin_1"
+        if action.kind == "rouse_spell_target" and action.value == "goblin_1"
     )
     result = execute_creature_action(state, action, state.current_decision())
 
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS) is False
     assert state.creatures["goblin_2"].actions_remaining == 0
-    assert any("wakes" in text for _, text in result.progress.messages)
+    assert any("rouses" in text for _, text in result.progress.messages)
 
 
 @pytest.mark.parametrize(

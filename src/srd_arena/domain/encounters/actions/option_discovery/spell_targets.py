@@ -171,6 +171,9 @@ def spell_target_context(
         target_conditions=tuple(
             condition.condition.value for condition in state.conditions_for(target_ref)
         ),
+        effective_conditions=tuple(
+            condition.condition.value for condition in effective.conditions
+        ),
         condition_immunities=frozenset(
             condition.value
             for condition in condition_immunities(state, target_ref).values
