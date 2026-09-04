@@ -23,8 +23,14 @@ from srd_arena.domain.capabilities import (
     CapabilityEffect,
     CapabilityResolution,
     CapabilityTarget,
+    CompelledTurnEffect,
     EffectDuration,
     SavingThrowResolution,
+    all_capability_effects,
+)
+
+SUPPORTED_COMPELLED_TURN_INSTRUCTIONS = frozenset(
+    {"approach", "flee", "grovel", "halt"}
 )
 
 
@@ -34,6 +40,48 @@ class CapabilityRuntimeIssue:
 
     code: str
     message: str
+
+
+def capability_selection_runtime_issue(
+    definition: CapabilityDefinition,
+    selected_option: str | None,
+) -> CapabilityRuntimeIssue | None:
+    """Return why a selected capability option cannot execute faithfully.
+
+    A definition can remain partially executable when only one choice requires
+    state the runtime does not yet model. This keeps the complete authored
+    option set visible while preventing unsupported choices from silently
+    degrading into different rules.
+
+    >>> from srd_arena.domain.capabilities import EffectDuration, Outcome
+    >>> definition = CapabilityDefinition(
+    ...     CapabilityTarget("creature"),
+    ...     AutomaticResolution(Outcome((CompelledTurnEffect(
+    ...         ("drop", "halt"), EffectDuration("next_turn_end")
+    ...     ),))),
+    ... )
+    >>> capability_selection_runtime_issue(definition, "drop").code
+    'unsupported_compelled_turn_option'
+    >>> capability_selection_runtime_issue(definition, "halt") is None
+    True
+    """
+
+    if selected_option is None:
+        return None
+    for effect in all_capability_effects(definition):
+        if (
+            isinstance(effect, CompelledTurnEffect)
+            and selected_option in effect.options
+            and selected_option not in SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
+        ):
+            return CapabilityRuntimeIssue(
+                "unsupported_compelled_turn_option",
+                (
+                    f"The {selected_option.title()} instruction is not executable "
+                    "until held objects are modeled."
+                ),
+            )
+    return None
 
 
 def capability_runtime_issue(

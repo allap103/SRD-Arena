@@ -12,13 +12,11 @@ from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...rule_queries.compulsions import active_compelled_turn
 from ...state_runtime import create_event
+from ..capability_support import SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
 from .compelled_movement import MOVEMENT_COMPELLED_INSTRUCTIONS
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
-
-
-EXECUTABLE_COMPELLED_INSTRUCTIONS = frozenset({"approach", "flee", "grovel", "halt"})
 
 
 def compelled_turn_action_candidates(
@@ -30,7 +28,7 @@ def compelled_turn_action_candidates(
     contribution = active_compelled_turn(state, creature_ref)
     if (
         contribution is None
-        or contribution.value.instruction not in EXECUTABLE_COMPELLED_INSTRUCTIONS
+        or contribution.value.instruction not in SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
     ):
         return []
     instruction = contribution.value.instruction
@@ -68,12 +66,13 @@ def execute_compelled_turn_action(
     if (
         contribution is None
         or action.value != contribution.value.instruction
-        or contribution.value.instruction not in EXECUTABLE_COMPELLED_INSTRUCTIONS
+        or contribution.value.instruction not in SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
     ):
         raise RuntimeError("A compelled-turn action requires its active instruction.")
 
     actor = state.creatures[decision.creature_ref]
     instruction = contribution.value.instruction
+    condition_applied: bool | None = None
     if instruction == "grovel":
         source = contribution.source
         result = apply_condition(
@@ -88,9 +87,15 @@ def execute_compelled_turn_action(
                 origin_id=f"{source.origin_id}:grovel-prone",
             ),
         )
-        if not result.accepted:
-            raise RuntimeError("An eligible Grovel instruction must apply Prone.")
-        message = f"{actor.creature.name} grovels and falls prone."
+        condition_applied = result.accepted
+        message = (
+            f"{actor.creature.name} grovels and falls prone."
+            if result.accepted
+            else (
+                f"{actor.creature.name} obeys Grovel but is immune to "
+                "the Prone condition."
+            )
+        )
     elif instruction == "halt":
         message = f"{actor.creature.name} halts and takes no action."
     else:
@@ -109,6 +114,7 @@ def execute_compelled_turn_action(
                 "instruction": instruction,
                 "provider_state_id": contribution.provider_state_id,
                 "source_definition_id": contribution.source.definition_id,
+                "condition_applied": condition_applied,
             },
         )
     )

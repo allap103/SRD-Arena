@@ -4,9 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.effects.rule_effects import CompelledTurn
+
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ...rule_queries.compulsions import active_compelled_turn
-from ..creature_actions.compelled import EXECUTABLE_COMPELLED_INSTRUCTIONS
+from ...rule_queries.models import SourcedRuleContribution
+from ..capability_support import SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
 from ..creature_actions.compelled_movement import (
     MOVEMENT_COMPELLED_INSTRUCTIONS,
     legal_compelled_movement_actions,
@@ -31,12 +34,15 @@ class CompelledTurnRule:
         contribution = active_compelled_turn(state, actor_ref)
         if (
             contribution is None
-            or contribution.value.instruction not in EXECUTABLE_COMPELLED_INSTRUCTIONS
+            or contribution.value.instruction
+            not in SUPPORTED_COMPELLED_TURN_INSTRUCTIONS
         ):
             return None
 
         instruction = contribution.value.instruction
         if instruction in MOVEMENT_COMPELLED_INSTRUCTIONS:
+            if action.kind not in {"move", "obey_compelled_turn"}:
+                return _compelled_turn_failure(contribution)
             legal_movements = legal_compelled_movement_actions(
                 state,
                 actor_ref,
@@ -55,8 +61,19 @@ class CompelledTurnRule:
         elif action.kind == "obey_compelled_turn" and action.value == instruction:
             return None
 
-        return EligibilityFailure(
-            "compelled_turn",
-            f"The creature must obey the {instruction.title()} instruction.",
-            (contribution.provider_state_id,),
-        )
+        return _compelled_turn_failure(contribution)
+
+
+def _compelled_turn_failure(
+    contribution: SourcedRuleContribution[CompelledTurn],
+) -> EligibilityFailure:
+    """Build the shared failure for an action blocked by an instruction."""
+
+    return EligibilityFailure(
+        "compelled_turn",
+        (
+            "The creature must obey the "
+            f"{contribution.value.instruction.title()} instruction."
+        ),
+        (contribution.provider_state_id,),
+    )

@@ -1,5 +1,6 @@
 """Verify Command authoring and delayed state through the public session path."""
 
+from dataclasses import replace
 from itertools import pairwise
 from pathlib import Path
 
@@ -9,6 +10,8 @@ from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import build_spell, load_spell_catalog
 from srd_arena.domain.capabilities import CompelledTurnEffect, capability_effects
+from srd_arena.domain.effects import EffectResult
+from srd_arena.domain.effects.application import condition_from_effect
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.rule_effects import CompelledTurn
 from srd_arena.domain.effects.runtime import UntilTurnEnd
@@ -20,6 +23,7 @@ from srd_arena.domain.encounters.creature_control import (
 from srd_arena.domain.encounters.effect_lifecycle.turn_end import (
     expire_ongoing_effects_for_turn_end,
 )
+from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.domain.encounters.rule_queries.compulsions import active_compelled_turn
 from srd_arena.domain.encounters.spatial import creature_distance
 from srd_arena.domain.geometry import Position
@@ -109,15 +113,23 @@ def test_command_advertises_each_predefined_instruction_as_typed_option() -> Non
     session = _session(save_roll=1)
 
     options = {
-        option.details.selected_option
+        option.details.selected_option: option
         for option in session._read().action_options
-        if option.enabled
-        and isinstance(option.details, SpellOptionDetails)
+        if isinstance(option.details, SpellOptionDetails)
         and option.details.source_id == "command"
         and option.details.target_ref == "goblin_1"
     }
 
-    assert options == {"approach", "drop", "flee", "grovel", "halt"}
+    assert set(options) == {"approach", "drop", "flee", "grovel", "halt"}
+    assert options["drop"].availability == "unimplemented"
+    assert options["drop"].eligibility.failures[0].code == (
+        "unsupported_compelled_turn_option"
+    )
+    assert all(
+        option.availability == "available"
+        for instruction, option in options.items()
+        if instruction != "drop"
+    )
 
 
 def test_failed_command_save_creates_source_aware_next_turn_instruction() -> None:
@@ -207,6 +219,31 @@ def test_grovel_applies_persistent_sourced_prone_and_ends_the_commanded_turn() -
     assert any(
         event.type == "compelled_turn_resolved"
         and event.data["instruction"] == "grovel"
+        and event.data["condition_applied"] is True
+        for event in update.events
+    )
+
+
+def test_grovel_still_ends_the_turn_when_the_target_is_immune_to_prone() -> None:
+    session = _session(save_roll=1)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    target = state.creatures["goblin_1"].creature
+    target.statistics = replace(
+        target.statistics,
+        condition_immunities=frozenset({Condition.PRONE}),
+    )
+    _cast_command(session, target_ref="goblin_1", instruction="grovel")
+    _make_target_current(session, "goblin_1")
+
+    update = session.advance_one_automatic_action()
+
+    assert state.current_decision().creature_ref != "goblin_1"
+    assert not state.has_condition("goblin_1", Condition.PRONE)
+    assert any(
+        event.type == "compelled_turn_resolved"
+        and event.data["instruction"] == "grovel"
+        and event.data["condition_applied"] is False
         for event in update.events
     )
 
@@ -252,7 +289,8 @@ def test_movement_instruction_constrains_each_step_and_completes_turn(
         assert all(after < before for before, after in pairwise(distances))
         assert distances[-1] <= 1
     else:
-        assert all(after > before for before, after in pairwise(distances))
+        assert all(after >= before for before, after in pairwise(distances))
+        assert distances[-1] > distances[0]
 
 
 def test_approach_uses_a_shortest_route_around_blocked_terrain() -> None:
@@ -278,3 +316,62 @@ def test_approach_uses_a_shortest_route_around_blocked_terrain() -> None:
         if action.kind == "obey_compelled_turn"
     )
     assert not state.action_eligibility(completion).allowed
+
+
+def test_flee_can_move_laterally_toward_a_farther_reachable_position() -> None:
+    session = _session(save_roll=1)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.creatures["warlock"].position = Position(4, 4)
+    state.creatures["goblin_1"].position = Position(6, 4)
+    state.creatures["barbarian"].position = Position(0, 8)
+    state.definition.terrain = tuple(
+        TerrainCell(Position(7, y), traversal=TerrainTraversal.BLOCKED)
+        for y in (3, 4, 5)
+    )
+    _cast_command(session, target_ref="goblin_1", instruction="flee")
+    _make_target_current(session, "goblin_1")
+    initial_distance = creature_distance(state, "goblin_1", "warlock")
+
+    available = available_creature_actions(state, "goblin_1")
+
+    assert {action.value for action in available} == {"up", "down"}
+    update = session.advance_one_automatic_action()
+    assert any(event.type == "movement_resolved" for event in update.events)
+    assert creature_distance(state, "goblin_1", "warlock") == initial_distance
+
+
+def test_flee_routes_with_a_grappled_creatures_footprint() -> None:
+    session = _session(save_roll=1)
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.creatures["warlock"].position = Position(3, 4)
+    state.creatures["goblin_1"].position = Position(5, 4)
+    state.creatures["barbarian"].position = Position(5, 5)
+    state.creatures["goblin_2"].position = Position(10, 8)
+    state.creatures["goblin_3"].position = Position(10, 7)
+    state.definition.terrain = (
+        TerrainCell(Position(6, 5), traversal=TerrainTraversal.BLOCKED),
+    )
+    assert apply_grapple(
+        state,
+        condition_from_effect(
+            EffectResult(
+                kind="apply_condition",
+                target_ref="barbarian",
+                data={
+                    "condition": "grappled",
+                    "source_ref": "goblin_1",
+                    "source_label": "Goblin",
+                },
+            )
+        ),
+    ).accepted
+    _cast_command(session, target_ref="goblin_1", instruction="flee")
+    _make_target_current(session, "goblin_1")
+
+    available = available_creature_actions(state, "goblin_1")
+
+    assert available
+    assert {action.kind for action in available} == {"move"}
+    assert all(action.value != "right" for action in available)

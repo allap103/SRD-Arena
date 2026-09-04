@@ -9,7 +9,10 @@ from srd_arena.domain.geometry import Position
 
 from ...behaviors import DIRECTION_DELTAS
 from ...encounter_models.actions import CreatureRef, EncounterAction
-from ...movement_routing import shortest_approach_directions
+from ...movement_routing import (
+    farthest_retreat_directions,
+    shortest_approach_directions,
+)
 from ...rule_queries.models import SourcedRuleContribution
 from ...spatial import creature_distance, creature_position
 from ..eligibility_rules.common import MovementRule, ResourceRule
@@ -43,42 +46,55 @@ def legal_compelled_movement_actions(
     ):
         return ()
 
-    current_distance = creature_distance(state, creature_ref, source_ref)
+    candidates = movement_action_candidates(state, creature_ref)
+    actor = state.creatures[creature_ref]
     approach_directions = (
         shortest_approach_directions(state, creature_ref, source_ref)
         if instruction == "approach"
         else frozenset()
     )
-    if instruction == "approach" and not approach_directions:
+    flee_directions = (
+        farthest_retreat_directions(
+            state,
+            creature_ref,
+            source_ref,
+            movement_budget=int(actor.movement_remaining or 0),
+        )
+        if instruction == "flee"
+        else frozenset()
+    )
+    permitted_directions = approach_directions or flee_directions
+    if not permitted_directions:
         return ()
 
     movement_rule = MovementRule()
     resource_rule = ResourceRule()
     measured: list[tuple[EncounterAction, int]] = []
     source_position = creature_position(state, creature_ref)
-    for action in movement_action_candidates(state, creature_ref):
+    for action in candidates:
         if (
             resource_rule.check(state, creature_ref, action) is not None
             or movement_rule.check(state, creature_ref, action) is not None
         ):
             continue
         direction = action.value
-        if not isinstance(direction, str):
+        if not isinstance(direction, str) or direction not in permitted_directions:
             continue
         dx, dy = DIRECTION_DELTAS[direction]
         destination = Position(source_position.x + dx, source_position.y + dy)
-        distance = int(
-            creature_distance(
-                state,
-                creature_ref,
-                source_ref,
-                source_position=destination,
+        measured.append(
+            (
+                action,
+                int(
+                    creature_distance(
+                        state,
+                        creature_ref,
+                        source_ref,
+                        source_position=destination,
+                    )
+                ),
             )
         )
-        if (instruction == "approach" and direction in approach_directions) or (
-            instruction == "flee" and distance > current_distance
-        ):
-            measured.append((action, distance))
 
     if not measured:
         return ()
@@ -87,5 +103,4 @@ def legal_compelled_movement_actions(
         return tuple(
             action for action, distance in measured if distance == best_distance
         )
-    best_distance = max(distance for _, distance in measured)
-    return tuple(action for action, distance in measured if distance == best_distance)
+    return tuple(action for action, _distance in measured)

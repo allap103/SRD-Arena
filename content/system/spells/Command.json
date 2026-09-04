@@ -98,7 +98,11 @@
     "omissions": [
       {
         "mechanic": "compelled turn execution",
-        "reason": "The authored choice and sourced next-turn state are implemented first; turn behavior follows in the next slice."
+        "reason": "Approach, Flee, Grovel, and Halt execute through the normal turn pipeline. Drop remains unavailable until held objects are modeled."
+      },
+      {
+        "mechanic": "fastest available means",
+        "reason": "Flee spends the target's available movement, but the engine does not yet provide a Dash action to extend that movement."
       }
     ]
   },

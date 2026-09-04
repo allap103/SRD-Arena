@@ -12,7 +12,10 @@ from srd_arena.domain.spells.rules import (
 
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ...rule_queries.obstructions import creature_has_line_of_effect_to_cell
-from ..capability_support import capability_runtime_issue
+from ..capability_support import (
+    capability_runtime_issue,
+    capability_selection_runtime_issue,
+)
 from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
@@ -74,7 +77,12 @@ class SpellActionRule:
                 "This spell is not known.",
             )
         if spell.definition is not None:
-            runtime_issue = capability_runtime_issue(spell.definition)
+            runtime_issue = capability_runtime_issue(
+                spell.definition
+            ) or capability_selection_runtime_issue(
+                spell.definition,
+                payload.selected_option,
+            )
             if runtime_issue is not None:
                 return EligibilityFailure(
                     runtime_issue.code,
