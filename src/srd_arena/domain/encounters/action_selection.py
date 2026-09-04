@@ -91,7 +91,11 @@ class ScriptedActionSelector:
         )
         if forced is not None:
             return forced
-        wait = next(action for action in actions if action.kind == "wait")
+        wait = next((action for action in actions if action.kind == "wait"), None)
+        if wait is None:
+            if not actions:
+                raise RuntimeError("A scripted creature has no legal action.")
+            return actions[0]
         target_ref = self._nearest_opponent(state, creature_ref)
         if target_ref is None:
             return wait

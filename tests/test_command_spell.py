@@ -1,5 +1,6 @@
 """Verify Command authoring and delayed state through the public session path."""
 
+from itertools import pairwise
 from pathlib import Path
 
 import pytest
@@ -11,11 +12,15 @@ from srd_arena.domain.capabilities import CompelledTurnEffect, capability_effect
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.rule_effects import CompelledTurn
 from srd_arena.domain.effects.runtime import UntilTurnEnd
-from srd_arena.domain.encounters.creature_control import creature_action_candidates
+from srd_arena.domain.encounters.creature_control import (
+    available_creature_actions,
+    creature_action_candidates,
+)
 from srd_arena.domain.encounters.effect_lifecycle.turn_end import (
     expire_ongoing_effects_for_turn_end,
 )
 from srd_arena.domain.encounters.rule_queries.compulsions import active_compelled_turn
+from srd_arena.domain.encounters.spatial import creature_distance
 from srd_arena.engine.queries import ActionOption, SpellOptionDetails
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
@@ -202,3 +207,47 @@ def test_grovel_applies_persistent_sourced_prone_and_ends_the_commanded_turn() -
         and event.data["instruction"] == "grovel"
         for event in update.events
     )
+
+
+@pytest.mark.parametrize("instruction", ["approach", "flee"])
+def test_movement_instruction_constrains_each_step_and_completes_turn(
+    instruction: str,
+) -> None:
+    session = _session(save_roll=1)
+    _cast_command(session, target_ref="goblin_1", instruction=instruction)
+    _make_target_current(session, "goblin_1")
+
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    distances = [int(creature_distance(state, "goblin_1", "warlock"))]
+    initially_available = available_creature_actions(state, "goblin_1")
+    assert initially_available
+    assert {action.kind for action in initially_available} == {"move"}
+    assert all(
+        not state.action_eligibility(action).allowed
+        for action in creature_action_candidates(state, "goblin_1")
+        if action.kind in {"attack", "wait"}
+    )
+
+    completion_seen = False
+    for _ in range(10):
+        if state.current_decision().creature_ref != "goblin_1":
+            break
+        update = session.advance_one_automatic_action()
+        if any(event.type == "movement_resolved" for event in update.events):
+            distances.append(int(creature_distance(state, "goblin_1", "warlock")))
+        completion_seen = completion_seen or any(
+            event.type == "compelled_turn_resolved"
+            and event.data["instruction"] == instruction
+            for event in update.events
+        )
+
+    assert state.current_decision().creature_ref != "goblin_1"
+    assert completion_seen
+    assert active_compelled_turn(state, "goblin_1") is None
+    assert len(distances) > 1
+    if instruction == "approach":
+        assert all(after < before for before, after in pairwise(distances))
+        assert distances[-1] <= 1
+    else:
+        assert all(after > before for before, after in pairwise(distances))

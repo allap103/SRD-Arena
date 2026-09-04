@@ -7,6 +7,10 @@ from typing import TYPE_CHECKING
 from ...encounter_models.actions import CreatureRef, EncounterAction
 from ...rule_queries.compulsions import active_compelled_turn
 from ..creature_actions.compelled import EXECUTABLE_COMPELLED_INSTRUCTIONS
+from ..creature_actions.compelled_movement import (
+    MOVEMENT_COMPELLED_INSTRUCTIONS,
+    legal_compelled_movement_actions,
+)
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -14,7 +18,7 @@ if TYPE_CHECKING:
 
 
 class CompelledTurnRule:
-    """Allow only the explicit choice that resolves a supported instruction."""
+    """Allow only choices that satisfy a supported active instruction."""
 
     def check(
         self,
@@ -30,12 +34,27 @@ class CompelledTurnRule:
             or contribution.value.instruction not in EXECUTABLE_COMPELLED_INSTRUCTIONS
         ):
             return None
-        if (
-            action.kind == "obey_compelled_turn"
-            and action.value == contribution.value.instruction
-        ):
-            return None
+
         instruction = contribution.value.instruction
+        if instruction in MOVEMENT_COMPELLED_INSTRUCTIONS:
+            legal_movements = legal_compelled_movement_actions(
+                state,
+                actor_ref,
+                contribution,
+            )
+            if action.kind == "move" and action.id in {
+                candidate.id for candidate in legal_movements
+            }:
+                return None
+            if (
+                action.kind == "obey_compelled_turn"
+                and action.value == instruction
+                and not legal_movements
+            ):
+                return None
+        elif action.kind == "obey_compelled_turn" and action.value == instruction:
+            return None
+
         return EligibilityFailure(
             "compelled_turn",
             f"The creature must obey the {instruction.title()} instruction.",

@@ -12,12 +12,13 @@ from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...rule_queries.compulsions import active_compelled_turn
 from ...state_runtime import create_event
+from .compelled_movement import MOVEMENT_COMPELLED_INSTRUCTIONS
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
 
 
-EXECUTABLE_COMPELLED_INSTRUCTIONS = frozenset({"grovel", "halt"})
+EXECUTABLE_COMPELLED_INSTRUCTIONS = frozenset({"approach", "flee", "grovel", "halt"})
 
 
 def compelled_turn_action_candidates(
@@ -33,9 +34,14 @@ def compelled_turn_action_candidates(
     ):
         return []
     instruction = contribution.value.instruction
+    label = (
+        f"Complete: {instruction.title()}"
+        if instruction in MOVEMENT_COMPELLED_INSTRUCTIONS
+        else f"Obey: {instruction.title()}"
+    )
     return [
         EncounterAction(
-            f"Obey: {instruction.title()}",
+            label,
             "obey_compelled_turn",
             instruction,
             id=(
@@ -85,8 +91,12 @@ def execute_compelled_turn_action(
         if not result.accepted:
             raise RuntimeError("An eligible Grovel instruction must apply Prone.")
         message = f"{actor.creature.name} grovels and falls prone."
-    else:
+    elif instruction == "halt":
         message = f"{actor.creature.name} halts and takes no action."
+    else:
+        message = (
+            f"{actor.creature.name} completes the {instruction.title()} instruction."
+        )
 
     progress.messages.append(("system", message))
     progress.events.append(
