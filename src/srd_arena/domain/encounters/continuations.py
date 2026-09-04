@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from .actions.spell_runtime.projectiles import resume_spell_projectiles
 from .actions.spellcasting import resolve_spell_action
+from .actions.weapon_mastery import open_weapon_mastery_decision
 from .creature_control import continue_creature_action
 from .encounter_models.decisions import (
     CloseParentDecision,
@@ -14,6 +15,7 @@ from .encounter_models.decisions import (
     ResumeMovement,
     ResumeSpellInvocation,
     ResumeSpellProjectiles,
+    ResumeWeaponMastery,
 )
 from .encounter_models.resolution import EncounterProgress
 from .reaction_runtime.movement_continuation import resume_movement
@@ -78,6 +80,7 @@ class ContinuationRunner:
                     ResumeMovement,
                     ResumeSpellInvocation,
                     ResumeSpellProjectiles,
+                    ResumeWeaponMastery,
                 ),
             ):
                 raise TypeError(
@@ -117,6 +120,13 @@ class ContinuationRunner:
                     continuation.payload,
                     progress,
                     continuation.action_id,
+                )
+            elif isinstance(continuation, ResumeWeaponMastery):
+                open_weapon_mastery_decision(
+                    state,
+                    continuation.request,
+                    progress,
+                    continuation=continuation.next_continuation,
                 )
             return
 

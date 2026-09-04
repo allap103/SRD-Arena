@@ -145,6 +145,8 @@ class AttackOutcome:
     weapon_name: str | None = None
     weapon_properties: tuple[str, ...] = ()
     weapon_mastery: str | None = None
+    ability_modifier: int = 0
+    proficiency_bonus: int = 0
     additional_damage: int = 0
     additional_damage_details: tuple[dict[str, object], ...] = ()
     hit_effects: tuple[CapabilityEffect, ...] = ()

@@ -128,6 +128,19 @@ class RecklessAttackRequest(DecisionRequest):
     actor_ref: CreatureRef
 
 
+@dataclass(frozen=True)
+class WeaponMasteryRequest(DecisionRequest):
+    """Offer one usable mastery after an exact weapon attack has hit."""
+
+    action_id: str
+    attacker_ref: CreatureRef
+    target_ref: CreatureRef
+    mastery: str
+    weapon_id: str
+    weapon_name: str
+    save_dc: int | None = None
+
+
 @dataclass
 class PendingSpellProjectiles:
     """Preserve one started spell while its projectiles and choices resolve."""
@@ -172,6 +185,14 @@ class ResumeSpellInvocation(DecisionContinuation):
     caster_ref: CreatureRef
     payload: SpellActionPayload
     action_id: str
+
+
+@dataclass(frozen=True)
+class ResumeWeaponMastery(DecisionContinuation):
+    """Open a post-hit mastery after an earlier attack decision completes."""
+
+    request: WeaponMasteryRequest
+    next_continuation: DecisionContinuation | None = None
 
 
 @dataclass(frozen=True)

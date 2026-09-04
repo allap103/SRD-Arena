@@ -42,6 +42,10 @@ from ..d20_roll_modifiers import (
     consume_d20_roll_mode,
 )
 from ..hit_effects import apply_attack_hit_effects
+from ..weapon_mastery import (
+    mastery_request_for_attack,
+    open_weapon_mastery_decision,
+)
 from .resources import consume_stat_block_action_resource
 
 if TYPE_CHECKING:
@@ -301,3 +305,12 @@ def resolve_attack_action(
             progress=progress,
             action_id=action_id,
         )
+    mastery_request = mastery_request_for_attack(
+        state,
+        outcome,
+        attacker_ref=creature_ref,
+        target_ref=target_ref,
+        action_id=action_id,
+    )
+    if mastery_request is not None:
+        open_weapon_mastery_decision(state, mastery_request, progress)

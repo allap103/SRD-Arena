@@ -9,11 +9,13 @@ from srd_arena.domain.rolls.dice import reroll_dice, reroll_dice_pool
 
 from ..actions.attack_resolution import apply_attack_damage, damage_roll_detail
 from ..actions.hit_effects import apply_attack_hit_effects
+from ..actions.weapon_mastery import mastery_request_for_attack
 from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     DecisionContinuation,
     DecisionFrame,
+    ResumeWeaponMastery,
 )
 from ..encounter_models.resolution import (
     AttackOutcome,
@@ -508,6 +510,18 @@ def finalize_damage_reroll(
             progress=progress,
             frame_id=decision.id,
             action_id=request.action_id,
+        )
+    mastery_request = mastery_request_for_attack(
+        state,
+        request.attack,
+        attacker_ref=request.attacker_ref,
+        target_ref=request.target_ref,
+        action_id=request.action_id,
+    )
+    if mastery_request is not None:
+        decision.continuation = ResumeWeaponMastery(
+            mastery_request,
+            next_continuation=decision.continuation,
         )
 
 

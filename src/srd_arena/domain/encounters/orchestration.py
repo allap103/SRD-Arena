@@ -15,6 +15,7 @@ from .actions.grapple_saves import apply_grapple_save_action
 from .actions.initiative_swaps import apply_initiative_swap_action
 from .actions.options import decision_actions
 from .actions.reckless_attack import apply_reckless_attack_action
+from .actions.weapon_mastery import apply_weapon_mastery_action
 from .continuations import ContinuationRunner
 from .creature_control import available_creature_actions, execute_creature_action
 from .encounter_models.actions import (
@@ -95,6 +96,7 @@ class EncounterOrchestrator:
             "initiative_swap",
             "d20_roll_modifier",
             "reckless_attack",
+            "weapon_mastery",
         }:
             return self._apply_decision_action(state, action, decision)
         return self._apply_selected_action(state, action, decision)
@@ -135,6 +137,9 @@ class EncounterOrchestrator:
             return self._finish_decision_execution(state, decision, result)
         if decision.kind == "reckless_attack":
             result = apply_reckless_attack_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "weapon_mastery":
+            result = apply_weapon_mastery_action(state, action, decision)
             return self._finish_decision_execution(state, decision, result)
         raise ValueError(f"Unsupported specialized decision: {decision.kind}")
 

@@ -16,6 +16,11 @@ from ..actions.attack_resolution import (
     resolve_attack,
     selected_attack_ability,
 )
+from ..actions.weapon_mastery import (
+    mastery_request_for_attack,
+    open_weapon_mastery_decision,
+    resolve_topple_automatically,
+)
 from ..attack_economy import record_attack_rolls
 from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
@@ -260,6 +265,15 @@ def resolve_automatic_opportunity_attacks(
                 },
             )
         )
+        mastery_request = mastery_request_for_attack(
+            state,
+            attack,
+            attacker_ref=reactor_ref,
+            target_ref=mover_ref,
+            action_id=action_id,
+        )
+        if mastery_request is not None:
+            resolve_topple_automatically(state, mastery_request, progress)
         if not mover.is_alive:
             break
     return messages
@@ -466,6 +480,28 @@ def apply_reaction_action(
                 progress=progress,
                 frame_id=decision.id,
                 action_id=resolved_action_id,
+            )
+        mastery_request = mastery_request_for_attack(
+            state,
+            attack,
+            attacker_ref=reactor_ref,
+            target_ref=target_ref,
+            action_id=resolved_action_id,
+        )
+        if mastery_request is not None:
+            open_weapon_mastery_decision(
+                state,
+                mastery_request,
+                progress,
+                continuation=CloseParentDecision(
+                    frame_id=decision.id,
+                    action_id=resolved_action_id,
+                ),
+            )
+            return DecisionExecutionResult(
+                progress=progress,
+                action_id=resolved_action_id,
+                completed=False,
             )
     elif action.kind != "pass":
         raise ValueError(f"Unsupported reaction action: {action.kind}")

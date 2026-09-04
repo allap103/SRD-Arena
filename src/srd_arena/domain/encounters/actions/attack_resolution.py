@@ -154,6 +154,8 @@ def resolve_attack(
             weapon_name=attack_source.weapon_name,
             weapon_properties=attack_source.weapon_properties,
             weapon_mastery=attack_source.weapon_mastery,
+            ability_modifier=attack_source.ability_modifier,
+            proficiency_bonus=attack_source.proficiency_bonus,
         )
 
     damage_modifier_for = sourced_damage_modifier_for or (lambda _ability: 0)
@@ -189,6 +191,8 @@ def resolve_attack(
         weapon_name=attack_source.weapon_name,
         weapon_properties=attack_source.weapon_properties,
         weapon_mastery=attack_source.weapon_mastery,
+        ability_modifier=attack_source.ability_modifier,
+        proficiency_bonus=attack_source.proficiency_bonus,
         additional_damage=damage.additional_damage,
         additional_damage_details=damage.additional_damage_details,
         hit_effects=attack_source.hit_effects,

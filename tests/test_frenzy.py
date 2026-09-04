@@ -1,6 +1,7 @@
 """Verify the canonical Berserker Barbarian's Frenzy damage trigger."""
 
 from collections.abc import Mapping
+from dataclasses import replace
 from pathlib import Path
 from typing import cast
 
@@ -31,6 +32,16 @@ def _prepared_session(d20_rolls: tuple[int, ...]) -> Session:
     keep_alert_initiative(session)
     state = session.encounter_state
     assert state is not None
+    barbarian = state.creatures["barbarian"].creature
+    assert barbarian.character_profile is not None
+    barbarian.character_profile = replace(
+        barbarian.character_profile,
+        weapon_masteries=tuple(
+            name
+            for name in barbarian.character_profile.weapon_masteries
+            if name != "Maul"
+        ),
+    )
     participant = next(
         participant
         for participant in state.definition.participants

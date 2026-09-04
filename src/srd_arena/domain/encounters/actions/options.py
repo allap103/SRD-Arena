@@ -38,6 +38,7 @@ from .option_discovery.standard import (
     feature_action_available,
 )
 from .reckless_attack import reckless_attack_actions
+from .weapon_mastery import weapon_mastery_actions
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -98,6 +99,8 @@ def decision_actions(state: EncounterState) -> list[EncounterAction]:
         return d20_roll_modifier_actions(state)
     if decision.kind == "reckless_attack":
         return reckless_attack_actions(state)
+    if decision.kind == "weapon_mastery":
+        return weapon_mastery_actions(state)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)

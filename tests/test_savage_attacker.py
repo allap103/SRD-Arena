@@ -1,6 +1,7 @@
 """Verify Savage Attacker's optional once-per-turn weapon damage choice."""
 
 from collections.abc import Iterator
+from dataclasses import replace
 from pathlib import Path
 
 from srd_arena.content.encounters import load_encounter_directory
@@ -29,6 +30,16 @@ def _prepared_session(
     keep_alert_initiative(session)
     state = session.encounter_state
     assert state is not None
+    barbarian = state.creatures["barbarian"].creature
+    assert barbarian.character_profile is not None
+    barbarian.character_profile = replace(
+        barbarian.character_profile,
+        weapon_masteries=tuple(
+            name
+            for name in barbarian.character_profile.weapon_masteries
+            if name != "Maul"
+        ),
+    )
     participant = next(
         participant
         for participant in state.definition.participants
