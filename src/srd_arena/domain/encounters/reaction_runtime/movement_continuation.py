@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.geometry import MovementCost, Position
 
+from ..effect_lifecycle.movement import reconcile_remaining_movement
 from ..encounter_models.decisions import PendingMovement
 from ..encounter_models.resolution import EncounterProgress
 from ..spatial import placement_is_free
@@ -40,6 +41,9 @@ def resume_movement(
     >>> with patch(
     ...     "srd_arena.domain.encounters.reaction_runtime."
     ...     "movement_continuation.placement_is_free", return_value=True
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.reaction_runtime."
+    ...     "movement_continuation.reconcile_remaining_movement"
     ... ):
     ...     resume_movement(state, movement, progress)
     >>> (mover.position, int(mover.movement_remaining))
@@ -52,15 +56,24 @@ def resume_movement(
         movement.creature_ref: movement.to_position,
         **movement.companion_destinations,
     }
-    if mover.is_alive and all(
-        placement_is_free(
-            state,
-            moving_ref,
-            destination,
-            ignored_refs=moving_refs,
+    movement_is_affordable = (
+        mover.movement_remaining is None
+        or movement.movement_cost <= mover.movement_remaining
+    )
+    movement_completed = (
+        mover.is_alive
+        and movement_is_affordable
+        and all(
+            placement_is_free(
+                state,
+                moving_ref,
+                destination,
+                ignored_refs=moving_refs,
+            )
+            for moving_ref, destination in destinations.items()
         )
-        for moving_ref, destination in destinations.items()
-    ):
+    )
+    if movement_completed:
         mover.position = Position(
             movement.to_position.x,
             movement.to_position.y,
@@ -96,5 +109,26 @@ def resume_movement(
                 },
             )
         )
-
-    mover.movement_remaining = movement.remaining_movement_after
+        mover.movement_remaining = movement.remaining_movement_after
+    elif mover.is_alive and not movement_is_affordable:
+        progress.messages.append(
+            (
+                "system",
+                f"{mover.creature.name} no longer has enough movement to move "
+                f"{movement.direction}.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "movement_cancelled",
+                creature_ref=movement.creature_ref,
+                action_id=movement.action_id,
+                data={
+                    "direction": movement.direction,
+                    "reason": "insufficient_movement",
+                    "resumed": True,
+                },
+            )
+        )
+    reconcile_remaining_movement(state, (movement.creature_ref,))

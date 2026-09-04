@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 
 from ...behaviors import DIRECTION_DELTAS
+from ...effect_lifecycle.movement import reconcile_remaining_movement
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import (
@@ -117,6 +118,27 @@ def execute_movement(
             context,
             ActionExecutionOutcome.CONTINUE_TURN,
         )
+    if movement_cost > (mover.movement_remaining or 0):
+        progress.messages.append(
+            (
+                "system",
+                f"{mover.creature.name} no longer has enough movement to move "
+                f"{direction}.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "movement_cancelled",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"direction": direction, "reason": "insufficient_movement"},
+            )
+        )
+        return ActionExecutionResult(
+            context,
+            ActionExecutionOutcome.CONTINUE_TURN,
+        )
     mover.position = destination
     for target_ref, target_position in grappled_positions.items():
         state.creatures[target_ref].position = target_position
@@ -124,6 +146,7 @@ def execute_movement(
     mover.movement_spent_this_turn = MovementCost(
         int(mover.movement_spent_this_turn) + int(movement_cost)
     )
+    reconcile_remaining_movement(state, (decision.creature_ref,))
     progress.messages.append(
         (
             "system",

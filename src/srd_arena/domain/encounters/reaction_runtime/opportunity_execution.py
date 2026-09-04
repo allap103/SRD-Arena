@@ -19,7 +19,7 @@ from ..actions.attack_resolution import (
 from ..actions.weapon_mastery import (
     mastery_request_for_attack,
     open_weapon_mastery_decision,
-    resolve_topple_automatically,
+    resolve_weapon_mastery_automatically,
 )
 from ..attack_economy import record_attack_rolls
 from ..defeat import resolve_creature_defeat
@@ -273,7 +273,7 @@ def resolve_automatic_opportunity_attacks(
             action_id=action_id,
         )
         if mastery_request is not None:
-            resolve_topple_automatically(state, mastery_request, progress)
+            resolve_weapon_mastery_automatically(state, mastery_request, progress)
         if not mover.is_alive:
             break
     return messages

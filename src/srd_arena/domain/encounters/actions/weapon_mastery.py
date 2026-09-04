@@ -5,7 +5,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
-from srd_arena.domain.effects.runtime import EffectSourceKind
+from srd_arena.domain.effects.results import EffectResult
+from srd_arena.domain.effects.rule_effects import SpeedAdjustment
+from srd_arena.domain.effects.runtime import EffectSourceKind, UntilTurnStart
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
 from ..condition_state import apply_condition
@@ -25,7 +27,12 @@ from ..encounter_models.resolution import (
 from ..rule_queries.defenses import has_condition_save_advantage
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import automatic_save_failure_provider_ids_for
-from ..state_runtime import create_event, creature_label, next_frame_id
+from ..state_runtime import (
+    apply_encounter_effects,
+    create_event,
+    creature_label,
+    next_frame_id,
+)
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -41,22 +48,27 @@ def mastery_request_for_attack(
 ) -> WeaponMasteryRequest | None:
     """Build a supported post-hit mastery request for one resolved attack."""
 
-    if (
-        not attack.hit
-        or not state.creatures[target_ref].is_alive
-        or attack.weapon_mastery != "Topple"
-        or attack.weapon_id is None
-        or attack.weapon_name is None
-    ):
+    mastery = attack.weapon_mastery
+    if not attack.hit or not state.creatures[target_ref].is_alive:
+        return None
+    if mastery not in {"Slow", "Topple"}:
+        return None
+    if mastery == "Slow" and attack.damage <= 0:
+        return None
+    if attack.weapon_id is None or attack.weapon_name is None:
         return None
     return WeaponMasteryRequest(
         action_id=action_id,
         attacker_ref=attacker_ref,
         target_ref=target_ref,
-        mastery=attack.weapon_mastery,
+        mastery=mastery,
         weapon_id=attack.weapon_id,
         weapon_name=attack.weapon_name,
-        save_dc=8 + attack.ability_modifier + attack.proficiency_bonus,
+        save_dc=(
+            8 + attack.ability_modifier + attack.proficiency_bonus
+            if mastery == "Topple"
+            else None
+        ),
     )
 
 
@@ -137,9 +149,12 @@ def apply_weapon_mastery_action(
     request = _mastery_request(decision)
     progress = EncounterProgress()
     if action.kind == "use_weapon_mastery":
-        if request.mastery != "Topple":
+        if request.mastery == "Topple":
+            _resolve_topple(state, request, progress, frame_id=decision.id)
+        elif request.mastery == "Slow":
+            _resolve_slow(state, request, progress, frame_id=decision.id)
+        else:
             raise ValueError(f"Unsupported weapon mastery: {request.mastery}")
-        _resolve_topple(state, request, progress, frame_id=decision.id)
     else:
         progress.events.append(
             create_event(
@@ -159,16 +174,73 @@ def apply_weapon_mastery_action(
     return DecisionExecutionResult(progress, action.id, completed=True)
 
 
-def resolve_topple_automatically(
+def resolve_weapon_mastery_automatically(
     state: EncounterState,
     request: WeaponMasteryRequest,
     progress: EncounterProgress,
 ) -> None:
-    """Use Topple for a scripted reaction path that cannot suspend movement."""
+    """Use a supported mastery in a scripted path that cannot suspend movement."""
 
-    if request.mastery != "Topple":
-        raise ValueError("Automatic Topple resolution requires a Topple request.")
-    _resolve_topple(state, request, progress)
+    if request.mastery == "Topple":
+        _resolve_topple(state, request, progress)
+    elif request.mastery == "Slow":
+        _resolve_slow(state, request, progress)
+    else:
+        raise ValueError(f"Unsupported automatic weapon mastery: {request.mastery}")
+
+
+def _resolve_slow(
+    state: EncounterState,
+    request: WeaponMasteryRequest,
+    progress: EncounterProgress,
+    *,
+    frame_id: str | None = None,
+) -> None:
+    progress.messages.extend(
+        apply_encounter_effects(
+            state,
+            [
+                EffectResult(
+                    kind="start_ongoing_effect",
+                    target_ref=request.target_ref,
+                    data={
+                        "source_ref": request.attacker_ref,
+                        "source_label": request.weapon_name,
+                        "source_kind": EffectSourceKind.FEATURE.value,
+                        "definition_id": "weapon_mastery_slow",
+                        "effect_kind": "generic",
+                        "polarity": "harmful",
+                        "dispellable": False,
+                    },
+                    rule_effects=(SpeedAdjustment(-10),),
+                    effect_label="Slow",
+                    duration=UntilTurnStart(request.attacker_ref),
+                )
+            ],
+            origin_id=f"{request.action_id}:weapon_mastery:slow",
+        )
+    )
+    target_label = creature_label(state, request.target_ref)
+    progress.messages.append(
+        ("system", f"{target_label}'s Speed is reduced by 10 feet by Slow.")
+    )
+    progress.events.append(
+        create_event(
+            state,
+            "weapon_mastery_resolved",
+            creature_ref=request.attacker_ref,
+            frame_id=frame_id,
+            action_id=request.action_id,
+            data={
+                "mastery": request.mastery,
+                "weapon_id": request.weapon_id,
+                "target_ref": request.target_ref,
+                "used": True,
+                "speed_reduction_feet": 10,
+                "expires_at": "start_of_attacker_next_turn",
+            },
+        )
+    )
 
 
 def _resolve_topple(

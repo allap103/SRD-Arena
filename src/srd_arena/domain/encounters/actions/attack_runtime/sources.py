@@ -144,6 +144,13 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     """
     assert weapon.weapon_stat is not None
     attack_type = weapon.weapon_stat.attack_type or "melee"
+    attack_modes = (
+        ("melee", "ranged")
+        if attack_type == "melee"
+        and "thrown" in weapon.weapon_stat.properties
+        and weapon.weapon_stat.range_normal is not None
+        else (attack_type,)
+    )
     ability_modifier = (
         attacker.get_modifier(attacker.attributes.dexterity)
         if attack_type == "ranged"
@@ -165,7 +172,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
         ),
         ability_modifier=ability_modifier,
         proficiency_bonus=proficiency_bonus,
-        attack_modes=(attack_type,),
+        attack_modes=attack_modes,
         range_normal=weapon.weapon_stat.range_normal,
         range_long=weapon.weapon_stat.range_long,
         weapon_id=weapon.id,

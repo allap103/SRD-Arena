@@ -46,6 +46,8 @@ def test_weapon_mastery_feature_and_selection_resolve_maul_and_javelin() -> None
     assert any(feature.id == "weapon_mastery" for feature in barbarian.class_features)
     assert maul.weapon_mastery == "Topple"
     assert javelin.weapon_mastery == "Slow"
+    assert javelin.attack_modes == ("melee", "ranged")
+    assert javelin.ability == "strength"
 
 
 def test_weapon_mastery_requires_the_weapon_to_be_selected() -> None:
