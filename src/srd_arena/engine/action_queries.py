@@ -19,6 +19,7 @@ from srd_arena.engine.queries import (
     ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
     GrappleSaveOptionDetails,
+    InitiativeSwapOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SpellOptionDetails,
@@ -97,6 +98,10 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
     }:
         return GrappleSaveOptionDetails(
             cast(Literal["strength", "dexterity", "fail"], action.value)
+        )
+    if action.kind in {"keep_initiative", "swap_initiative"}:
+        return InitiativeSwapOptionDetails(
+            target_ref=action.value if isinstance(action.value, str) else None
         )
     if action.kind == "set_spell_resource_allocation" and isinstance(
         action.value,

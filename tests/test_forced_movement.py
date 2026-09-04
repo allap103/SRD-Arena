@@ -39,6 +39,7 @@ from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
     choose_advertised_action,
     is_spell_action,
+    keep_alert_initiative,
     use_deterministic_dice,
 )
 
@@ -245,7 +246,7 @@ def test_forced_movement_ends_a_grapple_after_separation() -> None:
 
 def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")
@@ -351,7 +352,7 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
 
 def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     state.definition.grid = Grid(30, 9)
@@ -403,7 +404,7 @@ def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
 
 def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")
@@ -436,7 +437,7 @@ def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
 
 def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     participant = next(
@@ -496,7 +497,7 @@ def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> 
 
 def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     participant = next(
@@ -535,7 +536,7 @@ def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
 
 def test_repelling_blast_does_not_offer_a_push_for_a_huge_target() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = state.creatures["warlock"].creature

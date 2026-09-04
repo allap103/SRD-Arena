@@ -11,6 +11,7 @@ from ..reaction_runtime.damage_rerolls import reroll_damage_actions
 from ..reaction_runtime.opportunity_offers import reaction_actions
 from .forced_movement_choices import forced_movement_actions
 from .grapple_saves import grapple_save_actions
+from .initiative_swaps import initiative_swap_actions
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,
@@ -82,6 +83,8 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
         return grapple_save_actions(state)
     if decision.kind == "forced_movement":
         return forced_movement_actions(state)
+    if decision.kind == "initiative_swap":
+        return initiative_swap_actions(state)
     if decision.kind == "spell_targets":
         return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)

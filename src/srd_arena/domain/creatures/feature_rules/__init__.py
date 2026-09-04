@@ -1,5 +1,10 @@
 """Expose the public feature rules package API."""
 
+from .feats import (
+    can_use_alert_initiative_swap,
+    creature_has_feat,
+    initiative_modifier,
+)
 from .registry import (
     resolve_feature_action,
     spell_invocation_grant,
@@ -12,7 +17,10 @@ from .warlock import (
 
 __all__ = [
     "FIENDISH_VIGOR_GRANT_ID",
+    "can_use_alert_initiative_swap",
+    "creature_has_feat",
     "dark_ones_blessing_temporary_hit_points",
+    "initiative_modifier",
     "resolve_feature_action",
     "spell_invocation_grant",
     "spell_invocation_grants",

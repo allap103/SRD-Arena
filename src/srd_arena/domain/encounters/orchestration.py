@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING
 
 from .actions.forced_movement_choices import apply_forced_movement_action
 from .actions.grapple_saves import apply_grapple_save_action
+from .actions.initiative_swaps import apply_initiative_swap_action
 from .continuations import ContinuationRunner
 from .creature_control import available_creature_actions, execute_creature_action
 from .encounter_models.actions import (
@@ -92,6 +93,9 @@ class EncounterOrchestrator:
             return self._finish_decision_execution(state, decision, result)
         if decision.kind == "forced_movement":
             result = apply_forced_movement_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "initiative_swap":
+            result = apply_initiative_swap_action(state, action, decision)
             return self._finish_decision_execution(state, decision, result)
         return self._apply_selected_action(state, action, decision)
 

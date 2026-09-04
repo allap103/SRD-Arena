@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.creatures.feature_rules import initiative_modifier
 from srd_arena.domain.effects.conditions import CombatTrait
 
 from .action_selection import build_action_selector
@@ -55,6 +56,8 @@ def roll_initiative(
     >>> goblin.creature.attributes.dexterity = 12
     >>> hero.creature.get_modifier.return_value = 2
     >>> goblin.creature.get_modifier.return_value = 1
+    >>> hero.creature.character_profile = None
+    >>> goblin.creature.character_profile = None
     >>> participants = [
     ...     SimpleNamespace(creature_id="hero", takes_turns=True),
     ...     SimpleNamespace(creature_id="goblin", takes_turns=True),
@@ -89,9 +92,7 @@ def roll_initiative(
             InitiativeEntry(
                 creature_ref=creature_ref,
                 roll=die_result,
-                modifier=creature_state.creature.get_modifier(
-                    creature_state.creature.attributes.dexterity
-                ),
+                modifier=initiative_modifier(creature_state.creature),
                 total=0,
             )
         )

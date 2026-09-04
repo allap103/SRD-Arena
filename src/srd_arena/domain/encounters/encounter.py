@@ -17,6 +17,7 @@ from srd_arena.domain.geometry import GeometryConfig, MovementBudget, Position
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from .actions.eligibility import ActionEligibility
+from .actions.initiative_swaps import initialize_initiative_swap_decisions
 from .actions.options import (
     available_actions as _available_actions_impl,
 )
@@ -333,6 +334,7 @@ class EncounterState(EncounterStateData):
         validate_creature_placements(state)
         state.roll_initiative()
         _initialize_action_selectors_impl(state)
+        initialize_initiative_swap_decisions(state)
         return state
 
     def roll_initiative(self) -> None:

@@ -131,6 +131,25 @@ def action_id_by_label(session: Session, label: str) -> str:
     )
 
 
+def keep_alert_initiative(session: Session) -> None:
+    """Resolve every initial Alert choice by retaining the rolled Initiative.
+
+    Tests focused on later combat mechanics can use this helper to cross the
+    real pre-turn decision boundary without deleting or mutating its frames.
+    """
+
+    session._read()
+    state = session.encounter_state
+    assert state is not None
+    while state.current_decision().kind == "initiative_swap":
+        keep = next(
+            option
+            for option in session._read().action_options
+            if option.kind == "keep_initiative"
+        )
+        session._choose(keep.id)
+
+
 def action_labels(session: Session) -> list[str]:
     """Return the labels of all actions in the session's current decision."""
 

@@ -31,6 +31,7 @@ from srd_arena.engine.queries import (
     ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
     GrappleSaveOptionDetails,
+    InitiativeSwapOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SessionRead,
@@ -197,6 +198,8 @@ def _action_semantics(
         )
     if isinstance(details, GrappleSaveOptionDetails):
         return _ActionSemantics(grapple_choice=details.choice)
+    if isinstance(details, InitiativeSwapOptionDetails):
+        return _ActionSemantics(target_ref=details.target_ref)
     if isinstance(details, ResourceAllocationOptionDetails):
         return _ActionSemantics(target_ref=details.target_ref)
     if isinstance(details, DirectTargetOptionDetails):

@@ -79,6 +79,13 @@ class GrappleSaveOptionDetails:
 
 
 @dataclass(frozen=True)
+class InitiativeSwapOptionDetails:
+    """Identify the ally selected for an optional Alert Initiative swap."""
+
+    target_ref: str | None
+
+
+@dataclass(frozen=True)
 class FeatureOptionDetails:
     """Identify the creature feature selected by an executable option."""
 
@@ -116,6 +123,7 @@ ActionOptionDetails = (
     | EffectRetargetOptionDetails
     | GrappleEscapeOptionDetails
     | GrappleSaveOptionDetails
+    | InitiativeSwapOptionDetails
     | FeatureOptionDetails
     | MovementOptionDetails
     | ForcedMovementOptionDetails

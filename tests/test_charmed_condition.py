@@ -25,7 +25,10 @@ from srd_arena.domain.encounters.rule_queries.permissions import (
 )
 from srd_arena.engine.api import AimAction, SelectAction
 from srd_arena.engine.session import Session
-from tests.encounter_runtime_support import choose_advertised_action
+from tests.encounter_runtime_support import (
+    choose_advertised_action,
+    keep_alert_initiative,
+)
 
 ENCOUNTERS_ROOT = Path(__file__).parents[1] / "content" / "encounters"
 WARLOCK_TRAINING_ENCOUNTER_DIR = ENCOUNTERS_ROOT / "warlock_training"
@@ -35,7 +38,7 @@ STAT_BLOCK_ENCOUNTER_DIR = ENCOUNTERS_ROOT / "archive" / "stat_block_action_show
 
 def _warlock_session() -> Session:
     session = Session(load_encounter_directory(WARLOCK_TRAINING_ENCOUNTER_DIR))
-    session._read()
+    keep_alert_initiative(session)
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")

@@ -66,6 +66,13 @@ class ForcedMovementChoiceRequest(DecisionRequest):
     occurrence_index: int = 1
 
 
+@dataclass(frozen=True)
+class InitiativeSwapRequest(DecisionRequest):
+    """Offer one Alert owner its optional post-roll Initiative swap."""
+
+    owner_ref: CreatureRef
+
+
 @dataclass
 class PendingSpellProjectiles:
     """Preserve one started spell while its projectiles and choices resolve."""
