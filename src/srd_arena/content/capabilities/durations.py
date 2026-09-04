@@ -23,6 +23,13 @@ class StartOfTurnDurationSchema(CapabilitySchemaModel):
     turn_offset: NonNegativeInt = 0
 
 
+class NextTurnEndDurationSchema(CapabilitySchemaModel):
+    """Expire state at the named creature's next turn end."""
+
+    type: Literal["next_turn_end"]
+    creature: Literal["source", "target"]
+
+
 class TimedDurationSchema(CapabilitySchemaModel):
     """Encode the ``timed`` effect-duration variant with amount and unit."""
 
@@ -54,6 +61,7 @@ class PermanentDurationSchema(CapabilitySchemaModel):
 
 EffectDurationSchema = Annotated[
     EndOfTurnDurationSchema
+    | NextTurnEndDurationSchema
     | StartOfTurnDurationSchema
     | TimedDurationSchema
     | UntilEventDurationSchema

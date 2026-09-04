@@ -149,6 +149,7 @@ class SpellActionContext:
     selected_condition: str | None = None
     selected_damage_type: str | None = None
     selected_ability: str | None = None
+    selected_option: str | None = None
     attack_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
     target_armor_classes: Mapping[str, int] = field(default_factory=dict)
     automatic_critical_providers: Mapping[str, tuple[str, ...]] = field(

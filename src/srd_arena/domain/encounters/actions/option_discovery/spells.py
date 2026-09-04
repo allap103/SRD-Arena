@@ -6,6 +6,7 @@ from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.capabilities import (
+    CompelledTurnEffect,
     ConditionEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
@@ -127,21 +128,32 @@ def available_spell_actions(
             ability_selections: tuple[str | None, ...] = (
                 ability_choices if ability_choices else (None,)
             )
+            option_choices = tuple(
+                option
+                for effect in shared_effects
+                if isinstance(effect, CompelledTurnEffect)
+                for option in effect.options
+            )
+            option_selections: tuple[str | None, ...] = (
+                option_choices if option_choices else (None,)
+            )
             for selection in selections:
                 for damage_type_selection in damage_type_selections:
                     for ability_selection in ability_selections:
-                        _append_spell_option(
-                            actions,
-                            spellcasting,
-                            spell,
-                            target.target_ref,
-                            creature_ref,
-                            cost,
-                            selection,
-                            removal_choices,
-                            damage_type_selection,
-                            ability_selection,
-                        )
+                        for option_selection in option_selections:
+                            _append_spell_option(
+                                actions,
+                                spellcasting,
+                                spell,
+                                target.target_ref,
+                                creature_ref,
+                                cost,
+                                selection,
+                                removal_choices,
+                                damage_type_selection,
+                                ability_selection,
+                                option_selection,
+                            )
         if not targets:
             _append_spell_action_variants(
                 actions,
@@ -170,6 +182,7 @@ def _append_spell_option(
     removal_choices: tuple[tuple[str, str], ...],
     damage_type_selection: str | None,
     ability_selection: str | None,
+    option_selection: str | None,
 ) -> None:
     selection_display = next(
         (label for choice, label in removal_choices if choice == selection),
@@ -180,7 +193,11 @@ def _append_spell_option(
         selection_label = f" ({damage_type_selection.title()})"
     if ability_selection is not None:
         selection_label = f" ({ability_selection.title()})"
-    selected_id = selection or damage_type_selection or ability_selection
+    if option_selection is not None:
+        selection_label = f" ({option_selection.title()})"
+    selected_id = (
+        selection or damage_type_selection or ability_selection or option_selection
+    )
     selection_id = (
         f"-{selected_id.replace(':', '-').replace('@', '-')}" if selected_id else ""
     )
@@ -197,6 +214,7 @@ def _append_spell_option(
                 selected_condition=selection,
                 selected_damage_type=damage_type_selection,
                 selected_ability=ability_selection,
+                selected_option=option_selection,
             ),
             id=spell_action_id(spell, target_ref=target_ref) + selection_id,
             creature_ref=creature_ref,

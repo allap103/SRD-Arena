@@ -17,6 +17,7 @@ class SpellActionPayload:
     selected_condition: str | None = None
     selected_damage_type: str | None = None
     selected_ability: str | None = None
+    selected_option: str | None = None
     slot_level: int | None = None
     healing_allocations: tuple[tuple[str, int], ...] = ()
 
@@ -50,6 +51,7 @@ def serialize_spell_action_payload(payload: SpellActionPayload) -> dict[str, obj
         "selected_condition": payload.selected_condition,
         "selected_damage_type": payload.selected_damage_type,
         "selected_ability": payload.selected_ability,
+        "selected_option": payload.selected_option,
         "slot_level": payload.slot_level,
         "healing_allocations": dict(payload.healing_allocations),
     }
@@ -98,6 +100,7 @@ def spell_action_payload(
     selected_condition: str | None = None,
     selected_damage_type: str | None = None,
     selected_ability: str | None = None,
+    selected_option: str | None = None,
     slot_level: int | None = None,
     healing_allocations: dict[str, int] | None = None,
 ) -> SpellActionPayload:
@@ -134,6 +137,7 @@ def spell_action_payload(
         selected_condition=selected_condition,
         selected_damage_type=selected_damage_type,
         selected_ability=selected_ability,
+        selected_option=selected_option,
         slot_level=slot_level,
         healing_allocations=allocations,
     )

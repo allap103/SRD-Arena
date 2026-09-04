@@ -7,6 +7,7 @@ from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
     AttackHitDamageEffect,
     AttackHitRetaliationEffect,
+    CompelledTurnEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
     DamageImmunityEffect,
@@ -23,6 +24,7 @@ from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
     AttackHitDamage,
     AttackHitRetaliation,
+    CompelledTurn,
     ConditionImmunity,
     ConditionSaveAdvantage,
     DamageImmunity,
@@ -66,7 +68,8 @@ def prepare_persistent_rule_plan(
     ...     roll_modifier_effects=(),
     ... )
     >>> context = SimpleNamespace(
-    ...     selected_damage_type=None, selected_ability=None
+    ...     selected_damage_type=None, selected_ability=None,
+    ...     selected_option=None
     ... )
     >>> prepare_persistent_rule_plan(context, prepared)
     PersistentRulePlan(effects=(), duration=None)
@@ -128,6 +131,7 @@ def prepare_persistent_rule_plan(
         effects=_translate_rule_effects(
             prepared,
             context.selected_ability,
+            context.selected_option,
             maximum_hit_point_modifier=maximum_hit_point_modifier,
             also_modify_current=(
                 maximum_hit_point_effect.also_modify_current
@@ -179,6 +183,7 @@ def _first_effect[
 def _translate_rule_effects(
     prepared: PreparedSpellResolution,
     selected_ability: str | None,
+    selected_option: str | None,
     *,
     maximum_hit_point_modifier: int = 0,
     also_modify_current: bool = False,
@@ -200,7 +205,7 @@ def _translate_rule_effects(
     ...     ),
     ...     roll_modifier_effects=(),
     ... )
-    >>> _translate_rule_effects(prepared, None)
+    >>> _translate_rule_effects(prepared, None, None)
     (ArmorClassAdjustment(value=2), SpeedAdjustment(feet=10))
     """
 
@@ -231,6 +236,13 @@ def _translate_rule_effects(
         for effect in prepared.definition_effects
         if isinstance(effect, AttackHitRetaliationEffect)
     )
+    for effect in prepared.definition_effects:
+        if not isinstance(effect, CompelledTurnEffect):
+            continue
+        if selected_option not in effect.options:
+            raise ValueError("A compelled-turn effect requires one authored option.")
+        effects.append(CompelledTurn(selected_option))
+
     if maximum_hit_point_modifier:
         effects.append(
             MaximumHitPointAdjustment(

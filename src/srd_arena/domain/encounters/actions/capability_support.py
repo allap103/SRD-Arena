@@ -138,6 +138,8 @@ def effect_duration_runtime_issue(
 
     if duration is None or duration.kind == "timed":
         return None
+    if duration.kind == "next_turn_end":
+        return None
     if duration.kind in {"start_of_turn", "end_of_turn"}:
         if supports_turn_relative_durations or (
             duration.creature == "source" and duration.turn_offset == 1

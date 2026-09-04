@@ -47,6 +47,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
             selected_condition=payload.selected_condition,
             selected_damage_type=payload.selected_damage_type,
             selected_ability=payload.selected_ability,
+            selected_option=payload.selected_option,
             healing_allocations=payload.healing_allocations,
         )
     if action.kind == "toggle_spell_target":
@@ -59,6 +60,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
             selected_condition=None,
             selected_damage_type=None,
             selected_ability=None,
+            selected_option=None,
             healing_allocations=(),
         )
     if action.kind == "stat_block":

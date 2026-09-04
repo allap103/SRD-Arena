@@ -96,6 +96,7 @@ def build_spell_action_context(
         selected_condition=payload.selected_condition,
         selected_damage_type=payload.selected_damage_type,
         selected_ability=payload.selected_ability,
+        selected_option=payload.selected_option,
         attack_roll_modes=_attack_roll_modes(
             state,
             creature_ref,

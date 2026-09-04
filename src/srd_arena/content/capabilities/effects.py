@@ -111,6 +111,16 @@ class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
     duration: EffectDurationSchema
 
 
+class CompelledTurnEffectSchema(CapabilitySchemaModel):
+    """Encode a closed choice of instructions imposed on a target's next turn."""
+
+    type: Literal["compelled_turn"]
+    options: list[Literal["approach", "drop", "flee", "grovel", "halt"]] = Field(
+        min_length=1
+    )
+    duration: EffectDurationSchema
+
+
 class RollModifierEffectSchema(CapabilitySchemaModel):
     """Encode the ``roll_modifier`` capability-effect variant with roll and mode."""
 
@@ -172,6 +182,7 @@ ActionEffectSchema = Annotated[
     | SpeedMultiplierEffectSchema
     | ProhibitReactionEffectSchema
     | TurnEconomyRestrictionEffectSchema
+    | CompelledTurnEffectSchema
     | RollModifierEffectSchema
     | ControlEffectSchema
     | GainMemoriesEffectSchema,

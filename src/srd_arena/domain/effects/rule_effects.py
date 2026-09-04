@@ -9,7 +9,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 if TYPE_CHECKING:
     from srd_arena.domain.rolls.dice import DieRoller
@@ -222,6 +222,13 @@ class AttackHitRetaliation:
 
 
 @dataclass(frozen=True)
+class CompelledTurn:
+    """Require one predefined instruction during a target's next turn."""
+
+    instruction: Literal["approach", "drop", "flee", "grovel", "halt"]
+
+
+@dataclass(frozen=True)
 class ReactionProhibition:
     """Prohibit all reactions, or only the named reaction kinds."""
 
@@ -296,6 +303,7 @@ type RuntimeRuleEffect = (
     | AttackHitRetaliation
     | ReactionProhibition
     | ActionEconomyRestriction
+    | CompelledTurn
     | AttackLimit
     | InvocationFailureChance
 )
@@ -405,6 +413,11 @@ def serialize_runtime_rule_effect(
         return {
             "type": "action_economy_restriction",
             "choose_between": sorted(kind.value for kind in effect.choose_between),
+        }
+    if isinstance(effect, CompelledTurn):
+        return {
+            "type": "compelled_turn",
+            "instruction": effect.instruction,
         }
     if isinstance(effect, AttackLimit):
         return {"type": "attack_limit", "maximum": effect.maximum}

@@ -92,5 +92,48 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "compelled turn execution",
+        "reason": "The authored choice and sourced next-turn state are implemented first; turn behavior follows in the next slice."
+      }
+    ]
+  },
+  "capability": {
+    "target": {
+      "type": "creature",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "wis",
+      "failure": {
+        "effects": [
+          {
+            "type": "compelled_turn",
+            "options": ["approach", "drop", "flee", "grovel", "halt"],
+            "duration": {
+              "type": "next_turn_end",
+              "creature": "target"
+            }
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 1,
+        "per_level": [
+          {
+            "type": "target_count",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  }
 }

@@ -216,6 +216,14 @@ class TurnEconomyRestrictionEffect:
 
 
 @dataclass(frozen=True)
+class CompelledTurnEffect:
+    """Offer a closed set of instructions for a target's compelled turn."""
+
+    options: tuple[Literal["approach", "drop", "flee", "grovel", "halt"], ...]
+    duration: EffectDuration
+
+
+@dataclass(frozen=True)
 class RollModifierEffect:
     """Contribute a contextual numeric or advantage-state roll adjustment."""
 
@@ -271,6 +279,7 @@ CapabilityEffect = (
     | SpeedMultiplierEffect
     | ProhibitReactionsEffect
     | TurnEconomyRestrictionEffect
+    | CompelledTurnEffect
     | RollModifierEffect
     | ControlEffect
     | GainMemoriesEffect

@@ -35,6 +35,7 @@ class SpellOptionDetails:
     selected_condition: str | None
     selected_damage_type: str | None
     selected_ability: str | None
+    selected_option: str | None
     healing_allocations: tuple[tuple[str, int], ...]
 
 

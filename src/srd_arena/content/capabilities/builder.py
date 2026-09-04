@@ -13,6 +13,7 @@ _SHARED_EFFECT_TYPES = (
     effects.AttackHitDamageEffectSchema,
     effects.AttackHitRetaliationEffectSchema,
     effects.ConditionEffectSchema,
+    effects.CompelledTurnEffectSchema,
     effects.ForcedMovementEffectSchema,
     effects.SpeedMultiplierEffectSchema,
     effects.ProhibitReactionEffectSchema,
@@ -145,6 +146,11 @@ def build_duration(
             creature=value.creature,
             turn_offset=value.turn_offset,
         )
+    if isinstance(value, durations.NextTurnEndDurationSchema):
+        return domain.EffectDuration(
+            kind="next_turn_end",
+            creature=value.creature,
+        )
     if isinstance(value, durations.TimedDurationSchema):
         return domain.EffectDuration(
             kind="timed",
@@ -221,6 +227,11 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
     if isinstance(value, effects.TurnEconomyRestrictionEffectSchema):
         return domain.TurnEconomyRestrictionEffect(
             tuple(value.choose_between),
+            _required_duration(value.duration),
+        )
+    if isinstance(value, effects.CompelledTurnEffectSchema):
+        return domain.CompelledTurnEffect(
+            tuple(value.options),
             _required_duration(value.duration),
         )
     if isinstance(value, effects.RollModifierEffectSchema):

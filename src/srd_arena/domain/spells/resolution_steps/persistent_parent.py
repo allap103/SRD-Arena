@@ -120,6 +120,13 @@ def _runtime_duration(
     """Resolve capability timing into encounter-owned turn or round duration."""
 
     duration = rules.duration
+    if duration is not None and duration.kind == "next_turn_end":
+        creature_ref = (
+            context.source_ref
+            if duration.creature == "source"
+            else resolved.affected_targets[0].target_ref
+        )
+        return UntilTurnEnd(creature_ref)
     if duration is not None and duration.kind in {"start_of_turn", "end_of_turn"}:
         creature_ref = (
             context.source_ref

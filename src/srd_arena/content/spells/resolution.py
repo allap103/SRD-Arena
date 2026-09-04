@@ -10,6 +10,7 @@ from srd_arena.content.capabilities import (
     Ability,
     AttackHitDamageEffectSchema,
     AttackHitRetaliationEffectSchema,
+    CompelledTurnEffectSchema,
     ConditionEffectSchema,
     DamageEffectSchema,
     DerivedDifficultyClassSchema,
@@ -210,6 +211,7 @@ class SpellEffectSchema(
             | AttackHitDamageEffectSchema
             | AttackHitRetaliationEffectSchema
             | ConditionEffectSchema
+            | CompelledTurnEffectSchema
             | ForcedMovementEffectSchema
             | SpeedMultiplierEffectSchema
             | ProhibitReactionEffectSchema
