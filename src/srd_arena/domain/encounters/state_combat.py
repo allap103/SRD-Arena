@@ -61,16 +61,19 @@ def attack_roll_mode_for(
     >>> effective = SimpleNamespace(
     ...     has_trait=lambda trait: False
     ... )
+    >>> profile = SimpleNamespace(intrinsic_rule_providers={})
     >>> state = SimpleNamespace(
     ...     effective_conditions_for=lambda ref: effective, conditions=[],
     ...     ongoing_effects=[],
     ...     definition=SimpleNamespace(terrain=()),
     ...     creatures={
     ...         "archer": SimpleNamespace(
-    ...             position=Position(0, 0), creature=SimpleNamespace(size="M")
+    ...             position=Position(0, 0),
+    ...             creature=SimpleNamespace(size="M", combat_profile=profile),
     ...         ),
     ...         "goblin": SimpleNamespace(
-    ...             position=Position(2, 0), creature=SimpleNamespace(size="M")
+    ...             position=Position(2, 0),
+    ...             creature=SimpleNamespace(size="M", combat_profile=profile),
     ...         ),
     ...     },
     ... )

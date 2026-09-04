@@ -11,7 +11,7 @@ from ..encounter_models.actions import CreatureRef
 from .context import ConditionRuleQueryContext
 from .defenses import condition_suppressions
 from .models import RollRuleContribution, RollRuleResult
-from .providers import ongoing_rule_effects
+from .providers import creature_rule_effects
 from .senses import sense_range
 
 
@@ -26,7 +26,10 @@ def roll_modifiers(
     """Return modifiers matching one roll, subject, ability, and opponent.
 
     >>> from types import SimpleNamespace
-    >>> state = SimpleNamespace(ongoing_effects=[], conditions=[])
+    >>> profile = SimpleNamespace(intrinsic_rule_providers={})
+    >>> creature = SimpleNamespace(combat_profile=profile)
+    >>> state = SimpleNamespace(ongoing_effects=[], conditions=[],
+    ...     creatures={"hero": SimpleNamespace(creature=creature)})
     >>> result = roll_modifiers(state, "hero", "saving_throw", "wisdom")
     >>> (result.contributions, result.mode)
     ((), 'normal')
@@ -38,10 +41,15 @@ def roll_modifiers(
             source,
             rule_effect.modifier,
         )
-        for provider_state_id, source, rule_effect in ongoing_rule_effects(
+        for provider_state_id, source, rule_effect in creature_rule_effects(
             state, creature_ref
         )
         if isinstance(rule_effect, RollAdjustment)
+        and not _roll_adjustment_is_blocked(
+            state,
+            creature_ref,
+            rule_effect,
+        )
         and _modifier_applies(
             state,
             rule_effect.modifier,
@@ -60,6 +68,27 @@ def roll_modifiers(
             ability=ability,
             subject=subject,
         )
+    )
+
+
+def _roll_adjustment_is_blocked(
+    state: ConditionRuleQueryContext,
+    creature_ref: CreatureRef,
+    adjustment: RollAdjustment,
+) -> bool:
+    if not adjustment.blocked_by_conditions:
+        return False
+    applied_conditions = tuple(
+        condition
+        for condition in state.conditions
+        if condition.target_ref == creature_ref
+    )
+    conditions = effective_conditions(
+        applied_conditions,
+        condition_suppressions(state, creature_ref).values,
+    )
+    return any(
+        conditions.has(condition) for condition in adjustment.blocked_by_conditions
     )
 
 

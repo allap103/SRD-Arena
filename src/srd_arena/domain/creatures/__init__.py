@@ -19,6 +19,7 @@ from .multiattack import (
     MultiattackStep,
 )
 from .resources import ResourceRecovery, RestType
+from .rule_providers import IntrinsicRuleProvider
 from .size import (
     can_grapple,
     footprint_width,
@@ -52,6 +53,7 @@ __all__ = [
     "CreatureStatistics",
     "DeclaredStatBlockAction",
     "Equipment",
+    "IntrinsicRuleProvider",
     "Inventory",
     "Movement",
     "Multiattack",

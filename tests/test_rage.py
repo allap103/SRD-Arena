@@ -156,9 +156,17 @@ def test_rage_contributes_resistance_advantage_and_spell_prohibition() -> None:
         roll_modifiers(state, "barbarian", "saving_throw", "strength").mode
         == "advantage"
     )
-    assert (
-        roll_modifiers(state, "barbarian", "saving_throw", "dexterity").mode == "normal"
+    dexterity_save = roll_modifiers(
+        state,
+        "barbarian",
+        "saving_throw",
+        "dexterity",
     )
+    assert dexterity_save.mode == "advantage"
+    assert {
+        contribution.source.definition_id
+        for contribution in dexterity_save.contributions
+    } == {"danger_sense"}
     prohibitions = invocation_prohibitions(
         state,
         InvocationStartContext("barbarian", "cast_spell"),

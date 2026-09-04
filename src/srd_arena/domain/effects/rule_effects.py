@@ -182,6 +182,7 @@ class RollAdjustment:
     """Contribute one existing roll modifier to a rule query."""
 
     modifier: RollModifier
+    blocked_by_conditions: frozenset[Condition] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -411,7 +412,7 @@ def serialize_runtime_rule_effect(
         }
     if isinstance(effect, RollAdjustment):
         modifier = effect.modifier
-        return {
+        serialized: dict[str, object] = {
             "type": "roll_adjustment",
             "roll": modifier.roll,
             "mode": modifier.mode,
@@ -422,6 +423,11 @@ def serialize_runtime_rule_effect(
             "ability": modifier.ability,
             "consume_on_use": modifier.consume_on_use,
         }
+        if effect.blocked_by_conditions:
+            serialized["blocked_by_conditions"] = sorted(
+                condition.value for condition in effect.blocked_by_conditions
+            )
+        return serialized
     if isinstance(effect, AttackHitDamage):
         return {
             "type": "attack_hit_damage",

@@ -4,8 +4,12 @@ from srd_arena.domain.creatures import (
     ArmorClassCalculation,
     ClassFeature,
     CombatProfile,
+    IntrinsicRuleProvider,
 )
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.rule_effects import RollAdjustment
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
@@ -89,6 +93,21 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                     base=10,
                     ability_modifiers=("dexterity", "constitution"),
                 )
+            )
+        elif class_feature.id == "danger_sense":
+            profile.intrinsic_rule_providers["danger_sense"] = IntrinsicRuleProvider(
+                id="danger_sense",
+                label="Danger Sense",
+                rule_effects=(
+                    RollAdjustment(
+                        RollModifier(
+                            "saving_throw",
+                            "advantage",
+                            ability="dexterity",
+                        ),
+                        blocked_by_conditions=frozenset({Condition.INCAPACITATED}),
+                    ),
+                ),
             )
     return profile
 
