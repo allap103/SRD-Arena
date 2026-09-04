@@ -108,6 +108,45 @@ QPushButton[availability="unimplemented"] {
     border-color: #a74b4b;
 }
 
+QTreeWidget#encounterTree {
+    background: #1d1711;
+    border: 1px solid #5f482d;
+    border-radius: 8px;
+    padding: 5px;
+    outline: none;
+}
+
+QTreeWidget#encounterTree::item {
+    min-height: 30px;
+    border: none;
+}
+
+QTreeWidget#encounterTree::item:selected {
+    background: transparent;
+}
+
+QPushButton#encounterPickerButton {
+    min-height: 22px;
+    max-height: 22px;
+    padding: 2px 8px;
+    margin: 2px 3px;
+    text-align: left;
+    font-weight: 500;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: 5px;
+}
+
+QPushButton#encounterPickerButton:hover {
+    background: #30261c;
+    border-color: #6f5535;
+}
+
+QPushButton#encounterPickerButton:pressed {
+    background: #46331f;
+    border-color: #a17a43;
+}
+
 QPushButton#sidebarButton {
     text-align: left;
     padding-left: 16px;

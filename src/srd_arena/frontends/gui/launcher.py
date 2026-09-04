@@ -13,6 +13,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QMainWindow,
     QMessageBox,
+    QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
     QVBoxLayout,
@@ -83,6 +84,7 @@ class EncounterPickerWindow(QMainWindow):
         tree.setHeaderHidden(True)
         tree.setRootIsDecorated(True)
         tree.setIndentation(22)
+        tree.setUniformRowHeights(True)
         tree.itemClicked.connect(self._activate_tree_item)
         self._populate_tree(tree, encounters)
         layout.addWidget(tree, 1)
@@ -97,7 +99,7 @@ class EncounterPickerWindow(QMainWindow):
         for encounter in _sorted_encounters(
             candidate for candidate in encounters if not candidate.folder
         ):
-            tree.addTopLevelItem(self._encounter_item(encounter))
+            self._add_encounter_item(tree, None, encounter)
         root_folders = sorted(
             {encounter.folder[0] for encounter in encounters if encounter.folder},
             key=lambda name: (name.casefold(), name),
@@ -140,8 +142,31 @@ class EncounterPickerWindow(QMainWindow):
         for encounter in _sorted_encounters(
             candidate for candidate in encounters if candidate.folder == folder
         ):
-            item.addChild(self._encounter_item(encounter))
+            self._add_encounter_item(tree, item, encounter)
         item.setExpanded(False)
+
+    def _add_encounter_item(
+        self,
+        tree: QTreeWidget,
+        parent: QTreeWidgetItem | None,
+        encounter: EncounterSummary,
+    ) -> None:
+        """Add one compact encounter button while retaining tree metadata."""
+
+        item = self._encounter_item(encounter)
+        if parent is None:
+            tree.addTopLevelItem(item)
+        else:
+            parent.addChild(item)
+        button = QPushButton(encounter.label)
+        button.setObjectName("encounterPickerButton")
+        button.setCursor(Qt.CursorShape.PointingHandCursor)
+        button.setAutoDefault(False)
+        button.setFixedHeight(28)
+        button.clicked.connect(
+            lambda _checked=False, selected=encounter: self._open_encounter(selected)
+        )
+        tree.setItemWidget(item, 0, button)
 
     def _encounter_item(self, encounter: EncounterSummary) -> QTreeWidgetItem:
         """Create a selectable tree leaf for one encounter summary."""

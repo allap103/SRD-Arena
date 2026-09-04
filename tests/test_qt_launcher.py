@@ -17,6 +17,7 @@ from PySide6.QtWidgets import (
     QApplication,
     QLabel,
     QMessageBox,
+    QPushButton,
     QTreeWidget,
     QTreeWidgetItem,
 )
@@ -116,8 +117,18 @@ def test_encounter_picker_loads_content_then_creates_session(
     assert "Start a new session from any available encounter." not in {
         label.text() for label in picker.findChildren(QLabel)
     }
+    encounter_buttons = picker.findChildren(
+        QPushButton,
+        "encounterPickerButton",
+    )
+    assert [button.text() for button in encounter_buttons] == [
+        "alpha Demo",
+        "Example Encounter",
+        "Zulu Demo",
+    ]
+    assert all(button.height() == 28 for button in encounter_buttons)
 
-    picker._open_encounter(encounter)
+    encounter_buttons[1].click()
 
     assert catalog.loaded == ["example"]
     assert len(created_presenters) == 1
