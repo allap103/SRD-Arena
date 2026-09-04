@@ -25,7 +25,7 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..participants import creature_controller, creatures_are_opponents
-from ..rule_queries.defenses import apply_damage
+from ..rule_queries.damage_riders import attack_hit_damage
 from ..rule_queries.numeric import effective_armor_class
 from ..rule_queries.permissions import (
     TargetingKind,
@@ -34,7 +34,11 @@ from ..rule_queries.permissions import (
 )
 from ..rule_queries.rolls import roll_modifiers
 from ..spatial import creature_distance
-from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ..state_combat import (
+    apply_combat_damage,
+    attack_roll_mode_for,
+    automatic_critical_provider_ids_for,
+)
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
 from .damage_rerolls import open_damage_reroll_decision
@@ -181,6 +185,10 @@ def resolve_automatic_opportunity_attacks(
                     mover_ref,
                 )
             ),
+            sourced_additional_damage=tuple(
+                (contribution.provider_state_id, contribution.value)
+                for contribution in attack_hit_damage(state, reactor_ref, mover_ref)
+            ),
         )
         apply_attack_damage(
             attack,
@@ -188,7 +196,7 @@ def resolve_automatic_opportunity_attacks(
             attacker_label=reactor.creature.name,
             target_label=mover.creature.name,
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 mover_ref,
             ),
@@ -335,6 +343,10 @@ def apply_reaction_action(
                     target_ref,
                 )
             ),
+            sourced_additional_damage=tuple(
+                (contribution.provider_state_id, contribution.value)
+                for contribution in attack_hit_damage(state, reactor_ref, target_ref)
+            ),
         )
         reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
         if attack.hit and reroll_rule is not None:
@@ -365,7 +377,7 @@ def apply_reaction_action(
             attacker_label=reactor_label,
             target_label=target_label,
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 target_ref,
             ),

@@ -3,7 +3,7 @@
 from dataclasses import dataclass, field
 
 from .rule_effects import RuntimeRuleEffect
-from .runtime import EffectDuration, OngoingEffectLifecycle
+from .runtime import EffectDuration, EffectTag, OngoingEffectLifecycle
 
 
 @dataclass(frozen=True)
@@ -18,6 +18,7 @@ class EffectResult:
     effect_label: str | None = None
     lifecycle: OngoingEffectLifecycle | None = None
     duration: EffectDuration | None = None
+    tags: frozenset[EffectTag] = frozenset()
 
 
 @dataclass(frozen=True)

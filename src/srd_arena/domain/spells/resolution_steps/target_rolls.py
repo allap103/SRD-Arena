@@ -232,6 +232,13 @@ def _resolve_spell_attack(
                 ),
             )
         )
+    if hit:
+        damage_rolls.extend(
+            context.environment.attack_hit_damage(
+                target.target_ref,
+                critical_hit=critical_hit,
+            )
+        )
     return TargetRollOutcome(
         successful_save=False,
         automatic_success_reasons=(),

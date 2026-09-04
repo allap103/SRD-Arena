@@ -123,6 +123,7 @@ def start_ongoing_effect(
         label=result.effect_label,
         lifecycle=result.lifecycle or OngoingEffectLifecycle(),
         dispellable=True,
+        tags=result.tags,
         rule_effects=result.rule_effects,
     )
     state.ongoing_effects.append(effect)

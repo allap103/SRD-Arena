@@ -57,5 +57,65 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "complete"
+  },
+  "capability": {
+    "target": {
+      "type": "creature",
+      "disposition": "enemy",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "attack_hit_damage",
+            "dice": "1d6",
+            "damage_type": "necrotic"
+          },
+          {
+            "type": "roll_modifier",
+            "roll": "ability_check",
+            "mode": "disadvantage",
+            "ability_options": ["str", "dex", "con", "int", "wis", "cha"]
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "thresholds": [
+          {
+            "minimum_level": 2,
+            "increments": [
+              {"type": "duration", "amount": 4, "unit": "hour"}
+            ]
+          },
+          {
+            "minimum_level": 3,
+            "increments": [
+              {"type": "duration", "amount": 8, "unit": "hour"}
+            ]
+          },
+          {
+            "minimum_level": 5,
+            "increments": [
+              {"type": "duration", "amount": 24, "unit": "hour"}
+            ]
+          }
+        ]
+      }
+    ],
+    "effect_tags": ["curse"],
+    "retargeting": {
+      "trigger": "target_defeated",
+      "activation": "bonus_action",
+      "timing": "later_turn"
+    },
+    "recast_ends_previous": true
+  }
 }

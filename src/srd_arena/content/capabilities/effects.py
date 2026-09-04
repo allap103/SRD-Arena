@@ -25,6 +25,14 @@ class DamageEffectSchema(CapabilitySchemaModel):
     requirements: list[AttackHitRequirementSchema] = Field(default_factory=list)
 
 
+class AttackHitDamageEffectSchema(CapabilitySchemaModel):
+    """Encode damage added when the effect source hits its marked target."""
+
+    type: Literal["attack_hit_damage"]
+    dice: str = Field(pattern=r"^\d+d\d+$")
+    damage_type: str = Field(min_length=1)
+
+
 class ConditionEffectSchema(CapabilitySchemaModel):
     """Encode the ``condition`` capability-effect variant with condition and duration."""
 
@@ -134,6 +142,7 @@ class GainMemoriesEffectSchema(CapabilitySchemaModel):
 
 ActionEffectSchema = Annotated[
     DamageEffectSchema
+    | AttackHitDamageEffectSchema
     | ConditionEffectSchema
     | ForcedMovementEffectSchema
     | SpeedMultiplierEffectSchema

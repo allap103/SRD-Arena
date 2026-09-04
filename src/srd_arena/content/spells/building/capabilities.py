@@ -131,6 +131,16 @@ def build_spell_definition(
         scaling=build_scaling(raw),
         triggers=_build_triggers(raw),
         follow_ups=_build_follow_ups(raw),
+        effect_tags=frozenset(raw.capability.effect_tags),
+        retargeting=(
+            domain.CapabilityRetargeting(
+                raw.capability.retargeting.trigger,
+                raw.capability.retargeting.activation,
+                raw.capability.retargeting.timing,
+            )
+            if raw.capability.retargeting is not None
+            else None
+        ),
     )
 
 

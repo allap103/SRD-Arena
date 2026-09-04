@@ -11,6 +11,7 @@ from ...encounter_models.actions import (
 )
 from ...spatial import creatures_are_adjacent
 from ..consumables import healing_potions_in_inventory
+from ..effect_retargeting import effect_retarget_actions
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
 from ..option_discovery.standard import available_feature_actions
@@ -58,6 +59,7 @@ def special_action_candidates(
     actions.extend(prone_action_candidates(state, creature_ref))
     actions.extend(available_feature_actions(state, actor.creature))
     actions.extend(available_spell_actions(state, actor.creature))
+    actions.extend(effect_retarget_actions(state, creature_ref))
 
     for effect in state.ongoing_effects:
         if not any(

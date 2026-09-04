@@ -159,6 +159,18 @@ class EndEventRule:
 
 
 @dataclass(frozen=True)
+class RetargetOnDefeatLifecycle:
+    """Track a persistent effect that may move after its target is defeated."""
+
+    range_feet: int | None
+    line_of_sight: bool
+    disposition: str
+    defeated_target_ref: str | None = None
+    defeated_round: int | None = None
+    defeated_turn_index: int | None = None
+
+
+@dataclass(frozen=True)
 class OngoingEffectLifecycle:
     """Hold typed turn, event, and duration-progress behavior for an effect."""
 
@@ -166,6 +178,7 @@ class OngoingEffectLifecycle:
     repeat_save: RepeatSaveLifecycle | None = None
     end_events: tuple[EndEventRule, ...] = ()
     turn_start_temporary_hit_points: int = 0
+    retarget_on_defeat: RetargetOnDefeatLifecycle | None = None
 
 
 @dataclass(frozen=True)

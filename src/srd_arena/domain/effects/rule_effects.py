@@ -185,6 +185,14 @@ class RollAdjustment:
 
 
 @dataclass(frozen=True)
+class AttackHitDamage:
+    """Add typed dice damage when the effect source hits its target."""
+
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
 class ReactionProhibition:
     """Prohibit all reactions, or only the named reaction kinds."""
 
@@ -255,6 +263,7 @@ type RuntimeRuleEffect = (
     | ConditionSaveAdvantage
     | GrantedSense
     | RollAdjustment
+    | AttackHitDamage
     | ReactionProhibition
     | ActionEconomyRestriction
     | AttackLimit
@@ -342,6 +351,12 @@ def serialize_runtime_rule_effect(
             "ignored_by_senses": list(modifier.ignored_by_senses),
             "ability": modifier.ability,
             "consume_on_use": modifier.consume_on_use,
+        }
+    if isinstance(effect, AttackHitDamage):
+        return {
+            "type": "attack_hit_damage",
+            "dice": effect.dice,
+            "damage_type": effect.damage_type,
         }
     if isinstance(effect, ReactionProhibition):
         return {

@@ -152,6 +152,40 @@ def resource_int_increment(
     )
 
 
+def resource_duration_rounds(
+    definition: CapabilityDefinition,
+    resource_level: int,
+) -> int | None:
+    """Return the highest explicit duration threshold reached by a slot."""
+
+    rounds_per_unit = {
+        "round": 1,
+        "minute": 10,
+        "hour": 600,
+        "day": 14_400,
+    }
+    thresholds = sorted(
+        (
+            threshold
+            for scaling in definition.scaling
+            if scaling.basis == "resource_level"
+            for threshold in scaling.thresholds
+            if threshold.minimum_level <= resource_level
+        ),
+        key=lambda threshold: threshold.minimum_level,
+        reverse=True,
+    )
+    for threshold in thresholds:
+        for increment in threshold.increments:
+            if (
+                increment.kind == "duration"
+                and isinstance(increment.amount, int)
+                and increment.unit is not None
+            ):
+                return increment.amount * rounds_per_unit[increment.unit]
+    return None
+
+
 def parse_damage_dice(expression: str) -> tuple[int, int]:
     """Parse an authored dice expression into its count and die size.
 

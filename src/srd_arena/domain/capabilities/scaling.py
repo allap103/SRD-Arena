@@ -21,6 +21,7 @@ class ScalingIncrement:
     ]
     amount: int | str
     damage_type: str | None = None
+    unit: Literal["round", "minute", "hour", "day"] | None = None
 
 
 @dataclass(frozen=True)

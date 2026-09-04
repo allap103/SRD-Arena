@@ -9,7 +9,7 @@ from srd_arena.domain.spells.action_payloads import (
     serialize_spell_action_payload,
 )
 
-from ...encounter_models.actions import EncounterAction
+from ...encounter_models.actions import EffectRetargetSelection, EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import (
     ActionExecutionContext,
@@ -47,6 +47,11 @@ def begin_action_execution(
     event_value = (
         serialize_spell_action_payload(action.value)
         if isinstance(action.value, SpellActionPayload)
+        else {
+            "effect_id": action.value.effect_id,
+            "target_ref": action.value.target_ref,
+        }
+        if isinstance(action.value, EffectRetargetSelection)
         else action.value
     )
     context.progress.events.append(

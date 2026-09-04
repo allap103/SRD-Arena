@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.rolls.dice import resolve_dice
 
-from ..rule_queries.defenses import apply_damage
 from ..rule_queries.rolls import roll_modifiers
+from ..state_combat import apply_combat_damage
 from .concentration import resolve_concentration_damage
 from .lifecycle_events import resolve_spell_lifecycle_event
 
@@ -55,7 +55,7 @@ def resolve_repeat_failure_damage(
             modifier=damage_modifier,
             roller=state.dice.roll_die,
         )
-        applied = apply_damage(
+        applied = apply_combat_damage(
             state,
             creature_ref,
             roll.total,

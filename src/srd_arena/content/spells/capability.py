@@ -75,6 +75,14 @@ class OutcomeTriggerSchema(SpellCapabilitySchemaModel):
     resolution: SpellResolutionSchema
 
 
+class RetargetingSchema(SpellCapabilitySchemaModel):
+    """Configure moving one persistent effect after its target is defeated."""
+
+    trigger: Literal["target_defeated"]
+    activation: Literal["bonus_action"]
+    timing: Literal["later_turn"]
+
+
 class SpellCapabilitySchema(SpellCapabilitySchemaModel):
     """Define the authored spell-capability fields with target and resolution."""
 
@@ -92,3 +100,5 @@ class SpellCapabilitySchema(SpellCapabilitySchemaModel):
     condition_application: Literal["all", "choose_one"] = "all"
     self_removal_blocked_conditions: list[str] = Field(default_factory=list)
     recast_ends_previous: bool = False
+    effect_tags: list[Literal["curse"]] = Field(default_factory=list)
+    retargeting: RetargetingSchema | None = None

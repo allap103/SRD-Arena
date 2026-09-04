@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import Position
@@ -79,6 +80,7 @@ def resolve_attack(
     target_armor_class: int | None = None,
     sourced_damage_modifier_for: Callable[[], int] | None = None,
     automatic_critical_provider_ids: tuple[str, ...] = (),
+    sourced_additional_damage: tuple[tuple[str, DamageEffect], ...] = (),
 ) -> AttackOutcome:
     """Resolve attack selection, hit determination, and rolled damage.
 
@@ -155,6 +157,7 @@ def resolve_attack(
         attack_roll_mode=attack_roll.result.mode,
         roller=die_roller,
         sourced_modifier_for=damage_modifier_for,
+        sourced_additional_damage=sourced_additional_damage,
     )
     messages = [("system", attack_detail_message)]
     if attack_roll.critical_hit:

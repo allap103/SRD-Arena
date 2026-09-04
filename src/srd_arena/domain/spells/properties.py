@@ -24,7 +24,8 @@ def spell_supports_higher_level(spell: Spell) -> bool:
 
     if spell.definition is not None:
         return any(
-            scaling.basis == "resource_level" and scaling.per_level
+            scaling.basis == "resource_level"
+            and (scaling.per_level or scaling.thresholds)
             for scaling in spell.definition.scaling
         )
     return False

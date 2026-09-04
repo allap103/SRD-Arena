@@ -12,6 +12,7 @@ from srd_arena.domain.capabilities import (
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.effects.conditions import CombatTrait
 from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
+from srd_arena.domain.effects.runtime import EffectTag
 from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.resolution import SpellTargetContext
 from srd_arena.domain.spells.rules import spell_target_disposition
@@ -137,7 +138,8 @@ def _spell_removal_choices(
                 f"Curse: {effect.identity.source.label or effect.identity.source.definition_id}",
             )
             for effect in state.ongoing_effects
-            if target_ref in effect.target_refs and effect.kind.value == "curse"
+            if target_ref in effect.target_refs
+            and (effect.kind.value == "curse" or EffectTag.CURSE in effect.tags)
         )
     if "hit_point_maximum_reduction" in spell.removable_effect_kinds and any(
         target_ref in effect.target_refs

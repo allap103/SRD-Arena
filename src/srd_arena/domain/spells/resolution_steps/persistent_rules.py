@@ -5,6 +5,7 @@ from typing import cast
 
 from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
+    AttackHitDamageEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
     DamageImmunityEffect,
@@ -19,6 +20,7 @@ from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
 from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
+    AttackHitDamage,
     ConditionImmunity,
     ConditionSaveAdvantage,
     DamageImmunity,
@@ -205,6 +207,11 @@ def _translate_rule_effects(
         for effect in prepared.definition_effects
         if isinstance(effect, ArmorClassModifierEffect)
     ]
+    effects.extend(
+        AttackHitDamage(effect.dice, effect.damage_type)
+        for effect in prepared.definition_effects
+        if isinstance(effect, AttackHitDamageEffect)
+    )
     if maximum_hit_point_modifier:
         effects.append(
             MaximumHitPointAdjustment(

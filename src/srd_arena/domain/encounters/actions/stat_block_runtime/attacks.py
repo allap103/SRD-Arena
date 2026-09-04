@@ -14,12 +14,16 @@ from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
-from ...rule_queries.defenses import apply_damage
+from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.numeric import effective_armor_class
 from ...rule_queries.obstructions import cover_between
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_distance
-from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ...state_combat import (
+    apply_combat_damage,
+    attack_roll_mode_for,
+    automatic_critical_provider_ids_for,
+)
 from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
     apply_attack_damage,
@@ -164,6 +168,10 @@ def resolve_attack_action(
                 target_ref,
             )
         ),
+        sourced_additional_damage=tuple(
+            (contribution.provider_state_id, contribution.value)
+            for contribution in attack_hit_damage(state, creature_ref, target_ref)
+        ),
     )
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)
@@ -174,7 +182,7 @@ def resolve_attack_action(
         defender,
         attacker_label=creature.name,
         target_label=target_label,
-        damage_receiver=lambda amount, damage_type: apply_damage(
+        damage_receiver=lambda amount, damage_type: apply_combat_damage(
             state,
             target_ref,
             amount,

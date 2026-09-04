@@ -40,6 +40,7 @@ def roll_attack_damage(
     attack_roll_mode: D20RollMode,
     roller: DieRoller,
     sourced_modifier_for: Callable[[], int],
+    sourced_additional_damage: tuple[tuple[str, DamageEffect], ...] = (),
 ) -> AttackDamageResolution:
     """Roll primary and conditional additional damage in authored order.
 
@@ -70,7 +71,10 @@ def roll_attack_damage(
     damage_total = damage_roll.total
     additional_damage = 0
     additional_damage_details: list[dict[str, object]] = []
-    for effect in attack_source.additional_damage:
+    for provider_state_id, effect in (
+        *(("", effect) for effect in attack_source.additional_damage),
+        *sourced_additional_damage,
+    ):
         if not damage_effect_requirements_met(effect, attack_roll_mode):
             continue
         extra_dice = effect.dice
@@ -88,19 +92,20 @@ def roll_attack_damage(
             roller=roller,
         )
         additional_damage += max(0, extra_roll.total)
-        additional_damage_details.append(
-            {
-                "dice": extra_dice,
-                "dice_values": [die.result for die in extra_roll.dice],
-                "die_rolls": [list(die.rolls) for die in extra_roll.dice],
-                "dice_total": extra_roll.subtotal,
-                "modifier": extra_bonus + extra_sourced_modifier,
-                "sourced_modifier": extra_sourced_modifier,
-                "total": extra_roll.total,
-                "damage_type": extra_type,
-                "critical_hit": critical_hit,
-            }
-        )
+        extra_detail: dict[str, object] = {
+            "dice": extra_dice,
+            "dice_values": [die.result for die in extra_roll.dice],
+            "die_rolls": [list(die.rolls) for die in extra_roll.dice],
+            "dice_total": extra_roll.subtotal,
+            "modifier": extra_bonus + extra_sourced_modifier,
+            "sourced_modifier": extra_sourced_modifier,
+            "total": extra_roll.total,
+            "damage_type": extra_type,
+            "critical_hit": critical_hit,
+        }
+        if provider_state_id:
+            extra_detail["provider_state_ids"] = [provider_state_id]
+        additional_damage_details.append(extra_detail)
     detail: dict[str, object] = {
         "dice": damage_dice,
         "dice_values": [die.result for die in damage_roll.dice],

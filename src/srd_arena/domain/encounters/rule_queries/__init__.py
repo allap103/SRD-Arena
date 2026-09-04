@@ -1,5 +1,6 @@
 """Typed, source-aware questions asked by encounter orchestration."""
 
+from .damage_riders import attack_hit_damage
 from .defenses import (
     apply_damage,
     condition_immunities,
@@ -76,6 +77,7 @@ __all__ = [
     "action_compatibility",
     "apply_damage",
     "apply_healing",
+    "attack_hit_damage",
     "attack_limit",
     "cell_has_line_of_effect",
     "cells_with_line_of_effect",

@@ -9,9 +9,13 @@ from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.geometry import AreaOfEffect
-from srd_arena.domain.rolls.dice import D20RollMode, ResolvedRollModifier
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DicePoolResult,
+    ResolvedRollModifier,
+)
 
-from ..definitions import Spell
+from ..definitions import Spell, SpellDamage
 
 
 def _read_only[Key, Value](
@@ -78,6 +82,14 @@ class SpellResolutionEnvironment(Protocol):
 
     def damage_roll_modifier(self) -> ResolvedRollModifier:
         """Resolve the caster's current damage modifier and its sources."""
+
+    def attack_hit_damage(
+        self,
+        target_ref: str,
+        *,
+        critical_hit: bool,
+    ) -> tuple[tuple[SpellDamage, DicePoolResult], ...]:
+        """Roll source-bound damage added by hitting this target."""
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve a target's current sourced saving-throw modifier."""

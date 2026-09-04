@@ -6,7 +6,7 @@ from .definitions import (
     CapabilityDefinition,
     SavingThrowResolution,
 )
-from .effects import CapabilityEffect, DamageEffect
+from .effects import AttackHitDamageEffect, CapabilityEffect, DamageEffect
 from .resolutions import CapabilityResolution
 
 
@@ -96,7 +96,7 @@ def capability_can_damage(definition: CapabilityDefinition | None) -> bool:
     """
 
     return any(
-        isinstance(effect, DamageEffect)
+        isinstance(effect, (DamageEffect, AttackHitDamageEffect))
         for effect in all_capability_effects(definition)
     )
 

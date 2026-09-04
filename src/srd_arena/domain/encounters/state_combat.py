@@ -9,13 +9,31 @@ from srd_arena.domain.effects.triggered import TriggeredEffect, matching_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
+from .actions.effect_retargeting import mark_retargetable_effects_for_defeat
 from .attack_rules import proximity_attack_roll_mode
 from .encounter_models.actions import CreatureRef
+from .rule_queries.defenses import apply_damage
 from .rule_queries.rolls import roll_modifiers
 from .spatial import creature_distance
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
+
+
+def apply_combat_damage(
+    state: EncounterState,
+    creature_ref: CreatureRef,
+    amount: int,
+    damage_type: str | None = None,
+) -> int:
+    """Apply defensive rules and arm defeat-triggered persistent effects."""
+
+    creature = state.creatures[creature_ref].creature
+    was_alive = creature.get_health() > 0
+    applied = apply_damage(state, creature_ref, amount, damage_type)
+    if was_alive and creature.get_health() <= 0:
+        mark_retargetable_effects_for_defeat(state, creature_ref)
+    return applied
 
 
 def attack_roll_mode_for(

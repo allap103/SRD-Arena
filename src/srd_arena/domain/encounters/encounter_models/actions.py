@@ -30,6 +30,14 @@ class ForcedMovementSelection:
     distance_feet: int
 
 
+@dataclass(frozen=True)
+class EffectRetargetSelection:
+    """Select an active persistent effect and its replacement target."""
+
+    effect_id: str
+    target_ref: CreatureRef
+
+
 @dataclass
 class ActionCost:
     """Count movement and turn resources consumed by an encounter action."""
@@ -60,6 +68,7 @@ class EncounterAction:
         | SpellActionPayload
         | GrappleEscapeSelection
         | ForcedMovementSelection
+        | EffectRetargetSelection
         | None
     ) = None
     id: str = ""

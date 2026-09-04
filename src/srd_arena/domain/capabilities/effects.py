@@ -41,6 +41,14 @@ class DamageEffect:
 
 
 @dataclass(frozen=True)
+class AttackHitDamageEffect:
+    """Add typed dice damage when the effect source hits its marked target."""
+
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
 class HealingEffect:
     """Restore Hit Points from dice, a pool, or damage already dealt."""
 
@@ -233,6 +241,7 @@ class GainMemoriesEffect:
 
 CapabilityEffect = (
     DamageEffect
+    | AttackHitDamageEffect
     | HealingEffect
     | TemporaryHitPointsEffect
     | ArmorClassModifierEffect

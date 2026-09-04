@@ -20,7 +20,7 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id
-from ..rule_queries.defenses import apply_damage
+from ..state_combat import apply_combat_damage
 from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
 
@@ -338,7 +338,7 @@ def finalize_damage_reroll(
         target.creature,
         attacker_label=attacker.name,
         target_label=request.target_label,
-        damage_receiver=lambda amount, damage_type: apply_damage(
+        damage_receiver=lambda amount, damage_type: apply_combat_damage(
             state,
             request.target_ref,
             amount,

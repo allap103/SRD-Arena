@@ -2,16 +2,19 @@
 
 from typing import cast
 
+from srd_arena.domain.capabilities import CapabilityDefinition
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.runtime import (
     EffectDuration as RuntimeEffectDuration,
 )
 from srd_arena.domain.effects.runtime import (
+    EffectTag,
     EndEventRule,
     OngoingEffectLifecycle,
     RepeatedDamage,
     RepeatSaveLifecycle,
+    RetargetOnDefeatLifecycle,
     Rounds,
     UntilTurnEnd,
     UntilTurnStart,
@@ -23,7 +26,7 @@ from .details import effect_duration_rounds
 from .persistent_rules import PersistentRulePlan
 from .polarity import persistent_spell_effect_polarity
 from .preparation import PreparedSpellResolution
-from .scaling import resource_dice_increment, scale_dice
+from .scaling import resource_dice_increment, resource_duration_rounds, scale_dice
 from .targets import ResolvedSpellTargets
 
 
@@ -51,11 +54,15 @@ def build_ongoing_spell_effect(
     """
 
     spell = context.spell
+    if not resolved.affected_targets:
+        return None
     duration_rounds = spell_duration_rounds(spell)
     runtime_duration = _runtime_duration(
         context,
         resolved,
         rules,
+        definition=prepared.definition,
+        cast_level=prepared.cast_level,
         fallback_rounds=duration_rounds,
     )
     has_turn_start_temporary_hit_points = any(
@@ -73,7 +80,7 @@ def build_ongoing_spell_effect(
         or spell.concentration
         or prepared.repeat_save is not None
     )
-    if not resolved.affected_targets or not has_persistent_state or not has_lifecycle:
+    if not has_persistent_state or not has_lifecycle:
         return None
 
     assert context.creature.spellcasting is not None
@@ -94,6 +101,7 @@ def build_ongoing_spell_effect(
         lifecycle=_build_lifecycle(context, prepared),
         rule_effects=rules.effects,
         duration=runtime_duration,
+        tags=frozenset(EffectTag(tag) for tag in prepared.definition.effect_tags),
     )
 
 
@@ -102,6 +110,8 @@ def _runtime_duration(
     resolved: ResolvedSpellTargets,
     rules: PersistentRulePlan,
     *,
+    definition: CapabilityDefinition,
+    cast_level: int,
     fallback_rounds: int | None,
 ) -> RuntimeEffectDuration | None:
     """Resolve capability timing into encounter-owned turn or round duration."""
@@ -120,6 +130,12 @@ def _runtime_duration(
     rounds = (
         effect_duration_rounds(duration) if duration is not None else fallback_rounds
     )
+    scaled_rounds = resource_duration_rounds(
+        definition,
+        cast_level,
+    )
+    if scaled_rounds is not None:
+        rounds = scaled_rounds
     return Rounds(rounds) if rounds is not None else None
 
 
@@ -179,5 +195,19 @@ def _build_lifecycle(
                 if temporary.trigger == "target_turn_start"
             ),
             0,
+        ),
+        retarget_on_defeat=(
+            RetargetOnDefeatLifecycle(
+                range_feet=(
+                    context.spell.range.distance.amount
+                    if context.spell.range is not None
+                    and context.spell.range.distance.kind == "feet"
+                    else prepared.definition.target.range_feet
+                ),
+                line_of_sight=prepared.definition.target.line_of_sight,
+                disposition=prepared.definition.target.disposition,
+            )
+            if prepared.definition.retargeting is not None
+            else None
         ),
     )

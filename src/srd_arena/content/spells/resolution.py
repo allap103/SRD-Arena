@@ -8,6 +8,7 @@ from pydantic import Field, RootModel, model_validator
 
 from srd_arena.content.capabilities import (
     Ability,
+    AttackHitDamageEffectSchema,
     ConditionEffectSchema,
     DamageEffectSchema,
     DerivedDifficultyClassSchema,
@@ -205,6 +206,7 @@ class SpellEffectSchema(
     RootModel[
         Annotated[
             DamageEffectSchema
+            | AttackHitDamageEffectSchema
             | ConditionEffectSchema
             | ForcedMovementEffectSchema
             | SpeedMultiplierEffectSchema

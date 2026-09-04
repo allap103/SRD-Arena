@@ -4,6 +4,7 @@ from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema, TimedDurationSchema
 from .effects import (
     ActionEffectSchema,
+    AttackHitDamageEffectSchema,
     ConditionEffectSchema,
     ControlEffectSchema,
     DamageEffectSchema,
@@ -44,6 +45,7 @@ __all__ = [
     "ActionRequirementSchema",
     "ActionTargetSchema",
     "AreaTargetSchema",
+    "AttackHitDamageEffectSchema",
     "AutomaticResolutionSchema",
     "CapabilityBuildError",
     "CapabilitySchemaModel",

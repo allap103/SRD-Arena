@@ -7,15 +7,23 @@ from typing import TYPE_CHECKING, cast
 
 from srd_arena.domain.effects.triggered import ability_modifier_contributions
 from srd_arena.domain.geometry import build_radius_area
-from srd_arena.domain.rolls.dice import D20RollMode, ResolvedRollModifier
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DicePoolResult,
+    ResolvedRollModifier,
+    resolve_dice,
+)
 from srd_arena.domain.rolls.saving_throws import Ability
+from srd_arena.domain.spells.definitions import SpellDamage
 from srd_arena.domain.spells.resolution import SpellTargetContext
+from srd_arena.domain.spells.resolution_steps.scaling import parse_damage_dice
 
 from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
-from ...rule_queries.defenses import apply_damage
+from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.health import apply_healing
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_position
+from ...state_combat import apply_combat_damage
 from ..option_discovery.spell_areas import targets_in_area
 
 if TYPE_CHECKING:
@@ -73,6 +81,39 @@ class EncounterSpellResolutionEnvironment:
                 *(contribution.source_id for contribution in intrinsic),
             ),
         )
+
+    def attack_hit_damage(
+        self,
+        target_ref: str,
+        *,
+        critical_hit: bool,
+    ) -> tuple[tuple[SpellDamage, DicePoolResult], ...]:
+        """Roll persistent damage riders bound to this caster and target."""
+
+        results: list[tuple[SpellDamage, DicePoolResult]] = []
+        for contribution in attack_hit_damage(
+            self.state,
+            self.actor_ref,
+            target_ref,
+        ):
+            count, sides = parse_damage_dice(contribution.value.dice)
+            if critical_hit:
+                count *= 2
+            results.append(
+                (
+                    SpellDamage(
+                        f"{count}d{sides}",
+                        contribution.value.damage_type,
+                    ),
+                    resolve_dice(
+                        count,
+                        sides,
+                        modifier_source_ids=(contribution.provider_state_id,),
+                        roller=self.roll_die,
+                    ),
+                )
+            )
+        return tuple(results)
 
     def _ability_modifier(self, ability: str) -> int:
         """Return the actor's modifier for one fully named ability."""
@@ -138,7 +179,7 @@ class EncounterSpellResolutionEnvironment:
     ) -> int:
         """Apply encounter-adjusted spell damage to one target."""
 
-        return apply_damage(
+        return apply_combat_damage(
             self.state,
             target_ref,
             amount,

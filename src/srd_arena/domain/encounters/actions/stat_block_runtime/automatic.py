@@ -13,8 +13,8 @@ from ...attack_economy import consume_action
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...grappling_state import remove_relationships_for_creature
-from ...rule_queries.defenses import apply_damage
 from ...rule_queries.rolls import roll_modifiers
+from ...state_combat import apply_combat_damage
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
 
@@ -81,7 +81,7 @@ def resolve_automatic_stat_block_action(
             effect.minimum or 0,
             resolved_total,
         )
-        applied = apply_damage(
+        applied = apply_combat_damage(
             state,
             target_ref,
             amount,

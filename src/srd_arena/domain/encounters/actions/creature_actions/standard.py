@@ -11,6 +11,7 @@ from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...spatial import creatures_are_adjacent
 from ...state_runtime import create_event
+from ..effect_retargeting import execute_effect_retarget
 from ..rejections import reject_action
 
 if TYPE_CHECKING:
@@ -43,6 +44,8 @@ def execute_standard_action(
     """
 
     actor = state.creatures[decision.creature_ref]
+    if execute_effect_retarget(state, action, progress, action_id):
+        return True
     if action.kind == "wake_spell_target":
         if not isinstance(action.value, str):
             reject_action(

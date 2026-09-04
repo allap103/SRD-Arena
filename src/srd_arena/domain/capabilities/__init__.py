@@ -7,6 +7,7 @@ from .definitions import (
     CapabilityDefinition,
     CapabilityRepetition,
     CapabilityResolution,
+    CapabilityRetargeting,
     CapabilityScaling,
     CapabilityStep,
     CapabilityTrigger,
@@ -22,6 +23,7 @@ from .definitions import (
 )
 from .effects import (
     ArmorClassModifierEffect,
+    AttackHitDamageEffect,
     AttackHitRequirement,
     AttackRollModeRequirement,
     CapabilityEffect,
@@ -80,6 +82,7 @@ from .targeting import CapabilityTarget, TargetCount
 __all__ = [
     "ArmorClassModifierEffect",
     "AttackBonus",
+    "AttackHitDamageEffect",
     "AttackHitRequirement",
     "AttackResolution",
     "AttackRollModeRequirement",
@@ -91,6 +94,7 @@ __all__ = [
     "CapabilityRepetition",
     "CapabilityRequirement",
     "CapabilityResolution",
+    "CapabilityRetargeting",
     "CapabilityScaling",
     "CapabilityStep",
     "CapabilityTarget",

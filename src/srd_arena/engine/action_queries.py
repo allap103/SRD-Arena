@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import Literal, cast
 
 from srd_arena.domain.encounters.encounter_models.actions import (
+    EffectRetargetSelection,
     EncounterAction,
     ForcedMovementSelection,
     GrappleEscapeSelection,
@@ -107,6 +108,10 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         "wake_spell_target",
     }:
         return DirectTargetOptionDetails(target_ref=_direct_target_ref(action.value))
+    if action.kind == "retarget_effect" and isinstance(
+        action.value, EffectRetargetSelection
+    ):
+        return DirectTargetOptionDetails(target_ref=action.value.target_ref)
     return None
 
 
@@ -118,6 +123,7 @@ def _direct_target_ref(
         | SpellActionPayload
         | GrappleEscapeSelection
         | ForcedMovementSelection
+        | EffectRetargetSelection
         | None
     ),
 ) -> str | None:

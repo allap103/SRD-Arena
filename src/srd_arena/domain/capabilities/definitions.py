@@ -56,6 +56,15 @@ class CapabilityRepetition:
 
 
 @dataclass(frozen=True)
+class CapabilityRetargeting:
+    """Allow a persistent single-target effect to move after target defeat."""
+
+    trigger: Literal["target_defeated"]
+    activation: Literal["bonus_action"]
+    timing: Literal["later_turn"]
+
+
+@dataclass(frozen=True)
 class CapabilityDefinition:
     """Describe reusable executable mechanics independent of their rules source.
 
@@ -71,6 +80,8 @@ class CapabilityDefinition:
     scaling: tuple[CapabilityScaling, ...] = ()
     triggers: tuple[CapabilityTrigger, ...] = ()
     follow_ups: tuple[CapabilityStep, ...] = ()
+    effect_tags: frozenset[str] = frozenset()
+    retargeting: CapabilityRetargeting | None = None
 
 
 # Preserve the former definitions-module import surface while the models live in
@@ -82,6 +93,7 @@ __all__ = [
     "CapabilityDefinition",
     "CapabilityRepetition",
     "CapabilityResolution",
+    "CapabilityRetargeting",
     "CapabilityScaling",
     "CapabilityStep",
     "CapabilityTrigger",

@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
-from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.effects.runtime import EffectTag, OngoingEffect
 
 from ..attack_economy import reconcile_remaining_attacks
 from ..rule_queries.health import effective_maximum_health
@@ -55,7 +55,11 @@ def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
         for effect in state.ongoing_effects
         if result.target_ref in effect.target_refs
         and (not isinstance(effect_id, str) or effect.identity.id == effect_id)
-        and (not isinstance(effect_kind, str) or effect.kind.value == effect_kind)
+        and (
+            not isinstance(effect_kind, str)
+            or effect.kind.value == effect_kind
+            or (effect_kind == EffectTag.CURSE.value and EffectTag.CURSE in effect.tags)
+        )
         and (
             parameter != "negative_maximum_hit_points"
             or any(
