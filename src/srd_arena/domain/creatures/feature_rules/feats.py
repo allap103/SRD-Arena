@@ -54,6 +54,26 @@ def has_lucky(creature: Creature) -> bool:
     return creature_has_feat(creature, "Lucky")
 
 
+def feat_maximum_health_bonus(creature: Creature) -> int:
+    """Return the intrinsic maximum-HP bonus granted by selected feats.
+
+    Tough grants 2 Hit Points for every character level, including levels
+    gained before the feat was selected.
+
+    >>> from types import SimpleNamespace
+    >>> creature = SimpleNamespace(
+    ...     attributes=SimpleNamespace(level=5),
+    ...     character_profile=SimpleNamespace(
+    ...         feats=(SimpleNamespace(name="Tough"),)
+    ...     ),
+    ... )
+    >>> feat_maximum_health_bonus(creature)
+    10
+    """
+
+    return 2 * creature.attributes.level if creature_has_feat(creature, "Tough") else 0
+
+
 def feat_triggered_effects(
     profile: CharacterProfile | None,
 ) -> tuple[TriggeredEffect, ...]:

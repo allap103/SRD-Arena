@@ -222,7 +222,9 @@ class Creature:
             else self.attributes.base_health
             + self.get_modifier(self.attributes.constitution) * self.attributes.level
         )
-        return base
+        from .feature_rules import feat_maximum_health_bonus
+
+        return base + feat_maximum_health_bonus(self)
 
     def get_health(self) -> int:
         """Return current health as a concrete integer.

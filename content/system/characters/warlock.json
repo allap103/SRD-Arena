@@ -242,7 +242,7 @@
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
         "attributes": {
-          "base_health": 38,
+          "base_health": 28,
           "level": 5,
           "strength": 8,
           "dexterity": 16,

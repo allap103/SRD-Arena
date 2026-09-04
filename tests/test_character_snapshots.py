@@ -201,6 +201,24 @@ def test_warlock_snapshots_expose_pact_progression_and_selected_spells(
     assert "minor_illusion" not in learned
 
 
+def test_tough_bonus_is_derived_from_the_selected_feat(
+    snapshot_catalog: CharacterSnapshotCatalog,
+) -> None:
+    """Derive the level-five Tough bonus instead of baking it into base health."""
+
+    schema = snapshot_catalog.creature_template("warlock", 5)
+    warlock = build_creature(
+        schema,
+        classes=load_class_catalog(SYSTEM_CONTENT_ROOT),
+        optional_features=load_optional_feature_catalog(SYSTEM_CONTENT_ROOT),
+        spells=load_spell_catalog(SYSTEM_CONTENT_ROOT),
+    )
+
+    assert schema.attributes.base_health == 28
+    assert warlock.get_max_health() == 48
+    assert warlock.get_health() == 48
+
+
 def test_barbarian_level_five_reuses_existing_extra_attack_support(
     snapshot_catalog: CharacterSnapshotCatalog,
 ) -> None:
