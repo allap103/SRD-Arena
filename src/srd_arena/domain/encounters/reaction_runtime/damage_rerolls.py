@@ -8,6 +8,7 @@ from srd_arena.domain.effects.triggered import TriggeredEffect, reroll_eligible_
 from srd_arena.domain.rolls.dice import reroll_dice
 
 from ..actions.attack_resolution import apply_attack_damage, damage_roll_detail
+from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     DecisionContinuation,
@@ -381,14 +382,13 @@ def finalize_damage_reroll(
         )
     )
     if not target.is_alive:
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=request.target_ref,
-                frame_id=decision.id,
-                action_id=request.action_id,
-            )
+        resolve_creature_defeat(
+            state,
+            request.target_ref,
+            defeated_by_ref=request.attacker_ref,
+            progress=progress,
+            frame_id=decision.id,
+            action_id=request.action_id,
         )
 
 

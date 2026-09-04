@@ -10,6 +10,7 @@ from srd_arena.domain.effects.results import (
     SpellResolutionDetails,
 )
 
+from ...defeat import resolve_creature_defeat
 from ...effect_lifecycle.concentration import resolve_concentration_damage
 from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
@@ -225,6 +226,14 @@ def _apply_damage_lifecycle(
             damage.amount,
             progress,
         )
+        if not state.creatures[damage.target_ref].is_alive:
+            resolve_creature_defeat(
+                state,
+                damage.target_ref,
+                defeated_by_ref=creature_ref,
+                progress=progress,
+                action_id=action_id,
+            )
     resolve_attack_hit_retaliations(
         state,
         attacker_ref=creature_ref,

@@ -26,15 +26,18 @@ from srd_arena.domain.rolls.saving_throws import (
 )
 
 from ...attack_economy import consume_action
+from ...defeat import resolve_creature_defeat
 from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ...grappling_state import remove_relationships_for_creature
-from ...rule_queries.defenses import apply_damage, has_condition_save_advantage
+from ...rule_queries.defenses import has_condition_save_advantage
 from ...rule_queries.obstructions import cells_with_line_of_effect, cover_between
 from ...rule_queries.rolls import roll_modifiers
 from ...spatial import creature_intersects_cells
-from ...state_combat import automatic_save_failure_provider_ids_for
+from ...state_combat import (
+    apply_combat_damage,
+    automatic_save_failure_provider_ids_for,
+)
 from ...state_runtime import create_event
 from .resources import consume_stat_block_action_resource
 
@@ -152,7 +155,7 @@ def resolve_saving_throw_stat_block_action(
             die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 target_ref,
             ),
@@ -174,7 +177,7 @@ def resolve_saving_throw_stat_block_action(
             die_roller=roll_die,
             modifier_for_roll=lambda: damage_roll_rules.resolve_modifier(roll_die),
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 target_ref,
             ),
@@ -196,7 +199,13 @@ def resolve_saving_throw_stat_block_action(
             }
         )
         if target.get_health() <= 0:
-            remove_relationships_for_creature(state, target_ref)
+            resolve_creature_defeat(
+                state,
+                target_ref,
+                defeated_by_ref=creature_ref,
+                progress=progress,
+                action_id=action_id,
+            )
     progress.messages.append(
         (
             "system",

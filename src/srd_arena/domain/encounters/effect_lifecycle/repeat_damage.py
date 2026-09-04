@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.rolls.dice import resolve_dice
 
+from ..defeat import resolve_creature_defeat
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import apply_combat_damage
 from .concentration import resolve_concentration_damage
@@ -91,4 +92,11 @@ def resolve_repeat_failure_damage(
             progress=progress,
         )
         resolve_concentration_damage(state, creature_ref, applied, progress)
+        if progress is not None and not state.creatures[creature_ref].is_alive:
+            resolve_creature_defeat(
+                state,
+                creature_ref,
+                defeated_by_ref=(source_ref if source_ref in state.creatures else None),
+                progress=progress,
+            )
     return details

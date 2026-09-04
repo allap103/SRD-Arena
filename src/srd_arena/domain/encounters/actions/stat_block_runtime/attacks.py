@@ -8,9 +8,9 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.rolls.dice import combine_roll_modes
 
 from ...attack_economy import spend_attack, spend_current_attack
+from ...defeat import resolve_creature_defeat
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
 from ...reaction_runtime.attack_lifecycle import resolve_attack_lifecycle
 from ...rule_queries.damage_riders import attack_hit_damage
@@ -232,13 +232,11 @@ def resolve_attack_action(
             },
         )
     )
-    if defender.get_health() <= 0:
-        remove_relationships_for_creature(state, target_ref)
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=target_ref,
-                action_id=action_id,
-            )
+    if outcome.defender_defeated:
+        resolve_creature_defeat(
+            state,
+            target_ref,
+            defeated_by_ref=creature_ref,
+            progress=progress,
+            action_id=action_id,
         )

@@ -14,6 +14,7 @@ from ..actions.attack_resolution import (
     matching_damage_reroll_rule,
     resolve_attack,
 )
+from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     CloseParentDecision,
@@ -424,14 +425,13 @@ def apply_reaction_action(
             )
         )
         if not target.is_alive:
-            progress.events.append(
-                create_event(
-                    state,
-                    "creature_defeated",
-                    creature_ref=movement.creature_ref,
-                    frame_id=decision.id,
-                    action_id=resolved_action_id,
-                )
+            resolve_creature_defeat(
+                state,
+                movement.creature_ref,
+                defeated_by_ref=reactor_ref,
+                progress=progress,
+                frame_id=decision.id,
+                action_id=resolved_action_id,
             )
     elif action.kind != "pass":
         raise ValueError(f"Unsupported reaction action: {action.kind}")

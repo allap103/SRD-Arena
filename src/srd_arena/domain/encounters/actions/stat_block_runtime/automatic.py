@@ -10,9 +10,9 @@ from srd_arena.domain.creatures.stat_block_actions import AutomaticActionDefinit
 from srd_arena.domain.rolls.dice import resolve_dice
 
 from ...attack_economy import consume_action
+from ...defeat import resolve_creature_defeat
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ...grappling_state import remove_relationships_for_creature
 from ...rule_queries.rolls import roll_modifiers
 from ...state_combat import apply_combat_damage
 from ...state_runtime import create_event
@@ -124,12 +124,10 @@ def resolve_automatic_stat_block_action(
         )
     )
     if target.get_health() <= 0:
-        remove_relationships_for_creature(state, target_ref)
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=target_ref,
-                action_id=action_id,
-            )
+        resolve_creature_defeat(
+            state,
+            target_ref,
+            defeated_by_ref=creature_ref,
+            progress=progress,
+            action_id=action_id,
         )

@@ -149,6 +149,7 @@ class EncounterStateData:
     conditions: list[AppliedCondition] = field(default_factory=list)
     ongoing_effects: list[OngoingEffect] = field(default_factory=list)
     relationships: list[CreatureRelationship] = field(default_factory=list)
+    defeated_creature_refs: set[CreatureRef] = field(default_factory=set)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
     dice: DiceRoller = field(default_factory=DiceRoller, repr=False)

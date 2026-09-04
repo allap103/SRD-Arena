@@ -7,9 +7,9 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.effects.results import AttackHitRetaliationApplication
 from srd_arena.domain.effects.rule_effects import AttackHitRetaliation
 
+from ..defeat import resolve_creature_defeat
 from ..effect_lifecycle.concentration import resolve_concentration_damage
 from ..effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
-from ..grappling_state import remove_relationships_for_creature
 from ..rule_queries.models import SourcedRuleContribution
 from ..state_combat import apply_combat_damage
 from ..state_runtime import create_event, creature_label
@@ -172,13 +172,11 @@ def resolve_attack_hit_retaliations(
             )
         resolve_concentration_damage(state, attacker_ref, applied, progress)
     if was_alive and attacker.get_health() <= 0:
-        remove_relationships_for_creature(state, attacker_ref)
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=attacker_ref,
-                frame_id=frame_id,
-                action_id=action_id,
-            )
+        resolve_creature_defeat(
+            state,
+            attacker_ref,
+            defeated_by_ref=applications[0].protected_target_ref,
+            progress=progress,
+            frame_id=frame_id,
+            action_id=action_id,
         )
