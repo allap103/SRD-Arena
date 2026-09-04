@@ -8,6 +8,7 @@ from srd_arena.domain.effects.runtime import UntilTurnEnd, UntilTurnStart
 from srd_arena.domain.geometry import MovementBudget, MovementCost
 
 from .attack_economy import clear_attack_action
+from .effect_lifecycle.area_turn_start import resolve_turn_start_area_effects
 from .effect_lifecycle.repeat_saves import resolve_end_turn_effects
 from .effect_lifecycle.turn_end import expire_ongoing_effects_for_turn_end
 from .effect_lifecycle.turn_start import expire_ongoing_effects_for_turn_start
@@ -210,6 +211,7 @@ def _begin_turn_if_alive(
     creature_state.bonus_action_used_this_turn = False
     if progress is not None:
         progress.messages.append(("turn", f"{creature_state.creature.name}'s turn"))
+    resolve_turn_start_area_effects(state, creature_ref, progress)
 
 
 def expire_conditions_for_turn_end(

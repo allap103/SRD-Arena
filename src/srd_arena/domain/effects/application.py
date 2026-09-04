@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from srd_arena.domain.geometry import serialize_area
+
 from .conditions import AppliedCondition, Condition, build_applied_condition
 from .results import EffectResult
 from .rule_effects import serialize_runtime_rule_effect
@@ -119,6 +121,8 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
         ]
     if effect.effect_label is not None:
         payload["effect_label"] = effect.effect_label
+    if effect.area is not None:
+        payload["area"] = serialize_area(effect.area)
     return payload
 
 

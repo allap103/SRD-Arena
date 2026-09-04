@@ -125,6 +125,8 @@ def start_ongoing_effect(
         dispellable=True,
         tags=result.tags,
         rule_effects=result.rule_effects,
+        area=result.area,
+        obscures_vision=bool(result.data.get("obscures_vision", False)),
     )
     state.ongoing_effects.append(effect)
     reconcile_remaining_attacks(state, target_refs)

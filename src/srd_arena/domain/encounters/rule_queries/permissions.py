@@ -9,6 +9,7 @@ from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
+    ActionProhibition,
     ReactionProhibition,
 )
 
@@ -243,6 +244,24 @@ def action_compatibility(
     for provider_state_id, source, rule_effect in ongoing_rule_effects(
         state, creature_ref
     ):
+        if isinstance(rule_effect, ActionProhibition):
+            uses_prohibited_resource = (
+                bool(action.cost.action)
+                and ActionEconomyKind.ACTION in rule_effect.resources
+            ) or (
+                bool(action.cost.bonus_action)
+                and ActionEconomyKind.BONUS_ACTION in rule_effect.resources
+            )
+            if uses_prohibited_resource:
+                failures.append(
+                    SourcedEligibilityFailure(
+                        "effect.action_prohibited",
+                        "An ongoing effect prevents spending this turn resource.",
+                        (provider_state_id,),
+                        (source,),
+                    )
+                )
+            continue
         if not isinstance(rule_effect, ActionEconomyRestriction):
             continue
         restricted = rule_effect.choose_between

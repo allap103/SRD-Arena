@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass, field
 
+from srd_arena.domain.geometry import AreaOfEffect
+
 from .rule_effects import RuntimeRuleEffect
 from .runtime import EffectDuration, EffectTag, OngoingEffectLifecycle
 
@@ -19,6 +21,7 @@ class EffectResult:
     lifecycle: OngoingEffectLifecycle | None = None
     duration: EffectDuration | None = None
     tags: frozenset[EffectTag] = frozenset()
+    area: AreaOfEffect | None = None
 
 
 @dataclass(frozen=True)

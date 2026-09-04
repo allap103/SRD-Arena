@@ -17,6 +17,7 @@ from .results import EffectResult
 from .rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
+    ActionProhibition,
     ArmorClassAdjustment,
     AttackLimit,
     ConditionImmunity,
@@ -36,6 +37,7 @@ from .rule_effects import (
     SpeedMultiplier,
 )
 from .runtime import (
+    AreaTurnStartSave,
     CreatureRelationship,
     EffectPolarity,
     EffectSource,
@@ -49,7 +51,9 @@ from .triggered import TriggeredEffect, matching_effects, reroll_eligible_indice
 __all__ = [
     "ActionEconomyKind",
     "ActionEconomyRestriction",
+    "ActionProhibition",
     "AppliedCondition",
+    "AreaTurnStartSave",
     "ArmorClassAdjustment",
     "AttackLimit",
     "CombatTrait",

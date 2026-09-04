@@ -54,5 +54,32 @@
   ],
   "areaTags": [
     "S"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "resolver": "stinking_cloud",
+    "omissions": [
+      {
+        "mechanic": "heavy obscuration and strong-wind dispersal",
+        "reason": "Persistent area state is executable; vision and environmental wind hooks are the next part of this slice."
+      }
+    ]
+  },
+  "capability": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {
+        "shape": "sphere",
+        "radius_feet": 20
+      },
+      "occupants": "all"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": []
+      }
+    }
+  }
 }

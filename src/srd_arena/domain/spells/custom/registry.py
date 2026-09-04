@@ -8,9 +8,11 @@ from srd_arena.domain.effects.results import ActionResolutionResult
 
 from ..resolution_steps.context import SpellActionContext
 from .slow import resolve_slow
+from .stinking_cloud import resolve_stinking_cloud
 
 CUSTOM_SPELL_RESOLVERS = {
     "slow": resolve_slow,
+    "stinking_cloud": resolve_stinking_cloud,
 }
 
 

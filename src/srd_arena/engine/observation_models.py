@@ -251,6 +251,8 @@ class OngoingEffectObservation:
     definition_id: str
     target_refs: tuple[str, ...]
     label: str
+    area: Mapping[str, EngineValue] | None = None
+    obscures_vision: bool = False
 
 
 @dataclass(frozen=True)

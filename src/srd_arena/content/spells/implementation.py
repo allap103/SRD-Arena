@@ -36,7 +36,7 @@ class SpellImplementationSchema(SpellCapabilitySchemaModel):
     omissions: list[ImplementationOmissionSchema] = Field(default_factory=list)
     blocked_by: list[str] = Field(default_factory=list)
     reason: str | None = None
-    resolver: Literal["slow"] | None = None
+    resolver: Literal["slow", "stinking_cloud"] | None = None
 
     @model_validator(mode="after")
     def validate_status_details(self) -> SpellImplementationSchema:

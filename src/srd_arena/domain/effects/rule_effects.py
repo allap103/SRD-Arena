@@ -249,6 +249,17 @@ class ActionEconomyRestriction:
 
 
 @dataclass(frozen=True)
+class ActionProhibition:
+    """Prevent actions that spend one or more named turn resources."""
+
+    resources: frozenset[ActionEconomyKind]
+
+    def __post_init__(self) -> None:
+        if not self.resources:
+            raise ValueError("Action prohibition requires at least one resource.")
+
+
+@dataclass(frozen=True)
 class AttackLimit:
     """Limit how many attacks one Attack action can make."""
 
@@ -303,6 +314,7 @@ type RuntimeRuleEffect = (
     | AttackHitRetaliation
     | ReactionProhibition
     | ActionEconomyRestriction
+    | ActionProhibition
     | CompelledTurn
     | AttackLimit
     | InvocationFailureChance
@@ -413,6 +425,11 @@ def serialize_runtime_rule_effect(
         return {
             "type": "action_economy_restriction",
             "choose_between": sorted(kind.value for kind in effect.choose_between),
+        }
+    if isinstance(effect, ActionProhibition):
+        return {
+            "type": "action_prohibition",
+            "resources": sorted(resource.value for resource in effect.resources),
         }
     if isinstance(effect, CompelledTurn):
         return {

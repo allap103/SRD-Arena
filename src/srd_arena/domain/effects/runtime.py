@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from .rule_effects import RuntimeRuleEffect
 
 if TYPE_CHECKING:
+    from srd_arena.domain.geometry import AreaOfEffect
+
     from .conditions import Condition
 
 
@@ -171,6 +173,17 @@ class RetargetOnDefeatLifecycle:
 
 
 @dataclass(frozen=True)
+class AreaTurnStartSave:
+    """Resolve a save when a creature starts its turn inside an effect area."""
+
+    ability: str
+    dc: int
+    failure_conditions: tuple[Condition, ...] = ()
+    failure_rule_effects: tuple[RuntimeRuleEffect, ...] = ()
+    negated_by_condition_immunity: Condition | None = None
+
+
+@dataclass(frozen=True)
 class OngoingEffectLifecycle:
     """Hold typed turn, event, and duration-progress behavior for an effect."""
 
@@ -180,6 +193,7 @@ class OngoingEffectLifecycle:
     turn_start_temporary_hit_points: int = 0
     ends_when_temporary_hit_points_depleted: bool = False
     retarget_on_defeat: RetargetOnDefeatLifecycle | None = None
+    area_turn_start_save: AreaTurnStartSave | None = None
 
 
 @dataclass(frozen=True)
@@ -202,6 +216,8 @@ class OngoingEffect:
     dispellable: bool = False
     tags: frozenset[EffectTag] = frozenset()
     rule_effects: tuple[RuntimeRuleEffect, ...] = ()
+    area: AreaOfEffect | None = None
+    obscures_vision: bool = False
 
 
 class RelationshipKind(StrEnum):

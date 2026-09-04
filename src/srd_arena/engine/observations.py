@@ -13,6 +13,7 @@ from srd_arena.domain.encounters.encounter_models.actions import (
 )
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.encounters.spatial import creature_occupied_cells
+from srd_arena.domain.geometry import serialize_area
 from srd_arena.engine.protocols import GameEngine
 from srd_arena.engine.queries import SessionRead
 
@@ -43,6 +44,7 @@ from .observation_models import (
     TargetResourceLimitObservation,
     TerrainCellObservation,
 )
+from .values import freeze_mapping
 
 __all__ = [
     "ActionObservation",
@@ -413,6 +415,7 @@ def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
     source = effect.identity.source
     definition_id = source.definition_id
     label = effect.label or definition_id.replace("_", " ").replace("-", " ").title()
+    area = serialize_area(effect.area)
     return OngoingEffectObservation(
         kind=effect.kind.value,
         polarity=effect.polarity.value,
@@ -420,4 +423,6 @@ def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
         definition_id=definition_id,
         target_refs=effect.target_refs,
         label=label,
+        area=freeze_mapping(area) if area is not None else None,
+        obscures_vision=effect.obscures_vision,
     )
