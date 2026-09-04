@@ -83,6 +83,7 @@ class ActionExecutionContext:
     action_id: str
     progress: EncounterProgress = field(default_factory=EncounterProgress)
     rejection: ActionRejection | None = None
+    d20_decisions_checked: bool = False
 
 
 @dataclass

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.rolls.dice import combine_roll_modes
+from srd_arena.domain.rolls.occurrences import attack_roll_occurrence_id
 
 from ...attack_economy import spend_attack, spend_current_attack
 from ...defeat import resolve_creature_defeat
@@ -32,6 +33,10 @@ from ..attack_resolution import (
     matching_damage_reroll_rule,
     resolve_attack,
     selected_attack_type,
+)
+from ..d20_roll_modifiers import (
+    clear_d20_roll_modes,
+    consume_d20_roll_mode,
 )
 from ..hit_effects import apply_attack_hit_effects
 from .resources import consume_stat_block_action_resource
@@ -151,6 +156,11 @@ def resolve_attack_action(
                 nearby_opponent_refs=nearby_opponent_refs,
             ),
             range_roll_mode,
+            consume_d20_roll_mode(
+                state,
+                action_id,
+                attack_roll_occurrence_id(),
+            ),
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
         target_armor_class=effective_armor_class(
@@ -175,6 +185,7 @@ def resolve_attack_action(
             for contribution in attack_hit_damage(state, creature_ref, target_ref)
         ),
     )
+    clear_d20_roll_modes(state, action_id)
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)
     retaliations = (

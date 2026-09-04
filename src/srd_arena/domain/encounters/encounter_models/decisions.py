@@ -3,13 +3,17 @@
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Literal
+from typing import TYPE_CHECKING, Literal
 
 from srd_arena.domain.effects.results import ActionResolutionResult
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
+from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.spells.action_payloads import SpellActionPayload
 
 from .actions import CreatureRef, EncounterAction
+
+if TYPE_CHECKING:
+    from .resolution import ActionExecutionContext
 
 
 class DecisionRequest:
@@ -73,6 +77,49 @@ class InitiativeSwapRequest(DecisionRequest):
     owner_ref: CreatureRef
 
 
+@dataclass(frozen=True)
+class D20RollOccurrence:
+    """Identify one future D20 Test or incoming attack roll within an action."""
+
+    id: str
+    kind: Literal["attack_roll", "saving_throw", "ability_check"]
+    roller_ref: CreatureRef
+    target_ref: CreatureRef | None
+    label: str
+
+
+@dataclass(frozen=True)
+class LuckyRollOption:
+    """Offer one Lucky owner a roll-mode change for one exact occurrence."""
+
+    owner_ref: CreatureRef
+    occurrence: D20RollOccurrence
+    mode: Literal["advantage", "disadvantage"]
+
+
+@dataclass
+class PendingD20RollModifiers:
+    """Accumulate optional roll-mode changes before an action resumes."""
+
+    action_id: str
+    options: tuple[LuckyRollOption, ...]
+    selected_modes: dict[str, list[D20RollMode]] = field(default_factory=dict)
+    option_index: int = 0
+
+    @property
+    def current_option(self) -> LuckyRollOption:
+        """Return the optional modifier currently awaiting a controller choice."""
+
+        return self.options[self.option_index]
+
+
+@dataclass(frozen=True)
+class D20RollModifierRequest(DecisionRequest):
+    """Ask a feature owner whether to modify one addressed D20 roll."""
+
+    pending: PendingD20RollModifiers
+
+
 @dataclass
 class PendingSpellProjectiles:
     """Preserve one started spell while its projectiles and choices resolve."""
@@ -101,6 +148,22 @@ class ResumeSpellProjectiles(DecisionContinuation):
     """Resume the exact spell invocation after an interrupting choice closes."""
 
     invocation: PendingSpellProjectiles
+
+
+@dataclass(frozen=True)
+class ResumeActionExecution(DecisionContinuation):
+    """Resume a declared creature action after its pre-roll choices."""
+
+    context: ActionExecutionContext
+
+
+@dataclass(frozen=True)
+class ResumeSpellInvocation(DecisionContinuation):
+    """Resume a targeted spell after its pre-roll choices."""
+
+    caster_ref: CreatureRef
+    payload: SpellActionPayload
+    action_id: str
 
 
 @dataclass(frozen=True)

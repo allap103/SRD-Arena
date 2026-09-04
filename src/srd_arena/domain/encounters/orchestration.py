@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .actions.d20_roll_modifiers import apply_d20_roll_modifier_action
 from .actions.forced_movement_choices import apply_forced_movement_action
 from .actions.grapple_saves import apply_grapple_save_action
 from .actions.initiative_swaps import apply_initiative_swap_action
@@ -91,6 +92,7 @@ class EncounterOrchestrator:
             "grapple_save",
             "forced_movement",
             "initiative_swap",
+            "d20_roll_modifier",
         }:
             return self._apply_decision_action(state, action, decision)
         return self._apply_selected_action(state, action, decision)
@@ -125,6 +127,9 @@ class EncounterOrchestrator:
             return self._finish_decision_execution(state, decision, result)
         if decision.kind == "initiative_swap":
             result = apply_initiative_swap_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "d20_roll_modifier":
+            result = apply_d20_roll_modifier_action(state, action, decision)
             return self._finish_decision_execution(state, decision, result)
         raise ValueError(f"Unsupported specialized decision: {decision.kind}")
 

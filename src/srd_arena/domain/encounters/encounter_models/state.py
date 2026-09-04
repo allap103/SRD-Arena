@@ -16,6 +16,7 @@ from srd_arena.domain.geometry import (
     MovementCost,
     Position,
 )
+from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from ..definitions import EncounterBehavior, EncounterDefinition
@@ -144,6 +145,8 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    active_d20_action_id: str | None = None
+    active_d20_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
     runtime_state_sequence: int = 1
     initiative_order: list[CreatureRef] = field(default_factory=list)
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)

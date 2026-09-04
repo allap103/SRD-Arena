@@ -11,7 +11,8 @@ from srd_arena.domain.spells.rules import (
 
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ..spellcasting import resolve_spell_action
+from .spell_invocation import resolve_or_offer_spell_d20_choices
+from .spell_invocation_planning import plan_spell_invocation
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
@@ -150,14 +151,17 @@ def _confirm_spell_targets(
         target_refs=resolved_target_refs,
         healing_allocations=tuple(sorted(pending.resource_allocations.items())),
     )
+    plan = plan_spell_invocation(state, actor, payload)
     state.interrupts.decision_stack.pop()
     state.interrupts.pending_spell_cast = None
-    resolve_spell_action(
+    resolve_or_offer_spell_d20_choices(
         state,
         actor,
         payload,
         progress,
         action_id,
+        spell=plan.spell,
+        target_refs=resolved_target_refs,
     )
 
 

@@ -5,10 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from .actions.spell_runtime.projectiles import resume_spell_projectiles
+from .actions.spellcasting import resolve_spell_action
+from .creature_control import continue_creature_action
 from .encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
+    ResumeActionExecution,
     ResumeMovement,
+    ResumeSpellInvocation,
     ResumeSpellProjectiles,
 )
 from .encounter_models.resolution import EncounterProgress
@@ -69,7 +73,12 @@ class ContinuationRunner:
                     )
             elif continuation is not None and not isinstance(
                 continuation,
-                (ResumeMovement, ResumeSpellProjectiles),
+                (
+                    ResumeActionExecution,
+                    ResumeMovement,
+                    ResumeSpellInvocation,
+                    ResumeSpellProjectiles,
+                ),
             ):
                 raise TypeError(
                     "ContinuationRunner has no handler for continuation "
@@ -97,6 +106,17 @@ class ContinuationRunner:
                     state,
                     continuation.invocation,
                     progress,
+                )
+            elif isinstance(continuation, ResumeActionExecution):
+                continuation.context.progress = progress
+                continue_creature_action(state, continuation.context)
+            elif isinstance(continuation, ResumeSpellInvocation):
+                resolve_spell_action(
+                    state,
+                    state.creatures[continuation.caster_ref].creature,
+                    continuation.payload,
+                    progress,
+                    continuation.action_id,
                 )
             return
 

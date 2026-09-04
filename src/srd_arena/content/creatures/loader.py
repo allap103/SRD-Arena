@@ -15,7 +15,10 @@ from srd_arena.domain.creatures import (
     Equipment,
     Inventory,
 )
-from srd_arena.domain.creatures.feature_rules import feat_triggered_effects
+from srd_arena.domain.creatures.feature_rules import (
+    LUCKY_FEATURE_ID,
+    feat_triggered_effects,
+)
 
 from .actions.builder import (
     build_declared_stat_block_actions,
@@ -107,6 +110,11 @@ def build_creature(
         *feat_triggered_effects(character_profile),
     ]
     combat_profile = build_combat_profile(class_features)
+    if character_profile is not None and any(
+        feat.name.casefold() == "lucky" for feat in character_profile.feats
+    ):
+        combat_profile.feature_uses_max[LUCKY_FEATURE_ID] = attributes.proficiency_bonus
+        combat_profile.feature_recharge[LUCKY_FEATURE_ID] = {"long_rest": "all"}
     spellcasting = build_spellcasting(
         schema,
         attributes,

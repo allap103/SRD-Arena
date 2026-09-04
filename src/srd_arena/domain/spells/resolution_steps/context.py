@@ -160,6 +160,8 @@ class SpellActionContext:
     cast_level: int | None = None
     announce_cast: bool = True
     save_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
+    d20_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
+    roll_occurrence_index_offset: int = 0
     saving_throw_cover_bonuses: Mapping[str, int] = field(default_factory=dict)
     healing_allocations: Mapping[str, int] = field(default_factory=dict)
     maximize_temporary_hit_point_dice: bool = False
@@ -172,6 +174,7 @@ class SpellActionContext:
             "target_armor_classes",
             "automatic_critical_providers",
             "save_roll_modes",
+            "d20_roll_modes",
             "saving_throw_cover_bonuses",
             "healing_allocations",
         ):

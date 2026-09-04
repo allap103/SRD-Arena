@@ -19,6 +19,7 @@ from srd_arena.domain.spells.resolution import (
 from srd_arena.domain.spells.rules import SpellActionPayload
 
 from ..encounter_models.resolution import EncounterProgress
+from .d20_roll_modifiers import clear_d20_roll_modes
 from .option_discovery.spell_areas import spell_area, spell_area_targets
 from .option_discovery.spell_targets import spell_target_context
 from .option_discovery.spellcasting import (
@@ -228,6 +229,7 @@ def resolve_spell_action(
             targets=targets,
             area=area,
             cast_level=cast_level,
+            action_id=action_id,
             maximize_temporary_hit_point_dice=(
                 grant is not None and grant.temporary_hit_point_dice == "maximum"
             ),
@@ -257,6 +259,7 @@ def resolve_spell_action(
         grant_id=grant.id if grant is not None else None,
         consumes_spell_slot=(grant.consumes_spell_slot if grant is not None else True),
     )
+    clear_d20_roll_modes(state, action_id)
 
 
 def _record_failed_spell_action(

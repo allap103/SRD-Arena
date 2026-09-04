@@ -141,7 +141,15 @@ def _cast_two_beam_eldritch_blast(
         for action in state.available_actions()
         if action.kind == "confirm_spell_targets"
     )
-    return choose_advertised_action(session, confirm)
+    result = choose_advertised_action(session, confirm)
+    while state.current_decision().kind == "d20_roll_modifier":
+        decline = next(
+            action
+            for action in state.available_actions()
+            if action.kind == "decline_d20_modifier"
+        )
+        result = choose_advertised_action(session, decline)
+    return result
 
 
 def test_forced_movement_ignores_speed_and_difficult_terrain_cost() -> None:
@@ -507,6 +515,7 @@ def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
     )
     participant.controller = "scripted"
     state._action_selectors["warlock"] = _EldritchBlastSelector()
+    state.creatures["warlock"].creature.feature_uses_remaining["lucky"] = 0
     state.definition.grid = Grid(16, 9)
     state.turn.index = state.initiative_order.index("warlock")
     state.creatures["warlock"].position = Position(2, 3)

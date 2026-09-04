@@ -129,6 +129,13 @@ def test_hex_adds_independently_typed_damage_to_the_casters_critical_hit() -> No
         and option.details.target_ref == "goblin_1"
     )
     result = session._choose(attack.id)
+    if state.current_decision().kind == "d20_roll_modifier":
+        decline = next(
+            option
+            for option in session._read().action_options
+            if option.kind == "decline_d20_modifier"
+        )
+        result = session._choose(decline.id)
     event = next(event for event in result.events if event.type == "attack_resolved")
     detail = cast(dict[str, object], event.data["damage_roll_detail"])
     additional = cast(list[dict[str, object]], detail["additional_damage"])

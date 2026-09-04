@@ -6,6 +6,7 @@ from ..character_profiles import CharacterProfile
 from ..model import Creature
 
 SAVAGE_ATTACKER_EFFECT_ID = "savage_attacker"
+LUCKY_FEATURE_ID = "lucky"
 
 
 def creature_has_feat(creature: Creature, feat_name: str) -> bool:
@@ -45,6 +46,12 @@ def can_use_alert_initiative_swap(creature: Creature) -> bool:
     """Return whether the creature owns Alert's post-roll swap option."""
 
     return creature_has_feat(creature, "Alert")
+
+
+def has_lucky(creature: Creature) -> bool:
+    """Return whether the creature owns the Lucky origin feat."""
+
+    return creature_has_feat(creature, "Lucky")
 
 
 def feat_triggered_effects(

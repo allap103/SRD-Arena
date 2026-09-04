@@ -14,12 +14,8 @@ from srd_arena.domain.capabilities import (
 )
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.creatures.stat_block_actions import SavingThrowActionDefinition
-from srd_arena.domain.geometry import (
-    Vector2D,
-    build_directional_area,
-    vector_between_positions,
-)
-from srd_arena.domain.rolls.dice import DieRoller, resolve_dice
+from srd_arena.domain.rolls.dice import DieRoller, combine_roll_modes, resolve_dice
+from srd_arena.domain.rolls.occurrences import stat_block_save_occurrence_id
 from srd_arena.domain.rolls.saving_throws import (
     Ability,
     resolve_saving_throw,
@@ -31,15 +27,19 @@ from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...rule_queries.defenses import has_condition_save_advantage
-from ...rule_queries.obstructions import cells_with_line_of_effect, cover_between
+from ...rule_queries.obstructions import cover_between
 from ...rule_queries.rolls import roll_modifiers
-from ...spatial import creature_intersects_cells
 from ...state_combat import (
     apply_combat_damage,
     automatic_save_failure_provider_ids_for,
 )
 from ...state_runtime import create_event
+from ..d20_roll_modifiers import (
+    clear_d20_roll_modes,
+    consume_d20_roll_mode,
+)
 from .resources import consume_stat_block_action_resource
+from .targets import stat_block_target_refs
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -92,7 +92,7 @@ def resolve_saving_throw_stat_block_action(
         "damage_roll",
     )
     roll_die = state.dice.roll_die
-    for target_ref in target_refs:
+    for target_index, target_ref in enumerate(target_refs, start=1):
         target = state.creatures[target_ref].creature
         ability = cast(Ability, ability_names[definition.ability])
         roll_rules = roll_modifiers(
@@ -111,14 +111,21 @@ def resolve_saving_throw_stat_block_action(
             target,
             ability,
             definition.dc,
-            mode=(
-                "advantage"
-                if has_condition_save_advantage(
+            mode=combine_roll_modes(
+                (
+                    "advantage"
+                    if has_condition_save_advantage(
+                        state,
+                        target_ref,
+                        inflicted_conditions,
+                    )
+                    else "normal"
+                ),
+                consume_d20_roll_mode(
                     state,
-                    target_ref,
-                    inflicted_conditions,
-                )
-                else "normal"
+                    action_id,
+                    stat_block_save_occurrence_id(target_index),
+                ),
             ),
             sourced_modifier_override=(
                 resolve_saving_throw_modifier(state, target_ref, roll_rules)
@@ -186,7 +193,13 @@ def resolve_saving_throw_stat_block_action(
         outcomes.append(
             {
                 "target_ref": target_ref,
+                "save_die": saving_throw.check.roll.selected,
+                "save_dice": list(saving_throw.check.roll.dice),
+                "save_selected_index": saving_throw.check.roll.selected_index,
+                "save_mode": saving_throw.check.roll.mode,
+                "save_modifier": saving_throw.modifiers.total,
                 "save_total": saving_throw.check.roll.total,
+                "save_dc": saving_throw.check.target,
                 "success": saving_throw.check.success,
                 "automatic_failure_reasons": list(
                     saving_throw.automatic_failure_reasons
@@ -206,6 +219,7 @@ def resolve_saving_throw_stat_block_action(
                 progress=progress,
                 action_id=action_id,
             )
+    clear_d20_roll_modes(state, action_id)
     progress.messages.append(
         (
             "system",
@@ -223,85 +237,6 @@ def resolve_saving_throw_stat_block_action(
                 "outcomes": outcomes,
             },
         )
-    )
-
-
-def stat_block_target_refs(
-    state: EncounterState,
-    creature_ref: str,
-    aim: str | tuple[float, float],
-    definition: SavingThrowActionDefinition,
-) -> tuple[str, ...]:
-    """Resolve creature references covered by a stat-block action target.
-
-    Direct targets require no geometry; area definitions continue through the
-    same function and return every living creature whose cell is covered.
-
-    >>> from types import SimpleNamespace
-    >>> from srd_arena.domain.capabilities import CapabilityTarget, OutcomeStage
-    >>> self_definition = SavingThrowActionDefinition(
-    ...     "Pulse", CapabilityTarget("self"), "con", 12,
-    ...     (OutcomeStage(()),), (), "none", (),
-    ... )
-    >>> stat_block_target_refs(
-    ...     SimpleNamespace(), "caster", "ignored", self_definition
-    ... )
-    ('caster',)
-    >>> target_definition = SavingThrowActionDefinition(
-    ...     "Glare", CapabilityTarget("creature"), "wis", 12,
-    ...     (OutcomeStage(()),), (), "none", (),
-    ... )
-    >>> stat_block_target_refs(
-    ...     SimpleNamespace(), "caster", "target", target_definition
-    ... )
-    ('target',)
-    """
-    target = definition.target
-    if target.kind == "self":
-        return (creature_ref,)
-    if target.kind == "creature":
-        if not isinstance(aim, str):
-            raise ValueError("A creature-targeted action requires a creature target.")
-        return (aim,)
-    if target.origin != "self":
-        raise NotImplementedError("Point-origin stat-block areas are not executable.")
-    actor_position = state.creatures[creature_ref].position
-    direction = (
-        vector_between_positions(actor_position, state.creatures[aim].position)
-        if isinstance(aim, str)
-        else Vector2D(
-            aim[0] - (actor_position.x + 0.5),
-            aim[1] - (actor_position.y + 0.5),
-        )
-    )
-    grid = state.definition.grid
-    size_squares = int(
-        grid.distance_from_feet(target.size_feet or grid.square_size_feet, minimum=1)
-    )
-    width_squares = max(
-        1.0,
-        (target.width_feet or grid.square_size_feet) / grid.square_size_feet,
-    )
-    area = build_directional_area(
-        target.shape,
-        actor_position,
-        direction,
-        size_squares,
-        state.definition.grid,
-        width_squares=width_squares,
-        coverage_threshold=(
-            state.geometry_config.directional_area_cell_coverage_threshold
-        ),
-    )
-    if area is None:
-        raise NotImplementedError(f"Area shape '{target.shape}' is not executable.")
-    visible_cells = cells_with_line_of_effect(state, area.origin, area.cells)
-    occupied = {(cell.x, cell.y) for cell in visible_cells}
-    return tuple(
-        target_ref
-        for target_ref, target_state in state.creatures.items()
-        if target_state.is_alive
-        and creature_intersects_cells(state, target_ref, occupied)
     )
 
 

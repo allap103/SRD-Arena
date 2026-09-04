@@ -23,6 +23,7 @@ from ...encounter_models.decisions import (
 )
 from ...encounter_models.resolution import EncounterProgress
 from ...state_runtime import create_event
+from ..d20_roll_modifiers import clear_d20_roll_modes
 from ..eligibility_rules.common import target_requirement_failure
 from ..eligibility_rules.spell_targeting import spell_target_eligibility
 from ..feature_runtime.repelling_blast import (
@@ -127,6 +128,8 @@ def resume_spell_projectiles(
                 targets=(target,),
                 area=None,
                 cast_level=invocation.cast_level,
+                action_id=invocation.invocation_id,
+                roll_occurrence_index_offset=projectile_index - 1,
                 announce_cast=not invocation.cast_announced,
                 maximize_temporary_hit_point_dice=(
                     grant is not None and grant.temporary_hit_point_dice == "maximum"
@@ -190,6 +193,7 @@ def resume_spell_projectiles(
         grant_id=grant.id if grant is not None else None,
         consumes_spell_slot=(grant.consumes_spell_slot if grant is not None else True),
     )
+    clear_d20_roll_modes(state, invocation.invocation_id)
 
 
 def _live_projectile_target(

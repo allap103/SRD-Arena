@@ -51,6 +51,8 @@ def build_spell_action_context(
     targets: tuple[SpellTargetContext, ...],
     area: AreaOfEffect | None,
     cast_level: int | None,
+    action_id: str | None = None,
+    roll_occurrence_index_offset: int = 0,
     maximize_temporary_hit_point_dice: bool = False,
     announce_cast: bool = True,
 ) -> SpellActionContext:
@@ -136,6 +138,12 @@ def build_spell_action_context(
             conditions,
             save_advantage_against_opponents,
         ),
+        d20_roll_modes=(
+            dict(state.active_d20_roll_modes)
+            if state.active_d20_action_id == action_id
+            else {}
+        ),
+        roll_occurrence_index_offset=roll_occurrence_index_offset,
         saving_throw_cover_bonuses={
             candidate.target_ref: _cover_for_target(
                 state,

@@ -87,7 +87,22 @@ def _attack_warlock(session: Session, attack_type: str = "melee") -> EngineOutco
         and isinstance(option.details, DirectTargetOptionDetails)
         and option.details.target_ref == "warlock"
     )
-    return session._choose(option.id)
+    return _choose_without_lucky(session, option.id)
+
+
+def _choose_without_lucky(session: Session, action_id: str) -> EngineOutcome:
+    """Choose an action while declining unrelated Lucky prompts in these tests."""
+
+    result = session._choose(action_id)
+    assert session.encounter_state is not None
+    while session.encounter_state.current_decision().kind == "d20_roll_modifier":
+        decline = next(
+            option
+            for option in session._read().action_options
+            if option.kind == "decline_d20_modifier"
+        )
+        result = session._choose(decline.id)
+    return result
 
 
 def test_armor_of_agathys_grants_scaled_temporary_hit_points_and_rule_state() -> None:
@@ -256,7 +271,7 @@ def test_melee_spell_attack_uses_the_same_retaliation_path() -> None:
         and option.details.target_ref == "goblin_1"
     )
 
-    result = session._choose(option.id)
+    result = _choose_without_lucky(session, option.id)
 
     retaliation_events = [
         event for event in result.events if event.type == "attack_hit_retaliation"
