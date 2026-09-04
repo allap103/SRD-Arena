@@ -54,6 +54,14 @@ class DirectTargetOptionDetails:
 
 
 @dataclass(frozen=True)
+class EffectRetargetOptionDetails:
+    """Identify the persistent effect and replacement target of an option."""
+
+    effect_id: str
+    target_ref: str
+
+
+@dataclass(frozen=True)
 class GrappleEscapeOptionDetails:
     """Identify the grapple source and skill selected for an escape check."""
 
@@ -103,6 +111,7 @@ ActionOptionDetails = (
     SpellOptionDetails
     | StatBlockOptionDetails
     | DirectTargetOptionDetails
+    | EffectRetargetOptionDetails
     | GrappleEscapeOptionDetails
     | GrappleSaveOptionDetails
     | FeatureOptionDetails

@@ -82,12 +82,12 @@ def observe_session(session: GameEngine) -> GameObservation:
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
-    >>> observation = observe_session(SimpleNamespace(read=lambda: read))
+    >>> observation = observe_session(SimpleNamespace(_read=lambda: read))
     >>> (observation.scene.scene_id, observation.encounter)
     ('intro', None)
     """
 
-    read = session.read()
+    read = session._read()
     state = read.encounter_state
     scene = observe_scene(read)
     completion = None

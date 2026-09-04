@@ -39,7 +39,7 @@ class PendingEncounterCompletion:
 
 
 class Session:
-    """Coordinate content definitions and mutable state for one running game.
+    """Coordinate a loaded encounter and its mutable state for one running game.
 
     The session is the public engine façade used by driving adapters. It creates
     encounter state lazily, validates frontend-neutral commands, advertises
@@ -75,7 +75,7 @@ class Session:
         self._decision_epoch = decision_epoch
         self._decision_revision = 0
 
-    def read(self) -> SessionRead:
+    def _read(self) -> SessionRead:
         """Return typed internal inputs used to construct an observation.
 
         >>> from srd_arena.domain.geometry import Grid
@@ -84,7 +84,7 @@ class Session:
         >>> session.pending_encounter_completion = PendingEncounterCompletion(
         ...     "Encounter complete"
         ... )
-        >>> session.read().completion_message
+        >>> session._read().completion_message
         'Encounter complete'
         """
 
@@ -96,7 +96,7 @@ class Session:
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.queries import SessionRead
         >>> session = Session.__new__(Session)
-        >>> session.read = Mock(return_value=SessionRead(
+        >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.observe().scene.scene_id
@@ -112,7 +112,7 @@ class Session:
         >>> from srd_arena.engine.commands import SelectAction
         >>> from srd_arena.engine.queries import SessionRead
         >>> session = Session.__new__(Session)
-        >>> session.read = Mock(return_value=SessionRead(
+        >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.execute(SelectAction("wait", "old")).failure.code
@@ -121,7 +121,7 @@ class Session:
 
         return execute_game_command(self, command)
 
-    def choose(self, action_id: str) -> EngineOutcome:
+    def _choose(self, action_id: str) -> EngineOutcome:
         """Execute one action advertised by the current engine read.
 
         System exit remains available at an encounter decision point.
@@ -131,7 +131,7 @@ class Session:
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
         >>> session = Session(encounter)
         >>> session.encounter_state = Mock(encounter_id="demo")
-        >>> outcome = session.choose("system-exit")
+        >>> outcome = session._choose("system-exit")
         >>> (outcome.selected_action_id, outcome.should_exit)
         ('system-exit', True)
         """
@@ -222,7 +222,7 @@ class Session:
             selected_choice_text=action.label,
         )
 
-    def configure_action(
+    def _configure_action(
         self,
         action_id: str,
         configuration: ActionConfiguration,
@@ -237,7 +237,7 @@ class Session:
         >>> encounter = EncounterDefinition("demo", Grid(1, 1))
         >>> session = Session(encounter)
         >>> session.encounter_state = Mock(encounter_id="demo")
-        >>> session.configure_action("missing", ActionAim(1, 1))
+        >>> session._configure_action("missing", ActionAim(1, 1))
         Traceback (most recent call last):
         ...
         KeyError: "Action 'missing' is unavailable."
@@ -287,7 +287,7 @@ class Session:
         >>> session.encounter_orchestrator = orchestrator
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
-        >>> session.read = Mock(return_value=SessionRead(
+        >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.advance_until_input_required().messages
@@ -311,7 +311,7 @@ class Session:
         >>> session.encounter_orchestrator = orchestrator
         >>> session.encounter_state = Mock(
         ...     encounter_id="demo", requires_automatic_advance=Mock(return_value=True))
-        >>> session.read = Mock(return_value=SessionRead(
+        >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
         >>> session.advance_one_automatic_action().messages

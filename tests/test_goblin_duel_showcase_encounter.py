@@ -15,7 +15,7 @@ ENCOUNTER_DIR = (
 def test_goblin_duel_is_fully_scripted() -> None:
     encounter = load_encounter_directory(ENCOUNTER_DIR)
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert encounter.display_name == "3. Goblin Duel Demo"
     assert len(encounter.teams) == 2

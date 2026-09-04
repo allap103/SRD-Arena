@@ -23,7 +23,7 @@ FULL_CONTROL_ENCOUNTER_DIR = (
 
 def _encounter_state() -> EncounterState:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     return session.encounter_state
 

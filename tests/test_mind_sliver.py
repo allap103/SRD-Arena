@@ -25,7 +25,7 @@ WARLOCK_TRAINING_ENCOUNTER_DIR = (
 
 def _session() -> Session:
     session = Session(load_encounter_directory(str(WARLOCK_TRAINING_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     use_deterministic_dice(
         session,
         die_roller=lambda sides: 1 if sides == 20 else 3,
@@ -49,10 +49,10 @@ def _is_spell_option(
 def _cast_mind_sliver(session: Session) -> None:
     action = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if _is_spell_option(action, "mind_sliver", "goblin_1")
     )
-    result = session.choose(action.id)
+    result = session._choose(action.id)
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     damage = spell_event.data["damage_roll_details"]
     assert isinstance(damage, list)
@@ -80,17 +80,17 @@ def test_mind_sliver_penalty_is_consumed_by_the_targets_next_save() -> None:
     warlock.magic_actions_remaining = 1
     action = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.enabled and _is_spell_option(action, "hideous_laughter", "goblin_1")
     )
-    opened = session.choose(action.id)
+    opened = session._choose(action.id)
     assert [event.type for event in opened.events] == ["action_declared"]
     confirm = next(
         option
-        for option in session.read().action_options
+        for option in session._read().action_options
         if option.kind == "confirm_spell_targets"
     )
-    result = session.choose(confirm.id)
+    result = session._choose(confirm.id)
 
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     save = spell_event.data["save_detail"]

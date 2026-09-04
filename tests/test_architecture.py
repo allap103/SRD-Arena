@@ -438,6 +438,11 @@ def test_public_engine_api_exposes_the_session_facade() -> None:
         "advance_until_input_required",
         "reset",
     } <= set(vars(api.Session))
+    assert not {
+        "read",
+        "choose",
+        "configure_action",
+    } & set(vars(api.Session))
 
 
 def test_engine_does_not_define_presentation_views() -> None:

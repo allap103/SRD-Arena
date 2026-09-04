@@ -1,10 +1,10 @@
 """Formatting helpers for structured spell-resolution details."""
 
 from srd_arena.domain.capabilities import EffectDuration
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import DicePoolResult, DieRoller, resolve_dice
 
 from .context import SpellTargetContext
-from .scaling import parse_damage_dice
 
 
 def roll_optional_dice(
@@ -22,7 +22,7 @@ def roll_optional_dice(
 
     if dice is None:
         return None
-    count, sides = parse_damage_dice(dice)
+    count, sides = parse_dice_expression(dice)
     return resolve_dice(count, sides, roller=roller)
 
 

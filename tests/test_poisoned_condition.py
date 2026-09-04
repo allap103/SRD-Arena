@@ -17,7 +17,7 @@ from tests.encounter_runtime_support import (
 
 def _session() -> Session:
     session = Session(load_encounter_directory(TACTICAL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("player")
@@ -97,7 +97,7 @@ def test_poisoned_disadvantage_is_used_by_grapple_escape_checks() -> None:
     rolls = iter((20, 1))
     use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
-    result = session.choose(
+    result = session._choose(
         action_id_by_label(
             session,
             "Escape Goblin Warrior with Athletics (DC 30)",
@@ -128,7 +128,7 @@ def test_poisoned_and_stunned_attack_modes_cancel_once() -> None:
     assert apply_condition(state, stunned).accepted
     use_deterministic_dice(session, die_roller=lambda _sides: 10)
 
-    result = session.choose(action_id(session, "attack", "goblin_1"))
+    result = session._choose(action_id(session, "attack", "goblin_1"))
 
     attack = next(event for event in result.events if event.type == "attack_resolved")
     detail = attack.data["attack_roll_detail"]

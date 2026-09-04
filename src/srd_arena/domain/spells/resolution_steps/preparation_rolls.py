@@ -10,6 +10,7 @@ from srd_arena.domain.capabilities import (
     HealingEffect,
     SavingThrowResolution,
 )
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     DicePoolResult,
     resolve_dice,
@@ -20,7 +21,6 @@ from .context import SpellActionContext
 from .details import roll_optional_dice
 from .scaling import (
     actor_level_damage_dice,
-    parse_damage_dice,
     resource_dice_increment,
     scale_dice,
 )
@@ -125,7 +125,7 @@ def _resolve_damage_roll(
     return (
         damage,
         resolve_dice(
-            *parse_damage_dice(damage.dice),
+            *parse_dice_expression(damage.dice),
             modifier=modifier.value,
             modifier_source_ids=modifier.source_ids,
             roller=context.environment.roll_die,
@@ -166,8 +166,8 @@ def _scaled_damage_definitions(
         if increment is None:
             scaled.append(damage)
             continue
-        increment_count, increment_sides = parse_damage_dice(increment)
-        count, sides = parse_damage_dice(damage.dice)
+        increment_count, increment_sides = parse_dice_expression(increment)
+        count, sides = parse_dice_expression(damage.dice)
         if sides != increment_sides:
             raise ValueError("Slot damage scaling must use the base damage die.")
         scaled.append(

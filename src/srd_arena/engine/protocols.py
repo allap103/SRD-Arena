@@ -11,11 +11,11 @@ from srd_arena.engine.queries import ActionConfiguration, SessionRead
 class GameEngine(Protocol):
     """Low-level session operations used by engine command handlers."""
 
-    def read(self) -> SessionRead: ...
+    def _read(self) -> SessionRead: ...
 
-    def choose(self, action_id: str) -> EngineOutcome: ...
+    def _choose(self, action_id: str) -> EngineOutcome: ...
 
-    def configure_action(
+    def _configure_action(
         self,
         action_id: str,
         configuration: ActionConfiguration,

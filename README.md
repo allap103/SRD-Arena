@@ -34,14 +34,14 @@ Note that die rolls will only be the same between different executions of the sa
 The high-level execution path is:
 
     main
-      -> application use cases
-      -> engine session
+      -> selected frontend
+      -> engine API and session
       -> encounter orchestration
       -> domain rules
 
 Authored JSON content is validated and translated into domain definitions by
-the content package. Infrastructure connects that content to the application,
-while GUI and headless clients drive the same public application API.
+the content package. GUI and headless clients discover encounters through the
+public content API and drive them through the public engine API.
 
 ## Implemented player-character scope
 

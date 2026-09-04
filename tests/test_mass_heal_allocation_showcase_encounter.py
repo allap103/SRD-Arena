@@ -18,7 +18,7 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> None:
     session = Session(load_encounter_directory(str(ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

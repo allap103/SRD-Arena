@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING, cast
 
 from srd_arena.domain.effects.triggered import ability_modifier_contributions
 from srd_arena.domain.geometry import build_radius_area
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     D20RollMode,
     DicePoolResult,
@@ -16,7 +17,6 @@ from srd_arena.domain.rolls.dice import (
 from srd_arena.domain.rolls.saving_throws import Ability
 from srd_arena.domain.spells.definitions import SpellDamage
 from srd_arena.domain.spells.resolution import SpellTargetContext
-from srd_arena.domain.spells.resolution_steps.scaling import parse_damage_dice
 
 from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ...rule_queries.damage_riders import attack_hit_damage
@@ -96,7 +96,7 @@ class EncounterSpellResolutionEnvironment:
             self.actor_ref,
             target_ref,
         ):
-            count, sides = parse_damage_dice(contribution.value.dice)
+            count, sides = parse_dice_expression(contribution.value.dice)
             if critical_hit:
                 count *= 2
             results.append(

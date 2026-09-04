@@ -99,7 +99,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -155,7 +155,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
 
 def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     effects = [
@@ -205,7 +205,7 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
 
 def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -248,7 +248,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
 
 def test_condition_modifier_applies_to_repeated_saves() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -304,7 +304,7 @@ def test_condition_modifier_applies_to_repeated_saves() -> None:
 
 def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     before = active_movement_remaining(state)
@@ -345,7 +345,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
 
 def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -415,7 +415,7 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
 
 def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -504,7 +504,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     None
 ):
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -574,7 +574,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
 
 def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -607,7 +607,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
 
 def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -640,7 +640,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
 
 def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -690,7 +690,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
 
 def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -743,7 +743,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
 
 def test_weird_deals_damage_on_a_failed_repeat_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -773,7 +773,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save() -> None:
 
 def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -808,7 +808,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
 
 def test_sleep_stages_choice_when_area_contains_multiple_creatures() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -865,7 +865,7 @@ def test_sleep_automatically_spares_ineligible_creature(
     reason: str,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -921,7 +921,7 @@ def test_sleep_automatically_spares_ineligible_creature(
 
 def test_charm_person_save_has_advantage_against_opponent() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -962,7 +962,7 @@ def test_charm_person_save_has_advantage_against_opponent() -> None:
 
 def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1027,7 +1027,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
     event: str,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     target_ref = "goblin_1"
@@ -1075,7 +1075,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
 
 def test_charm_ends_only_when_source_side_damages_target() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1128,7 +1128,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
 
 def test_hideous_laughter_damage_save_has_advantage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1182,7 +1182,7 @@ def test_hideous_laughter_damage_save_has_advantage() -> None:
 
 def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1221,7 +1221,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
 
 def test_hideous_laughter_success_is_reported_as_a_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1261,7 +1261,7 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
 
@@ -1309,7 +1309,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1368,7 +1368,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution() -> None
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster_ref = state.current_decision().creature_ref
@@ -1457,7 +1457,7 @@ def test_failed_damage_save_ends_concentration_and_its_conditions() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(

@@ -83,7 +83,7 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     session.encounter_state.turn.index = 1
@@ -99,7 +99,7 @@ def test_orchestrator_runs_enemy_turns_until_player_turn() -> None:
 
 def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     enemy = session.encounter_state.creatures["goblin_1"]
@@ -134,7 +134,7 @@ def test_archer_behavior_uses_ranged_weapon_without_closing_distance() -> None:
 
 def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
@@ -151,7 +151,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: 1)
 
     attack_index = _action_id(session, "attack", "goblin_1")
-    result = session.choose(attack_index)
+    result = session._choose(attack_index)
 
     assert (
         "system",
@@ -174,7 +174,7 @@ def test_natural_one_is_an_automatic_miss_for_attack_rolls() -> None:
 
 def test_extra_attack_allows_second_attack_after_movement() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     _active_creature(session).combat_profile.attacks_per_attack_action = 2
@@ -190,7 +190,7 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
     )
 
     attack_index = _action_id(session, "attack", "goblin_1")
-    first_result = session.choose(attack_index)
+    first_result = session._choose(attack_index)
 
     attack_events = [
         event for event in first_result.events if event.type == "attack_resolved"
@@ -202,7 +202,7 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
     assert session.encounter_state.active_attacks_remaining == 1
 
     move_index = _action_id_by_label(session, "Move left")
-    move_result = session.choose(move_index)
+    move_result = session._choose(move_index)
 
     assert ("system", "Traveler moves left to (3, 3).") in move_result.messages
     assert session.encounter_state.active_position.x == 3
@@ -210,7 +210,7 @@ def test_extra_attack_allows_second_attack_after_movement() -> None:
     assert session.encounter_state.active_attacks_remaining == 1
 
     second_attack_index = _action_id(session, "attack", "goblin_1")
-    second_result = session.choose(second_attack_index)
+    second_result = session._choose(second_attack_index)
 
     second_attack_events = [
         event for event in second_result.events if event.type == "attack_resolved"
@@ -231,7 +231,7 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
     _use_deterministic_dice(session, die_roller=lambda _sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
-    result = session.choose(second_wind_index)
+    result = session._choose(second_wind_index)
 
     assert ("system", "Traveler uses Second Wind.") in result.messages
     assert ("system", "Healing: 1d10=5 + level 2 = 7; applied 7.") in result.messages
@@ -241,7 +241,7 @@ def test_second_wind_appears_and_consumes_bonus_action() -> None:
     assert _active_creature(session).feature_uses_remaining["second_wind"] == 1
     second_wind = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.label == "Second Wind"
     )
     assert second_wind.availability == "unavailable"
@@ -263,7 +263,7 @@ def test_healing_potion_appears_and_is_consumed() -> None:
     player.current_health = 10
     _use_deterministic_dice(session, die_roller=lambda _sides: 4)
 
-    result = session.choose(_action_id_by_label(session, "Drink Potion of Healing"))
+    result = session._choose(_action_id_by_label(session, "Drink Potion of Healing"))
 
     assert player.get_health() == 20
     assert "potion_of_healing" not in player.inventory.items
@@ -282,7 +282,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
     _use_deterministic_dice(session, die_roller=lambda _sides: 5)
 
     second_wind_index = _action_id_by_label(session, "Second Wind")
-    session.choose(second_wind_index)
+    session._choose(second_wind_index)
 
     presentation = build_session_presentation(observe_session(session))
 
@@ -299,7 +299,7 @@ def test_second_wind_stays_visible_in_feature_column_when_unavailable() -> None:
 
 def test_action_surge_grants_additional_action_for_same_turn() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3
@@ -313,32 +313,32 @@ def test_action_surge_grants_additional_action_for_same_turn() -> None:
     _use_deterministic_dice(session, die_roller=fixed_roll)
 
     first_attack_index = _action_id(session, "attack", "goblin_1")
-    session.choose(first_attack_index)
+    session._choose(first_attack_index)
 
     assert session.encounter_state.active_actions_remaining == 0
 
     action_surge_index = _action_id_by_label(session, "Action Surge")
-    result = session.choose(action_surge_index)
+    result = session._choose(action_surge_index)
 
     assert ("system", "Traveler uses Action Surge.") in result.messages
     assert session.encounter_state.active_actions_remaining == 1
     assert session.encounter_state.active_magic_actions_remaining == 0
     assert _active_creature(session).feature_uses_remaining["action_surge"] == 0
-    assert any(action.kind == "attack" for action in session.read().action_options)
-    assert not any(action.kind == "spell" for action in session.read().action_options)
+    assert any(action.kind == "attack" for action in session._read().action_options)
+    assert not any(action.kind == "spell" for action in session._read().action_options)
     event = next(event for event in result.events if event.type == "feature_used")
     assert event.data["feature_id"] == "action_surge"
     assert event.data["granted_actions"] == 1
 
     second_attack = _action_id(session, "attack", "goblin_1")
-    session.choose(second_attack)
+    session._choose(second_attack)
 
     assert session.encounter_state.active_actions_remaining == 0
 
 
 def test_presentation_surfaces_conditions_in_encounter_views() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -673,7 +673,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -687,17 +687,17 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
     _use_deterministic_dice(session, die_roller=lambda sides: 15 if sides == 20 else 3)
     initial = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.kind == "spell"
         and isinstance(action.details, SpellOptionDetails)
         and action.details.source_id == "eldritch_blast"
         and action.details.target_ref == "goblin_1"
     )
-    session.choose(initial.id)
+    session._choose(initial.id)
     assert state.interrupts.pending_spell_cast is not None
     add = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.kind == "toggle_spell_target"
         and isinstance(action.details, SpellOptionDetails)
         and action.details.target_ref == "goblin_1"
@@ -734,7 +734,7 @@ def test_movement_does_not_consume_pending_multiattack_slots() -> None:
             str(STAT_BLOCK_ACTION_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("assassin")
@@ -835,7 +835,7 @@ def test_spell_target_modes_preserve_selected_cast_level() -> None:
 
 def test_goblin_encounter_attack_can_complete_the_encounter() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     _active_creature(session).combat_profile.attacks_per_attack_action = 1
@@ -853,18 +853,18 @@ def test_goblin_encounter_attack_can_complete_the_encounter() -> None:
     )
 
     attack_index = _action_id(session, "attack", "goblin_1")
-    result = session.choose(attack_index)
+    result = session._choose(attack_index)
 
     assert result.selected_choice_text is not None
     assert result.events[0].data["kind"] == "attack"
     assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
-    assert session.read().action_options[0].id == "system-restart-encounter"
+    assert session._read().action_options[0].id == "system-restart-encounter"
 
 
 def test_attack_consumes_action_until_next_turn() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     _active_creature(session).combat_profile.attacks_per_attack_action = 1
@@ -876,17 +876,17 @@ def test_attack_consumes_action_until_next_turn() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: 1)
 
     attack_index = _action_id(session, "attack", "goblin_1")
-    session.choose(attack_index)
+    session._choose(attack_index)
 
     assert session.encounter_state.active_action_available is False
     attacks = [
-        action for action in session.read().action_options if action.kind == "attack"
+        action for action in session._read().action_options if action.kind == "attack"
     ]
     assert attacks
     assert all(action.availability == "unavailable" for action in attacks)
 
     wait_index = _action_id_by_label(session, "Wait")
-    session.choose(wait_index)
+    session._choose(wait_index)
     while not (
         session.encounter_state.current_decision().kind == "turn"
         and session.encounter_state.current_decision().creature_ref == "player"
@@ -894,15 +894,15 @@ def test_attack_consumes_action_until_next_turn() -> None:
         if session.encounter_state.requires_automatic_advance():
             session.advance_until_input_required()
         else:
-            session.choose(_action_id_by_label(session, "Pass reaction"))
+            session._choose(_action_id_by_label(session, "Pass reaction"))
 
     assert session.encounter_state.creatures["player"].actions_remaining == 1
-    assert any(action.kind == "attack" for action in session.read().action_options)
+    assert any(action.kind == "attack" for action in session._read().action_options)
 
 
 def test_completed_encounter_waits_for_restart() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     for creature_ref, creature_state in session.encounter_state.creatures.items():
         if creature_ref != session.encounter_state.current_decision().creature_ref:
@@ -914,7 +914,7 @@ def test_completed_encounter_waits_for_restart() -> None:
     )
 
     wait_index = _action_id_by_label(session, "Wait")
-    result = session.choose(wait_index)
+    result = session._choose(wait_index)
 
     assert session.pending_encounter_completion is not None
     assert session.encounter_state is not None
@@ -922,7 +922,7 @@ def test_completed_encounter_waits_for_restart() -> None:
         "system",
         "Encounter complete",
     ) in result.messages
-    encounter_read = session.read()
+    encounter_read = session._read()
     assert encounter_read.completion_message == "Encounter complete"
     assert session.pending_encounter_completion.message == "Encounter complete"
     assert encounter_read.action_options[0].id == "system-restart-encounter"
@@ -937,7 +937,7 @@ def test_completed_encounter_waits_for_restart() -> None:
     assert presentation.encounter.restart_action is not None
     assert presentation.encounter.restart_action.id == "system-restart-encounter"
 
-    session.choose("system-restart-encounter")
+    session._choose("system-restart-encounter")
 
     assert session.pending_encounter_completion is None
     assert session.encounter_state is not None

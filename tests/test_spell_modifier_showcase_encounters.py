@@ -11,7 +11,7 @@ def test_spell_modifier_showcase_loads_new_modifier_spells() -> None:
         ENCOUNTERS_ROOT / "archive" / "spell_modifier_showcase"
     )
     session = Session(encounter)
-    session.read()
+    session._read()
 
     caster = encounter.get_creature("modifier_archmage")
     assert caster.spellcasting is not None
@@ -41,7 +41,7 @@ def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None
         ENCOUNTERS_ROOT / "archive" / "spell_effect_lifecycle_showcase"
     )
     session = Session(encounter)
-    session.read()
+    session._read()
 
     caster = encounter.get_creature("lifecycle_archmage")
     assert caster.spellcasting is not None
@@ -61,7 +61,7 @@ def test_spell_effect_lifecycle_showcase_loads_recent_spell_lifecycles() -> None
 def test_slow_showcase_exposes_six_of_seven_rules_subjects() -> None:
     encounter = load_encounter_directory(ENCOUNTERS_ROOT / "archive" / "slow_showcase")
     session = Session(encounter)
-    session.read()
+    session._read()
 
     caster = encounter.get_creature("tempo_archmage")
     assert caster.spellcasting is not None

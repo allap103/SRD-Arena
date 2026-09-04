@@ -26,6 +26,7 @@ from srd_arena.domain.spells.rules import (
 from srd_arena.engine.queries import (
     ActionOption,
     DirectTargetOptionDetails,
+    EffectRetargetOptionDetails,
     FeatureOptionDetails,
     ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
@@ -52,6 +53,7 @@ class _ActionSemantics:
     source_level: int | None = None
     resource_level: int | None = None
     feature_id: str | None = None
+    effect_id: str | None = None
     movement_direction: str | None = None
     movement_distance_feet: int | None = None
     target_ref: str | None = None
@@ -121,6 +123,7 @@ def _observe_action(
         source_level=semantics.source_level,
         resource_level=semantics.resource_level,
         feature_id=semantics.feature_id,
+        effect_id=semantics.effect_id,
         movement_direction=semantics.movement_direction,
         movement_distance_feet=semantics.movement_distance_feet,
         target_ref=semantics.target_ref,
@@ -173,6 +176,11 @@ def _action_semantics(
         )
     if isinstance(details, FeatureOptionDetails):
         return _ActionSemantics(feature_id=details.feature_id)
+    if isinstance(details, EffectRetargetOptionDetails):
+        return _ActionSemantics(
+            effect_id=details.effect_id,
+            target_ref=details.target_ref,
+        )
     if isinstance(details, MovementOptionDetails):
         return _ActionSemantics(movement_direction=details.direction)
     if isinstance(details, ForcedMovementOptionDetails):

@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import cast
 
 from srd_arena.domain.capabilities import AttackResolution, SavingThrowResolution
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     DicePoolResult,
     resolve_check,
@@ -18,7 +19,6 @@ from srd_arena.domain.rolls.saving_throws import (
 from ..definitions import SpellDamage
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
-from .scaling import parse_damage_dice
 
 
 @dataclass
@@ -216,7 +216,7 @@ def _resolve_spell_attack(
     critical_hit = hit and (attack.selected == 20 or bool(automatic_critical))
     damage_rolls = list(prepared.shared_damage_rolls)
     for damage in prepared.damage_definitions:
-        count, sides = parse_damage_dice(damage.dice)
+        count, sides = parse_dice_expression(damage.dice)
         if critical_hit:
             count *= 2
         modifier = context.environment.damage_roll_modifier()

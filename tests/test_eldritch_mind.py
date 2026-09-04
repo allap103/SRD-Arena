@@ -26,7 +26,7 @@ WARLOCK_TRAINING_ENCOUNTER_DIR = (
 
 def test_eldritch_mind_grants_advantage_to_a_concentration_save() -> None:
     session = Session(load_encounter_directory(str(WARLOCK_TRAINING_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(

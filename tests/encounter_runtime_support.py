@@ -127,14 +127,14 @@ def action_id_by_label(session: Session, label: str) -> str:
     """Return the unique advertised action whose label matches exactly."""
 
     return next(
-        action.id for action in session.read().action_options if action.label == label
+        action.id for action in session._read().action_options if action.label == label
     )
 
 
 def action_labels(session: Session) -> list[str]:
     """Return the labels of all actions in the session's current decision."""
 
-    return [action.label for action in session.read().action_options]
+    return [action.label for action in session._read().action_options]
 
 
 def action_id_by_prefix(session: Session, prefix: str) -> str:
@@ -142,7 +142,7 @@ def action_id_by_prefix(session: Session, prefix: str) -> str:
 
     return next(
         action.id
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.label.startswith(prefix)
     )
 
@@ -152,7 +152,7 @@ def action_id(session: Session, kind: str, value: object) -> str:
 
     return next(
         action.id
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.kind == kind
         and isinstance(action.details, DirectTargetOptionDetails)
         and action.details.target_ref == value
@@ -163,7 +163,7 @@ def active_creature(session: Session) -> Creature:
     """Return the active creature from a concrete integration-test session."""
 
     if session.encounter_state is None:
-        session.read()
+        session._read()
     state = session.encounter_state
     assert state is not None
     return state.active_creature_state.creature
@@ -175,9 +175,9 @@ def choose_advertised_action(
 ) -> EngineOutcome:
     """Submit a domain action through the engine's advertised-ID boundary."""
 
-    advertised_ids = {option.id for option in session.read().action_options}
+    advertised_ids = {option.id for option in session._read().action_options}
     assert action.id in advertised_ids
-    return session.choose(action.id)
+    return session._choose(action.id)
 
 
 def use_deterministic_dice(
@@ -204,11 +204,11 @@ def choose_directional_spell(
 ) -> EngineOutcome:
     """Configure a directional spell by aiming at a grid-cell center."""
 
-    scene_view = session.read()
+    scene_view = session._read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.configure_action(
+    return session._configure_action(
         action.id,
         ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )

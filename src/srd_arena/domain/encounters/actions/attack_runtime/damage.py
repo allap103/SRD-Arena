@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     D20RollMode,
     DicePoolResult,
@@ -56,7 +57,7 @@ def roll_attack_damage(
     ('1d8', 7, 7)
     """
     damage_dice = attack_source.damage_dice
-    damage_die_count, damage_die_sides = parse_damage_dice(damage_dice)
+    damage_die_count, damage_die_sides = parse_dice_expression(damage_dice)
     if critical_hit:
         damage_die_count *= 2
         damage_dice = f"{damage_die_count}d{damage_die_sides}"
@@ -80,7 +81,7 @@ def roll_attack_damage(
         extra_dice = effect.dice
         extra_bonus = effect.bonus
         extra_type = effect.damage_type
-        extra_count, extra_sides = parse_damage_dice(extra_dice)
+        extra_count, extra_sides = parse_dice_expression(extra_dice)
         if critical_hit:
             extra_count *= 2
             extra_dice = f"{extra_count}d{extra_sides}"
@@ -251,13 +252,3 @@ def damage_effect_requirements_met(
     False
     """
     return all(requirement.mode == roll_mode for requirement in effect.requirements)
-
-
-def parse_damage_dice(damage: str) -> tuple[int, int]:
-    """Parse a simple NdS damage expression.
-
-    >>> parse_damage_dice("2d10")
-    (2, 10)
-    """
-    count_text, sides_text = damage.lower().split("d", 1)
-    return int(count_text), int(sides_text)

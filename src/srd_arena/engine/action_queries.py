@@ -14,6 +14,7 @@ from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.queries import (
     ActionOptionDetails,
     DirectTargetOptionDetails,
+    EffectRetargetOptionDetails,
     FeatureOptionDetails,
     ForcedMovementOptionDetails,
     GrappleEscapeOptionDetails,
@@ -111,7 +112,10 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
     if action.kind == "retarget_effect" and isinstance(
         action.value, EffectRetargetSelection
     ):
-        return DirectTargetOptionDetails(target_ref=action.value.target_ref)
+        return EffectRetargetOptionDetails(
+            effect_id=action.value.effect_id,
+            target_ref=action.value.target_ref,
+        )
     return None
 
 

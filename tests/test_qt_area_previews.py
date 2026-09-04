@@ -53,7 +53,7 @@ def test_slow_pending_area_preview_is_an_eight_square_cube(
     session = Session(
         load_encounter_directory(ENCOUNTERS_ROOT / "archive" / "slow_showcase")
     )
-    session.read()
+    session._read()
     observation = observe_session(session)
     slow_action = next(
         action

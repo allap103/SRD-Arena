@@ -9,8 +9,8 @@ from srd_arena.domain.effects.triggered import TriggeredEffect, matching_effects
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
-from .actions.effect_retargeting import mark_retargetable_effects_for_defeat
 from .attack_rules import proximity_attack_roll_mode
+from .effect_lifecycle.retargeting import mark_retargetable_effects_for_defeat
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import apply_damage
 from .rule_queries.rolls import roll_modifiers

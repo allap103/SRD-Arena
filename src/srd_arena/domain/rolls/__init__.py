@@ -19,6 +19,7 @@ from .dice import (
     roll_die,
     select_d20,
 )
+from .expressions import parse_dice_expression
 from .randomness import DiceRoller
 from .saving_throws import (
     SavingThrowModifiers,
@@ -39,6 +40,7 @@ __all__ = [
     "SavingThrowModifiers",
     "SavingThrowResult",
     "extend_d20_pool",
+    "parse_dice_expression",
     "reroll_dice",
     "reroll_dice_pool",
     "reroll_saving_throw",

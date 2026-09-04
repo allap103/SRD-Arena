@@ -245,7 +245,7 @@ def test_forced_movement_ends_a_grapple_after_separation() -> None:
 
 def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")
@@ -298,10 +298,10 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
     assert observed_push.source_id == "repelling_blast"
     push = next(
         action
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.id == observed_push.id
     )
-    moved = session.choose(push.id)
+    moved = session._choose(push.id)
 
     assert state.creatures["ogre_target"].position == Position(8, 3)
     movement_event = next(
@@ -332,7 +332,7 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
         if action.kind == "forced_movement_choice"
         and action.movement_distance_feet == 0
     )
-    finished = session.choose(decline.id)
+    finished = session._choose(decline.id)
 
     assert state.interrupts.decision_stack == []
     assert state.current_decision().kind == "turn"
@@ -351,7 +351,7 @@ def test_repelling_blast_opens_one_push_choice_for_each_hit() -> None:
 
 def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.definition.grid = Grid(30, 9)
@@ -375,7 +375,7 @@ def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
         and action.movement_distance_feet == 10
     )
 
-    result = session.choose(push.id)
+    result = session._choose(push.id)
 
     assert state.creatures["ogre_target"].position == Position(25, 3)
     assert state.interrupts.decision_stack == []
@@ -403,7 +403,7 @@ def test_first_push_can_move_target_out_of_range_of_second_beam() -> None:
 
 def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")
@@ -427,7 +427,7 @@ def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
         if action.kind == "forced_movement_choice"
         and action.movement_distance_feet == 10
     )
-    result = session.choose(push.id)
+    result = session._choose(push.id)
 
     assert state.interrupts.decision_stack == []
     assert session.pending_encounter_completion is not None
@@ -436,7 +436,7 @@ def test_terminal_hit_waits_for_repelling_blast_before_completing() -> None:
 
 def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     participant = next(
@@ -496,7 +496,7 @@ def test_scripted_repelling_blast_uses_maximum_distance_without_a_decision() -> 
 
 def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     participant = next(
@@ -535,7 +535,7 @@ def test_scripted_session_resolves_every_beam_and_maximum_push() -> None:
 
 def test_repelling_blast_does_not_offer_a_push_for_a_huge_target() -> None:
     session = Session(load_encounter_directory(WARLOCK_ENCOUNTER))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = state.creatures["warlock"].creature

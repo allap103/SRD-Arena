@@ -209,7 +209,7 @@ def test_restart_rewinds_seeded_encounter_randomness() -> None:
         "Encounter complete"
     )
 
-    result = session.choose("system-restart-encounter")
+    result = session._choose("system-restart-encounter")
 
     assert result.selected_action_id == "system-restart-encounter"
     assert random_signature() == first_run

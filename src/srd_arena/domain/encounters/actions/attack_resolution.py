@@ -19,7 +19,6 @@ from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
-    parse_damage_dice,
     roll_attack_damage,
 )
 from .attack_runtime.rolls import resolve_attack_roll
@@ -50,7 +49,6 @@ __all__ = [
     "equipped_weapon",
     "has_free_hand",
     "matching_damage_reroll_rule",
-    "parse_damage_dice",
     "resolve_attack",
     "select_attack_source",
     "selected_attack_type",

@@ -45,7 +45,7 @@ def execute_game_command(
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
-    >>> session = SimpleNamespace(read=lambda: read)
+    >>> session = SimpleNamespace(_read=lambda: read)
     >>> result = execute_game_command(session, SelectAction("wait", "old"))
     >>> (result.accepted, result.failure.code)
     (False, 'stale_decision')
@@ -90,7 +90,7 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> update = game_update(
-    ...     SimpleNamespace(read=lambda: read),
+    ...     SimpleNamespace(_read=lambda: read),
     ...     EngineOutcome(selected_action_id="wait", messages=(("Hero", "Waits"),)))
     >>> (update.selected_action_id, update.messages)
     ('wait', (('Hero', 'Waits'),))
@@ -154,7 +154,7 @@ def _select_advertised(
             "action_configuration_required",
             f"Action '{action_id}' requires {option.required_configuration} configuration.",
         )
-    return session.choose(action_id)
+    return session._choose(action_id)
 
 
 def _aim_action(
@@ -175,7 +175,7 @@ def _aim_action(
             "action_unavailable",
             f"Aimable action '{command.action_id}' is not available.",
         )
-    return session.configure_action(
+    return session._configure_action(
         option.id,
         ActionAim(x=command.x, y=command.y),
     )
@@ -228,7 +228,7 @@ def _change_target(
             "target_change_unavailable",
             "The requested target change is not available.",
         )
-    return session.choose(option.id)
+    return session._choose(option.id)
 
 
 def _set_resource_allocation(
@@ -281,7 +281,7 @@ def _set_resource_allocation(
             "allocation_target_unavailable",
             "The requested allocation target is not available.",
         )
-    return session.configure_action(
+    return session._configure_action(
         option.id,
         ActionResourceAllocation(
             target_ref=command.target_ref,
@@ -308,7 +308,7 @@ def _select_kind(
             "action_unavailable",
             f"No '{kind}' action is available.",
         )
-    return session.choose(option.id)
+    return session._choose(option.id)
 
 
 def _reject(code: str, message: str) -> CommandResult:

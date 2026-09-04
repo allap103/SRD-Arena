@@ -7,6 +7,7 @@ from srd_arena.domain.capabilities import (
     DamageEffect,
     SavingThrowResolution,
 )
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import resolve_dice
 from srd_arena.domain.rolls.saving_throws import (
     Ability,
@@ -16,7 +17,6 @@ from srd_arena.domain.rolls.saving_throws import (
 from ..definitions import SpellDamage
 from .context import SpellActionContext
 from .scaling import (
-    parse_damage_dice,
     resource_dice_increment,
     scaled_damage_dice,
 )
@@ -73,7 +73,7 @@ def resolve_follow_up(
             if increment is None:
                 scaled.append(damage)
                 continue
-            increment_count, increment_sides = parse_damage_dice(increment)
+            increment_count, increment_sides = parse_dice_expression(increment)
             scaled.append(
                 SpellDamage(
                     scaled_damage_dice(
@@ -93,7 +93,7 @@ def resolve_follow_up(
             (
                 damage,
                 resolve_dice(
-                    *parse_damage_dice(damage.dice),
+                    *parse_dice_expression(damage.dice),
                     modifier=modifier.value,
                     modifier_source_ids=modifier.source_ids,
                     roller=context.environment.roll_die,

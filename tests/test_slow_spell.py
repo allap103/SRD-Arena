@@ -93,11 +93,11 @@ def _choose_directional_spell(
     label: str,
     aim_cell: tuple[int, int],
 ) -> EngineOutcome:
-    scene_view = session.read()
+    scene_view = session._read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.configure_action(
+    return session._configure_action(
         action.id,
         ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )
@@ -109,7 +109,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -280,7 +280,7 @@ def test_slow_chosen_area_never_exceeds_six_targets() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -334,7 +334,7 @@ def _assassin_showcase_state() -> EncounterState:
             str(STAT_BLOCK_ACTION_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -459,7 +459,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -529,7 +529,7 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

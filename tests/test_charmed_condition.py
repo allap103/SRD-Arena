@@ -35,7 +35,7 @@ STAT_BLOCK_ENCOUNTER_DIR = ENCOUNTERS_ROOT / "archive" / "stat_block_action_show
 
 def _warlock_session() -> Session:
     session = Session(load_encounter_directory(WARLOCK_TRAINING_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("warlock")
@@ -265,7 +265,7 @@ def test_charmed_rejects_an_area_spell_aimed_over_the_charmer() -> None:
 
 def test_charmed_reactor_is_not_offered_an_attack_against_the_charmer() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("player")
@@ -292,7 +292,7 @@ def test_charmed_reactor_is_not_offered_an_attack_against_the_charmer() -> None:
 
 def test_new_charm_does_not_consume_an_already_offered_reaction() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("player")
@@ -325,7 +325,7 @@ def test_new_charm_does_not_consume_an_already_offered_reaction() -> None:
 
 def test_charmed_rejects_a_damaging_stat_block_area_over_the_charmer() -> None:
     session = Session(load_encounter_directory(STAT_BLOCK_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.turn.index = state.initiative_order.index("blue_wyrmling")
@@ -357,7 +357,7 @@ def test_charmed_rejects_a_damaging_stat_block_area_over_the_charmer() -> None:
     assert unconfigured.failure is not None
     assert unconfigured.failure.code == "action_configuration_required"
     with pytest.raises(ValueError, match="requires aim configuration"):
-        session.choose(breath.id)
+        session._choose(breath.id)
 
     result = session.execute(
         AimAction(
