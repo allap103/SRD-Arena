@@ -18,7 +18,7 @@ from ..attack_economy import clear_attack_action, consume_action
 from ..encounter_models.resolution import EncounterProgress
 from ..rule_queries.health import apply_healing
 from ..rule_queries.permissions import reaction_eligibility
-from ..state_runtime import create_event
+from ..state_runtime import apply_encounter_effects, create_event
 from .eligibility_rules.models import EligibilityFailure
 from .rejections import reject_action
 
@@ -88,6 +88,7 @@ def resolve_feature_action(
             amount,
         ),
         actor_ref=creature_ref,
+        round_number=state.round.number,
     )
     if result is None:
         reject_action(
@@ -114,6 +115,23 @@ def resolve_feature_action(
         state.active_reaction_available = False
 
     progress.messages.extend(result.messages)
+    stateful_effects = [
+        effect
+        for effect in result.effects
+        if effect.kind
+        in {
+            "apply_condition",
+            "extend_ongoing_effect",
+            "message",
+            "remove_condition",
+            "remove_ongoing_effects",
+            "start_ongoing_effect",
+            "teleport",
+        }
+    ]
+    progress.messages.extend(
+        apply_encounter_effects(state, stateful_effects, origin_id=action_id)
+    )
     granted_actions = (
         result.details.granted_actions
         if isinstance(result.details, FeatureResolutionDetails)
@@ -173,10 +191,32 @@ def _feature_execution_failure(
         )
         if not reaction.allowed:
             return reaction.failures[0]
-    if creature.feature_uses_remaining.get(feature_id, 0) <= 0:
+    if (
+        feature_action.requires_use
+        and creature.feature_uses_remaining.get(feature_id, 0) <= 0
+    ):
         return EligibilityFailure(
             "resource_spent",
             f"You have no uses of {feature_action.label} remaining.",
+        )
+    if feature_action.requires_active_effect_id is not None and not any(
+        feature_action.requires_active_effect_id == effect.identity.source.definition_id
+        and creature_ref in effect.target_refs
+        for effect in state.ongoing_effects
+    ):
+        return EligibilityFailure(
+            "required_effect_inactive",
+            f"{feature_action.label} requires an active "
+            f"{feature_action.requires_active_effect_id.replace('_', ' ').title()}.",
+        )
+    if feature_action.blocked_while_effect_active and any(
+        feature_id == effect.identity.source.definition_id
+        and creature_ref in effect.target_refs
+        for effect in state.ongoing_effects
+    ):
+        return EligibilityFailure(
+            "feature_already_active",
+            f"{feature_action.label} is already active.",
         )
     return None
 

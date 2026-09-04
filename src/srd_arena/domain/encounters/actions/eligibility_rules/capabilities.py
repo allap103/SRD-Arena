@@ -232,9 +232,31 @@ class FeatureActionRule:
                 "feature_unavailable",
                 "This feature action is not executable.",
             )
-        if actor.feature_uses_remaining.get(action.value, 0) <= 0:
+        if (
+            definition.requires_use
+            and actor.feature_uses_remaining.get(action.value, 0) <= 0
+        ):
             return EligibilityFailure(
                 "resource_spent",
                 f"No uses of {definition.label} remain.",
+            )
+        if definition.requires_active_effect_id is not None and not any(
+            definition.requires_active_effect_id == effect.identity.source.definition_id
+            and actor_ref in effect.target_refs
+            for effect in state.ongoing_effects
+        ):
+            return EligibilityFailure(
+                "required_effect_inactive",
+                f"{definition.label} requires an active "
+                f"{definition.requires_active_effect_id.replace('_', ' ').title()}.",
+            )
+        if definition.blocked_while_effect_active and any(
+            action.value == effect.identity.source.definition_id
+            and actor_ref in effect.target_refs
+            for effect in state.ongoing_effects
+        ):
+            return EligibilityFailure(
+                "feature_already_active",
+                f"{definition.label} is already active.",
             )
         return None

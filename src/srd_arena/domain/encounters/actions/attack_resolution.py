@@ -76,7 +76,7 @@ def resolve_attack(
     attack_roll_mode_override: D20RollMode | None = None,
     sourced_attack_modifier: int | None = None,
     target_armor_class: int | None = None,
-    sourced_damage_modifier_for: Callable[[], int] | None = None,
+    sourced_damage_modifier_for: Callable[[str | None], int] | None = None,
     automatic_critical_provider_ids: tuple[str, ...] = (),
     sourced_additional_damage: tuple[tuple[str, DamageEffect], ...] = (),
 ) -> AttackOutcome:
@@ -148,13 +148,13 @@ def resolve_attack(
             critical_hit=attack_roll.critical_hit,
         )
 
-    damage_modifier_for = sourced_damage_modifier_for or (lambda: 0)
+    damage_modifier_for = sourced_damage_modifier_for or (lambda _ability: 0)
     damage = roll_attack_damage(
         attack_source,
         critical_hit=attack_roll.critical_hit,
         attack_roll_mode=attack_roll.result.mode,
         roller=die_roller,
-        sourced_modifier_for=damage_modifier_for,
+        sourced_modifier_for=lambda: damage_modifier_for(attack_source.ability),
         sourced_additional_damage=sourced_additional_damage,
     )
     messages = [("system", attack_detail_message)]

@@ -10,7 +10,7 @@ from ..defeat import resolve_creature_defeat
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import apply_combat_damage
 from .concentration import resolve_concentration_damage
-from .lifecycle_events import resolve_spell_lifecycle_event
+from .lifecycle_events import resolve_effect_lifecycle_event
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
@@ -84,7 +84,7 @@ def resolve_repeat_failure_damage(
                     f"{applied} {damage.damage_type} damage to {target.name}.",
                 )
             )
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "target_damaged",
             actor_ref=source_ref or "system",

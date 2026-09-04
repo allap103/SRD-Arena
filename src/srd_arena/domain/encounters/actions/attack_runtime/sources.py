@@ -113,6 +113,7 @@ def unarmed_attack_source(attacker: Creature) -> AttackSource:
         attack_bonus_label="STR mod",
         ability_modifier=strength_modifier,
         attack_modes=("melee",),
+        ability="strength",
     )
 
 
@@ -167,6 +168,7 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
         weapon_id=weapon.id,
         weapon_name=weapon.name,
         weapon_properties=tuple(weapon.weapon_stat.properties),
+        ability="dexterity" if attack_type == "ranged" else "strength",
     )
 
 
@@ -348,6 +350,7 @@ def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
         additional_damage=source.additional_damage,
         hit_effects=source.hit_effects,
         reach_feet=source.reach_feet,
+        ability=source.ability,
     )
 
 

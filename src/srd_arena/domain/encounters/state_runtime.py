@@ -9,7 +9,7 @@ from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.geometry import Position
 
 from .condition_state import apply_condition, remove_condition
-from .effect_lifecycle.application import start_ongoing_effect
+from .effect_lifecycle.application import extend_ongoing_effect, start_ongoing_effect
 from .effect_lifecycle.removal import remove_ongoing_effects
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
@@ -47,6 +47,7 @@ def apply_encounter_effects(
         apply_ongoing_effect=lambda effect, origin: start_ongoing_effect(
             state, effect, origin
         ),
+        extend_ongoing_effect=lambda effect: extend_ongoing_effect(state, effect),
         remove_ongoing_effects=lambda effect: remove_ongoing_effects(state, effect),
         apply_teleport=lambda target_ref, x, y: apply_teleport(
             state,

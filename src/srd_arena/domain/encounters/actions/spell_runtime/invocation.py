@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.effects.runtime import OngoingEffectKind
 
 from ...effect_lifecycle.concentration import end_concentration
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
 from ...rule_queries.invocations import (
     invocation_start_checks,
@@ -62,7 +62,7 @@ def begin_spell_invocation(
     ...     "spend_spell_resources"
     ... ) as spend, patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
-    ...     "resolve_spell_lifecycle_event"
+    ...     "resolve_effect_lifecycle_event"
     ... ):
     ...     allowed = begin_spell_invocation(
     ...         state,
@@ -94,7 +94,7 @@ def begin_spell_invocation(
             creature_ref=creature_ref,
             progress=progress,
         )
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_casts_spell",
         actor_ref=creature_ref,

@@ -9,10 +9,12 @@ from srd_arena.domain.rolls.dice import DieRoller
 from srd_arena.domain.spells import SpellInvocationGrant
 
 from ..model import Creature
+from .barbarian import resolve_barbarian_feature
 from .fighter import resolve_fighter_feature
 from .warlock import warlock_spell_invocation_grants
 
 CLASS_FEATURE_RESOLVERS = {
+    "barbarian": resolve_barbarian_feature,
     "fighter": resolve_fighter_feature,
 }
 
@@ -59,6 +61,7 @@ def resolve_feature_action(
     heal: Callable[[int], int],
     *,
     actor_ref: str,
+    round_number: int = 1,
 ) -> ActionResolutionResult | None:
     """Dispatch a feature with the acting encounter participant's identity.
 
@@ -92,4 +95,5 @@ def resolve_feature_action(
         roll_die,
         heal,
         actor_ref=actor_ref,
+        round_number=round_number,
     )

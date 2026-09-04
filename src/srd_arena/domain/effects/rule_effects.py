@@ -296,6 +296,25 @@ class InvocationFailureChance:
             raise ValueError("Invocation failure chance requires a message.")
 
 
+@dataclass(frozen=True)
+class InvocationProhibition:
+    """Prevent invocations of the named kinds while an effect is active."""
+
+    invocation_kinds: frozenset[str]
+    code: str
+    message: str
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(kind.casefold() for kind in self.invocation_kinds)
+        if not normalized:
+            raise ValueError("Invocation prohibition requires an invocation kind.")
+        if not self.code.strip():
+            raise ValueError("Invocation prohibition requires a code.")
+        if not self.message.strip():
+            raise ValueError("Invocation prohibition requires a message.")
+        object.__setattr__(self, "invocation_kinds", normalized)
+
+
 type RuntimeRuleEffect = (
     ArmorClassAdjustment
     | SpeedAdjustment
@@ -318,6 +337,7 @@ type RuntimeRuleEffect = (
     | CompelledTurn
     | AttackLimit
     | InvocationFailureChance
+    | InvocationProhibition
 )
 
 
@@ -445,6 +465,13 @@ def serialize_runtime_rule_effect(
             "required_components": sorted(effect.required_components),
             "numerator": effect.numerator,
             "denominator": effect.denominator,
+            "code": effect.code,
+            "message": effect.message,
+        }
+    if isinstance(effect, InvocationProhibition):
+        return {
+            "type": "invocation_prohibition",
+            "invocation_kinds": sorted(effect.invocation_kinds),
             "code": effect.code,
             "message": effect.message,
         }

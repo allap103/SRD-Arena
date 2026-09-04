@@ -9,7 +9,7 @@ from srd_arena.domain.effects.rule_effects import AttackHitRetaliation
 
 from ..defeat import resolve_creature_defeat
 from ..effect_lifecycle.concentration import resolve_concentration_damage
-from ..effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ..effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ..rule_queries.models import SourcedRuleContribution
 from ..state_combat import apply_combat_damage
 from ..state_runtime import create_event, creature_label
@@ -40,7 +40,7 @@ def resolve_attack_lifecycle(
     >>> from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
     >>> with patch(
     ...     "srd_arena.domain.encounters.reaction_runtime.attack_lifecycle."
-    ...     "resolve_spell_lifecycle_event"
+    ...     "resolve_effect_lifecycle_event"
     ... ) as lifecycle, patch(
     ...     "srd_arena.domain.encounters.reaction_runtime.attack_lifecycle."
     ...     "resolve_concentration_damage"
@@ -58,7 +58,7 @@ def resolve_attack_lifecycle(
     7
     """
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_makes_attack",
         actor_ref=attacker_ref,
@@ -66,14 +66,14 @@ def resolve_attack_lifecycle(
         progress=progress,
     )
     if damage > 0:
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "target_damaged",
             actor_ref=attacker_ref,
             target_ref=target_ref,
             progress=progress,
         )
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "target_deals_damage",
             actor_ref=attacker_ref,
@@ -156,14 +156,14 @@ def resolve_attack_hit_retaliations(
             )
         )
         if applied > 0:
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_damaged",
                 actor_ref=defender_ref,
                 target_ref=attacker_ref,
                 progress=progress,
             )
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_deals_damage",
                 actor_ref=defender_ref,

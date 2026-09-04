@@ -21,6 +21,7 @@ def resolve_fighter_feature(
     heal: Callable[[int], int],
     *,
     actor_ref: str,
+    round_number: int = 1,
 ) -> ActionResolutionResult | None:
     """Execute the supported fighter feature identified by an action grant.
 
@@ -40,6 +41,7 @@ def resolve_fighter_feature(
     (1, {'action_surge': 0})
     """
 
+    del round_number
     if feature_id == "second_wind":
         return _resolve_second_wind(
             creature,

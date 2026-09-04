@@ -57,6 +57,19 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 "long_rest": "all",
             }
         elif class_feature.id == "rage":
+            profile.feature_actions["rage"] = FeatureActionDefinition(
+                feature_id="rage",
+                label="Rage",
+                economy="bonus_action",
+                blocked_while_effect_active=True,
+            )
+            profile.feature_actions["extend_rage"] = FeatureActionDefinition(
+                feature_id="extend_rage",
+                label="Extend Rage",
+                economy="bonus_action",
+                requires_active_effect_id="rage",
+                requires_use=False,
+            )
             uses = class_feature.data.get("uses")
             if isinstance(uses, int):
                 profile.feature_uses_max["rage"] = uses

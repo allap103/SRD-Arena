@@ -39,7 +39,7 @@ from srd_arena.domain.encounters.effect_lifecycle.concentration import (
     resolve_concentration_damage,
 )
 from srd_arena.domain.encounters.effect_lifecycle.lifecycle_events import (
-    resolve_spell_lifecycle_event,
+    resolve_effect_lifecycle_event,
 )
 from srd_arena.domain.encounters.effect_lifecycle.removal import (
     remove_ongoing_effects,
@@ -1062,7 +1062,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
         origin_id=f"{definition_id}-cast",
     )
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         event,
         actor_ref=target_ref if event != "target_damaged" else "player",
@@ -1109,7 +1109,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
         origin_id="charm-cast",
     )
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="goblin_2",
@@ -1117,7 +1117,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
     )
     assert state.has_condition("goblin_1", Condition.CHARMED)
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="player",
@@ -1169,7 +1169,7 @@ def test_hideous_laughter_damage_save_has_advantage() -> None:
     rolls = iter((1, 20))
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="player",

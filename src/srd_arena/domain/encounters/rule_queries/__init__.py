@@ -14,7 +14,11 @@ from .defenses import (
     resolve_damage_reduction,
 )
 from .health import apply_healing, effective_maximum_health
-from .invocations import invocation_start_checks, resolve_invocation_start
+from .invocations import (
+    invocation_prohibitions,
+    invocation_start_checks,
+    resolve_invocation_start,
+)
 from .models import (
     InvocationFailureChanceContribution,
     InvocationStartContext,
@@ -100,6 +104,7 @@ __all__ = [
     "effective_speed",
     "grid_ray_cells",
     "has_condition_save_advantage",
+    "invocation_prohibitions",
     "invocation_start_checks",
     "movement_budget",
     "movement_step_cost",

@@ -5,7 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from ...attack_economy import consume_action
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
@@ -100,7 +100,7 @@ def execute_standard_action(
             )
             return True
         consume_action(state, allow_magic=False)
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "adjacent_creature_wakes_target",
             actor_ref=decision.creature_ref,

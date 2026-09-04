@@ -1,4 +1,4 @@
-"""Resolve event-driven termination rules for ongoing spell effects."""
+"""Resolve event-driven lifecycle rules for sourced ongoing effects."""
 
 from __future__ import annotations
 
@@ -12,6 +12,7 @@ from srd_arena.domain.rolls.saving_throws import (
 from ..participants import creatures_are_opponents
 from ..rule_queries.rolls import roll_modifiers
 from ..state_combat import automatic_save_failure_provider_ids_for
+from .application import extend_effect_through_turn_end
 from .removal import _remove_effect_target
 from .roll_usage import resolve_saving_throw_modifier
 
@@ -20,7 +21,7 @@ if TYPE_CHECKING:
     from ..encounter_models.resolution import EncounterProgress
 
 
-def resolve_spell_lifecycle_event(
+def resolve_effect_lifecycle_event(
     state: EncounterState,
     event: str,
     *,
@@ -28,7 +29,7 @@ def resolve_spell_lifecycle_event(
     target_ref: str | None = None,
     progress: EncounterProgress | None = None,
 ) -> None:
-    """Apply event-triggered repeat saves and configured termination rules.
+    """Apply event-triggered extension, repeat-save, and termination rules.
 
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
@@ -47,7 +48,7 @@ def resolve_spell_lifecycle_event(
     ...     "srd_arena.domain.encounters.effect_lifecycle.lifecycle_events."
     ...     "_remove_effect_target"
     ... ) as remove:
-    ...     resolve_spell_lifecycle_event(
+    ...     resolve_effect_lifecycle_event(
     ...         state, "target_makes_attack", actor_ref="target"
     ...     )
     >>> remove.call_args.args[2]
@@ -63,6 +64,21 @@ def resolve_spell_lifecycle_event(
         )
         if affected_ref not in effect.target_refs:
             continue
+        for configured in getattr(effect.lifecycle, "extend_events", ()):
+            if configured.event != event:
+                continue
+            if configured.scope == "actor_against_opponent" and (
+                target_ref is None
+                or not creatures_are_opponents(state, actor_ref, target_ref)
+            ):
+                continue
+            effect = extend_effect_through_turn_end(
+                state,
+                effect,
+                actor_ref,
+                state.round.number + 1,
+            )
+            break
         repeat_save = effect.lifecycle.repeat_save
         if (
             event == "target_damaged"

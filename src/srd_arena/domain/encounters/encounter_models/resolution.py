@@ -187,3 +187,4 @@ class AttackSource:
     additional_damage: tuple[DamageEffect, ...] = ()
     hit_effects: tuple[CapabilityEffect, ...] = ()
     reach_feet: int | None = None
+    ability: str | None = None

@@ -18,6 +18,7 @@ from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
+from ...rule_queries import InvocationStartContext, invocation_prohibitions
 from ...rule_queries.permissions import action_compatibility, reaction_eligibility
 
 if TYPE_CHECKING:
@@ -55,6 +56,16 @@ def spell_cast_block_reason_for(
     """Return the rule reason that prevents this creature from casting a spell."""
 
     creature_ref = state.current_decision().creature_ref
+    prohibitions = invocation_prohibitions(
+        state,
+        InvocationStartContext(
+            creature_ref,
+            "cast_spell",
+            spell.components.required,
+        ),
+    )
+    if prohibitions:
+        return prohibitions[0].message
     compatibility = action_compatibility(
         state,
         creature_ref,

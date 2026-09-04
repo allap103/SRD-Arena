@@ -161,6 +161,14 @@ class EndEventRule:
 
 
 @dataclass(frozen=True)
+class ExtendEventRule:
+    """Extend an ongoing effect when a matching sourced event occurs."""
+
+    event: str
+    scope: str
+
+
+@dataclass(frozen=True)
 class RetargetOnDefeatLifecycle:
     """Track a persistent effect that may move after its target is defeated."""
 
@@ -194,6 +202,9 @@ class OngoingEffectLifecycle:
     ends_when_temporary_hit_points_depleted: bool = False
     retarget_on_defeat: RetargetOnDefeatLifecycle | None = None
     area_turn_start_save: AreaTurnStartSave | None = None
+    end_conditions: tuple[Condition, ...] = ()
+    extend_events: tuple[ExtendEventRule, ...] = ()
+    maximum_end_round: int | None = None
 
 
 @dataclass(frozen=True)

@@ -23,7 +23,7 @@ from srd_arena.domain.encounters.actions.creature_actions.special import (
 )
 from srd_arena.domain.encounters.condition_state import apply_condition
 from srd_arena.domain.encounters.effect_lifecycle.lifecycle_events import (
-    resolve_spell_lifecycle_event,
+    resolve_effect_lifecycle_event,
 )
 from srd_arena.domain.encounters.rule_queries.numeric import effective_speed
 from srd_arena.engine.commands import AimAction, CommandResult, SelectAction
@@ -167,7 +167,7 @@ def test_damage_ends_hypnotic_pattern_only_for_the_damaged_target() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="barbarian",

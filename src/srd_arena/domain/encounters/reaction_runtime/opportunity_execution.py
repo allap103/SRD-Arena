@@ -7,6 +7,7 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.dice import DieRoller
 
 from ..actions.attack_resolution import (
     apply_attack_damage,
@@ -47,6 +48,22 @@ from .damage_rerolls import open_damage_reroll_decision
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
+
+
+def _damage_roll_modifier(
+    state: EncounterState,
+    creature_ref: str,
+    roller: DieRoller,
+    ability: str | None,
+) -> int:
+    """Resolve sourced damage modifiers for an attack's selected ability."""
+
+    return roll_modifiers(
+        state,
+        creature_ref,
+        "damage_roll",
+        ability,
+    ).resolve_modifier(roller)
 
 
 def opportunity_attack_request(decision: DecisionFrame) -> OpportunityAttackRequest:
@@ -146,11 +163,6 @@ def resolve_automatic_opportunity_attacks(
             reactor_ref,
             "attack_roll",
         )
-        damage_roll_rules = roll_modifiers(
-            state,
-            reactor_ref,
-            "damage_roll",
-        )
         attack = resolve_attack(
             reactor.creature,
             mover.creature,
@@ -175,7 +187,9 @@ def resolve_automatic_opportunity_attacks(
                 mover_ref,
             ).value,
             sourced_damage_modifier_for=partial(
-                damage_roll_rules.resolve_modifier,
+                _damage_roll_modifier,
+                state,
+                reactor_ref,
                 roll_die,
             ),
             d20_roller=roll_die,
@@ -310,11 +324,6 @@ def apply_reaction_action(
             reactor_ref,
             "attack_roll",
         )
-        damage_roll_rules = roll_modifiers(
-            state,
-            reactor_ref,
-            "damage_roll",
-        )
         attack = resolve_attack(
             reactor.creature,
             target.creature,
@@ -338,8 +347,11 @@ def apply_reaction_action(
                 state,
                 target_ref,
             ).value,
-            sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
-                roll_die
+            sourced_damage_modifier_for=partial(
+                _damage_roll_modifier,
+                state,
+                reactor_ref,
+                roll_die,
             ),
             d20_roller=roll_die,
             die_roller=roll_die,

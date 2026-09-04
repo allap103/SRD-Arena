@@ -12,7 +12,7 @@ from srd_arena.domain.effects.results import (
 
 from ...defeat import resolve_creature_defeat
 from ...effect_lifecycle.concentration import resolve_concentration_damage
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
 from ...reaction_runtime.attack_lifecycle import (
     resolve_attack_hit_retaliations,
@@ -112,6 +112,21 @@ def apply_spell_result_consequences(
     """Apply one complete or partial spell result without publishing its cast."""
 
     progress.messages.extend(result.messages)
+    details = result.details
+    if isinstance(details, SpellResolutionDetails):
+        forced_save_targets = {
+            target_ref
+            for detail in details.save_details
+            if isinstance((target_ref := detail.get("target_ref")), str)
+        }
+        for target_ref in forced_save_targets:
+            resolve_effect_lifecycle_event(
+                state,
+                "target_forces_saving_throw",
+                actor_ref=creature_ref,
+                target_ref=target_ref,
+                progress=progress,
+            )
     _apply_damage_lifecycle(
         state,
         result,
@@ -213,14 +228,14 @@ def _apply_damage_lifecycle(
         return
     for damage in details.damage_applications:
         if damage.amount > 0:
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_damaged",
                 actor_ref=creature_ref,
                 target_ref=damage.target_ref,
                 progress=progress,
             )
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_deals_damage",
                 actor_ref=creature_ref,

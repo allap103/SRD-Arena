@@ -93,6 +93,7 @@ def test_unimplemented_feature_rejection_retains_feature_identity() -> None:
         active_bonus_action_available=True,
         event_sequence=1,
         dice=SimpleNamespace(roll_die=lambda sides: sides),
+        round=SimpleNamespace(number=1),
     )
     progress = EncounterProgress()
 

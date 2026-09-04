@@ -9,6 +9,7 @@ from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.rolls.saving_throws import Ability, resolve_saving_throw
 
+from ..effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ..effect_lifecycle.roll_usage import resolve_saving_throw_modifier
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import DecisionFrame, GrappleSaveRequest
@@ -114,6 +115,13 @@ def resolve_grapple_save(
 ) -> None:
     """Resolve one chosen save and finish its originating Grapple attempt."""
 
+    resolve_effect_lifecycle_event(
+        state,
+        "target_forces_saving_throw",
+        actor_ref=request.grappler_ref,
+        target_ref=request.target_ref,
+        progress=progress,
+    )
     target = state.creatures[request.target_ref].creature
     grappler = state.creatures[request.grappler_ref].creature
     roll_die = state.dice.roll_die

@@ -14,6 +14,7 @@ from .runtime import EffectSourceKind
 ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
 ApplyOngoingEffect = Callable[[EffectResult, str], object]
+ExtendOngoingEffect = Callable[[EffectResult], object]
 RemoveOngoingEffects = Callable[[EffectResult], object]
 ApplyTeleport = Callable[[str, int, int], object]
 
@@ -24,6 +25,7 @@ def apply_effects(
     apply_condition: ApplyCondition,
     remove_condition: RemoveCondition,
     apply_ongoing_effect: ApplyOngoingEffect | None = None,
+    extend_ongoing_effect: ExtendOngoingEffect | None = None,
     remove_ongoing_effects: RemoveOngoingEffects | None = None,
     apply_teleport: ApplyTeleport | None = None,
     origin_id: str | None = None,
@@ -63,6 +65,10 @@ def apply_effects(
             if apply_ongoing_effect is None:
                 raise ValueError("No ongoing-effect application service provided.")
             apply_ongoing_effect(effect, origin_id or "")
+        elif effect.kind == "extend_ongoing_effect":
+            if extend_ongoing_effect is None:
+                raise ValueError("No ongoing-effect extension service provided.")
+            extend_ongoing_effect(effect)
         elif effect.kind == "remove_ongoing_effects":
             if remove_ongoing_effects is None:
                 raise ValueError("No ongoing-effect removal service provided.")

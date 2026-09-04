@@ -112,11 +112,6 @@ def resolve_attack_action(
         creature_ref,
         "attack_roll",
     )
-    damage_roll_rules = roll_modifiers(
-        state,
-        creature_ref,
-        "damage_roll",
-    )
     attack_type = selected_attack_type(
         creature,
         state.item_templates,
@@ -168,9 +163,12 @@ def resolve_attack_action(
             target_ref,
         ).value
         + cover.bonus,
-        sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
-            roll_die
-        ),
+        sourced_damage_modifier_for=lambda ability: roll_modifiers(
+            state,
+            creature_ref,
+            "damage_roll",
+            ability,
+        ).resolve_modifier(roll_die),
         d20_roller=roll_die,
         die_roller=roll_die,
         automatic_critical_provider_ids=(
