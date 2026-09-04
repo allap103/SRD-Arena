@@ -9,6 +9,10 @@
     {
       "colLabels": ["Rage"],
       "rows": [["2"], ["2"], ["3"], ["3"], ["3"]]
+    },
+    {
+      "colLabels": ["Rage Damage"],
+      "rows": [["2"], ["2"], ["2"], ["2"], ["2"]]
     }
   ],
   "classFeatures": [

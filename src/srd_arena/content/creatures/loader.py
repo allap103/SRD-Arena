@@ -31,6 +31,7 @@ from .character_options import (
     find_class_record,
     resolve_class_features,
     resolve_optional_feature_effects,
+    resolve_subclass_features,
 )
 from .character_snapshots import CharacterSnapshotCatalog, build_character_profile
 from .features import build_combat_profile, build_feature_uses_remaining
@@ -103,8 +104,15 @@ def build_creature(
         }
     )
     attributes = build_creature_attributes(schema, stat_block, class_record)
-    class_features = resolve_class_features(class_record, schema.attributes.level)
     character_profile = build_character_profile(schema.character_profile)
+    class_features = [
+        *resolve_class_features(class_record, schema.attributes.level),
+        *resolve_subclass_features(
+            character_profile,
+            class_record,
+            schema.attributes.level,
+        ),
+    ]
     triggered_effects = [
         *resolve_optional_feature_effects(schema, optional_features),
         *feat_triggered_effects(character_profile),

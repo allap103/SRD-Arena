@@ -85,7 +85,9 @@ def roll_attack_damage(
         if critical_hit:
             extra_count *= 2
             extra_dice = f"{extra_count}d{extra_sides}"
-        extra_sourced_modifier = sourced_modifier_for()
+        # A modifier to an attack's damage roll, such as Rage Damage, applies
+        # once to the attack rather than once again to every damage rider.
+        extra_sourced_modifier = 0
         extra_roll = resolve_dice(
             extra_count,
             extra_sides,

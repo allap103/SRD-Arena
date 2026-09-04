@@ -2,8 +2,9 @@
 
 from __future__ import annotations
 
-from collections.abc import Callable
+from collections.abc import Callable, Collection
 
+from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.results import ActionResolutionResult, EffectResult
@@ -24,6 +25,7 @@ from srd_arena.domain.rolls.dice import DieRoller
 from ..model import Creature
 
 RECKLESS_ATTACK_FEATURE_ID = "reckless_attack"
+FRENZY_FEATURE_ID = "frenzy"
 
 
 def has_reckless_attack(creature: Creature) -> bool:
@@ -79,6 +81,53 @@ def reckless_attack_result(
             )
         ],
     )
+
+
+def frenzy_attack_hit_damage(
+    creature: Creature,
+    active_effect_ids: Collection[str],
+    attack_ability: str | None,
+    attack_damage_type: str,
+    excluded_feature_ids: Collection[str] = (),
+) -> DamageEffect | None:
+    """Return Frenzy's damage for the first qualifying hit this turn.
+
+    The caller owns hit detection and marks the feature consumed only after a
+    hit. This keeps a miss from wasting Frenzy while leaving the
+    subclass-specific conjunction of Rage and Reckless Attack in one place.
+
+    >>> from types import SimpleNamespace
+    >>> from ..class_features import ClassFeature
+    >>> feature = ClassFeature(
+    ...     "frenzy", "Frenzy", "Barbarian", 3, data={"damage_dice": "2d6"}
+    ... )
+    >>> creature = SimpleNamespace(class_features=[feature])
+    >>> frenzy_attack_hit_damage(
+    ...     creature, {"rage", "reckless_attack"}, "strength", "bludgeoning"
+    ... )
+    DamageEffect(dice='2d6', bonus=0, damage_type='bludgeoning', minimum=None, requirements=())
+    """
+
+    if (
+        FRENZY_FEATURE_ID in excluded_feature_ids
+        or attack_ability != "strength"
+        or not {"rage", RECKLESS_ATTACK_FEATURE_ID} <= set(active_effect_ids)
+    ):
+        return None
+    feature = next(
+        (
+            class_feature
+            for class_feature in creature.class_features
+            if class_feature.id == FRENZY_FEATURE_ID
+        ),
+        None,
+    )
+    if feature is None:
+        return None
+    damage_dice = feature.data.get("damage_dice")
+    if not isinstance(damage_dice, str):
+        raise ValueError("Frenzy requires authored damage dice.")
+    return DamageEffect(damage_dice, 0, attack_damage_type)
 
 
 def resolve_barbarian_feature(

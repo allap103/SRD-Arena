@@ -5,6 +5,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_rules import FRENZY_FEATURE_ID
 from srd_arena.domain.rolls.dice import combine_roll_modes
 from srd_arena.domain.rolls.occurrences import attack_roll_occurrence_id
 
@@ -33,6 +34,7 @@ from ..attack_resolution import (
     matching_damage_reroll_rule,
     resolve_attack,
     selected_attack_ability,
+    selected_attack_damage_type,
     selected_attack_type,
 )
 from ..d20_roll_modifiers import (
@@ -114,6 +116,12 @@ def resolve_attack_action(
         preferred_attack_type=action.preferred_attack_type,
         preferred_attack_name=preferred_attack_name,
     )
+    attack_damage_type = selected_attack_damage_type(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
     attack_roll_rules = roll_modifiers(
         state,
         creature_ref,
@@ -139,6 +147,14 @@ def resolve_attack_action(
     cover = cover_between(state, creature_ref, target_ref)
     roll_die = state.dice.roll_die
     record_attack_rolls(state, creature_ref)
+    damage_riders = attack_hit_damage(
+        state,
+        creature_ref,
+        target_ref,
+        attack_ability=attack_ability,
+        attack_damage_type=attack_damage_type,
+        excluded_feature_ids=frozenset(creature_state.features_used_this_turn),
+    )
     outcome = resolve_attack(
         creature,
         defender,
@@ -190,9 +206,14 @@ def resolve_attack_action(
         ),
         sourced_additional_damage=tuple(
             (contribution.provider_state_id, contribution.value)
-            for contribution in attack_hit_damage(state, creature_ref, target_ref)
+            for contribution in damage_riders
         ),
     )
+    if outcome.hit and any(
+        contribution.source.definition_id == FRENZY_FEATURE_ID
+        for contribution in damage_riders
+    ):
+        creature_state.features_used_this_turn.add(FRENZY_FEATURE_ID)
     clear_d20_roll_modes(state, action_id)
     if isinstance(preferred_attack_name, str):
         consume_stat_block_action_resource(creature, preferred_attack_name)

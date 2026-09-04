@@ -400,6 +400,24 @@ def selected_attack_ability(
     return "strength" if attack_source is None else attack_source.ability
 
 
+def selected_attack_damage_type(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
+) -> str:
+    """Return the damage type inherited from the selected attack source."""
+
+    attack_source = select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    return "bludgeoning" if attack_source is None else attack_source.damage_type
+
+
 def can_make_opportunity_attack(
     attacker: Creature,
     items_by_id: dict[str, Item],
