@@ -185,6 +185,13 @@ def _normalize_class_feature(
             level=feature_level,
             data={"uses": _rage_uses(class_record, creature_level)},
         )
+    if feature_name == "Unarmored Defense":
+        return ClassFeature(
+            id="unarmored_defense",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
     return None
 
 

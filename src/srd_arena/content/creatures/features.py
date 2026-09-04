@@ -1,6 +1,10 @@
 """Translate authored creature features into executable domain rules."""
 
-from srd_arena.domain.creatures import ClassFeature, CombatProfile
+from srd_arena.domain.creatures import (
+    ArmorClassCalculation,
+    ClassFeature,
+    CombatProfile,
+)
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 
 
@@ -77,6 +81,15 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 "short_rest": 1,
                 "long_rest": "all",
             }
+        elif class_feature.id == "unarmored_defense":
+            profile.armor_class_calculations["unarmored_defense"] = (
+                ArmorClassCalculation(
+                    id="unarmored_defense",
+                    label="Unarmored Defense",
+                    base=10,
+                    ability_modifiers=("dexterity", "constitution"),
+                )
+            )
     return profile
 
 

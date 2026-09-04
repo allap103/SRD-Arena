@@ -36,8 +36,7 @@ def effective_armor_class(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     attributes=SimpleNamespace(base_armor_class=10, dexterity=14),
-    ...     get_modifier=lambda score: (score - 10) // 2,
+    ...     get_armor_class=lambda: 12,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
@@ -48,9 +47,7 @@ def effective_armor_class(
     """
 
     creature = state.creatures[creature_ref].creature
-    base = creature.attributes.base_armor_class + creature.get_modifier(
-        creature.attributes.dexterity
-    )
+    base = creature.get_armor_class()
     contributions = tuple(
         NumericRuleContribution(
             provider_state_id,

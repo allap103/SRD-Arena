@@ -1,5 +1,6 @@
 """Expose the public creatures package API."""
 
+from .armor_class import ArmorClassCalculation
 from .attributes import Attributes, Movement
 from .character_profiles import CharacterOptionRef, CharacterProfile
 from .class_features import ClassFeature
@@ -38,6 +39,7 @@ from .stat_block_actions import (
 from .statistics import CreatureStatistics
 
 __all__ = [
+    "ArmorClassCalculation",
     "AttackActionDefinition",
     "Attributes",
     "AutomaticActionDefinition",

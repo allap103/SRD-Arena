@@ -247,6 +247,28 @@ def test_barbarian_level_five_reuses_existing_extra_attack_support(
     assert snapshot.weapon_masteries == ("Maul", "Javelin", "Greatsword")
 
 
+@pytest.mark.parametrize("level", range(1, 6))
+def test_barbarian_unarmored_defense_is_a_competing_ac_calculation(
+    snapshot_catalog: CharacterSnapshotCatalog,
+    level: int,
+) -> None:
+    """Derive Unarmored Defense without baking Constitution into base AC."""
+
+    schema = snapshot_catalog.creature_template("barbarian", level)
+    barbarian = build_creature(
+        schema,
+        classes=load_class_catalog(SYSTEM_CONTENT_ROOT),
+    )
+
+    assert schema.attributes.base_armor_class == 10
+    assert "unarmored_defense" in barbarian.combat_profile.armor_class_calculations
+    assert barbarian.get_armor_class() == 16
+
+    # A better standard armor calculation wins; the formulas never stack.
+    barbarian.attributes.base_armor_class = 15
+    assert barbarian.get_armor_class() == 18
+
+
 def test_barbarian_snapshots_expose_selected_progression_at_each_level(
     snapshot_catalog: CharacterSnapshotCatalog,
 ) -> None:

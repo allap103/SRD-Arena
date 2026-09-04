@@ -321,12 +321,17 @@ class Creature:
         return self.temporary_hit_points - previous
 
     def get_armor_class(self) -> int:
-        """Return the creature's intrinsic AC including Dexterity.
+        """Return the best available intrinsic Armor Class calculation.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 14, 10, 10, 10, 10, 10), Equipment())
         >>> creature.get_armor_class()
         12
         """
-        return self.attributes.base_armor_class + self.get_modifier(
+        standard = self.attributes.base_armor_class + self.get_modifier(
             self.attributes.dexterity
         )
+        alternatives = tuple(
+            calculation.resolve(self.attributes)
+            for calculation in self.combat_profile.armor_class_calculations.values()
+        )
+        return max((standard, *alternatives))

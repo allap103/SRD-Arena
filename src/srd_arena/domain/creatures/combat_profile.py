@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from .armor_class import ArmorClassCalculation
     from .feature_actions import FeatureActionDefinition
 
 
@@ -17,3 +18,6 @@ class CombatProfile:
     feature_actions: dict[str, FeatureActionDefinition] = field(default_factory=dict)
     feature_uses_max: dict[str, int] = field(default_factory=dict)
     feature_recharge: dict[str, dict[str, int | str]] = field(default_factory=dict)
+    armor_class_calculations: dict[str, ArmorClassCalculation] = field(
+        default_factory=dict
+    )
