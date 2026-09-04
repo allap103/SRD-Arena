@@ -195,6 +195,8 @@ def _begin_turn_if_alive(
     creature_state = state.creatures[creature_ref]
     if not creature_state.is_alive:
         return
+    for participant in state.creatures.values():
+        participant.features_used_this_turn.clear()
     reset_damage_reductions(state, creature_ref)
     expire_ongoing_effects_for_turn_start(state, creature_ref)
     expire_conditions_for_turn_start(state, creature_ref)

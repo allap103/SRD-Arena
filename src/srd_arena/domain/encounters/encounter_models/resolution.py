@@ -160,6 +160,8 @@ class DamageRerollRequest(DecisionRequest):
     attack: AttackOutcome
     triggered_effect: TriggeredEffect
     reaction: bool = False
+    original_damage_roll: DicePoolResult | None = None
+    alternate_damage_roll: DicePoolResult | None = None
 
 
 @dataclass(frozen=True)

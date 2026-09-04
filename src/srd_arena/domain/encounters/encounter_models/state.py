@@ -96,6 +96,7 @@ class EncounterCreatureState:
     pending_multiattack: list[MultiattackStep] = field(default_factory=list)
     bonus_action_available: bool = True
     bonus_action_used_this_turn: bool = False
+    features_used_this_turn: set[str] = field(default_factory=set)
 
     @property
     def is_alive(self) -> bool:

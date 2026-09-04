@@ -355,7 +355,11 @@ def apply_reaction_action(
                 for contribution in attack_hit_damage(state, reactor_ref, target_ref)
             ),
         )
-        reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
+        reroll_rule = matching_damage_reroll_rule(
+            reactor.creature,
+            attack,
+            excluded_effect_ids=reactor.features_used_this_turn,
+        )
         if attack.hit and reroll_rule is not None:
             open_damage_reroll_decision(
                 state,

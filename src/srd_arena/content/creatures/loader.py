@@ -15,6 +15,7 @@ from srd_arena.domain.creatures import (
     Equipment,
     Inventory,
 )
+from srd_arena.domain.creatures.feature_rules import feat_triggered_effects
 
 from .actions.builder import (
     build_declared_stat_block_actions,
@@ -100,7 +101,11 @@ def build_creature(
     )
     attributes = build_creature_attributes(schema, stat_block, class_record)
     class_features = resolve_class_features(class_record, schema.attributes.level)
-    triggered_effects = resolve_optional_feature_effects(schema, optional_features)
+    character_profile = build_character_profile(schema.character_profile)
+    triggered_effects = [
+        *resolve_optional_feature_effects(schema, optional_features),
+        *feat_triggered_effects(character_profile),
+    ]
     combat_profile = build_combat_profile(class_features)
     spellcasting = build_spellcasting(
         schema,
@@ -140,7 +145,7 @@ def build_creature(
             if schema.class_ref
             else None
         ),
-        character_profile=build_character_profile(schema.character_profile),
+        character_profile=character_profile,
         class_features=class_features,
         triggered_effects=triggered_effects,
         combat_profile=combat_profile,

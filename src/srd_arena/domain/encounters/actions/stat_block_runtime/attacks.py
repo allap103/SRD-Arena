@@ -13,6 +13,7 @@ from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...participants import creatures_are_opponents
 from ...reaction_runtime.attack_lifecycle import resolve_attack_lifecycle
+from ...reaction_runtime.damage_rerolls import open_damage_reroll_decision
 from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.numeric import effective_armor_class
 from ...rule_queries.obstructions import cover_between
@@ -28,6 +29,7 @@ from ...state_runtime import create_event, creature_label
 from ..attack_resolution import (
     apply_attack_damage,
     attack_range_band_squares,
+    matching_damage_reroll_rule,
     resolve_attack,
     selected_attack_type,
 )
@@ -180,6 +182,25 @@ def resolve_attack_action(
     )
     outcome.attack_roll_detail["cover_degree"] = cover.degree.value
     outcome.attack_roll_detail["cover_bonus"] = cover.bonus
+    reroll_rule = matching_damage_reroll_rule(
+        creature,
+        outcome,
+        excluded_effect_ids=creature_state.features_used_this_turn,
+        allowed_operations=("roll_damage_pool_twice",),
+    )
+    if outcome.hit and reroll_rule is not None:
+        open_damage_reroll_decision(
+            state,
+            attack=outcome,
+            triggered_effect=reroll_rule,
+            attacker_ref=creature_ref,
+            target_ref=target_ref,
+            attacker_label=creature.name,
+            target_label=target_label,
+            action_id=action_id,
+            progress=progress,
+        )
+        return
     apply_attack_damage(
         outcome,
         defender,

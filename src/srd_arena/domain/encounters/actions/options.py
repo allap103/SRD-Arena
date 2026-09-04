@@ -75,6 +75,13 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
     decision = state.current_decision()
     if creature_controller(state, decision.creature_ref) != "external":
         return []
+    return decision_actions(state)
+
+
+def decision_actions(state: EncounterState) -> list[EncounterAction]:
+    """Build legal choices for the current decision, independent of controller."""
+
+    decision = state.current_decision()
     if decision.kind == "reroll_dice":
         return reroll_damage_actions(state)
     if decision.kind == "reaction":
@@ -94,6 +101,7 @@ __all__ = [
     "available_actions",
     "available_feature_actions",
     "available_spell_actions",
+    "decision_actions",
     "feature_action_available",
     "spell_action_cost",
     "spell_action_targets",
