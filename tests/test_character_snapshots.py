@@ -19,6 +19,8 @@ from srd_arena.content.creatures import (
 )
 from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.content.spells import load_spell_catalog
+from srd_arena.domain.encounters.rule_queries.numeric import effective_speed
+from srd_arena.engine.session import Session
 
 WARLOCK_TRAINING_ENCOUNTER_DIR = (
     Path(__file__).parents[1] / "content" / "encounters" / "warlock_training"
@@ -38,7 +40,7 @@ def snapshot_catalog() -> CharacterSnapshotCatalog:
         "ability_score",
         "maximum_health",
         "armor_class",
-        "speed",
+        "base_speed",
     ),
     [
         ("warlock", 1, "charisma", 17, 10, 14, 30),
@@ -50,7 +52,7 @@ def snapshot_catalog() -> CharacterSnapshotCatalog:
         ("barbarian", 2, "strength", 16, 25, 16, 30),
         ("barbarian", 3, "strength", 16, 35, 16, 30),
         ("barbarian", 4, "strength", 18, 45, 16, 30),
-        ("barbarian", 5, "strength", 18, 55, 16, 40),
+        ("barbarian", 5, "strength", 18, 55, 16, 30),
     ],
 )
 def test_canonical_snapshots_compile_expected_combat_statistics(
@@ -61,7 +63,7 @@ def test_canonical_snapshots_compile_expected_combat_statistics(
     ability_score: int,
     maximum_health: int,
     armor_class: int,
-    speed: int,
+    base_speed: int,
 ) -> None:
     creature = build_creature(
         snapshot_catalog.creature_template(build_id, level),
@@ -75,7 +77,38 @@ def test_canonical_snapshots_compile_expected_combat_statistics(
     assert creature.attributes.proficiency_bonus == (3 if level == 5 else 2)
     assert creature.get_max_health() == maximum_health
     assert creature.get_armor_class() == armor_class
-    assert creature.attributes.movement.speed_feet == speed
+    assert creature.attributes.movement.speed_feet == base_speed
+
+
+def test_fast_movement_enters_at_level_five_as_a_sourced_speed_rule(
+    snapshot_catalog: CharacterSnapshotCatalog,
+) -> None:
+    """Derive the canonical Barbarian's 40-foot Speed from Fast Movement."""
+
+    classes = load_class_catalog(SYSTEM_CONTENT_ROOT)
+    level_four = build_creature(
+        snapshot_catalog.creature_template("barbarian", 4),
+        classes=classes,
+    )
+    session = Session(load_encounter_directory(WARLOCK_TRAINING_ENCOUNTER_DIR))
+    session._read()
+    state = session.encounter_state
+    assert state is not None
+    level_five = state.creatures["barbarian"].creature
+
+    assert all(feature.id != "fast_movement" for feature in level_four.class_features)
+    feature = next(
+        feature
+        for feature in level_five.class_features
+        if feature.id == "fast_movement"
+    )
+    assert feature.data == {"speed_bonus_feet": 10}
+    assert level_five.attributes.movement.speed_feet == 30
+    speed = effective_speed(state, "barbarian")
+    assert speed.value == 40
+    assert tuple(
+        contribution.source.definition_id for contribution in speed.contributions
+    ) == ("fast_movement",)
 
 
 def test_warlock_snapshots_expose_pact_progression_and_selected_spells(

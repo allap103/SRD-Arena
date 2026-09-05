@@ -9,7 +9,7 @@ from srd_arena.domain.creatures import (
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import RollModifier
-from srd_arena.domain.effects.rule_effects import RollAdjustment
+from srd_arena.domain.effects.rule_effects import RollAdjustment, SpeedAdjustment
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
@@ -109,6 +109,16 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                     ),
                 ),
             )
+        elif class_feature.id == "fast_movement":
+            speed_bonus = class_feature.data.get("speed_bonus_feet")
+            if isinstance(speed_bonus, int):
+                profile.intrinsic_rule_providers["fast_movement"] = (
+                    IntrinsicRuleProvider(
+                        id="fast_movement",
+                        label="Fast Movement",
+                        rule_effects=(SpeedAdjustment(speed_bonus),),
+                    )
+                )
     return profile
 
 

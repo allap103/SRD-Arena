@@ -25,7 +25,7 @@ from .models import (
     NumericRuleContribution,
     NumericRuleResult,
 )
-from .providers import ongoing_rule_effects
+from .providers import creature_rule_effects, ongoing_rule_effects
 
 
 def effective_armor_class(
@@ -74,6 +74,7 @@ def effective_speed(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
+    ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
@@ -86,7 +87,7 @@ def effective_speed(
 
     creature = state.creatures[creature_ref].creature
     contributions: list[NumericRuleContribution] = []
-    for provider_state_id, source, rule_effect in ongoing_rule_effects(
+    for provider_state_id, source, rule_effect in creature_rule_effects(
         state, creature_ref
     ):
         if isinstance(rule_effect, SpeedAdjustment):
@@ -150,6 +151,7 @@ def movement_budget(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
+    ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
     ... )
     >>> state = SimpleNamespace(
