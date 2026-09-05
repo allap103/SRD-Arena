@@ -15,7 +15,6 @@ from .feats import (
     feat_maximum_health_bonus,
     feat_triggered_effects,
     has_lucky,
-    initiative_modifier,
 )
 from .registry import (
     resolve_feature_action,
@@ -46,7 +45,6 @@ __all__ = [
     "frenzy_attack_hit_damage",
     "has_lucky",
     "has_reckless_attack",
-    "initiative_modifier",
     "reckless_attack_result",
     "resolve_feature_action",
     "selected_weapon_mastery",

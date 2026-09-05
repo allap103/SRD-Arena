@@ -5,7 +5,7 @@ from __future__ import annotations
 from collections.abc import Callable
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.creatures.feature_rules import initiative_modifier
+from srd_arena.domain.creatures.initiative import initiative_modifier
 from srd_arena.domain.effects.conditions import CombatTrait
 
 from .action_selection import build_action_selector
@@ -54,6 +54,10 @@ def roll_initiative(
     >>> goblin = SimpleNamespace(creature=Mock())
     >>> hero.creature.attributes.dexterity = 14
     >>> goblin.creature.attributes.dexterity = 12
+    >>> hero.creature.attributes.proficiency_bonus = 2
+    >>> goblin.creature.attributes.proficiency_bonus = 2
+    >>> hero.creature.statistics.initiative_proficiency_multiplier = 0
+    >>> goblin.creature.statistics.initiative_proficiency_multiplier = 0
     >>> hero.creature.get_modifier.return_value = 2
     >>> goblin.creature.get_modifier.return_value = 1
     >>> hero.creature.character_profile = None

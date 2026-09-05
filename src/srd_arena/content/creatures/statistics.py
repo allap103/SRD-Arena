@@ -40,6 +40,7 @@ def build_creature_statistics(
             value for value in stat_block.alignment if isinstance(value, str)
         ),
         challenge_rating=stat_block.challenge_rating,
+        initiative_proficiency_multiplier=stat_block.initiative.proficiency,
         saving_throw_bonuses={
             ABILITY_NAMES.get(name.casefold(), name.casefold()): _parse_bonus(value)
             for name, value in stat_block.save.items()

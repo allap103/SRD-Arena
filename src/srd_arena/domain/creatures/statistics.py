@@ -13,6 +13,7 @@ class CreatureStatistics:
     type_tags: tuple[str, ...] = ()
     alignment: tuple[str, ...] = ()
     challenge_rating: str | None = None
+    initiative_proficiency_multiplier: int = 0
     saving_throw_bonuses: dict[str, int] = field(default_factory=dict)
     skill_bonuses: dict[str, int] = field(default_factory=dict)
     senses: tuple[str, ...] = ()

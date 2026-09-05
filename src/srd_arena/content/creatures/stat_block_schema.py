@@ -49,6 +49,12 @@ class BestiaryChallengeRatingSchema(SourceModel):
     cr: str
 
 
+class BestiaryInitiativeSchema(SourceModel):
+    """Define how many proficiency bonuses a stat block adds to Initiative."""
+
+    proficiency: int = Field(default=0, ge=0)
+
+
 class BestiaryConditionalImmunitySchema(SourceModel):
     """Define the authored stat-block fields with condition immune and note."""
 
@@ -162,6 +168,9 @@ class BestiaryMonsterSchema(SourceModel):
     senses: list[str] = Field(default_factory=list)
     passive: int | None = None
     languages: list[str] = Field(default_factory=list)
+    initiative: BestiaryInitiativeSchema = Field(
+        default_factory=BestiaryInitiativeSchema
+    )
     trait_tags: list[str] = Field(default_factory=list, alias="traitTags")
     condition_immune: list[str | BestiaryConditionalImmunitySchema] = Field(
         default_factory=list,
