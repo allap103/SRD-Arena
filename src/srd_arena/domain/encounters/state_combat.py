@@ -60,7 +60,8 @@ def attack_roll_mode_for(
 
     >>> from types import SimpleNamespace
     >>> effective = SimpleNamespace(
-    ...     has_trait=lambda trait: False
+    ...     has=lambda condition: False,
+    ...     has_trait=lambda trait: False,
     ... )
     >>> profile = SimpleNamespace(intrinsic_rule_providers={})
     >>> state = SimpleNamespace(

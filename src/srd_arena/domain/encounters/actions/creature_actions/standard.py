@@ -23,6 +23,7 @@ from ...spatial import creatures_are_adjacent
 from ...state_runtime import create_event, next_runtime_origin_id
 from ..effect_retargeting import execute_effect_retarget
 from ..rejections import reject_action
+from .hiding import execute_hiding_action
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -55,6 +56,8 @@ def execute_standard_action(
 
     actor = state.creatures[decision.creature_ref]
     if execute_effect_retarget(state, action, progress, action_id):
+        return True
+    if execute_hiding_action(state, action, decision, progress, action_id):
         return True
     if action.kind == "disengage":
         if action.cost.bonus_action:

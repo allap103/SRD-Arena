@@ -96,17 +96,18 @@ def test_nimble_escape_grants_disengage_as_a_bonus_action() -> None:
 
     options = session._read().action_options
     nimble_disengage = next(
-        option for option in options if option.label == "Nimble Escape  Disengage"
+        option for option in options if option.label == "Nimble Escape — Disengage"
     )
     nimble_hide = next(
-        option for option in options if option.label == "Nimble Escape  Hide"
+        option for option in options if option.label == "Nimble Escape — Hide"
     )
 
     assert nimble_disengage.enabled is True
     assert nimble_disengage.cost.action == 0
     assert nimble_disengage.cost.bonus_action == 1
-    assert nimble_hide.availability == "unimplemented"
-    assert nimble_hide.eligibility.failures[0].code == "unsupported_standard_action"
+    assert nimble_hide.enabled is False
+    assert nimble_hide.availability == "unavailable"
+    assert nimble_hide.eligibility.failures[0].code == "hide.concealment_required"
 
     nimble_action = next(
         action

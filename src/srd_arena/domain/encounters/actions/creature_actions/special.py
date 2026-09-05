@@ -15,6 +15,7 @@ from ..effect_retargeting import effect_retarget_actions
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
 from ..option_discovery.standard import available_feature_actions
+from .hiding import hide_action_candidates
 from .prone import prone_action_candidates
 
 if TYPE_CHECKING:
@@ -32,9 +33,11 @@ def special_action_candidates(
     >>> actor = SimpleNamespace(
     ...     creature=SimpleNamespace(inventory=SimpleNamespace(items=[])),
     ...     position=SimpleNamespace(x=0, y=0),
+    ...     creature_id="hero", is_alive=True,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
+    ...     definition=SimpleNamespace(teams=[]),
     ...     effective_conditions_for=lambda ref: SimpleNamespace(
     ...         has=lambda condition: False
     ...     ),
@@ -51,12 +54,13 @@ def special_action_candidates(
     ... ):
     ...     actions = special_action_candidates(state, "hero")
     >>> [(action.label, action.kind) for action in actions]
-    [('Drop Prone', 'drop_prone'), ('Disengage', 'disengage'), ('Wait', 'wait')]
+    [('Drop Prone', 'drop_prone'), ('Hide', 'hide'), ('Disengage', 'disengage'), ('Wait', 'wait')]
     """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     actions.extend(prone_action_candidates(state, creature_ref))
+    actions.extend(hide_action_candidates(state, creature_ref))
     actions.append(
         EncounterAction(
             "Disengage",

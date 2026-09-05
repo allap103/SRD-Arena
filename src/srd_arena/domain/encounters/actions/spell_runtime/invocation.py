@@ -101,6 +101,13 @@ def begin_spell_invocation(
         progress=progress,
     )
     components = spell.components.required
+    if "verbal" in components:
+        resolve_effect_lifecycle_event(
+            state,
+            "target_casts_verbal_spell",
+            actor_ref=creature_ref,
+            progress=progress,
+        )
     query = invocation_start_checks(
         state,
         InvocationStartContext(

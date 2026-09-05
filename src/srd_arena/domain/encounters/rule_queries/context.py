@@ -5,6 +5,7 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
+from srd_arena.domain.effects.condition_rules import EffectiveConditionSet
 from srd_arena.domain.effects.conditions import AppliedCondition
 from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
 from srd_arena.domain.equipment import Item
@@ -41,6 +42,12 @@ class VisibilityQueryContext(CreatureEffectQueryContext, Protocol):
     @property
     def definition(self) -> EncounterDefinition:
         """Return the authored encounter definition containing the grid."""
+
+    def effective_conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> EffectiveConditionSet:
+        """Return the effective conditions currently affecting a creature."""
 
 
 class ConditionRuleQueryContext(CreatureEffectQueryContext, Protocol):

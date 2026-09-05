@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.geometry import Position
 
 from ..encounter_models.actions import CreatureRef
@@ -19,6 +20,17 @@ def creature_can_see_creature(
     """Return whether any footprint ray lets the viewer perceive the subject."""
 
     subject_cells = creature_occupied_cells(state, subject_ref)
+    if state.effective_conditions_for(subject_ref).has(Condition.INVISIBLE):
+        distance = minimum_cell_distance(
+            creature_occupied_cells(state, viewer_ref),
+            subject_cells,
+        )
+        distance_feet = state.definition.grid.feet_for_squares(distance)
+        if not any(
+            (sense_range(state, viewer_ref, sense).range_feet or 0) >= distance_feet
+            for sense in ("blindsight", "truesight")
+        ):
+            return False
     return any(
         creature_can_see_cell(state, viewer_ref, subject) for subject in subject_cells
     )
@@ -65,4 +77,16 @@ def _cell_is_heavily_obscured(
             for area_cell in effect.area.cells
         )
         for effect in state.ongoing_effects
+    )
+
+
+def creature_is_heavily_obscured(
+    state: VisibilityQueryContext,
+    creature_ref: CreatureRef,
+) -> bool:
+    """Return whether every cell of a creature's footprint is obscured."""
+
+    return all(
+        _cell_is_heavily_obscured(state, cell)
+        for cell in creature_occupied_cells(state, creature_ref)
     )

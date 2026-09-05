@@ -116,6 +116,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         "grapple",
         "opportunity_attack",
         "rouse_spell_target",
+        "search_hidden",
     }:
         return DirectTargetOptionDetails(target_ref=_direct_target_ref(action.value))
     if action.kind == "retarget_effect" and isinstance(

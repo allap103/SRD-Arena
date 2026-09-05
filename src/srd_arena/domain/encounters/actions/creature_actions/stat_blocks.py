@@ -55,7 +55,7 @@ def stat_block_action_candidates(
             source_slug = definition.name.lower().replace(" ", "-")
             actions.extend(
                 EncounterAction(
-                    f"{display_name(actor.creature, definition.name)}  "
+                    f"{display_name(actor.creature, definition.name)} — "
                     f"{granted_action.replace('_', ' ').title()}",
                     granted_action,
                     id=(
