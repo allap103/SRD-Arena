@@ -55,7 +55,9 @@ def apply_attack_hit_effects(
     >>> state = SimpleNamespace(
     ...     creatures={
     ...         "wolf": SimpleNamespace(creature=SimpleNamespace(name="Wolf")),
-    ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
+    ...         "hero": SimpleNamespace(
+    ...             creature=SimpleNamespace(name="Hero", size="M")
+    ...         ),
     ...     },
     ...     round=SimpleNamespace(number=1),
     ... )
@@ -99,6 +101,8 @@ def _apply_condition(
         return
     attacker = state.creatures[attacker_ref].creature
     target = state.creatures[target_ref].creature
+    if not _target_meets_size_requirements(target.size, effect):
+        return
     if effect.condition != "grappled":
         duration = _condition_duration(
             state,
@@ -123,18 +127,6 @@ def _apply_condition(
             progress.messages.append(
                 ("system", f"{target.name} is {effect.condition}.")
             )
-        return
-    maximum_size = next(
-        (
-            requirement.maximum
-            for requirement in effect.requirements
-            if isinstance(requirement, SizeRequirement)
-        ),
-        None,
-    )
-    if isinstance(maximum_size, str) and size_rank(target.size) > size_rank(
-        maximum_size
-    ):
         return
     already_grappled = attacker_ref in grappled_sources_for(state, target_ref)
     capacity = effect.source_capacity
@@ -167,6 +159,24 @@ def _apply_condition(
         ),
     )
     progress.messages.append(("system", f"{attacker.name} grapples {target.name}."))
+
+
+def _target_meets_size_requirements(
+    target_size: str,
+    effect: ConditionEffect,
+) -> bool:
+    for requirement in effect.requirements:
+        if not isinstance(requirement, SizeRequirement):
+            return False
+        if requirement.maximum is not None and size_rank(target_size) > size_rank(
+            requirement.maximum
+        ):
+            return False
+        if requirement.minimum is not None and size_rank(target_size) < size_rank(
+            requirement.minimum
+        ):
+            return False
+    return True
 
 
 def _condition_duration(

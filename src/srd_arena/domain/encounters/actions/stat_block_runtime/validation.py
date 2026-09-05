@@ -2,7 +2,11 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.capabilities import ConditionEffect, DamageEffect
+from srd_arena.domain.capabilities import (
+    ConditionEffect,
+    DamageEffect,
+    SizeRequirement,
+)
 from srd_arena.domain.creatures.stat_block_actions import (
     AttackActionDefinition,
     AutomaticActionDefinition,
@@ -44,7 +48,10 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
                         "Authored durations for grappled are not executable yet; "
                         "the creature relationship owns its ending rules."
                     )
-                if effect.condition != "grappled" and effect.requirements:
+                if any(
+                    not isinstance(requirement, SizeRequirement)
+                    for requirement in effect.requirements
+                ):
                     return (
                         "Conditional attack-applied conditions are not executable yet."
                     )
