@@ -54,6 +54,10 @@ class ConditionRuleQueryContext(CreatureEffectQueryContext, Protocol):
     """Add sourced conditions needed by permission and speed queries."""
 
     @property
+    def definition(self) -> EncounterDefinition:
+        """Return the authored encounter definition containing teams and grid."""
+
+    @property
     def conditions(self) -> Sequence[AppliedCondition]:
         """Return sourced condition applications active in the encounter."""
 

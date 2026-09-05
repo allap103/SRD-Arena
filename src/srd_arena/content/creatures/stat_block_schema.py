@@ -162,6 +162,7 @@ class BestiaryMonsterSchema(SourceModel):
     senses: list[str] = Field(default_factory=list)
     passive: int | None = None
     languages: list[str] = Field(default_factory=list)
+    trait_tags: list[str] = Field(default_factory=list, alias="traitTags")
     condition_immune: list[str | BestiaryConditionalImmunitySchema] = Field(
         default_factory=list,
         alias="conditionImmune",

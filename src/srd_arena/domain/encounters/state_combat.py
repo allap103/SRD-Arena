@@ -114,6 +114,7 @@ def attack_roll_mode_for(
             attacker_ref,
             "attack_roll",
             attack_ability,
+            opposing_ref=target_ref,
         ).mode
     )
     target_effective = state.effective_conditions_for(target_ref)

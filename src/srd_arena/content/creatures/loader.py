@@ -35,6 +35,7 @@ from .character_options import (
 )
 from .character_snapshots import CharacterSnapshotCatalog, build_character_profile
 from .features import build_combat_profile, build_feature_uses_remaining
+from .monster_traits import build_monster_trait_rule_providers
 from .player_characters import PlayerCharacterTemplates
 from .schema import CreatureItemReferenceSchema, CreatureSchema
 from .spellcasting import build_spellcasting
@@ -118,6 +119,9 @@ def build_creature(
         *feat_triggered_effects(character_profile),
     ]
     combat_profile = build_combat_profile(class_features)
+    combat_profile.intrinsic_rule_providers.update(
+        build_monster_trait_rule_providers(stat_block)
+    )
     if character_profile is not None and any(
         feat.name.casefold() == "lucky" for feat in character_profile.feats
     ):

@@ -186,6 +186,19 @@ class RollAdjustment:
 
 
 @dataclass(frozen=True)
+class AdjacentAllyAttackAdvantage:
+    """Grant attack advantage while an eligible ally is near the target."""
+
+    range_feet: int = 5
+
+    def __post_init__(self) -> None:
+        if self.range_feet <= 0:
+            raise ValueError(
+                "Adjacent-ally attack advantage requires a positive range."
+            )
+
+
+@dataclass(frozen=True)
 class AttackHitDamage:
     """Add typed dice damage when the effect source hits its target."""
 
@@ -337,6 +350,7 @@ type RuntimeRuleEffect = (
     | ConditionSaveAdvantage
     | GrantedSense
     | RollAdjustment
+    | AdjacentAllyAttackAdvantage
     | AttackHitDamage
     | AttackHitRetaliation
     | ReactionProhibition
@@ -436,6 +450,11 @@ def serialize_runtime_rule_effect(
                 condition.value for condition in effect.blocked_by_conditions
             )
         return serialized
+    if isinstance(effect, AdjacentAllyAttackAdvantage):
+        return {
+            "type": "adjacent_ally_attack_advantage",
+            "range_feet": effect.range_feet,
+        }
     if isinstance(effect, AttackHitDamage):
         return {
             "type": "attack_hit_damage",
