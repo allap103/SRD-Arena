@@ -7,6 +7,7 @@ from typing import Protocol
 
 from srd_arena.domain.effects.conditions import AppliedCondition
 from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
+from srd_arena.domain.equipment import Item
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from ..definitions import EncounterDefinition
@@ -28,6 +29,10 @@ class CreatureEffectQueryContext(EffectQueryContext, Protocol):
     @property
     def creatures(self) -> Mapping[CreatureRef, EncounterCreatureState]:
         """Return encounter combatants keyed by stable creature reference."""
+
+    @property
+    def item_templates(self) -> Mapping[str, Item]:
+        """Return item templates used to interpret equipped rules objects."""
 
 
 class VisibilityQueryContext(CreatureEffectQueryContext, Protocol):

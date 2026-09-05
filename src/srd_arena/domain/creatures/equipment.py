@@ -15,3 +15,4 @@ class Equipment:
 
     right_hand: str | None = None
     left_hand: str | None = None
+    armor: str | None = None

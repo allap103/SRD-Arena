@@ -1,6 +1,7 @@
 """Verify the fixed Warlock and Barbarian build snapshots."""
 
 import json
+from dataclasses import replace
 from pathlib import Path
 
 import pytest
@@ -18,8 +19,13 @@ from srd_arena.content.creatures import (
     load_character_snapshot_catalog,
 )
 from srd_arena.content.encounters import load_encounter_directory
+from srd_arena.content.equipment import load_system_items
 from srd_arena.content.spells import load_spell_catalog
-from srd_arena.domain.encounters.rule_queries.numeric import effective_speed
+from srd_arena.domain.encounters.rule_queries.numeric import (
+    effective_armor_class,
+    effective_speed,
+)
+from srd_arena.domain.equipment import Item
 from srd_arena.engine.session import Session
 
 WARLOCK_TRAINING_ENCOUNTER_DIR = (
@@ -30,6 +36,11 @@ WARLOCK_TRAINING_ENCOUNTER_DIR = (
 @pytest.fixture(scope="module")
 def snapshot_catalog() -> CharacterSnapshotCatalog:
     return load_character_snapshot_catalog(SYSTEM_CONTENT_ROOT)
+
+
+@pytest.fixture(scope="module")
+def items_by_id() -> dict[str, Item]:
+    return {item.id: item for item in load_system_items(SYSTEM_CONTENT_ROOT)}
 
 
 @pytest.mark.parametrize(
@@ -57,6 +68,7 @@ def snapshot_catalog() -> CharacterSnapshotCatalog:
 )
 def test_canonical_snapshots_compile_expected_combat_statistics(
     snapshot_catalog: CharacterSnapshotCatalog,
+    items_by_id: dict[str, Item],
     build_id: str,
     level: int,
     ability: str,
@@ -76,7 +88,7 @@ def test_canonical_snapshots_compile_expected_combat_statistics(
     assert getattr(creature.attributes, ability) == ability_score
     assert creature.attributes.proficiency_bonus == (3 if level == 5 else 2)
     assert creature.get_max_health() == maximum_health
-    assert creature.get_armor_class() == armor_class
+    assert creature.get_armor_class(items_by_id) == armor_class
     assert creature.attributes.movement.speed_feet == base_speed
 
 
@@ -109,6 +121,57 @@ def test_fast_movement_enters_at_level_five_as_a_sourced_speed_rule(
     assert tuple(
         contribution.source.definition_id for contribution in speed.contributions
     ) == ("fast_movement",)
+
+
+def test_armor_controls_unarmored_defense_and_fast_movement() -> None:
+    """Apply armor restrictions through the same effective-stat queries."""
+
+    session = Session(load_encounter_directory(WARLOCK_TRAINING_ENCOUNTER_DIR))
+    session._read()
+    state = session.encounter_state
+    assert state is not None
+    barbarian = state.creatures["barbarian"].creature
+
+    barbarian.equipment = replace(barbarian.equipment, armor="leather_armor")
+    assert effective_armor_class(state, "barbarian").value == 14
+    assert effective_speed(state, "barbarian").value == 40
+
+    barbarian.equipment = replace(barbarian.equipment, armor="chain_mail")
+    assert effective_speed(state, "barbarian").value == 30
+
+    barbarian.attributes.strength = 8
+    speed = effective_speed(state, "barbarian")
+    assert speed.value == 20
+    assert tuple(contribution.source.kind for contribution in speed.contributions) == (
+        "item",
+    )
+
+
+@pytest.mark.parametrize(
+    ("level", "armor_id"),
+    [
+        (1, "leather_armor"),
+        (2, "leather_armor"),
+        (3, "studded_leather_armor"),
+        (4, "studded_leather_armor"),
+        (5, "studded_leather_armor"),
+    ],
+)
+def test_warlock_snapshots_equip_authored_armor(
+    snapshot_catalog: CharacterSnapshotCatalog,
+    level: int,
+    armor_id: str,
+) -> None:
+    """Keep the Warlock's armor choice explicit instead of baking it into AC."""
+
+    creature = build_creature(
+        snapshot_catalog.creature_template("warlock", level),
+        classes=load_class_catalog(SYSTEM_CONTENT_ROOT),
+        optional_features=load_optional_feature_catalog(SYSTEM_CONTENT_ROOT),
+        spells=load_spell_catalog(SYSTEM_CONTENT_ROOT),
+    )
+
+    assert creature.equipment.armor == armor_id
 
 
 def test_warlock_snapshots_expose_pact_progression_and_selected_spells(

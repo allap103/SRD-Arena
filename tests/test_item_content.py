@@ -59,6 +59,31 @@ def test_item_builder_preserves_weapon_mastery_identity() -> None:
     assert javelin.weapon_stat.mastery == "Slow"
 
 
+def test_item_builder_creates_typed_armor_statistics() -> None:
+    """Preserve each armor category's AC formula and restrictions."""
+
+    catalog = load_item_catalog(SYSTEM_CONTENT_ROOT)
+    leather = build_item(catalog.find("Leather Armor", "XPHB"))
+    hide = build_item(catalog.find("Hide Armor", "XPHB"))
+    chain_mail = build_item(catalog.find("Chain Mail", "XPHB"))
+    shield = build_item(catalog.find("Shield", "XPHB"))
+
+    assert leather.armor_stat is not None
+    assert leather.armor_stat.category == "light"
+    assert leather.armor_stat.resolve_armor_class(3) == 14
+    assert hide.armor_stat is not None
+    assert hide.armor_stat.category == "medium"
+    assert hide.armor_stat.resolve_armor_class(3) == 14
+    assert chain_mail.armor_stat is not None
+    assert chain_mail.armor_stat.category == "heavy"
+    assert chain_mail.armor_stat.resolve_armor_class(3) == 16
+    assert chain_mail.armor_stat.strength_requirement == 13
+    assert chain_mail.armor_stat.stealth_disadvantage
+    assert shield.armor_stat is not None
+    assert shield.armor_stat.category == "shield"
+    assert shield.armor_stat.armor_class == 2
+
+
 def test_item_catalog_and_builder_use_srd_public_name() -> None:
     source_item = ItemSchema.model_validate(
         {

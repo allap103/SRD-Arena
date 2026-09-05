@@ -1,7 +1,7 @@
 """Translate validated equipment records into domain item templates."""
 
 from srd_arena.content.common.sources import slug
-from srd_arena.domain.equipment import Item, WeaponStat
+from srd_arena.domain.equipment import ArmorCategory, ArmorStat, Item, WeaponStat
 
 from .schema import ItemSchema
 
@@ -41,6 +41,23 @@ def build_item(source_item: ItemSchema) -> Item:
                     if source_item.mastery
                     else None
                 ),
+            ),
+            item_type=source_item.type,
+            misc_tags=source_item.misc_tags,
+        )
+    if source_item.is_armor:
+        return Item(
+            id=slug(source_item.public_name),
+            name=source_item.public_name,
+            description=_description(source_item),
+            category="armor",
+            armor_stat=ArmorStat(
+                category=_armor_category(source_item.type),
+                armor_class=_armor_class(source_item),
+                strength_requirement=_strength_requirement(
+                    source_item.strength_requirement
+                ),
+                stealth_disadvantage=source_item.stealth_disadvantage,
             ),
             item_type=source_item.type,
             misc_tags=source_item.misc_tags,
@@ -110,3 +127,30 @@ def _reference_name(value: str) -> str:
     """Return the public name portion of a source-qualified reference."""
 
     return value.split("|", 1)[0]
+
+
+def _armor_category(item_type: str) -> ArmorCategory:
+    categories: dict[str, ArmorCategory] = {
+        "LA": "light",
+        "MA": "medium",
+        "HA": "heavy",
+        "S": "shield",
+    }
+    return categories[item_type.split("|", 1)[0]]
+
+
+def _armor_class(item: ItemSchema) -> int:
+    if item.armor_class is None:
+        raise ValueError(f"Armor item {item.public_name!r} has no Armor Class value")
+    return item.armor_class
+
+
+def _strength_requirement(value: str | int | None) -> int | None:
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return None
+    return None

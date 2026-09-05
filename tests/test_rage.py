@@ -1,5 +1,6 @@
 """Verify the canonical Barbarian's Rage activation and core combat rules."""
 
+from dataclasses import replace
 from pathlib import Path
 
 from srd_arena.content.encounters import load_encounter_directory
@@ -128,6 +129,34 @@ def test_rage_activation_spends_a_use_and_replaces_concentration() -> None:
     assert rage_option.enabled is False
     assert "feature_already_active" in {
         failure.code for failure in rage_option.eligibility.failures
+    }
+
+
+def test_heavy_armor_prevents_rage_activation() -> None:
+    """Disable Rage while the Barbarian wears Heavy armor."""
+
+    session = _prepared_session()
+    state = session.encounter_state
+    assert state is not None
+    barbarian = state.creatures["barbarian"].creature
+
+    barbarian.equipment = replace(barbarian.equipment, armor="leather_armor")
+    rage = next(
+        option
+        for option in session._read().action_options
+        if option.kind == "feature" and option.label == "Rage"
+    )
+    assert rage.enabled
+
+    barbarian.equipment = replace(barbarian.equipment, armor="chain_mail")
+    rage = next(
+        option
+        for option in session._read().action_options
+        if option.kind == "feature" and option.label == "Rage"
+    )
+    assert not rage.enabled
+    assert {failure.code for failure in rage.eligibility.failures} == {
+        "armor_restriction"
     }
 
 

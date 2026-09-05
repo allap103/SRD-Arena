@@ -19,6 +19,12 @@ def creature_rule_effects(
 
     creature = state.creatures[creature_ref].creature
     for provider in creature.combat_profile.intrinsic_rule_providers.values():
+        if (
+            provider.blocked_by_armor_categories
+            and creature.worn_armor_category(state.item_templates)
+            in provider.blocked_by_armor_categories
+        ):
+            continue
         source = EffectSource(
             provider.source_kind,
             provider.id,

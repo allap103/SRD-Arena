@@ -1,11 +1,13 @@
 """Aggregate persistent creature statistics, possessions, features, and health."""
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import assert_never
 
 from srd_arena.domain.capabilities import LimitedUsePool
 from srd_arena.domain.effects.triggered import TriggeredEffect
+from srd_arena.domain.equipment import ArmorCategory, Item
 from srd_arena.domain.rolls.saving_throws import Ability
 
 from .attributes import Attributes
@@ -320,18 +322,60 @@ class Creature:
         self.temporary_hit_points = max(previous, max(amount, 0))
         return self.temporary_hit_points - previous
 
-    def get_armor_class(self) -> int:
+    def get_armor_class(self, items_by_id: Mapping[str, Item] | None = None) -> int:
         """Return the best available intrinsic Armor Class calculation.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 14, 10, 10, 10, 10, 10), Equipment())
         >>> creature.get_armor_class()
         12
         """
-        standard = self.attributes.base_armor_class + self.get_modifier(
-            self.attributes.dexterity
+        worn_armor = self.worn_armor(items_by_id or {})
+        dexterity_modifier = self.get_modifier(self.attributes.dexterity)
+        standard = (
+            worn_armor.armor_stat.resolve_armor_class(dexterity_modifier)
+            if worn_armor is not None and worn_armor.armor_stat is not None
+            else self.attributes.base_armor_class + dexterity_modifier
         )
         alternatives = tuple(
             calculation.resolve(self.attributes)
             for calculation in self.combat_profile.armor_class_calculations.values()
+            if not calculation.requires_unarmored or worn_armor is None
         )
         return max((standard, *alternatives))
+
+    def worn_armor(self, items_by_id: Mapping[str, Item]) -> Item | None:
+        """Return the equipped armor suit when its item template is available."""
+
+        armor_id = self.equipment.armor
+        if armor_id is None:
+            return None
+        item = items_by_id.get(armor_id)
+        if (
+            item is None
+            or item.armor_stat is None
+            or item.armor_stat.category == "shield"
+        ):
+            return None
+        return item
+
+    def worn_armor_category(
+        self,
+        items_by_id: Mapping[str, Item],
+    ) -> ArmorCategory | None:
+        """Return the category of the equipped armor suit, if resolved."""
+
+        armor = self.worn_armor(items_by_id)
+        return armor.armor_stat.category if armor and armor.armor_stat else None
+
+    def armor_speed_penalty(self, items_by_id: Mapping[str, Item]) -> int:
+        """Return the armor Strength penalty applied to Speed in feet."""
+
+        armor = self.worn_armor(items_by_id)
+        if armor is None or armor.armor_stat is None:
+            return 0
+        requirement = armor.armor_stat.strength_requirement
+        return (
+            -10
+            if requirement is not None and self.attributes.strength < requirement
+            else 0
+        )

@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 from srd_arena.domain.effects.rule_effects import RuntimeRuleEffect
 from srd_arena.domain.effects.runtime import EffectSourceKind
+from srd_arena.domain.equipment import ArmorCategory
 
 
 @dataclass(frozen=True)
@@ -21,6 +22,7 @@ class IntrinsicRuleProvider:
     label: str
     rule_effects: tuple[RuntimeRuleEffect, ...]
     source_kind: EffectSourceKind = EffectSourceKind.FEATURE
+    blocked_by_armor_categories: frozenset[ArmorCategory] = frozenset()
 
     def __post_init__(self) -> None:
         if not self.id.strip():

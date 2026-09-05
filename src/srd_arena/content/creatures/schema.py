@@ -4,10 +4,11 @@ from typing import Literal
 
 from pydantic import BaseModel, ConfigDict, Field
 
-EQUIPMENT_SLOTS = ("right_hand", "left_hand")
+EQUIPMENT_SLOTS = ("right_hand", "left_hand", "armor")
 EquipmentSlot = Literal[
     "right_hand",
     "left_hand",
+    "armor",
 ]
 
 

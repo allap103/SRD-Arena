@@ -37,6 +37,7 @@ class ArmorClassCalculation:
     label: str
     base: int
     ability_modifiers: tuple[str, ...] = ()
+    requires_unarmored: bool = False
 
     def __post_init__(self) -> None:
         unknown = set(self.ability_modifiers) - ABILITY_NAMES

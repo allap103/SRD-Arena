@@ -10,6 +10,7 @@ from srd_arena.domain.effects.rule_effects import (
     SpeedAdjustment,
     SpeedMultiplier,
 )
+from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
 
 from ..encounter_models.actions import CreatureRef
 from .context import (
@@ -36,18 +37,18 @@ def effective_armor_class(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     get_armor_class=lambda: 12,
+    ...     get_armor_class=lambda items: 12,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[],
+    ...     ongoing_effects=[], item_templates={},
     ... )
     >>> effective_armor_class(state, "hero").value
     12
     """
 
     creature = state.creatures[creature_ref].creature
-    base = creature.get_armor_class()
+    base = creature.get_armor_class(state.item_templates)
     contributions = tuple(
         NumericRuleContribution(
             provider_state_id,
@@ -76,10 +77,12 @@ def effective_speed(
     ...     ),
     ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ...     armor_speed_penalty=lambda items: 0,
+    ...     worn_armor=lambda items: None,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[], conditions=[],
+    ...     ongoing_effects=[], conditions=[], item_templates={},
     ... )
     >>> effective_speed(state, "hero").value
     30
@@ -109,6 +112,22 @@ def effective_speed(
                     rule_effect.denominator,
                 )
             )
+    armor_penalty = creature.armor_speed_penalty(state.item_templates)
+    worn_armor = creature.worn_armor(state.item_templates)
+    if armor_penalty and worn_armor is not None:
+        contributions.append(
+            NumericRuleContribution(
+                f"equipment:{creature_ref}:{worn_armor.id}",
+                EffectSource(
+                    EffectSourceKind.ITEM,
+                    worn_armor.id,
+                    applied_by_ref=creature_ref,
+                    label=worn_armor.name,
+                ),
+                NumericOperation.ADD,
+                armor_penalty,
+            )
+        )
     applied_conditions = tuple(
         condition
         for condition in state.conditions
@@ -153,10 +172,12 @@ def movement_budget(
     ...     ),
     ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ...     armor_speed_penalty=lambda items: 0,
+    ...     worn_armor=lambda items: None,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[], conditions=[],
+    ...     ongoing_effects=[], conditions=[], item_templates={},
     ...     definition=SimpleNamespace(grid=Grid(10, 10)),
     ... )
     >>> movement_budget(state, "hero").budget

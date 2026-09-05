@@ -2,6 +2,8 @@
 
 from dataclasses import dataclass
 
+from srd_arena.domain.equipment import ArmorCategory
+
 
 @dataclass(frozen=True)
 class FeatureActionDefinition:
@@ -13,3 +15,4 @@ class FeatureActionDefinition:
     blocked_while_effect_active: bool = False
     requires_active_effect_id: str | None = None
     requires_use: bool = True
+    blocked_by_armor_categories: frozenset[ArmorCategory] = frozenset()

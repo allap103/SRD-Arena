@@ -25,7 +25,7 @@
           "wisdom": 10,
           "intelligence": 8,
           "charisma": 17,
-          "base_armor_class": 11
+          "base_armor_class": 10
         },
         "inventory": [
           {"name": "Leather Armor", "source": "XPHB"},
@@ -34,6 +34,7 @@
           {"name": "Dagger", "source": "XPHB"}
         ],
         "equipment": {
+          "armor": {"name": "Leather Armor", "source": "XPHB"},
           "right_hand": {"name": "Sickle", "source": "XPHB"},
           "left_hand": {"name": "Dagger", "source": "XPHB"}
         },
@@ -75,7 +76,7 @@
           "wisdom": 10,
           "intelligence": 8,
           "charisma": 17,
-          "base_armor_class": 11
+          "base_armor_class": 10
         },
         "inventory": [
           {"name": "Leather Armor", "source": "XPHB"},
@@ -84,6 +85,7 @@
           {"name": "Dagger", "source": "XPHB"}
         ],
         "equipment": {
+          "armor": {"name": "Leather Armor", "source": "XPHB"},
           "right_hand": {"name": "Sickle", "source": "XPHB"},
           "left_hand": {"name": "Dagger", "source": "XPHB"}
         },
@@ -130,7 +132,7 @@
           "wisdom": 10,
           "intelligence": 8,
           "charisma": 17,
-          "base_armor_class": 12
+          "base_armor_class": 10
         },
         "inventory": [
           {"name": "Studded Leather Armor", "source": "XPHB"},
@@ -139,6 +141,7 @@
           {"name": "Dagger", "source": "XPHB"}
         ],
         "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
           "right_hand": {"name": "Sickle", "source": "XPHB"},
           "left_hand": {"name": "Dagger", "source": "XPHB"}
         },
@@ -189,7 +192,7 @@
           "wisdom": 10,
           "intelligence": 8,
           "charisma": 19,
-          "base_armor_class": 12
+          "base_armor_class": 10
         },
         "inventory": [
           {"name": "Studded Leather Armor", "source": "XPHB"},
@@ -198,6 +201,7 @@
           {"name": "Dagger", "source": "XPHB"}
         ],
         "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
           "right_hand": {"name": "Sickle", "source": "XPHB"},
           "left_hand": {"name": "Dagger", "source": "XPHB"}
         },
@@ -250,7 +254,7 @@
           "wisdom": 10,
           "intelligence": 8,
           "charisma": 19,
-          "base_armor_class": 12
+          "base_armor_class": 10
         },
         "inventory": [
           {"name": "Studded Leather Armor", "source": "XPHB"},
@@ -259,6 +263,7 @@
           {"name": "Dagger", "source": "XPHB"}
         ],
         "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
           "right_hand": {"name": "Sickle", "source": "XPHB"},
           "left_hand": {"name": "Dagger", "source": "XPHB"}
         },

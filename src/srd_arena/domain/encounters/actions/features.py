@@ -199,6 +199,14 @@ def _feature_execution_failure(
             "resource_spent",
             f"You have no uses of {feature_action.label} remaining.",
         )
+    if feature_action.blocked_by_armor_categories:
+        worn_armor_category = creature.worn_armor_category(state.item_templates)
+        if worn_armor_category in feature_action.blocked_by_armor_categories:
+            return EligibilityFailure(
+                "armor_restriction",
+                f"{feature_action.label} is unavailable while wearing "
+                f"{worn_armor_category.title()} armor.",
+            )
     if feature_action.requires_active_effect_id is not None and not any(
         feature_action.requires_active_effect_id == effect.identity.source.definition_id
         and creature_ref in effect.target_refs

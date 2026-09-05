@@ -240,6 +240,14 @@ class FeatureActionRule:
                 "resource_spent",
                 f"No uses of {definition.label} remain.",
             )
+        if definition.blocked_by_armor_categories:
+            worn_armor_category = actor.worn_armor_category(state.item_templates)
+            if worn_armor_category in definition.blocked_by_armor_categories:
+                return EligibilityFailure(
+                    "armor_restriction",
+                    f"{definition.label} is unavailable while wearing "
+                    f"{worn_armor_category.title()} armor.",
+                )
         if definition.requires_active_effect_id is not None and not any(
             definition.requires_active_effect_id == effect.identity.source.definition_id
             and actor_ref in effect.target_refs

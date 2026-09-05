@@ -70,6 +70,7 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 label="Rage",
                 economy="bonus_action",
                 blocked_while_effect_active=True,
+                blocked_by_armor_categories=frozenset({"heavy"}),
             )
             profile.feature_actions["extend_rage"] = FeatureActionDefinition(
                 feature_id="extend_rage",
@@ -92,6 +93,7 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                     label="Unarmored Defense",
                     base=10,
                     ability_modifiers=("dexterity", "constitution"),
+                    requires_unarmored=True,
                 )
             )
         elif class_feature.id == "danger_sense":
@@ -117,6 +119,7 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                         id="fast_movement",
                         label="Fast Movement",
                         rule_effects=(SpeedAdjustment(speed_bonus),),
+                        blocked_by_armor_categories=frozenset({"heavy"}),
                     )
                 )
     return profile
