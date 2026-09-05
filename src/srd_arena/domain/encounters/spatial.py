@@ -16,7 +16,7 @@ from srd_arena.domain.geometry import (
 from .definitions import EncounterDefinition
 from .encounter_models.actions import CreatureRef
 from .encounter_models.state import EncounterCreatureState
-from .terrain import TerrainCell, TerrainTraversal
+from .terrain import TerrainCell, TerrainMovementMode, TerrainTraversal
 
 
 class SpatialContext(Protocol):
@@ -240,6 +240,31 @@ def footprint_enters_difficult_terrain(
         for cell in creature_occupied_cells(state, creature_ref, position=position)
         if (terrain := terrain_at(state, cell)) is not None
     )
+
+
+def movement_mode_for_destination(
+    state: SpatialContext,
+    creature_ref: CreatureRef,
+    position: Position,
+) -> TerrainMovementMode:
+    """Return the special movement mode required by a destination footprint.
+
+    Ground cells do not override a special cell intersected by a larger
+    footprint. Authored battlefields should not overlap climb and swim cells
+    within one destination footprint.
+    """
+
+    modes = {
+        terrain.movement_mode
+        for cell in creature_occupied_cells(state, creature_ref, position=position)
+        if (terrain := terrain_at(state, cell)) is not None
+        and terrain.movement_mode is not TerrainMovementMode.GROUND
+    }
+    if TerrainMovementMode.SWIM in modes:
+        return TerrainMovementMode.SWIM
+    if TerrainMovementMode.CLIMB in modes:
+        return TerrainMovementMode.CLIMB
+    return TerrainMovementMode.GROUND
 
 
 def diagonal_terrain_step_is_clear(

@@ -24,6 +24,7 @@ from srd_arena.domain.encounters import (
     EncounterParticipant,
     EncounterTeam,
     TerrainCell,
+    TerrainMovementMode,
     TerrainTraversal,
 )
 from srd_arena.domain.encounters.spatial import validate_placements
@@ -99,6 +100,7 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
                 position=_build_position(cell.position),
                 traversal=TerrainTraversal(cell.traversal),
                 cover=CoverDegree(cell.cover),
+                movement_mode=TerrainMovementMode(cell.movement_mode),
             )
             for cell in schema.terrain
         ),

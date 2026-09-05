@@ -20,7 +20,11 @@ from ...reaction_runtime.opportunity_execution import (
     resolve_automatic_opportunity_attacks,
 )
 from ...reaction_runtime.opportunity_offers import queue_opportunity_attack
-from ...rule_queries.movement import movement_step_cost
+from ...rule_queries.movement import (
+    movement_mode_for_step,
+    movement_step_cost,
+    remaining_movement_for_mode,
+)
 from ...state_runtime import create_event
 
 if TYPE_CHECKING:
@@ -52,6 +56,12 @@ def execute_movement(
     >>> from unittest.mock import patch
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "movement_mode_for_step", return_value="walk"
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "remaining_movement_for_mode", return_value=MovementBudget(6)
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
     ...     "movement_step_cost", return_value=MovementCost(1)
     ... ), patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
@@ -73,8 +83,20 @@ def execute_movement(
     direction = str(action.value)
     dx, dy = DIRECTION_DELTAS[direction]
     destination = Position(mover.position.x + dx, mover.position.y + dy)
+    movement_mode = movement_mode_for_step(
+        state,
+        decision.creature_ref,
+        destination,
+    )
     movement_cost = movement_step_cost(state, decision.creature_ref, destination)
-    remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
+    remaining_before = remaining_movement_for_mode(
+        state,
+        decision.creature_ref,
+        movement_mode,
+    )
+    remaining = MovementBudget(max(0, remaining_before - movement_cost))
+    mover.movement_mode = movement_mode
+    mover.movement_remaining = remaining_before
     grappled_refs = grappling_targets_for(state, decision.creature_ref)
     grappled_positions = {
         target_ref: Position(
@@ -92,6 +114,7 @@ def execute_movement(
         to_position=destination,
         remaining_movement_after=remaining,
         movement_cost=movement_cost,
+        movement_mode=movement_mode,
         companion_destinations=grappled_positions,
         progress=progress,
         external_only=True,
@@ -118,7 +141,7 @@ def execute_movement(
             context,
             ActionExecutionOutcome.CONTINUE_TURN,
         )
-    if movement_cost > (mover.movement_remaining or 0):
+    if movement_cost > remaining_before:
         progress.messages.append(
             (
                 "system",
@@ -162,6 +185,7 @@ def execute_movement(
             action_id=action_id,
             data={
                 "direction": direction,
+                "movement_mode": movement_mode,
                 "to": {"x": destination.x, "y": destination.y},
             },
         )

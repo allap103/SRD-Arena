@@ -17,6 +17,7 @@ from srd_arena.domain.encounters import (
     EncounterBehavior,
     EncounterDefinition,
     TerrainCell,
+    TerrainMovementMode,
     TerrainTraversal,
 )
 from srd_arena.domain.encounters.actions.creature_actions.movement_candidates import (
@@ -101,6 +102,7 @@ def test_encounter_loader_builds_typed_terrain(tmp_path: Path) -> None:
                         "position": {"x": 2, "y": 2},
                         "traversal": "blocked",
                         "cover": "total",
+                        "movement_mode": "climb",
                     }
                 ],
             }
@@ -115,6 +117,7 @@ def test_encounter_loader_builds_typed_terrain(tmp_path: Path) -> None:
             Position(2, 2),
             TerrainTraversal.BLOCKED,
             CoverDegree.TOTAL,
+            TerrainMovementMode.CLIMB,
         ),
     )
 

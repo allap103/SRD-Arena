@@ -205,6 +205,7 @@ def _begin_turn_if_alive(
     recharge_stat_block_actions(creature_state.creature, state.dice.roll_die)
     creature_state.movement_remaining = None
     creature_state.movement_spent_this_turn = MovementCost(0)
+    creature_state.movement_mode = "walk"
     creature_state.actions_remaining = 1
     creature_state.action_used_this_turn = False
     creature_state.magic_actions_remaining = 1

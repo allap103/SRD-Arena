@@ -14,6 +14,14 @@ class TerrainTraversal(StrEnum):
     BLOCKED = "blocked"
 
 
+class TerrainMovementMode(StrEnum):
+    """Identify the form of movement required to cross a projected cell."""
+
+    GROUND = "ground"
+    CLIMB = "climb"
+    SWIM = "swim"
+
+
 class CoverDegree(StrEnum):
     """Enumerate the SRD degrees of cover in increasing protection order."""
 
@@ -52,3 +60,4 @@ class TerrainCell:
     position: Position
     traversal: TerrainTraversal = TerrainTraversal.NORMAL
     cover: CoverDegree = CoverDegree.NONE
+    movement_mode: TerrainMovementMode = TerrainMovementMode.GROUND

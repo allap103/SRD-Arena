@@ -33,6 +33,7 @@ class TerrainCellSchema(BaseModel):
     position: PositionSchema
     traversal: Literal["normal", "difficult", "blocked"] = "normal"
     cover: Literal["none", "half", "three_quarters", "total"] = "none"
+    movement_mode: Literal["ground", "climb", "swim"] = "ground"
 
 
 class GeometryConfigSchema(BaseModel):

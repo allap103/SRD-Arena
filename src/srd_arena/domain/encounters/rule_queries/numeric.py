@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.effects.condition_rules import effective_conditions
 from srd_arena.domain.effects.conditions import CombatTrait
 from srd_arena.domain.effects.rule_effects import (
@@ -67,6 +68,8 @@ def effective_armor_class(
 def effective_speed(
     state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
+    *,
+    mode: MovementMode | None = None,
 ) -> NumericRuleResult:
     """Return effective Speed after additions, multipliers, and caps.
 
@@ -151,8 +154,18 @@ def effective_speed(
                 0,
             )
         )
+    authored_speed = (
+        creature.attributes.movement.effective_speed_feet
+        if mode is None
+        else creature.attributes.movement.feet_for(mode)
+    )
+    base_speed = (
+        creature.attributes.movement.speed_feet
+        if authored_speed is None
+        else authored_speed
+    )
     return NumericRuleResult(
-        creature.attributes.movement.effective_speed_feet,
+        base_speed,
         tuple(contributions),
         minimum=0,
     )
@@ -185,6 +198,20 @@ def movement_budget(
     """
 
     speed = effective_speed(state, creature_ref)
+    return MovementQueryResult(
+        speed=speed,
+        budget=state.definition.grid.movement_budget(speed.value),
+    )
+
+
+def movement_budget_for_mode(
+    state: MovementRuleQueryContext,
+    creature_ref: CreatureRef,
+    mode: MovementMode,
+) -> MovementQueryResult:
+    """Translate one effective walking or special Speed into grid movement."""
+
+    speed = effective_speed(state, creature_ref, mode=mode)
     return MovementQueryResult(
         speed=speed,
         budget=state.definition.grid.movement_budget(speed.value),

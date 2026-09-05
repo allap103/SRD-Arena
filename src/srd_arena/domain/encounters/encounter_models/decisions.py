@@ -5,6 +5,7 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import TYPE_CHECKING, Literal
 
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.effects.results import ActionResolutionResult
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 from srd_arena.domain.rolls.dice import D20RollMode
@@ -37,6 +38,7 @@ class PendingMovement:
     movement_cost: MovementCost
     trigger_id: str
     companion_destinations: dict[CreatureRef, Position] = field(default_factory=dict)
+    movement_mode: MovementMode = "walk"
 
 
 @dataclass(frozen=True)

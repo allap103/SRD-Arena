@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.creatures.multiattack import MultiattackStep
 from srd_arena.domain.effects.conditions import AppliedCondition
 from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
@@ -88,6 +89,7 @@ class EncounterCreatureState:
     movement_spent_this_turn: MovementCost = field(
         default_factory=lambda: MovementCost(0)
     )
+    movement_mode: MovementMode = "walk"
     actions_remaining: int = 1
     action_used_this_turn: bool = False
     magic_actions_remaining: int = 1

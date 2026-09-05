@@ -1,6 +1,9 @@
 """Store a creature's core ability scores, defenses, health, and movement modes."""
 
 from dataclasses import dataclass, field
+from typing import Literal
+
+MovementMode = Literal["walk", "burrow", "climb", "fly", "swim"]
 
 
 @dataclass
@@ -12,6 +15,30 @@ class Movement:
     climb_feet: int | None = None
     fly_feet: int | None = None
     swim_feet: int | None = None
+
+    def feet_for(self, mode: MovementMode) -> int | None:
+        """Return the creature's authored speed for one movement mode.
+
+        Walking always has a numeric speed. Special modes remain absent when
+        the creature must use its walking Speed and pay the mode's extra cost.
+
+        >>> Movement(speed_feet=40, climb_feet=30).feet_for("climb")
+        30
+        >>> Movement(speed_feet=40).feet_for("swim") is None
+        True
+        """
+
+        match mode:
+            case "walk":
+                return self.speed_feet
+            case "burrow":
+                return self.burrow_feet
+            case "climb":
+                return self.climb_feet
+            case "fly":
+                return self.fly_feet
+            case "swim":
+                return self.swim_feet
 
     @property
     def effective_speed_feet(self) -> int:

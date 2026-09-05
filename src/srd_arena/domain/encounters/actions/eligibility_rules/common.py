@@ -15,7 +15,11 @@ from ...encounter_models.actions import (
 )
 from ...grappling_state import grappling_targets_for
 from ...participants import creatures_are_opponents
-from ...rule_queries.movement import movement_step_cost
+from ...rule_queries.movement import (
+    movement_mode_for_step,
+    movement_step_cost,
+    remaining_movement_for_mode,
+)
 from ...rule_queries.numeric import effective_speed
 from ...spatial import (
     creature_position,
@@ -100,12 +104,14 @@ class ResourceRule:
         >>> from unittest.mock import Mock
         >>> from ...encounter_models.actions import ActionCost
         >>> from srd_arena.domain.geometry import MovementCost
-        >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
+        >>> action = EncounterAction("Stand", "stand_up", cost=ActionCost(movement=MovementCost(2)))
         >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),
         ...     "hero", action).code
         'insufficient_movement'
         """
         actor = state.creatures[actor_ref]
+        if action.kind == "move":
+            return None
         if action.cost.movement > (actor.movement_remaining or 0):
             return EligibilityFailure(
                 "insufficient_movement",
@@ -147,17 +153,28 @@ class MovementRule:
             for moving_ref in moving_refs
         }
         movement_cost = movement_step_cost(state, actor_ref, destinations[actor_ref])
-        actor = state.creatures[actor_ref]
+        movement_mode = movement_mode_for_step(
+            state,
+            actor_ref,
+            destinations[actor_ref],
+        )
+        remaining_movement = remaining_movement_for_mode(
+            state,
+            actor_ref,
+            movement_mode,
+        )
         effective = state.effective_conditions_for(actor_ref)
-        if effective_speed(state, actor_ref).value == 0 and not effective.has_trait(
-            CombatTrait.CANNOT_TAKE_ACTIONS
-        ):
+        if effective_speed(
+            state,
+            actor_ref,
+            mode=movement_mode,
+        ).value == 0 and not effective.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS):
             return EligibilityFailure(
                 "movement.speed_zero",
                 "A creature whose Speed is 0 cannot move.",
                 effective.providers_for_trait(CombatTrait.SPEED_ZERO),
             )
-        if (actor.movement_remaining or 0) < movement_cost:
+        if remaining_movement < movement_cost:
             return EligibilityFailure(
                 "insufficient_movement",
                 "Not enough movement remains.",
