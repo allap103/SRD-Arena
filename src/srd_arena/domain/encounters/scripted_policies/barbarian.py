@@ -67,8 +67,23 @@ class BarbarianAllyActionSelector:
         creature_ref: CreatureRef,
         actions: Sequence[EncounterAction],
     ) -> EncounterAction:
-        target_ref = _nearest_opponent(state, creature_ref)
         wait = _first_action(actions, kind="wait")
+        attached_condition = _first_action(
+            actions,
+            kind="attack_condition",
+            value=creature_ref,
+            preferred_attack_type="melee",
+            preferred_attack_name="Maul",
+        ) or _first_action(
+            actions,
+            kind="attack_condition",
+            value=creature_ref,
+            preferred_attack_type="melee",
+        )
+        if attached_condition is not None:
+            return attached_condition
+
+        target_ref = _nearest_opponent(state, creature_ref)
         if target_ref is None:
             return wait or _required_choice(actions)
 

@@ -7,7 +7,11 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.capabilities import ConditionEffect, SizeRequirement
 from srd_arena.domain.creatures import size_rank
 from srd_arena.domain.effects.application import condition_from_effect_with_origin
-from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+from srd_arena.domain.effects.conditions import (
+    Condition,
+    DestructibleConditionState,
+    build_applied_condition,
+)
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.runtime import (
     EffectDuration,
@@ -67,6 +71,26 @@ def apply_sourced_condition_effect(
                     source_ref,
                     target_ref,
                     effect,
+                ),
+                destructible=(
+                    DestructibleConditionState(
+                        label=effect.destructible.label,
+                        armor_class=effect.destructible.armor_class,
+                        hit_points=effect.destructible.hit_points,
+                        maximum_hit_points=effect.destructible.hit_points,
+                        damage_vulnerabilities=frozenset(
+                            damage_type.casefold()
+                            for damage_type in (
+                                effect.destructible.damage_vulnerabilities
+                            )
+                        ),
+                        damage_immunities=frozenset(
+                            damage_type.casefold()
+                            for damage_type in effect.destructible.damage_immunities
+                        ),
+                    )
+                    if effect.destructible is not None
+                    else None
                 ),
             ),
         )

@@ -6,6 +6,7 @@ from typing import TYPE_CHECKING
 
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
+from ..destructible_conditions import resolve_destructible_condition_attack
 from ..execution import resolve_grapple_action
 from ..features import resolve_feature_action
 from ..grappling import resolve_escape_action
@@ -63,6 +64,13 @@ def execute_capability_action(
         resolve_attack_action(
             state,
             actor,
+            action,
+            progress,
+            action_id,
+        )
+    elif action.kind == "attack_condition":
+        resolve_destructible_condition_attack(
+            state,
             action,
             progress,
             action_id,

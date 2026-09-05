@@ -92,6 +92,16 @@ class ScriptedActionSelector:
         )
         if forced is not None:
             return forced
+        self_attachment_attack = next(
+            (
+                action
+                for action in actions
+                if action.kind == "attack_condition" and action.value == creature_ref
+            ),
+            None,
+        )
+        if self_attachment_attack is not None:
+            return self_attachment_attack
         wait = next((action for action in actions if action.kind == "wait"), None)
         if wait is None:
             if not actions:

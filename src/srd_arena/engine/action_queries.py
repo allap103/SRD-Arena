@@ -113,6 +113,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         )
     if action.kind in {
         "attack",
+        "attack_condition",
         "grapple",
         "opportunity_attack",
         "rouse_spell_target",

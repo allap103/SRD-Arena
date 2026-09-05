@@ -55,6 +55,18 @@ class CombatTrait(StrEnum):
 
 
 @dataclass(frozen=True)
+class DestructibleConditionState:
+    """Track the remaining durability of an attackable condition attachment."""
+
+    label: str
+    armor_class: int
+    hit_points: int
+    maximum_hit_points: int
+    damage_vulnerabilities: frozenset[str] = frozenset()
+    damage_immunities: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
 class AppliedCondition:
     """Track one sourced application of a condition to a creature.
 
@@ -70,6 +82,7 @@ class AppliedCondition:
     value: int | None = None
     triggered_effects: tuple[TriggeredEffect, ...] = ()
     metadata: dict[str, object] = field(default_factory=dict)
+    destructible: DestructibleConditionState | None = None
 
     def __post_init__(self) -> None:
         if self.condition is Condition.EXHAUSTION:
@@ -134,6 +147,7 @@ def build_applied_condition(
     origin_id: str | None = None,
     parent_id: str | None = None,
     root_id: str | None = None,
+    destructible: DestructibleConditionState | None = None,
 ) -> AppliedCondition:
     """Build one sourced condition instance for a target.
 
@@ -171,6 +185,7 @@ def build_applied_condition(
         value=value,
         triggered_effects=_condition_effects(condition, target_ref),
         metadata=dict(metadata or {}),
+        destructible=destructible,
     )
 
 

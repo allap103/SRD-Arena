@@ -36,7 +36,7 @@ def open_reckless_attack_decision(
 
     actor_state = state.creatures[actor_ref]
     if (
-        action.kind != "attack"
+        action.kind not in {"attack", "attack_condition"}
         or actor_state.attack_rolls_made_this_turn != 0
         or not has_reckless_attack(actor_state.creature)
         or selected_attack_ability(

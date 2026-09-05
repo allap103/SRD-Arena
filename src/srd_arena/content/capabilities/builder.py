@@ -209,6 +209,19 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             ),
             escape_dc=value.escape_dc,
             source_capacity=value.source_capacity,
+            destructible=(
+                domain.DestructibleCondition(
+                    label=value.destructible.label,
+                    armor_class=value.destructible.armor_class,
+                    hit_points=value.destructible.hit_points,
+                    damage_vulnerabilities=tuple(
+                        value.destructible.damage_vulnerabilities
+                    ),
+                    damage_immunities=tuple(value.destructible.damage_immunities),
+                )
+                if value.destructible is not None
+                else None
+            ),
             ends_on=tuple(value.ends_on),
         )
     if isinstance(value, effects.ForcedMovementEffectSchema):

@@ -9,7 +9,11 @@ from ..encounter_models.actions import (
     EncounterAction,
 )
 from ..rule_queries.permissions import action_compatibility
-from .eligibility_rules.attacks import AttackRule, GrappleRule
+from .eligibility_rules.attacks import (
+    AttackRule,
+    DestructibleConditionAttackRule,
+    GrappleRule,
+)
 from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
 from .eligibility_rules.common import (
     ActorOwnershipRule,
@@ -38,6 +42,7 @@ ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ProneActionRule(),
     StandardActionRule(),
     AttackRule(),
+    DestructibleConditionAttackRule(),
     GrappleRule(),
     StatBlockActionRule(),
     FeatureActionRule(),
@@ -72,6 +77,7 @@ __all__ = [
     "ActorOwnershipRule",
     "ActorReadyRule",
     "AttackRule",
+    "DestructibleConditionAttackRule",
     "EligibilityFailure",
     "EligibilityRule",
     "FeatureActionRule",

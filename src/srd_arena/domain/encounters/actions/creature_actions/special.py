@@ -11,6 +11,7 @@ from ...encounter_models.actions import (
 )
 from ...spatial import creatures_are_adjacent
 from ..consumables import healing_potions_in_inventory
+from ..destructible_conditions import destructible_condition_attack_actions
 from ..effect_retargeting import effect_retarget_actions
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
@@ -31,12 +32,17 @@ def special_action_candidates(
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
     >>> actor = SimpleNamespace(
-    ...     creature=SimpleNamespace(inventory=SimpleNamespace(items=[])),
+    ...     creature=SimpleNamespace(
+    ...         inventory=SimpleNamespace(items=[]),
+    ...         equipment=SimpleNamespace(right_hand=None, left_hand=None),
+    ...         stat_block_actions={},
+    ...     ),
     ...     position=SimpleNamespace(x=0, y=0),
-    ...     creature_id="hero", is_alive=True,
+    ...     creature_id="hero", is_alive=True, pending_multiattack=[],
     ... )
     >>> state = SimpleNamespace(
-    ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
+    ...     creatures={"hero": actor}, conditions=[], ongoing_effects=[],
+    ...     item_templates={},
     ...     definition=SimpleNamespace(teams=[]),
     ...     effective_conditions_for=lambda ref: SimpleNamespace(
     ...         has=lambda condition: False
@@ -73,6 +79,7 @@ def special_action_candidates(
     actions.extend(available_feature_actions(state, actor.creature))
     actions.extend(available_spell_actions(state, actor.creature))
     actions.extend(effect_retarget_actions(state, creature_ref))
+    actions.extend(destructible_condition_attack_actions(state, creature_ref))
 
     for effect in state.ongoing_effects:
         if not any(

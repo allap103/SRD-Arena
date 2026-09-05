@@ -40,14 +40,16 @@ def action_d20_occurrences(
 ) -> tuple[D20RollOccurrence, ...]:
     """Describe immediate attack or stat-block save rolls made by an action."""
 
-    if action.kind == "attack" and isinstance(action.value, str):
+    if action.kind in {"attack", "attack_condition"} and isinstance(action.value, str):
+        target_ref = action.value if action.kind == "attack" else None
+        target_label = creature_label(state, action.value)
         return (
             D20RollOccurrence(
                 attack_roll_occurrence_id(),
                 "attack_roll",
                 actor_ref,
-                action.value,
-                f"Attack against {creature_label(state, action.value)}",
+                target_ref,
+                f"Attack against {target_label}",
             ),
         )
     if action.kind != "stat_block":

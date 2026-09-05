@@ -56,6 +56,16 @@ class AttackHitRetaliationEffectSchema(CapabilitySchemaModel):
         return self
 
 
+class DestructibleConditionSchema(CapabilitySchemaModel):
+    """Describe a condition attachment that attacks can destroy."""
+
+    label: str = Field(min_length=1)
+    armor_class: PositiveInt
+    hit_points: PositiveInt
+    damage_vulnerabilities: list[str] = Field(default_factory=list)
+    damage_immunities: list[str] = Field(default_factory=list)
+
+
 class ConditionEffectSchema(CapabilitySchemaModel):
     """Encode the ``condition`` capability-effect variant with condition and duration."""
 
@@ -65,6 +75,7 @@ class ConditionEffectSchema(CapabilitySchemaModel):
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
     escape_dc: PositiveInt | None = None
     source_capacity: PositiveInt | None = None
+    destructible: DestructibleConditionSchema | None = None
     ends_on: list[
         Literal[
             "source_dies",

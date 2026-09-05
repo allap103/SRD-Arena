@@ -171,6 +171,17 @@ class HitPointMaximumModifierEffect:
 
 
 @dataclass(frozen=True)
+class DestructibleCondition:
+    """Define an attackable attachment whose destruction ends a condition."""
+
+    label: str
+    armor_class: int
+    hit_points: int
+    damage_vulnerabilities: tuple[str, ...] = ()
+    damage_immunities: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class ConditionEffect:
     """Apply one condition with provenance, duration, and optional escape rules."""
 
@@ -179,6 +190,7 @@ class ConditionEffect:
     requirements: tuple[CapabilityRequirement, ...] = ()
     escape_dc: int | None = None
     source_capacity: int | None = None
+    destructible: DestructibleCondition | None = None
     ends_on: tuple[str, ...] = ()
 
 

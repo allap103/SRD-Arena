@@ -16,7 +16,12 @@ from ...rule_queries.permissions import (
     target_eligibility,
 )
 from ...spatial import creature_distance
-from ..attack_resolution import attack_range_band_squares, has_free_hand
+from ..attack_resolution import (
+    attack_range_band_squares,
+    has_free_hand,
+    select_attack_source,
+)
+from ..destructible_conditions import destructible_condition_for_action
 from ..stat_block import (
     executable_multiattack_slot_plans,
     stat_block_action_resource_available,
@@ -200,4 +205,94 @@ class GrappleRule:
             return EligibilityFailure("free_hand_required", "A free hand is required.")
         if not can_grapple(target.creature.size, actor.creature.size):
             return EligibilityFailure("target_too_large", "The target is too large.")
+        return None
+
+
+class DestructibleConditionAttackRule:
+    """Validate attacks against active condition attachments."""
+
+    def check(
+        self,
+        state: EncounterState,
+        actor_ref: CreatureRef,
+        action: EncounterAction,
+    ) -> EligibilityFailure | None:
+        """Check attack economy, attachment identity, source, range, and cover."""
+
+        if action.kind != "attack_condition":
+            return None
+        actor = state.creatures[actor_ref]
+        if actor.actions_remaining <= 0 and actor.attacks_remaining <= 0:
+            return EligibilityFailure("action_spent", "No attack remains.")
+        condition = destructible_condition_for_action(state, action)
+        if condition is None:
+            return EligibilityFailure(
+                "condition_attachment_unavailable",
+                "The destructible condition is no longer active.",
+            )
+        target = state.creatures.get(condition.target_ref)
+        if target is None or not target.is_alive:
+            return EligibilityFailure(
+                "target_unavailable",
+                "The attached condition has no available target.",
+            )
+        preferred_name = action.preferred_attack_name
+        if actor.pending_multiattack and preferred_name not in {
+            invocation.name for invocation in actor.pending_multiattack[0].options
+        }:
+            return EligibilityFailure(
+                "multiattack_choice_unavailable",
+                "That attack is not available for this Multiattack slot.",
+            )
+        if isinstance(preferred_name, str):
+            definition = actor.creature.stat_block_actions.get(preferred_name)
+            if definition is not None:
+                runtime_issue = stat_block_action_runtime_issue(definition)
+                if runtime_issue is not None:
+                    return EligibilityFailure(
+                        "unsupported_stat_block_capability",
+                        runtime_issue,
+                    )
+                if not stat_block_action_resource_available(
+                    actor.creature,
+                    preferred_name,
+                ):
+                    return EligibilityFailure(
+                        "resource_spent",
+                        f"{preferred_name} is not available.",
+                    )
+        source = select_attack_source(
+            actor.creature,
+            state.item_templates,
+            preferred_attack_type=action.preferred_attack_type,
+            preferred_attack_name=preferred_name,
+        )
+        if source is None:
+            return EligibilityFailure(
+                "attack_source_unavailable",
+                "The selected attack source is no longer available.",
+            )
+        range_band = attack_range_band_squares(
+            actor.creature,
+            state.item_templates,
+            state.definition.grid,
+            preferred_attack_type=action.preferred_attack_type,
+            preferred_attack_name=preferred_name,
+        )
+        if not range_band.contains(
+            creature_distance(state, actor_ref, condition.target_ref)
+        ):
+            return EligibilityFailure(
+                "target_out_of_range",
+                "The condition attachment is out of range.",
+            )
+        if not cover_between(
+            state,
+            actor_ref,
+            condition.target_ref,
+        ).has_line_of_effect:
+            return EligibilityFailure(
+                "target_has_total_cover",
+                "The condition attachment has Total Cover.",
+            )
         return None

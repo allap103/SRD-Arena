@@ -72,6 +72,29 @@ def test_barbarian_policy_conserves_rage_without_an_opponent() -> None:
     assert selected.kind == "wait"
 
 
+def test_barbarian_policy_attacks_its_web_without_a_living_opponent() -> None:
+    """Remove a persistent attachment instead of waiting for an opponent."""
+
+    selector = BarbarianAllyActionSelector()
+    state = Mock()
+    state.current_decision.return_value.kind = "turn"
+    actions = (
+        EncounterAction(
+            "Attack Web - Maul",
+            "attack_condition",
+            "barbarian",
+            preferred_attack_type="melee",
+            preferred_attack_name="Maul",
+        ),
+        EncounterAction("Wait", "wait"),
+    )
+
+    selected = selector.select_action(state, "barbarian", actions)
+
+    assert selected.kind == "attack_condition"
+    assert selected.preferred_attack_name == "Maul"
+
+
 def test_barbarian_policy_uses_free_rage_extension_before_pursuit() -> None:
     """Keep an active Rage alive before spending movement or an Action."""
 

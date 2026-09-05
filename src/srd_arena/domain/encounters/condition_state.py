@@ -209,6 +209,26 @@ def remove_condition_from_source(
         ]
 
 
+def remove_condition_application(
+    state: EncounterState,
+    condition_id: str,
+) -> None:
+    """Remove exactly one sourced condition application and its relationships."""
+
+    removed_ids = {
+        applied.id for applied in state.conditions if applied.id == condition_id
+    }
+    state.conditions = [
+        applied for applied in state.conditions if applied.id not in removed_ids
+    ]
+    if removed_ids:
+        state.relationships = [
+            relationship
+            for relationship in state.relationships
+            if relationship.identity.parent_id not in removed_ids
+        ]
+
+
 def condition_sources_for(
     state: EncounterState,
     creature_ref: CreatureRef,
