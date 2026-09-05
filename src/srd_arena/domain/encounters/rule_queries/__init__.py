@@ -55,6 +55,7 @@ from .obstructions import (
 from .permissions import (
     TargetingKind,
     action_compatibility,
+    movement_provokes_opportunity_attacks,
     reaction_eligibility,
     target_eligibility,
 )
@@ -107,6 +108,7 @@ __all__ = [
     "invocation_prohibitions",
     "invocation_start_checks",
     "movement_budget",
+    "movement_provokes_opportunity_attacks",
     "movement_step_cost",
     "reaction_eligibility",
     "reset_damage_reductions",

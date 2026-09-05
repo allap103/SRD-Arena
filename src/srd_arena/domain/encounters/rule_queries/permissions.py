@@ -10,6 +10,7 @@ from srd_arena.domain.effects.rule_effects import (
     ActionEconomyKind,
     ActionEconomyRestriction,
     ActionProhibition,
+    OpportunityAttackPrevention,
     ReactionProhibition,
 )
 
@@ -18,7 +19,7 @@ from ..encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
-from .context import ConditionRuleQueryContext
+from .context import ConditionRuleQueryContext, EffectQueryContext
 from .defenses import condition_suppressions
 from .models import SourcedEligibilityFailure
 from .providers import ongoing_rule_effects
@@ -30,6 +31,34 @@ class TargetingKind(StrEnum):
     ATTACK = "attack"
     DAMAGING_ABILITY = "damaging_ability"
     DAMAGING_MAGICAL_EFFECT = "damaging_magical_effect"
+
+
+def movement_provokes_opportunity_attacks(
+    state: EffectQueryContext,
+    creature_ref: CreatureRef,
+) -> bool:
+    """Return whether the creature's voluntary movement can trigger reactions.
+
+    >>> from types import SimpleNamespace
+    >>> from srd_arena.domain.effects.rule_effects import OpportunityAttackPrevention
+    >>> source = SimpleNamespace(definition_id="disengage")
+    >>> effect = SimpleNamespace(
+    ...     identity=SimpleNamespace(id="effect-1", source=source),
+    ...     target_refs=("hero",),
+    ...     rule_effects=(OpportunityAttackPrevention(),),
+    ... )
+    >>> state = SimpleNamespace(ongoing_effects=[effect])
+    >>> movement_provokes_opportunity_attacks(state, "hero")
+    False
+    """
+
+    return not any(
+        isinstance(rule_effect, OpportunityAttackPrevention)
+        for _state_id, _source, rule_effect in ongoing_rule_effects(
+            state,
+            creature_ref,
+        )
+    )
 
 
 def target_eligibility(

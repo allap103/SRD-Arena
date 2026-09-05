@@ -51,12 +51,21 @@ def special_action_candidates(
     ... ):
     ...     actions = special_action_candidates(state, "hero")
     >>> [(action.label, action.kind) for action in actions]
-    [('Drop Prone', 'drop_prone'), ('Wait', 'wait')]
+    [('Drop Prone', 'drop_prone'), ('Disengage', 'disengage'), ('Wait', 'wait')]
     """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     actions.extend(prone_action_candidates(state, creature_ref))
+    actions.append(
+        EncounterAction(
+            "Disengage",
+            "disengage",
+            id=f"{creature_ref}-disengage",
+            creature_ref=creature_ref,
+            cost=ActionCost(action=1),
+        )
+    )
     actions.extend(available_feature_actions(state, actor.creature))
     actions.extend(available_spell_actions(state, actor.creature))
     actions.extend(effect_retarget_actions(state, creature_ref))

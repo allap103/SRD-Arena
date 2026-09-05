@@ -4,13 +4,23 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...attack_economy import consume_action
+from srd_arena.domain.effects.rule_effects import OpportunityAttackPrevention
+from srd_arena.domain.effects.runtime import (
+    EffectPolarity,
+    EffectSource,
+    EffectSourceKind,
+    OngoingEffect,
+    RuntimeStateIdentity,
+    UntilTurnEnd,
+)
+
+from ...attack_economy import clear_attack_action, consume_action
 from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
 from ...spatial import creatures_are_adjacent
-from ...state_runtime import create_event
+from ...state_runtime import create_event, next_runtime_origin_id
 from ..effect_retargeting import execute_effect_retarget
 from ..rejections import reject_action
 
@@ -25,7 +35,7 @@ def execute_standard_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Execute rouse/wait actions and report whether this handler recognized one.
+    """Execute encounter-native actions and report whether one was recognized.
 
     >>> from types import SimpleNamespace
     >>> actor = SimpleNamespace(creature=SimpleNamespace(name="Hero"))
@@ -46,7 +56,49 @@ def execute_standard_action(
     actor = state.creatures[decision.creature_ref]
     if execute_effect_retarget(state, action, progress, action_id):
         return True
-    if action.kind == "rouse_spell_target":
+    if action.kind == "disengage":
+        consume_action(state, allow_magic=False)
+        clear_attack_action(state.active_creature_state)
+        effect_id = next_runtime_origin_id(state)
+        state.ongoing_effects.append(
+            OngoingEffect(
+                identity=RuntimeStateIdentity(
+                    id=effect_id,
+                    source=EffectSource(
+                        EffectSourceKind.ACTION,
+                        "disengage",
+                        applied_by_ref=decision.creature_ref,
+                        label="Disengage",
+                        origin_id=action_id,
+                    ),
+                ),
+                target_refs=(decision.creature_ref,),
+                duration=UntilTurnEnd(
+                    decision.creature_ref,
+                    state.round.number,
+                ),
+                polarity=EffectPolarity.BENEFICIAL,
+                label="Disengage",
+                rule_effects=(OpportunityAttackPrevention(),),
+            )
+        )
+        progress.messages.append(
+            (
+                "system",
+                f"{actor.creature.name} disengages and no longer provokes "
+                "Opportunity Attacks this turn.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "action_resolved",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"kind": "disengage", "effect_id": effect_id},
+            )
+        )
+    elif action.kind == "rouse_spell_target":
         if not isinstance(action.value, str):
             reject_action(
                 state,

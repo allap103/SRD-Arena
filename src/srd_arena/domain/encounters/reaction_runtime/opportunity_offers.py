@@ -22,6 +22,7 @@ from ..encounter_models.resolution import EncounterProgress
 from ..participants import creature_controller, creatures_are_opponents
 from ..rule_queries.permissions import (
     TargetingKind,
+    movement_provokes_opportunity_attacks,
     reaction_eligibility,
     target_eligibility,
 )
@@ -50,7 +51,9 @@ def queue_opportunity_attack(
     """Push the first eligible external Opportunity Attack decision.
 
     >>> from types import SimpleNamespace
-    >>> state = SimpleNamespace(creatures={"hero": SimpleNamespace()})
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace()}, ongoing_effects=[]
+    ... )
     >>> queue_opportunity_attack(
     ...     state, mover_ref="hero", action_id="move-1", direction="right",
     ...     from_position=Position(0, 0), to_position=Position(1, 0),
@@ -60,6 +63,9 @@ def queue_opportunity_attack(
     ... )
     False
     """
+
+    if not movement_provokes_opportunity_attacks(state, mover_ref):
+        return False
 
     reactors = [
         (creature_ref, creature_state)

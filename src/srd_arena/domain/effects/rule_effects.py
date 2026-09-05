@@ -237,6 +237,13 @@ class ReactionProhibition:
 
 
 @dataclass(frozen=True)
+class OpportunityAttackPrevention:
+    """Prevent a creature's movement from provoking Opportunity Attacks."""
+
+    pass
+
+
+@dataclass(frozen=True)
 class ActionEconomyRestriction:
     """Require a turn to choose between the listed action-economy kinds."""
 
@@ -333,6 +340,7 @@ type RuntimeRuleEffect = (
     | AttackHitDamage
     | AttackHitRetaliation
     | ReactionProhibition
+    | OpportunityAttackPrevention
     | ActionEconomyRestriction
     | ActionProhibition
     | CompelledTurn
@@ -447,6 +455,8 @@ def serialize_runtime_rule_effect(
             "type": "reaction_prohibition",
             "reaction_kinds": sorted(effect.reaction_kinds),
         }
+    if isinstance(effect, OpportunityAttackPrevention):
+        return {"type": "opportunity_attack_prevention"}
     if isinstance(effect, ActionEconomyRestriction):
         return {
             "type": "action_economy_restriction",
