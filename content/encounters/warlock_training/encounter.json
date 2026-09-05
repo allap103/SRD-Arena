@@ -33,7 +33,7 @@
       "team_id": "heroes",
       "controller": "scripted",
       "behavior": {
-        "type": "chase"
+        "type": "barbarian_ally"
       }
     },
     {

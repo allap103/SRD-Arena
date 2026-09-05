@@ -17,6 +17,7 @@ from .encounter_models.state import (
     EncounterCreatureState,
 )
 from .participants import creatures_are_opponents
+from .scripted_policies import BarbarianAllyActionSelector
 from .spatial import creature_distance
 from .state_runtime import living_creature_refs
 
@@ -166,8 +167,16 @@ def build_action_selector(
     >>> participant.behavior.type = "wait"
     >>> isinstance(build_action_selector("scripted", participant), ScriptedActionSelector)
     True
+    >>> participant.behavior.type = "barbarian_ally"
+    >>> isinstance(
+    ...     build_action_selector("scripted", participant),
+    ...     BarbarianAllyActionSelector,
+    ... )
+    True
     """
 
     if controller == "external":
         return ExternalActionSelector()
+    if participant.behavior.type == "barbarian_ally":
+        return BarbarianAllyActionSelector()
     return ScriptedActionSelector(participant)

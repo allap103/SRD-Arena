@@ -167,6 +167,9 @@ def test_scripted_barbarian_resolves_savage_attacker_through_same_decision() -> 
     assert creature_controller(state, "barbarian") == "scripted"
     initial_health = state.creatures["ogre_target"].creature.get_health()
 
+    rage = session.advance_one_automatic_action()
+    assert any(event.type == "feature_used" for event in rage.events)
+
     opened = session.advance_one_automatic_action()
     assert state.current_decision().kind == "reroll_dice"
     assert any(event.type == "attack_pending" for event in opened.events)
@@ -177,5 +180,5 @@ def test_scripted_barbarian_resolves_savage_attacker_through_same_decision() -> 
 
     selected = session.advance_one_automatic_action()
     assert state.current_decision().kind == "turn"
-    assert state.creatures["ogre_target"].creature.get_health() == initial_health - 16
+    assert state.creatures["ogre_target"].creature.get_health() == initial_health - 18
     assert any(event.type == "damage_roll_selected" for event in selected.events)

@@ -52,8 +52,11 @@ class AttackRangeBand:
         return "disadvantage" if distance > self.normal else "normal"
 
 
-def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:
-    """Return the first equipped item that defines a weapon attack.
+def equipped_weapons(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+) -> tuple[Item, ...]:
+    """Return distinct equipped items that define weapon attacks.
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.equipment import WeaponStat
@@ -64,17 +67,20 @@ def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | 
     >>> attacker = SimpleNamespace(
     ...     equipment=SimpleNamespace(right_hand="sword", left_hand=None)
     ... )
-    >>> equipped_weapon(attacker, {"sword": sword}) is sword
+    >>> equipped_weapons(attacker, {"sword": sword}) == (sword,)
     True
     """
+    weapons: list[Item] = []
+    seen_item_ids: set[str] = set()
     for slot in ("right_hand", "left_hand"):
         item_id = getattr(attacker.equipment, slot)
-        if item_id is None:
+        if item_id is None or item_id in seen_item_ids:
             continue
         item = items_by_id.get(item_id)
         if item is not None and item.weapon_stat is not None:
-            return item
-    return None
+            weapons.append(item)
+            seen_item_ids.add(item_id)
+    return tuple(weapons)
 
 
 def has_free_hand(creature: Creature) -> bool:
@@ -282,9 +288,9 @@ def attack_sources(
     >>> attack_sources(attacker, {})
     []
     """
-    weapon = equipped_weapon(attacker, items_by_id)
-    if weapon is not None:
-        return [weapon_attack_source(attacker, weapon)]
+    weapons = equipped_weapons(attacker, items_by_id)
+    if weapons:
+        return [weapon_attack_source(attacker, weapon) for weapon in weapons]
     return [
         stat_block_attack_source(action)
         for action in attacker.stat_block_actions.values()
