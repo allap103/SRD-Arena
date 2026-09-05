@@ -81,3 +81,49 @@ def test_disengage_expires_at_the_end_of_the_creatures_turn() -> None:
         effect.identity.source.definition_id == "disengage"
         for effect in state.ongoing_effects
     )
+
+
+def test_nimble_escape_grants_disengage_as_a_bonus_action() -> None:
+    session = Session(load_encounter_directory(ENCOUNTER_DIR))
+    session._read()
+    state = session.encounter_state
+    assert state is not None
+    state.turn.index = state.initiative_order.index("red_blade")
+    goblin = state.creatures["red_blade"]
+    fighter = state.creatures["champion_2"]
+    goblin.position.x, goblin.position.y = 3, 3
+    fighter.position.x, fighter.position.y = 3, 4
+
+    options = session._read().action_options
+    nimble_disengage = next(
+        option for option in options if option.label == "Nimble Escape  Disengage"
+    )
+    nimble_hide = next(
+        option for option in options if option.label == "Nimble Escape  Hide"
+    )
+
+    assert nimble_disengage.enabled is True
+    assert nimble_disengage.cost.action == 0
+    assert nimble_disengage.cost.bonus_action == 1
+    assert nimble_hide.availability == "unimplemented"
+    assert nimble_hide.eligibility.failures[0].code == "unsupported_standard_action"
+
+    nimble_action = next(
+        action
+        for action in state.available_actions()
+        if action.id == nimble_disengage.id
+    )
+    choose_advertised_action(session, nimble_action)
+
+    assert state.active_actions_remaining == 1
+    assert state.active_bonus_action_available is False
+    move = next(
+        action
+        for action in state.available_actions()
+        if action.kind == "move" and action.value == "up"
+    )
+    moved = choose_advertised_action(session, move)
+
+    assert (goblin.position.x, goblin.position.y) == (3, 2)
+    assert fighter.reaction_available is True
+    assert not any(event.type == "trigger_opened" for event in moved.events)

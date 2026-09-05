@@ -9,6 +9,7 @@ from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     Creature,
     SavingThrowActionDefinition,
+    StandardActionGrantDefinition,
 )
 
 from ...encounter_models.actions import (
@@ -45,6 +46,29 @@ def stat_block_action_candidates(
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     for definition in actor.creature.stat_block_actions.values():
+        if isinstance(definition, StandardActionGrantDefinition):
+            cost = (
+                ActionCost(bonus_action=1)
+                if definition.economy == "bonus_action"
+                else ActionCost(action=1)
+            )
+            source_slug = definition.name.lower().replace(" ", "-")
+            actions.extend(
+                EncounterAction(
+                    f"{display_name(actor.creature, definition.name)}  "
+                    f"{granted_action.replace('_', ' ').title()}",
+                    granted_action,
+                    id=(
+                        f"{creature_ref}-stat-block-{source_slug}-"
+                        f"{granted_action.replace('_', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    preferred_attack_name=definition.name,
+                    cost=cost,
+                )
+                for granted_action in definition.actions
+            )
+            continue
         if not isinstance(
             definition,
             (AutomaticActionDefinition, SavingThrowActionDefinition),

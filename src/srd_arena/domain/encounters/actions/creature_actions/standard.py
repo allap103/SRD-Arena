@@ -57,8 +57,11 @@ def execute_standard_action(
     if execute_effect_retarget(state, action, progress, action_id):
         return True
     if action.kind == "disengage":
-        consume_action(state, allow_magic=False)
-        clear_attack_action(state.active_creature_state)
+        if action.cost.bonus_action:
+            state.active_bonus_action_available = False
+        else:
+            consume_action(state, allow_magic=False)
+            clear_attack_action(state.active_creature_state)
         effect_id = next_runtime_origin_id(state)
         state.ongoing_effects.append(
             OngoingEffect(

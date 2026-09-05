@@ -33,6 +33,7 @@ from srd_arena.content.creatures.actions.schema import (
     AttackCapabilitySchema,
     CapabilitySchema,
     SavingThrowActionResolutionSchema,
+    StandardActionGrantCapabilitySchema,
     UsesResourceSchema,
 )
 from srd_arena.domain.capabilities import (
@@ -99,6 +100,12 @@ def test_bundled_bestiary_loads_as_typed_records() -> None:
     [shortbow_requirement] = shortbow_conditional_damage.requirements
     assert isinstance(shortbow_requirement, AttackRollModeRequirementSchema)
     assert shortbow_requirement.mode == "advantage"
+    [nimble_escape] = goblin.bonus
+    assert isinstance(
+        nimble_escape.capability,
+        StandardActionGrantCapabilitySchema,
+    )
+    assert nimble_escape.capability.actions == ["disengage", "hide"]
     multiattack = aboleth.action[0].capability
     assert isinstance(multiattack, MultiattackCapabilitySchema)
     assert multiattack.plans[0].steps[0].times == 2

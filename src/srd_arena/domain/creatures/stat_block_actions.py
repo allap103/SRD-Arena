@@ -96,9 +96,19 @@ class SpellcastingActionDefinition:
     resource_pool: ResourcePoolDefinition | None = None
 
 
+@dataclass(frozen=True)
+class StandardActionGrantDefinition:
+    """Let a stat-block entry grant universal actions with its own economy."""
+
+    name: str
+    actions: tuple[Literal["dash", "disengage", "dodge", "help", "hide"], ...]
+    economy: Literal["action", "bonus_action"]
+
+
 StatBlockActionDefinition = (
     AttackActionDefinition
     | SavingThrowActionDefinition
     | AutomaticActionDefinition
     | SpellcastingActionDefinition
+    | StandardActionGrantDefinition
 )

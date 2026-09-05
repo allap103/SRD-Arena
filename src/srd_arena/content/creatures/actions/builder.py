@@ -57,9 +57,23 @@ def build_stat_block_actions(
     if stat_block is None:
         return {}
     definitions: dict[str, domain.StatBlockActionDefinition] = {}
+    for action in stat_block.bonus:
+        capability = action.capability
+        if isinstance(capability, schema.StandardActionGrantCapabilitySchema):
+            definitions[action.name] = domain.StandardActionGrantDefinition(
+                name=action.name,
+                actions=tuple(capability.actions),
+                economy="bonus_action",
+            )
     for action in stat_block.action:
         capability = action.capability
-        if isinstance(capability, schema.AttackCapabilitySchema):
+        if isinstance(capability, schema.StandardActionGrantCapabilitySchema):
+            definitions[action.name] = domain.StandardActionGrantDefinition(
+                name=action.name,
+                actions=tuple(capability.actions),
+                economy="action",
+            )
+        elif isinstance(capability, schema.AttackCapabilitySchema):
             definitions[action.name] = _attack_definition(action, capability)
         elif isinstance(capability, schema.CapabilitySchema):
             resolution = capability.resolution

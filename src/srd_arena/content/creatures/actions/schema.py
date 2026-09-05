@@ -170,7 +170,20 @@ class SpellcastingCapabilitySchema(CapabilitySchemaModel):
     shared_resource: ActionResourceSchema | None = None
 
 
+StandardActionKind = Literal["dash", "disengage", "dodge", "help", "hide"]
+
+
+class StandardActionGrantCapabilitySchema(CapabilitySchemaModel):
+    """Grant one of the listed universal actions through a stat-block entry."""
+
+    type: Literal["standard_action_grant"] = "standard_action_grant"
+    actions: list[StandardActionKind] = Field(min_length=1)
+
+
 NonMultiattackCapabilitySchema = Annotated[
-    AttackCapabilitySchema | CapabilitySchema | SpellcastingCapabilitySchema,
+    AttackCapabilitySchema
+    | CapabilitySchema
+    | SpellcastingCapabilitySchema
+    | StandardActionGrantCapabilitySchema,
     Field(discriminator="type"),
 ]

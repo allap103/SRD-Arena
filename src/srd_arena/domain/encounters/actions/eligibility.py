@@ -25,6 +25,7 @@ from .eligibility_rules.models import (
     EligibilityRule,
 )
 from .eligibility_rules.spells import SpellActionRule, SpellTargetSelectionRule
+from .eligibility_rules.standard_actions import StandardActionRule
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -35,6 +36,7 @@ ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
     ResourceRule(),
     MovementRule(),
     ProneActionRule(),
+    StandardActionRule(),
     AttackRule(),
     GrappleRule(),
     StatBlockActionRule(),
@@ -79,6 +81,7 @@ __all__ = [
     "ResourceRule",
     "SpellActionRule",
     "SpellTargetSelectionRule",
+    "StandardActionRule",
     "StatBlockActionRule",
     "action_eligibility",
 ]

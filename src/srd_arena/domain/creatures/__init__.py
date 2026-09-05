@@ -35,6 +35,7 @@ from .stat_block_actions import (
     SavingThrowActionDefinition,
     SpellcastingActionDefinition,
     SpellOption,
+    StandardActionGrantDefinition,
     StatBlockActionDefinition,
 )
 from .statistics import CreatureStatistics
@@ -69,6 +70,7 @@ __all__ = [
     "SpellOption",
     "Spellcasting",
     "SpellcastingActionDefinition",
+    "StandardActionGrantDefinition",
     "StatBlockActionDefinition",
     "can_grapple",
     "footprint_width",

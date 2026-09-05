@@ -7,6 +7,7 @@ from .schema import (
     NonMultiattackCapabilitySchema,
     SavingThrowActionResolutionSchema,
     SpellcastingCapabilitySchema,
+    StandardActionGrantCapabilitySchema,
 )
 
 __all__ = [
@@ -16,4 +17,5 @@ __all__ = [
     "NonMultiattackCapabilitySchema",
     "SavingThrowActionResolutionSchema",
     "SpellcastingCapabilitySchema",
+    "StandardActionGrantCapabilitySchema",
 ]
