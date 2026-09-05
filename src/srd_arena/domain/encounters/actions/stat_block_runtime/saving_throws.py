@@ -34,6 +34,7 @@ from ...state_combat import (
     automatic_save_failure_provider_ids_for,
 )
 from ...state_runtime import create_event
+from ..condition_effects import apply_sourced_condition_effect
 from ..d20_roll_modifiers import (
     clear_d20_roll_modes,
     consume_d20_roll_mode,
@@ -167,16 +168,25 @@ def resolve_saving_throw_stat_block_action(
                 target_ref,
             ),
         )
-        non_damage_effects = (*effects, *definition.always)
-        if any(not isinstance(effect, DamageEffect) for effect in non_damage_effects):
-            unsupported = next(
-                effect
-                for effect in non_damage_effects
-                if not isinstance(effect, DamageEffect)
-            )
-            raise NotImplementedError(
-                f"Saving-throw effect '{type(unsupported).__name__}' is not executable."
-            )
+        applied_conditions: list[str] = []
+        for effect in (*effects, *definition.always):
+            if isinstance(effect, DamageEffect):
+                continue
+            if not isinstance(effect, ConditionEffect):
+                raise NotImplementedError(
+                    f"Saving-throw effect '{type(effect).__name__}' is not executable."
+                )
+            if apply_sourced_condition_effect(
+                state,
+                source_ref=creature_ref,
+                target_ref=target_ref,
+                effect=effect,
+                progress=progress,
+                origin_id=action_id,
+                definition_id=definition.name,
+                originating_action="stat_block",
+            ):
+                applied_conditions.append(effect.condition)
         always_damage_resolution = apply_damage_effects(
             target,
             definition.always,
@@ -209,6 +219,7 @@ def resolve_saving_throw_stat_block_action(
                     *damage_resolution.details,
                     *always_damage_resolution.details,
                 ],
+                "applied_conditions": applied_conditions,
             }
         )
         if target.get_health() <= 0:

@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.capabilities import ConditionRequirement, CreatureTypeRequirement
+from srd_arena.domain.capabilities import (
+    ConditionRequirement,
+    CreatureTypeRequirement,
+    SizeRequirement,
+)
+from srd_arena.domain.creatures import size_rank
 from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.geometry import Position
 
@@ -261,6 +266,23 @@ def target_requirement_failure(
     """
 
     for requirement in requirements:
+        if isinstance(requirement, SizeRequirement):
+            target_size = state.creatures[target_ref].creature.size
+            if requirement.maximum is not None and size_rank(target_size) > size_rank(
+                requirement.maximum
+            ):
+                return EligibilityFailure(
+                    "target_size_required",
+                    f"The target must be {requirement.maximum} size or smaller.",
+                )
+            if requirement.minimum is not None and size_rank(target_size) < size_rank(
+                requirement.minimum
+            ):
+                return EligibilityFailure(
+                    "target_size_required",
+                    f"The target must be {requirement.minimum} size or larger.",
+                )
+            continue
         if isinstance(requirement, CreatureTypeRequirement):
             creature_type = state.creatures[
                 target_ref

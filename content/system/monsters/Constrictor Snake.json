@@ -84,7 +84,14 @@
         "type": "capability",
         "target": {
           "type": "creature",
-          "range_feet": 5
+          "range_feet": 5,
+          "line_of_sight": true,
+          "requirements": [
+            {
+              "type": "size",
+              "maximum": "M"
+            }
+          ]
         },
         "resolution": {
           "type": "saving_throw",
