@@ -462,6 +462,7 @@ def finalize_damage_reroll(
             request.target_ref,
             amount,
             damage_type,
+            critical_hit=request.attack.critical_hit,
         ),
     )
     resolve_attack_lifecycle(

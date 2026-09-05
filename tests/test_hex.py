@@ -9,7 +9,9 @@ from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackHitDamage, RollAdjustment
 from srd_arena.domain.effects.runtime import EffectTag, OngoingEffectKind, Rounds
+from srd_arena.domain.encounters.defeat import resolve_creature_defeat
 from srd_arena.domain.encounters.effect_lifecycle.removal import remove_ongoing_effects
+from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.rule_queries.damage_riders import attack_hit_damage
 from srd_arena.domain.encounters.rule_queries.rolls import roll_modifiers
 from srd_arena.domain.encounters.state_combat import apply_combat_damage
@@ -170,6 +172,12 @@ def test_hex_retargeting_appears_only_on_a_later_turn_and_moves_the_mark() -> No
 
     target = state.creatures["goblin_1"].creature
     apply_combat_damage(state, "goblin_1", target.get_health())
+    resolve_creature_defeat(
+        state,
+        "goblin_1",
+        defeated_by_ref="warlock",
+        progress=EncounterProgress(),
+    )
     assert not any(
         option.kind == "retarget_effect" for option in session._read().action_options
     )

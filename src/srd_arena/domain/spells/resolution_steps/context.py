@@ -118,6 +118,8 @@ class SpellResolutionEnvironment(Protocol):
         target_ref: str,
         amount: int,
         damage_type: str | None,
+        *,
+        critical_hit: bool = False,
     ) -> int:
         """Apply effect-adjusted damage and return the amount dealt."""
 

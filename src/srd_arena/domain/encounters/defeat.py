@@ -8,6 +8,8 @@ from srd_arena.domain.creatures.feature_rules.warlock import (
     dark_ones_blessing_temporary_hit_points,
 )
 
+from .defeat_prevention import prevent_damage_defeat
+from .effect_lifecycle.retargeting import mark_retargetable_effects_for_defeat
 from .grappling_state import remove_relationships_for_creature
 from .participants import creatures_are_opponents
 from .spatial import creature_distance
@@ -34,10 +36,25 @@ def resolve_creature_defeat(
     """
 
     creature_state = state.creatures[creature_ref]
-    if creature_state.is_alive or creature_ref in state.defeated_creature_refs:
+    if creature_state.is_alive:
+        state.pending_lethal_damage.pop(creature_ref, None)
         return False
+    if creature_ref in state.defeated_creature_refs:
+        return False
+    lethal_damage = state.pending_lethal_damage.pop(creature_ref, None)
+    if lethal_damage is not None and prevent_damage_defeat(
+        state,
+        creature_ref,
+        lethal_damage,
+        progress=progress,
+        action_id=action_id,
+        frame_id=frame_id,
+    ):
+        return False
+    mark_retargetable_effects_for_defeat(state, creature_ref)
     state.defeated_creature_refs.add(creature_ref)
     remove_relationships_for_creature(state, creature_ref)
+    progress.messages.append(("system", f"{creature_state.creature.name} is defeated."))
     progress.events.append(
         create_event(
             state,

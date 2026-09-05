@@ -201,6 +201,8 @@ class EncounterSpellResolutionEnvironment:
         target_ref: str,
         amount: int,
         damage_type: str | None,
+        *,
+        critical_hit: bool = False,
     ) -> int:
         """Apply encounter-adjusted spell damage to one target."""
 
@@ -209,6 +211,7 @@ class EncounterSpellResolutionEnvironment:
             target_ref,
             amount,
             damage_type,
+            critical_hit=critical_hit,
         )
 
     def apply_healing(self, target_ref: str, amount: int) -> int:

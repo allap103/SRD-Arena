@@ -11,6 +11,7 @@ from .defenses import (
     damage_vulnerabilities,
     has_condition_save_advantage,
     reset_damage_reductions,
+    resolve_damage,
     resolve_damage_reduction,
 )
 from .health import apply_healing, effective_maximum_health
@@ -117,6 +118,7 @@ __all__ = [
     "movement_step_cost",
     "reaction_eligibility",
     "reset_damage_reductions",
+    "resolve_damage",
     "resolve_damage_reduction",
     "resolve_invocation_start",
     "roll_modifiers",

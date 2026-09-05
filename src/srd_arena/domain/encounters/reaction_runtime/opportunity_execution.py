@@ -233,6 +233,7 @@ def resolve_automatic_opportunity_attacks(
                 apply_combat_damage,
                 state,
                 mover_ref,
+                critical_hit=attack.critical_hit,
             ),
         )
         resolve_attack_lifecycle(
@@ -438,6 +439,7 @@ def apply_reaction_action(
                 apply_combat_damage,
                 state,
                 target_ref,
+                critical_hit=attack.critical_hit,
             ),
         )
         resolve_attack_lifecycle(

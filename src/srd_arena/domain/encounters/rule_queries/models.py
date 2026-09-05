@@ -26,6 +26,16 @@ class SourcedRuleContribution[T]:
 
 
 @dataclass(frozen=True)
+class DamageResolution:
+    """Separate mitigated damage taken from HP loss capped at current health."""
+
+    requested: int
+    taken: int
+    applied: int
+    damage_type: str | None
+
+
+@dataclass(frozen=True)
 class SetRuleResult[T]:
     """Compose intrinsic values with sourced set-valued contributions."""
 

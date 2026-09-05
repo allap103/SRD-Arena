@@ -128,6 +128,24 @@ class InitiativeEntry:
     total: int
 
 
+@dataclass(frozen=True)
+class LethalDamage:
+    """Retain the complete damage occurrence that reduced a creature to 0 HP."""
+
+    amount: int
+    damage_types: frozenset[str]
+    critical_hit: bool = False
+
+    def __post_init__(self) -> None:
+        if self.amount < 0:
+            raise ValueError("Lethal damage cannot be negative.")
+        object.__setattr__(
+            self,
+            "damage_types",
+            frozenset(value.casefold() for value in self.damage_types),
+        )
+
+
 @dataclass
 class EncounterStateData:
     """Store all mutable aggregate state for one encounter instance.
@@ -155,6 +173,7 @@ class EncounterStateData:
     ongoing_effects: list[OngoingEffect] = field(default_factory=list)
     relationships: list[CreatureRelationship] = field(default_factory=list)
     defeated_creature_refs: set[CreatureRef] = field(default_factory=set)
+    pending_lethal_damage: dict[CreatureRef, LethalDamage] = field(default_factory=dict)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
     dice: DiceRoller = field(default_factory=DiceRoller, repr=False)

@@ -196,8 +196,6 @@ def apply_attack_damage(
             ),
         ]
     )
-    if attack.defender_defeated:
-        attack.messages.append(("system", f"{target_label} is defeated."))
 
 
 def damage_roll_detail(

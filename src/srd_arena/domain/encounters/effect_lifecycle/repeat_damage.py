@@ -36,11 +36,11 @@ def resolve_repeat_failure_damage(
         effect.label or effect.identity.source.definition_id.replace("_", " ").title()
     )
     details: list[dict[str, object]] = []
+    source_ref = effect.identity.source.applied_by_ref
     for damage in repeat_save.failure_damage:
         count_text, separator, sides_text = damage.dice.partition("d")
         if not separator or not count_text.isdigit() or not sides_text.isdigit():
             continue
-        source_ref = effect.identity.source.applied_by_ref
         damage_modifier = (
             roll_modifiers(
                 state,
@@ -92,11 +92,11 @@ def resolve_repeat_failure_damage(
             progress=progress,
         )
         resolve_concentration_damage(state, creature_ref, applied, progress)
-        if progress is not None and not state.creatures[creature_ref].is_alive:
-            resolve_creature_defeat(
-                state,
-                creature_ref,
-                defeated_by_ref=(source_ref if source_ref in state.creatures else None),
-                progress=progress,
-            )
+    if progress is not None and not state.creatures[creature_ref].is_alive:
+        resolve_creature_defeat(
+            state,
+            creature_ref,
+            defeated_by_ref=(source_ref if source_ref in state.creatures else None),
+            progress=progress,
+        )
     return details

@@ -255,6 +255,7 @@ def resolve_attack_action(
             target_ref,
             amount,
             damage_type,
+            critical_hit=outcome.critical_hit,
         ),
     )
     resolve_attack_lifecycle(

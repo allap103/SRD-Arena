@@ -11,6 +11,8 @@ from dataclasses import dataclass
 from enum import StrEnum
 from typing import TYPE_CHECKING, Literal
 
+from srd_arena.domain.rolls.saving_throws import Ability
+
 if TYPE_CHECKING:
     from srd_arena.domain.rolls.dice import DieRoller
 
@@ -199,6 +201,31 @@ class AdjacentAllyAttackAdvantage:
 
 
 @dataclass(frozen=True)
+class DamageTriggeredDefeatSave:
+    """Offer a saving throw when damage would otherwise defeat a creature."""
+
+    ability: Ability
+    base_dc: int
+    damage_multiplier: int = 1
+    hit_points_on_success: int = 1
+    bypass_damage_types: frozenset[str] = frozenset()
+    bypass_critical_hits: bool = False
+
+    def __post_init__(self) -> None:
+        if self.base_dc < 0:
+            raise ValueError("Defeat-save base DC cannot be negative.")
+        if self.damage_multiplier < 0:
+            raise ValueError("Defeat-save damage multiplier cannot be negative.")
+        if self.hit_points_on_success < 1:
+            raise ValueError("A successful defeat save must leave positive Hit Points.")
+        object.__setattr__(
+            self,
+            "bypass_damage_types",
+            frozenset(value.casefold() for value in self.bypass_damage_types),
+        )
+
+
+@dataclass(frozen=True)
 class AttackHitDamage:
     """Add typed dice damage when the effect source hits its target."""
 
@@ -351,6 +378,7 @@ type RuntimeRuleEffect = (
     | GrantedSense
     | RollAdjustment
     | AdjacentAllyAttackAdvantage
+    | DamageTriggeredDefeatSave
     | AttackHitDamage
     | AttackHitRetaliation
     | ReactionProhibition
@@ -454,6 +482,16 @@ def serialize_runtime_rule_effect(
         return {
             "type": "adjacent_ally_attack_advantage",
             "range_feet": effect.range_feet,
+        }
+    if isinstance(effect, DamageTriggeredDefeatSave):
+        return {
+            "type": "damage_triggered_defeat_save",
+            "ability": effect.ability,
+            "base_dc": effect.base_dc,
+            "damage_multiplier": effect.damage_multiplier,
+            "hit_points_on_success": effect.hit_points_on_success,
+            "bypass_damage_types": sorted(effect.bypass_damage_types),
+            "bypass_critical_hits": effect.bypass_critical_hits,
         }
     if isinstance(effect, AttackHitDamage):
         return {

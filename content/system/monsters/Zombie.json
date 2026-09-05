@@ -76,7 +76,27 @@
       "name": "Slam",
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}5 ({@damage 1d8 + 1}) Bludgeoning damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "reach_feet": 5,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "bonus": 1,
+            "damage_type": "bludgeoning"
+          }
+        ]
+      }
     }
   ],
   "environment": [

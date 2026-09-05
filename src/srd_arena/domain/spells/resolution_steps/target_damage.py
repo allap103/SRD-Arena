@@ -35,7 +35,7 @@ def apply_target_damage(
     ... )
     >>> context = SimpleNamespace(
     ...     environment=SimpleNamespace(
-    ...         apply_damage=lambda target_ref, amount, kind: amount
+    ...         apply_damage=lambda target_ref, amount, kind, **kwargs: amount
     ...     )
     ... )
     >>> target = SimpleNamespace(target_ref="goblin", target_label="Goblin")
@@ -59,6 +59,10 @@ def apply_target_damage(
             target.target_ref,
             final_damage,
             damage.damage_type,
+            critical_hit=(
+                roll_outcome.attack_detail is not None
+                and roll_outcome.attack_detail.get("critical_hit") is True
+            ),
         )
         total_applied += applied
         details.append(

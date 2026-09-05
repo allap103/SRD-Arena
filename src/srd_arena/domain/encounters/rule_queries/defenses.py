@@ -19,7 +19,7 @@ from .context import (
     DamageRuleQueryContext,
     EffectQueryContext,
 )
-from .models import SetRuleResult, SourcedRuleContribution
+from .models import DamageResolution, SetRuleResult, SourcedRuleContribution
 from .providers import ongoing_rule_effects
 
 
@@ -201,10 +201,23 @@ def apply_damage(
 ) -> int:
     """Apply immunity, adjustments, resistance, and vulnerability in SRD order."""
 
+    return resolve_damage(state, creature_ref, amount, damage_type).applied
+
+
+def resolve_damage(
+    state: DamageRuleQueryContext,
+    creature_ref: str,
+    amount: int,
+    damage_type: str | None = None,
+) -> DamageResolution:
+    """Resolve damage defenses while retaining damage taken before the HP floor."""
+
+    requested = amount
+    normalized: str | None = None
     if damage_type is not None:
         normalized = damage_type.casefold()
         if normalized in damage_immunities(state, creature_ref).values:
-            return state.creatures[creature_ref].creature.take_damage(0)
+            return DamageResolution(requested, 0, 0, normalized)
         amount = max(
             0,
             amount
@@ -219,7 +232,9 @@ def apply_damage(
             amount //= 2
         if normalized in damage_vulnerabilities(state, creature_ref).values:
             amount *= 2
-    return state.creatures[creature_ref].creature.take_damage(amount)
+    taken = max(amount, 0)
+    applied = state.creatures[creature_ref].creature.take_damage(taken)
+    return DamageResolution(requested, taken, applied, normalized)
 
 
 def reset_damage_reductions(

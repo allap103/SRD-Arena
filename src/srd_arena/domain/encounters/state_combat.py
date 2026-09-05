@@ -11,9 +11,9 @@ from srd_arena.domain.rolls.dice import D20RollMode, combine_roll_modes
 
 from .attack_rules import proximity_attack_roll_mode
 from .effect_lifecycle.removal import _remove_effect_target
-from .effect_lifecycle.retargeting import mark_retargetable_effects_for_defeat
 from .encounter_models.actions import CreatureRef
-from .rule_queries.defenses import apply_damage
+from .encounter_models.state import LethalDamage
+from .rule_queries.defenses import resolve_damage
 from .rule_queries.rolls import roll_modifiers
 from .rule_queries.visibility import creature_can_see_creature
 from .spatial import creature_distance
@@ -27,12 +27,14 @@ def apply_combat_damage(
     creature_ref: CreatureRef,
     amount: int,
     damage_type: str | None = None,
+    *,
+    critical_hit: bool = False,
 ) -> int:
-    """Apply defenses, expire depleted temporary-HP effects, and arm defeat rules."""
+    """Apply defenses and retain context for any resulting defeat resolution."""
 
     creature = state.creatures[creature_ref].creature
     was_alive = creature.get_health() > 0
-    applied = apply_damage(state, creature_ref, amount, damage_type)
+    resolved = resolve_damage(state, creature_ref, amount, damage_type)
     if creature.temporary_hit_points <= 0:
         for effect in tuple(state.ongoing_effects):
             if (
@@ -40,9 +42,22 @@ def apply_combat_damage(
                 and effect.lifecycle.ends_when_temporary_hit_points_depleted
             ):
                 _remove_effect_target(state, effect, creature_ref)
-    if was_alive and creature.get_health() <= 0:
-        mark_retargetable_effects_for_defeat(state, creature_ref)
-    return applied
+    pending = state.pending_lethal_damage.get(creature_ref)
+    if (was_alive and creature.get_health() <= 0) or pending is not None:
+        damage_types = (
+            frozenset({resolved.damage_type})
+            if resolved.damage_type is not None and resolved.taken > 0
+            else frozenset()
+        )
+        state.pending_lethal_damage[creature_ref] = LethalDamage(
+            amount=resolved.taken + (pending.amount if pending is not None else 0),
+            damage_types=damage_types.union(
+                pending.damage_types if pending is not None else ()
+            ),
+            critical_hit=critical_hit
+            or (pending.critical_hit if pending is not None else False),
+        )
+    return resolved.applied
 
 
 def attack_roll_mode_for(
