@@ -1,0 +1,73 @@
+{
+  "id": "hell_hound_pack",
+  "grid": {
+    "width": 12,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "warlock",
+      "name": "Warlock",
+      "character_snapshot": {
+        "build": "warlock",
+        "level": 5
+      },
+      "start": {
+        "x": 3,
+        "y": 3
+      },
+      "team_id": "heroes"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "character_snapshot": {
+        "build": "barbarian",
+        "level": 5
+      },
+      "start": {
+        "x": 3,
+        "y": 5
+      },
+      "team_id": "heroes"
+    },
+    {
+      "id": "hell_hound_1",
+      "name": "Ember",
+      "stat_block": {
+        "name": "Hell Hound",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 3
+      },
+      "team_id": "hounds"
+    },
+    {
+      "id": "hell_hound_2",
+      "name": "Cinder",
+      "stat_block": {
+        "name": "Hell Hound",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 7,
+        "y": 5
+      },
+      "team_id": "hounds"
+    }
+  ],
+  "teams": [
+    {
+      "id": "heroes",
+      "name": "Warlock and Barbarian",
+      "controller": "external"
+    },
+    {
+      "id": "hounds",
+      "name": "Hell Hound Pack",
+      "controller": "external"
+    }
+  ]
+}

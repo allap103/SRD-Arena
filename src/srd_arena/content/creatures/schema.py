@@ -10,6 +10,20 @@ EquipmentSlot = Literal[
     "left_hand",
     "armor",
 ]
+CreatureSize = Literal[
+    "T",
+    "S",
+    "M",
+    "L",
+    "H",
+    "G",
+    "tiny",
+    "small",
+    "medium",
+    "large",
+    "huge",
+    "gargantuan",
+]
 
 
 class CreatureItemReferenceSchema(BaseModel):
@@ -104,6 +118,7 @@ class CreatureSchema(BaseModel):
     name: str | None = None
     description: str = ""
     token_image: str | None = None
+    size: CreatureSize | None = None
     current_health: int | None = Field(default=None, ge=0)
     attributes: AttributesSchema = Field(default_factory=AttributesSchema)
     inventory: list[ItemIdOrReference] = Field(default_factory=list)

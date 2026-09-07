@@ -31,6 +31,7 @@ from .encounter_models.resolution import (
 from .participants import creature_controller
 from .reaction_runtime.damage_rerolls import apply_damage_reroll_action
 from .reaction_runtime.opportunity_execution import apply_reaction_action
+from .reaction_runtime.parry import apply_parry_action
 from .state_runtime import merge_progress
 from .turn_lifecycle import (
     active_turn_creature,
@@ -91,6 +92,7 @@ class EncounterOrchestrator:
         if decision.kind in {
             "reroll_dice",
             "reaction",
+            "parry",
             "grapple_save",
             "forced_movement",
             "initiative_swap",
@@ -122,6 +124,9 @@ class EncounterOrchestrator:
                 action,
                 decision,
             )
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "parry":
+            result = apply_parry_action(state, action, decision)
             return self._finish_decision_execution(state, decision, result)
         if decision.kind == "grapple_save":
             result = apply_grapple_save_action(state, action, decision)

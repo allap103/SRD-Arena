@@ -1,0 +1,38 @@
+{
+  "id": "web_and_constrict",
+  "grid": {"width": 12, "height": 10},
+  "creatures": [
+    {
+      "id": "giant_spider",
+      "name": "Web Weaver",
+      "stat_block": {"name": "Giant Spider", "source": "XMM"},
+      "start": {"x": 1, "y": 1},
+      "team_id": "controllers"
+    },
+    {
+      "id": "constrictor_snake",
+      "name": "Constrictor",
+      "stat_block": {"name": "Constrictor Snake", "source": "XMM"},
+      "start": {"x": 1, "y": 7},
+      "team_id": "controllers"
+    },
+    {
+      "id": "ogre",
+      "name": "Web Target",
+      "stat_block": {"name": "Ogre", "source": "XMM"},
+      "start": {"x": 8, "y": 1},
+      "team_id": "targets"
+    },
+    {
+      "id": "brown_bear",
+      "name": "Constrict Target",
+      "stat_block": {"name": "Brown Bear", "source": "XMM"},
+      "start": {"x": 8, "y": 7},
+      "team_id": "targets"
+    }
+  ],
+  "teams": [
+    {"id": "controllers", "name": "Controllers", "controller": "external"},
+    {"id": "targets", "name": "Targets", "controller": "external"}
+  ]
+}

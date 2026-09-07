@@ -65,6 +65,14 @@ def build_stat_block_actions(
                 actions=tuple(capability.actions),
                 economy="bonus_action",
             )
+    for reaction in stat_block.reaction:
+        capability = reaction.capability
+        if isinstance(capability, schema.ParryReactionCapabilitySchema):
+            definitions[reaction.name] = domain.ParryReactionDefinition(
+                name=reaction.name,
+                armor_class_bonus=capability.armor_class_bonus,
+                trigger_attack_modes=tuple(capability.trigger_attack_modes),
+            )
     for action in stat_block.action:
         capability = action.capability
         if isinstance(capability, schema.StandardActionGrantCapabilitySchema):

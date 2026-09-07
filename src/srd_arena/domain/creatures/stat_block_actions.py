@@ -105,10 +105,20 @@ class StandardActionGrantDefinition:
     economy: Literal["action", "bonus_action"]
 
 
+@dataclass(frozen=True)
+class ParryReactionDefinition:
+    """Raise Armor Class against one triggering attack in the normal loadout."""
+
+    name: str
+    armor_class_bonus: int
+    trigger_attack_modes: tuple[Literal["melee", "ranged"], ...]
+
+
 StatBlockActionDefinition = (
     AttackActionDefinition
     | SavingThrowActionDefinition
     | AutomaticActionDefinition
     | SpellcastingActionDefinition
     | StandardActionGrantDefinition
+    | ParryReactionDefinition
 )

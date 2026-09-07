@@ -9,6 +9,7 @@ from ..encounter_models.actions import EncounterAction
 from ..participants import creature_controller
 from ..reaction_runtime.damage_rerolls import reroll_damage_actions
 from ..reaction_runtime.opportunity_offers import reaction_actions
+from ..reaction_runtime.parry import parry_actions
 from .d20_roll_modifiers import d20_roll_modifier_actions
 from .forced_movement_choices import forced_movement_actions
 from .grapple_saves import grapple_save_actions
@@ -89,6 +90,8 @@ def decision_actions(state: EncounterState) -> list[EncounterAction]:
         return reroll_damage_actions(state)
     if decision.kind == "reaction":
         return reaction_actions(state)
+    if decision.kind == "parry":
+        return parry_actions(state)
     if decision.kind == "grapple_save":
         return grapple_save_actions(state)
     if decision.kind == "forced_movement":

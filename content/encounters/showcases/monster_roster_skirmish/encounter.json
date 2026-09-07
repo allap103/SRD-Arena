@@ -1,0 +1,76 @@
+{
+  "id": "monster_roster_skirmish",
+  "grid": {"width": 16, "height": 12},
+  "creatures": [
+    {
+      "id": "warlock",
+      "name": "Warlock",
+      "character_snapshot": {"build": "warlock", "level": 5},
+      "start": {"x": 2, "y": 4},
+      "team_id": "heroes",
+      "controller": "external"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "character_snapshot": {"build": "barbarian", "level": 5},
+      "start": {"x": 2, "y": 7},
+      "team_id": "heroes",
+      "behavior": {"type": "barbarian_ally"}
+    },
+    {
+      "id": "bandit",
+      "name": "Bandit",
+      "stat_block": {"name": "Bandit", "source": "XMM"},
+      "start": {"x": 12, "y": 1},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    },
+    {
+      "id": "goblin",
+      "name": "Goblin Warrior",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {"name": "Goblin Warrior", "source": "XMM"},
+      "start": {"x": 13, "y": 3},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    },
+    {
+      "id": "wolf",
+      "name": "Wolf",
+      "stat_block": {"name": "Wolf", "source": "XMM"},
+      "start": {"x": 11, "y": 4},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    },
+    {
+      "id": "skeleton",
+      "name": "Skeleton",
+      "token_image": "tokens/skeleton-warrior.png",
+      "stat_block": {"name": "Skeleton", "source": "XMM"},
+      "start": {"x": 13, "y": 6},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    },
+    {
+      "id": "zombie",
+      "name": "Zombie",
+      "stat_block": {"name": "Zombie", "source": "XMM"},
+      "start": {"x": 11, "y": 8},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    },
+    {
+      "id": "animated_armor",
+      "name": "Animated Armor",
+      "stat_block": {"name": "Animated Armor", "source": "XMM"},
+      "start": {"x": 13, "y": 9},
+      "team_id": "monsters",
+      "behavior": {"type": "chase"}
+    }
+  ],
+  "teams": [
+    {"id": "heroes", "name": "Warlock and Barbarian", "controller": "scripted"},
+    {"id": "monsters", "name": "Monster Roster", "controller": "scripted"}
+  ]
+}

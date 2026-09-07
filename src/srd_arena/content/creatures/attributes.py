@@ -91,6 +91,21 @@ def build_creature_size(
     'L'
     """
 
+    if schema.size is not None:
+        selected = normalize_size(schema.size)
+        if stat_block is not None:
+            authored_sizes = (
+                stat_block.size
+                if isinstance(stat_block.size, list)
+                else [stat_block.size]
+            )
+            permitted = {normalize_size(size) for size in authored_sizes}
+            if selected not in permitted:
+                raise ValueError(
+                    f"Size {selected} is not permitted by "
+                    f"{stat_block.public_name}'s stat block."
+                )
+        return selected
     if stat_block is not None:
         return normalize_size(stat_block.primary_size)
     return _normalize_size_value(schema.metadata.get("size"))

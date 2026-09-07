@@ -52,6 +52,7 @@ from ..state_combat import (
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
 from .damage_rerolls import open_damage_reroll_decision
+from .parry import open_parry_decision
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -400,6 +401,28 @@ def apply_reaction_action(
                 for contribution in attack_hit_damage(state, reactor_ref, target_ref)
             ),
         )
+        if open_parry_decision(
+            state,
+            attack=attack,
+            attacker_ref=reactor_ref,
+            target_ref=target_ref,
+            attacker_label=reactor_label,
+            target_label=target_label,
+            attack_name=attack.weapon_name,
+            attacks_remaining=state.active_attacks_remaining,
+            action_id=resolved_action_id,
+            progress=progress,
+            continuation=CloseParentDecision(
+                frame_id=decision.id,
+                action_id=resolved_action_id,
+            ),
+            reaction_attack=True,
+        ):
+            return DecisionExecutionResult(
+                progress=progress,
+                action_id=resolved_action_id,
+                completed=False,
+            )
         reroll_rule = matching_damage_reroll_rule(
             reactor.creature,
             attack,

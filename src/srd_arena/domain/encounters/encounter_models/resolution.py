@@ -169,6 +169,35 @@ class DamageRerollRequest(DecisionRequest):
     alternate_damage_roll: DicePoolResult | None = None
 
 
+@dataclass
+class ParryRequest(DecisionRequest):
+    """A resolved hit waiting for its target's optional Parry reaction."""
+
+    action_id: str
+    attacker_ref: CreatureRef
+    target_ref: CreatureRef
+    attacker_label: str
+    target_label: str
+    attack_name: str | None
+    attacks_remaining: int
+    attack: AttackOutcome
+    reaction_name: str
+    armor_class_bonus: int
+    base_target_armor_class: int
+    on_hit_feature_ids: tuple[str, ...] = ()
+    reaction_attack: bool = False
+
+    @property
+    def would_prevent_hit(self) -> bool:
+        """Return whether the AC increase changes this hit into a miss."""
+
+        return (
+            not self.attack.critical_hit
+            and self.attack.attack_roll
+            < self.base_target_armor_class + self.armor_class_bonus
+        )
+
+
 @dataclass(frozen=True)
 class AttackSource:
     """Normalize weapon or stat-block data required to resolve an attack."""

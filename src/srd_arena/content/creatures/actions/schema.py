@@ -180,9 +180,18 @@ class StandardActionGrantCapabilitySchema(CapabilitySchemaModel):
     actions: list[StandardActionKind] = Field(min_length=1)
 
 
+class ParryReactionCapabilitySchema(CapabilitySchemaModel):
+    """Add Armor Class against one triggering attack that has already hit."""
+
+    type: Literal["parry"] = "parry"
+    armor_class_bonus: PositiveInt
+    trigger_attack_modes: list[Literal["melee", "ranged"]] = Field(min_length=1)
+
+
 NonMultiattackCapabilitySchema = Annotated[
     AttackCapabilitySchema
     | CapabilitySchema
+    | ParryReactionCapabilitySchema
     | SpellcastingCapabilitySchema
     | StandardActionGrantCapabilitySchema,
     Field(discriminator="type"),
