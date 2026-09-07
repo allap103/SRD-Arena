@@ -1,9 +1,11 @@
 """Translate recognized monster-trait tags into intrinsic domain rules."""
 
 from srd_arena.domain.creatures import IntrinsicRuleProvider
+from srd_arena.domain.effects.modifiers import RollModifier
 from srd_arena.domain.effects.rule_effects import (
     AdjacentAllyAttackAdvantage,
     DamageTriggeredDefeatSave,
+    EnvironmentalRollAdjustment,
 )
 from srd_arena.domain.effects.runtime import EffectSourceKind
 
@@ -43,6 +45,22 @@ def build_monster_trait_rule_providers(
                     base_dc=5,
                     bypass_damage_types=frozenset({"radiant"}),
                     bypass_critical_hits=True,
+                ),
+            ),
+            source_kind=EffectSourceKind.CREATURE,
+        )
+    if "sunlight sensitivity" in tags:
+        providers["sunlight_sensitivity"] = IntrinsicRuleProvider(
+            id="sunlight_sensitivity",
+            label="Sunlight Sensitivity",
+            rule_effects=(
+                EnvironmentalRollAdjustment(
+                    "sunlight",
+                    RollModifier("attack_roll", "disadvantage"),
+                ),
+                EnvironmentalRollAdjustment(
+                    "sunlight",
+                    RollModifier("ability_check", "disadvantage"),
                 ),
             ),
             source_kind=EffectSourceKind.CREATURE,

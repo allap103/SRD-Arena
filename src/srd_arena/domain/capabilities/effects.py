@@ -41,6 +41,13 @@ class DamageEffect:
 
 
 @dataclass(frozen=True)
+class HitPointMaximumReductionEffect:
+    """Reduce maximum HP by damage actually applied during this outcome."""
+
+    amount: Literal["damage_taken"]
+
+
+@dataclass(frozen=True)
 class AttackHitDamageEffect:
     """Add typed dice damage when the effect source hits its marked target."""
 
@@ -280,6 +287,7 @@ class GainMemoriesEffect:
 
 CapabilityEffect = (
     DamageEffect
+    | HitPointMaximumReductionEffect
     | AttackHitDamageEffect
     | AttackHitRetaliationEffect
     | HealingEffect

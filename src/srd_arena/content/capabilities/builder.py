@@ -10,6 +10,7 @@ from .durations import EffectDurationSchema
 
 _SHARED_EFFECT_TYPES = (
     effects.DamageEffectSchema,
+    effects.HitPointMaximumReductionEffectSchema,
     effects.AttackHitDamageEffectSchema,
     effects.AttackHitRetaliationEffectSchema,
     effects.ConditionEffectSchema,
@@ -190,6 +191,8 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
                 for requirement in value.requirements
             ),
         )
+    if isinstance(value, effects.HitPointMaximumReductionEffectSchema):
+        return domain.HitPointMaximumReductionEffect(value.amount)
     if isinstance(value, effects.AttackHitDamageEffectSchema):
         return domain.AttackHitDamageEffect(value.dice, value.damage_type)
     if isinstance(value, effects.AttackHitRetaliationEffectSchema):

@@ -21,6 +21,7 @@ from srd_arena.content.encounters import (
     EncounterConfigSchema,
     EncounterDefinitionSchema,
     load_encounter_directory,
+    load_encounter_file,
 )
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import AttackActionDefinition
@@ -75,6 +76,24 @@ def test_load_encounter_parses_definition() -> None:
     assert guard.anchor is not None
     assert guard.radius == 2
     assert len(patrol.path) == 3
+
+
+def test_encounter_file_loads_global_combat_environment(tmp_path: Path) -> None:
+    path = tmp_path / "encounter.json"
+    path.write_text(
+        json.dumps(
+            {
+                "id": "sunlit_arena",
+                "grid": {"width": 5, "height": 5},
+                "environment": {"sunlight": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    loaded = load_encounter_file(path)
+
+    assert loaded.definition.environment.sunlight is True
 
 
 def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None:

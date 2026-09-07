@@ -7,6 +7,7 @@ from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.effects.modifiers import ModifierSubject, RollKind, RollModifier
 from srd_arena.domain.effects.rule_effects import (
     AdjacentAllyAttackAdvantage,
+    EnvironmentalRollAdjustment,
     RollAdjustment,
 )
 
@@ -76,6 +77,9 @@ def _rule_effect_contributions(
         if isinstance(rule_effect, RollAdjustment):
             if not _roll_adjustment_is_blocked(state, creature_ref, rule_effect):
                 modifier = rule_effect.modifier
+        elif isinstance(rule_effect, EnvironmentalRollAdjustment):
+            if _environment_is_active(state, rule_effect.environment):
+                modifier = rule_effect.modifier
         elif (
             isinstance(rule_effect, AdjacentAllyAttackAdvantage)
             and roll == "attack_roll"
@@ -101,6 +105,15 @@ def _rule_effect_contributions(
                 RollRuleContribution(provider_state_id, source, modifier)
             )
     return tuple(contributions)
+
+
+def _environment_is_active(
+    state: ConditionRuleQueryContext,
+    environment: str,
+) -> bool:
+    """Return whether one global encounter environment is currently active."""
+
+    return environment == "sunlight" and state.definition.environment.sunlight
 
 
 def _has_eligible_ally_near_target(

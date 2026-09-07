@@ -594,7 +594,7 @@ def test_enriched_multiattack_action_references_have_typed_capability() -> None:
                         ),
                     )
 
-    assert len(referenced_actions) == 84
+    assert len(referenced_actions) == 87
 
     aboleth = catalog.find("Aboleth", "XMM")
     tentacle = next(action for action in aboleth.action if action.name == "Tentacle")

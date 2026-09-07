@@ -25,6 +25,13 @@ class DamageEffectSchema(CapabilitySchemaModel):
     requirements: list[AttackHitRequirementSchema] = Field(default_factory=list)
 
 
+class HitPointMaximumReductionEffectSchema(CapabilitySchemaModel):
+    """Reduce maximum HP by damage actually applied during this outcome."""
+
+    type: Literal["hit_point_maximum_reduction"]
+    amount: Literal["damage_taken"]
+
+
 class AttackHitDamageEffectSchema(CapabilitySchemaModel):
     """Encode damage added when the effect source hits its marked target."""
 
@@ -194,6 +201,7 @@ class GainMemoriesEffectSchema(CapabilitySchemaModel):
 
 ActionEffectSchema = Annotated[
     DamageEffectSchema
+    | HitPointMaximumReductionEffectSchema
     | AttackHitDamageEffectSchema
     | AttackHitRetaliationEffectSchema
     | ConditionEffectSchema

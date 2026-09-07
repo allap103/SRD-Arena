@@ -11,6 +11,7 @@ from ...attack_economy import begin_attack_action, clear_attack_action, consume_
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
 from ...state_runtime import create_event
+from .validation import stat_block_action_runtime_issue
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -55,13 +56,39 @@ def executable_multiattack_slot_plans(
     """
     if creature.multiattack is None:
         return ()
-    return creature.multiattack.executable_slot_plans(
-        {
-            action.name
-            for action in creature.stat_block_actions.values()
-            if isinstance(action, AttackActionDefinition)
-        }
-    )
+    action_names = {
+        action.name
+        for action in creature.stat_block_actions.values()
+        if stat_block_action_runtime_issue(action) is None
+    }
+    attack_names = {
+        action.name
+        for action in creature.stat_block_actions.values()
+        if isinstance(action, AttackActionDefinition)
+    }
+    return creature.multiattack.executable_slot_plans(action_names, attack_names)
+
+
+def consume_pending_multiattack_invocation(
+    state: EncounterState,
+    creature_ref: str,
+    action_name: str,
+) -> bool:
+    """Consume the pending slot when it offers the selected stat-block action."""
+
+    creature_state = state.creatures[creature_ref]
+    if not creature_state.pending_multiattack:
+        return False
+    slot = creature_state.pending_multiattack[0]
+    if action_name not in {invocation.name for invocation in slot.options}:
+        raise ValueError(
+            "The selected action is not available for this Multiattack slot."
+        )
+    from ...attack_economy import spend_current_attack
+
+    spend_current_attack(state, creature_ref)
+    creature_state.pending_multiattack.pop(0)
+    return True
 
 
 def resolve_multiattack_action(

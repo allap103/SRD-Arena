@@ -11,6 +11,7 @@ from srd_arena.domain.capabilities import (
     CapabilityEffect,
     ConditionEffect,
     DamageEffect,
+    HitPointMaximumReductionEffect,
 )
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.creatures.stat_block_actions import SavingThrowActionDefinition
@@ -39,6 +40,10 @@ from ..d20_roll_modifiers import (
     clear_d20_roll_modes,
     consume_d20_roll_mode,
 )
+from ..hit_point_effects import (
+    apply_damage_derived_maximum_hit_point_reduction,
+)
+from .multiattack import consume_pending_multiattack_invocation
 from .resources import consume_stat_block_action_resource
 from .targets import stat_block_target_refs
 
@@ -76,7 +81,12 @@ def resolve_saving_throw_stat_block_action(
     )
     if not target_refs:
         raise ValueError("The stat-block action has no valid targets.")
-    consume_action(state, allow_magic=False)
+    if not consume_pending_multiattack_invocation(
+        state,
+        creature_ref,
+        definition.name,
+    ):
+        consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     ability_names = {
         "str": "strength",
@@ -169,8 +179,22 @@ def resolve_saving_throw_stat_block_action(
             ),
         )
         applied_conditions: list[str] = []
+        maximum_hit_point_reduction = 0
         for effect in (*effects, *definition.always):
             if isinstance(effect, DamageEffect):
+                continue
+            if isinstance(effect, HitPointMaximumReductionEffect):
+                maximum_hit_point_reduction += (
+                    apply_damage_derived_maximum_hit_point_reduction(
+                        state,
+                        source_ref=creature_ref,
+                        target_ref=target_ref,
+                        damage_taken=damage_resolution.total,
+                        progress=progress,
+                        origin_id=f"{action_id}:{target_index}",
+                        definition_id=definition.name,
+                    )
+                )
                 continue
             if not isinstance(effect, ConditionEffect):
                 raise NotImplementedError(
@@ -219,6 +243,7 @@ def resolve_saving_throw_stat_block_action(
                     *damage_resolution.details,
                     *always_damage_resolution.details,
                 ],
+                "maximum_hit_point_reduction": maximum_hit_point_reduction,
                 "applied_conditions": applied_conditions,
             }
         )

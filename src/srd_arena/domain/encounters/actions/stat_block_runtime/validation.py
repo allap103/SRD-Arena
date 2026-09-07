@@ -5,6 +5,7 @@ from __future__ import annotations
 from srd_arena.domain.capabilities import (
     ConditionEffect,
     DamageEffect,
+    HitPointMaximumReductionEffect,
     SizeRequirement,
 )
 from srd_arena.domain.creatures.stat_block_actions import (
@@ -58,6 +59,8 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
         )
         for effect in effects:
             if isinstance(effect, DamageEffect):
+                continue
+            if isinstance(effect, HitPointMaximumReductionEffect):
                 continue
             if isinstance(effect, ConditionEffect):
                 issue = _condition_effect_runtime_issue(effect)

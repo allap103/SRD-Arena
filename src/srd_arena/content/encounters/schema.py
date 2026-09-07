@@ -48,6 +48,14 @@ class GeometryConfigSchema(BaseModel):
     )
 
 
+class EncounterEnvironmentSchema(BaseModel):
+    """Validate global combat-relevant environmental facts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sunlight: bool = False
+
+
 class EncounterConfigSchema(BaseModel):
     """Validate one selectable encounter's metadata and presentation settings."""
 
@@ -112,6 +120,9 @@ class EncounterDefinitionSchema(BaseModel):
     creatures: list[EncounterCreatureSchema] = Field(default_factory=list)
     teams: list[EncounterTeamSchema] = Field(default_factory=list, max_length=5)
     terrain: list[TerrainCellSchema] = Field(default_factory=list)
+    environment: EncounterEnvironmentSchema = Field(
+        default_factory=EncounterEnvironmentSchema
+    )
 
     @model_validator(mode="after")
     def validate_creatures(self) -> EncounterDefinitionSchema:

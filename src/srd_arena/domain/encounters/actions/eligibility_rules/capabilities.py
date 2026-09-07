@@ -62,6 +62,13 @@ class StatBlockActionRule:
                 "stat_block_action_unavailable",
                 "The stat-block action is not executable.",
             )
+        if actor.pending_multiattack and definition.name not in {
+            invocation.name for invocation in actor.pending_multiattack[0].options
+        }:
+            return EligibilityFailure(
+                "multiattack_choice_unavailable",
+                "That action is not available for this Multiattack slot.",
+            )
         runtime_issue = stat_block_action_runtime_issue(definition)
         if runtime_issue is not None:
             return EligibilityFailure(

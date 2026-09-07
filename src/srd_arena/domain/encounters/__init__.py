@@ -3,6 +3,7 @@
 from .definitions import (
     EncounterBehavior,
     EncounterDefinition,
+    EncounterEnvironment,
     EncounterParticipant,
     EncounterTeam,
 )
@@ -16,6 +17,7 @@ __all__ = [
     "EncounterAction",
     "EncounterBehavior",
     "EncounterDefinition",
+    "EncounterEnvironment",
     "EncounterOrchestrator",
     "EncounterParticipant",
     "EncounterState",

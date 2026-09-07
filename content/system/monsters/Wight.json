@@ -73,26 +73,153 @@
       "name": "Multiattack",
       "entries": [
         "The wight makes two attacks, using Necrotic Sword or Necrotic Bow in any combination. It can replace one attack with a use of Life Drain."
-      ]
+      ],
+      "capability": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Necrotic Sword"
+                  },
+                  {
+                    "type": "stat_block_action",
+                    "name": "Necrotic Bow"
+                  }
+                ],
+                "times": 2
+              }
+            ],
+            "replacements": [
+              {
+                "target": {
+                  "type": "any_attack"
+                },
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Life Drain"
+                  }
+                ]
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Necrotic Sword",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}6 ({@damage 1d8 + 2}) Slashing damage plus 4 ({@damage 1d8}) Necrotic damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "slashing",
+            "bonus": 2
+          },
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "necrotic",
+            "bonus": 0
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Necrotic Bow",
       "entries": [
         "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage plus 4 ({@damage 1d8}) Necrotic damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 150
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 2
+          },
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "necrotic",
+            "bonus": 0
+          }
+        ],
+        "range_normal_feet": 150,
+        "range_long_feet": 600
+      }
     },
     {
       "name": "Life Drain",
       "entries": [
         "{@actSave con} {@dc 13}, one creature within 5 feet. {@actSaveFail} 6 ({@damage 1d8 + 2}) Necrotic damage, and the target's {@variantrule Hit Points|XPHB|Hit Point} maximum decreases by an amount equal to the damage taken.",
         "A Humanoid slain by this attack rises 24 hours later as a {@creature Zombie|XMM} under the wight's control, unless the Humanoid is restored to life or its body is destroyed. The wight can have no more than twelve zombies under its control at a time."
-      ]
+      ],
+      "capability": {
+        "type": "capability",
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "resolution": {
+          "type": "saving_throw",
+          "ability": "con",
+          "difficulty": {
+            "type": "fixed",
+            "value": 13
+          },
+          "failure": [
+            {
+              "effects": [
+                {
+                  "type": "damage",
+                  "dice": "1d8",
+                  "damage_type": "necrotic",
+                  "bonus": 2
+                },
+                {
+                  "type": "hit_point_maximum_reduction",
+                  "amount": "damage_taken"
+                }
+              ]
+            }
+          ],
+          "success": {
+            "effects": []
+          },
+          "always": {
+            "effects": []
+          },
+          "success_damage": "none"
+        }
+      }
     }
   ],
   "environment": [

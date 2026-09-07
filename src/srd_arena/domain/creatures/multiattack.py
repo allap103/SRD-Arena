@@ -1,6 +1,8 @@
 """Describe legal compositions of actions within a creature's Multiattack."""
 
+from collections.abc import Iterable
 from dataclasses import dataclass, field
+from itertools import combinations
 from typing import Literal
 
 
@@ -54,6 +56,10 @@ class MultiattackReplacement:
     requirement: MultiattackRequirement | None = None
 
 
+type OriginSlot = tuple[MultiattackStep, int | None]
+type OriginSlotPlan = tuple[OriginSlot, ...]
+
+
 @dataclass(frozen=True)
 class MultiattackPlan:
     """Describe one legal ordered or freely arranged Multiattack composition."""
@@ -98,7 +104,7 @@ class MultiattackPlan:
 
     def executable_slots(
         self,
-        attack_names: set[str],
+        action_names: set[str],
     ) -> tuple[MultiattackStep, ...] | None:
         """Expand a plan into slots containing only available options.
 
@@ -118,7 +124,7 @@ class MultiattackPlan:
                 for option in step.options
                 if option.kind == "stat_block_action"
                 and option.section == "action"
-                and option.name in attack_names
+                and option.name in action_names
             )
             if not available:
                 if step.availability == "required":
@@ -128,6 +134,67 @@ class MultiattackPlan:
                 MultiattackStep(
                     options=available,
                     availability=step.availability,
+                )
+                for _ in range(step.times)
+            )
+        return tuple(slots) or None
+
+    def executable_slot_variants(
+        self,
+        action_names: set[str],
+        attack_names: set[str],
+    ) -> tuple[tuple[MultiattackStep, ...], ...]:
+        """Expand optional replacements into independently selectable slot plans.
+
+        Replacements are compiled before a Multiattack starts. This keeps the
+        mutable turn state as a small ordered list while still allowing an
+        actor to choose where a limited replacement occurs.
+        """
+
+        base = self._executable_slots_with_origins(action_names)
+        if base is None:
+            return ()
+        variants: tuple[OriginSlotPlan, ...] = (base,)
+        for replacement in self.replacements:
+            expanded: list[OriginSlotPlan] = []
+            for variant in variants:
+                expanded.extend(
+                    _expand_replacement(
+                        variant,
+                        replacement,
+                        action_names,
+                        attack_names,
+                    )
+                )
+            variants = _unique_slot_variants(expanded)
+        return tuple(tuple(slot for slot, _origin in variant) for variant in variants)
+
+    def _executable_slots_with_origins(
+        self,
+        action_names: set[str],
+    ) -> OriginSlotPlan | None:
+        slots: list[OriginSlot] = []
+        for step_index, step in enumerate(self.steps):
+            if not isinstance(step.times, int):
+                return None
+            available = tuple(
+                option
+                for option in step.options
+                if option.kind == "stat_block_action"
+                and option.section == "action"
+                and option.name in action_names
+            )
+            if not available:
+                if step.availability == "required":
+                    return None
+                continue
+            slots.extend(
+                (
+                    MultiattackStep(
+                        options=available,
+                        availability=step.availability,
+                    ),
+                    step_index,
                 )
                 for _ in range(step.times)
             )
@@ -159,7 +226,8 @@ class Multiattack:
 
     def executable_slot_plans(
         self,
-        attack_names: set[str],
+        action_names: set[str],
+        attack_names: set[str] | None = None,
     ) -> tuple[tuple[MultiattackStep, ...], ...]:
         """Return every plan whose required slots have legal options.
 
@@ -170,8 +238,102 @@ class Multiattack:
         >>> len(Multiattack(plans).executable_slot_plans({"Bite"}))
         1
         """
+        resolved_attack_names = (
+            attack_names if attack_names is not None else action_names
+        )
         return tuple(
             slots
             for plan in self.plans
-            if (slots := plan.executable_slots(attack_names)) is not None
+            for slots in plan.executable_slot_variants(
+                action_names,
+                resolved_attack_names,
+            )
         )
+
+
+def _expand_replacement(
+    base: OriginSlotPlan,
+    replacement: MultiattackReplacement,
+    action_names: set[str],
+    attack_names: set[str],
+) -> tuple[OriginSlotPlan, ...]:
+    """Return the unchanged plan plus every legal use of one replacement."""
+
+    available_options = tuple(
+        option
+        for option in replacement.options
+        if option.kind == "stat_block_action"
+        and option.section == "action"
+        and option.name in action_names
+    )
+    if not available_options or replacement.requirement is not None:
+        return (base,)
+    maximum = (
+        len(base) // replacement.replace_count
+        if replacement.maximum_uses == "unbounded"
+        else replacement.maximum_uses
+    )
+    variants: list[OriginSlotPlan] = [base]
+    frontier = [base]
+    for _ in range(maximum):
+        next_frontier: list[OriginSlotPlan] = []
+        for variant in frontier:
+            eligible = [
+                index
+                for index, (slot, origin) in enumerate(variant)
+                if origin is not None
+                and _replacement_matches(
+                    replacement,
+                    slot,
+                    origin,
+                    attack_names,
+                )
+            ]
+            for selected in combinations(eligible, replacement.replace_count):
+                first = selected[0]
+                selected_set = set(selected)
+                replacement_slot = (
+                    MultiattackStep(options=available_options),
+                    None,
+                )
+                candidate = tuple(
+                    replacement_slot if index == first else entry
+                    for index, entry in enumerate(variant)
+                    if index not in selected_set or index == first
+                )
+                next_frontier.append(candidate)
+        if not next_frontier:
+            break
+        variants.extend(next_frontier)
+        frontier = list(_unique_slot_variants(next_frontier))
+    return _unique_slot_variants(variants)
+
+
+def _replacement_matches(
+    replacement: MultiattackReplacement,
+    slot: MultiattackStep,
+    origin: int,
+    attack_names: set[str],
+) -> bool:
+    if replacement.target_kind == "step":
+        return replacement.target_step == origin
+    if replacement.target_kind == "action":
+        return any(option.name == replacement.target_name for option in slot.options)
+    return any(option.name in attack_names for option in slot.options)
+
+
+def _unique_slot_variants(
+    variants: Iterable[OriginSlotPlan],
+) -> tuple[OriginSlotPlan, ...]:
+    unique: list[OriginSlotPlan] = []
+    seen: set[tuple[tuple[tuple[str, str], ...], ...]] = set()
+    for variant in variants:
+        key = tuple(
+            tuple((option.kind, option.name) for option in slot.options)
+            for slot, _origin in variant
+        )
+        if key in seen:
+            continue
+        seen.add(key)
+        unique.append(variant)
+    return tuple(unique)

@@ -16,6 +16,7 @@ from ...encounter_models.resolution import EncounterProgress
 from ...rule_queries.rolls import roll_modifiers
 from ...state_combat import apply_combat_damage
 from ...state_runtime import create_event
+from .multiattack import consume_pending_multiattack_invocation
 from .resources import consume_stat_block_action_resource
 
 if TYPE_CHECKING:
@@ -53,7 +54,12 @@ def resolve_automatic_stat_block_action(
         raise ValueError("Automatic stat-block action requires a target.")
     target_ref = action.value
     target = state.creatures[target_ref].creature
-    consume_action(state, allow_magic=False)
+    if not consume_pending_multiattack_invocation(
+        state,
+        creature_ref,
+        definition.name,
+    ):
+        consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []

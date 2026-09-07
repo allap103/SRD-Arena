@@ -46,6 +46,13 @@ def stat_block_action_candidates(
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     for definition in actor.creature.stat_block_actions.values():
+        pending_names = (
+            {invocation.name for invocation in actor.pending_multiattack[0].options}
+            if actor.pending_multiattack
+            else None
+        )
+        if pending_names is not None and definition.name not in pending_names:
+            continue
         if isinstance(definition, StandardActionGrantDefinition):
             cost = (
                 ActionCost(bonus_action=1)
@@ -107,7 +114,7 @@ def stat_block_action_candidates(
                     creature_ref=creature_ref,
                     preferred_attack_name=definition.name,
                     aim_committed=definition.target.kind != "area",
-                    cost=ActionCost(action=1),
+                    cost=ActionCost(action=0 if pending_names is not None else 1),
                 )
             )
     return actions

@@ -188,6 +188,14 @@ class RollAdjustment:
 
 
 @dataclass(frozen=True)
+class EnvironmentalRollAdjustment:
+    """Apply a roll modifier while a named encounter environment is active."""
+
+    environment: Literal["sunlight"]
+    modifier: RollModifier
+
+
+@dataclass(frozen=True)
 class AdjacentAllyAttackAdvantage:
     """Grant attack advantage while an eligible ally is near the target."""
 
@@ -377,6 +385,7 @@ type RuntimeRuleEffect = (
     | ConditionSaveAdvantage
     | GrantedSense
     | RollAdjustment
+    | EnvironmentalRollAdjustment
     | AdjacentAllyAttackAdvantage
     | DamageTriggeredDefeatSave
     | AttackHitDamage
@@ -478,6 +487,14 @@ def serialize_runtime_rule_effect(
                 condition.value for condition in effect.blocked_by_conditions
             )
         return serialized
+    if isinstance(effect, EnvironmentalRollAdjustment):
+        return {
+            "type": "environmental_roll_adjustment",
+            "environment": effect.environment,
+            "roll": effect.modifier.roll,
+            "mode": effect.modifier.mode,
+            "ability": effect.modifier.ability,
+        }
     if isinstance(effect, AdjacentAllyAttackAdvantage):
         return {
             "type": "adjacent_ally_attack_advantage",

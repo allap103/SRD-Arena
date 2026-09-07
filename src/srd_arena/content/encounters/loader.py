@@ -21,6 +21,7 @@ from srd_arena.domain.encounters import (
     CoverDegree,
     EncounterBehavior,
     EncounterDefinition,
+    EncounterEnvironment,
     EncounterParticipant,
     EncounterTeam,
     TerrainCell,
@@ -104,6 +105,7 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
             )
             for cell in schema.terrain
         ),
+        environment=EncounterEnvironment(sunlight=schema.environment.sunlight),
     )
 
 
