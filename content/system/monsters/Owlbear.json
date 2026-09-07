@@ -48,13 +48,56 @@
       "name": "Multiattack",
       "entries": [
         "The owlbear makes two Rend attacks."
-      ]
+      ],
+      "capability": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                }
+              },
+              {
+                "type": "invoke",
+                "invocation": {
+                  "type": "stat_block_action",
+                  "name": "Rend"
+                }
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Rend",
       "entries": [
         "{@atkr m} {@hit 7}, reach 5 ft. {@h}14 ({@damage 2d8 + 5}) Slashing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 7,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d8",
+            "damage_type": "slashing",
+            "bonus": 5
+          }
+        ],
+        "reach_feet": 5
+      }
     }
   ],
   "environment": [
