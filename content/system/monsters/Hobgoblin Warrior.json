@@ -71,13 +71,60 @@
       "name": "Longsword",
       "entries": [
         "{@atkr m} {@hit 3}, reach 5 ft. {@h}12 ({@damage 2d10 + 1}) Slashing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "2d10",
+            "damage_type": "slashing",
+            "bonus": 1
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Longbow",
       "entries": [
         "{@atkr r} {@hit 3}, range 150/600 ft. {@h}5 ({@damage 1d8 + 1}) Piercing damage plus 7 ({@damage 3d4}) Poison damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 3,
+        "target": {
+          "type": "creature",
+          "range_feet": 150
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 1
+          },
+          {
+            "type": "damage",
+            "dice": "3d4",
+            "damage_type": "poison",
+            "bonus": 0
+          }
+        ],
+        "range_normal_feet": 150,
+        "range_long_feet": 600
+      }
     }
   ],
   "environment": [
