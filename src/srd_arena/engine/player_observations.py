@@ -13,6 +13,7 @@ from .observation_models import (
     PositionObservation,
     TerrainCellObservation,
 )
+from .player_action_observations import player_action_observations
 from .player_knowledge import TeamKnowledge
 from .player_observation_models import (
     PLAYER_OBSERVATION_SCHEMA_ID,
@@ -97,10 +98,17 @@ def observe_player_session(
         creatures=tuple(creatures),
         initiative_order=tuple(state.initiative_order),
         action_details=(
-            tuple(
-                action
-                for action in scene.action_details
-                if not action.kind.startswith("system_")
+            player_action_observations(
+                tuple(
+                    action
+                    for action in scene.action_details
+                    if not action.kind.startswith("system_")
+                ),
+                visible_creature_refs=frozenset(
+                    creature.creature_ref
+                    for creature in creatures
+                    if creature.currently_visible
+                ),
             )
             if decision_team_id == perspective_team_id
             else ()
@@ -157,9 +165,6 @@ def _observe_player_creature(
                 and (allied or effect_observability(effect) is Observability.OBVIOUS)
             )
         )
-        if not allied:
-            knowledge.remember_visible_health(creature_ref, creature.get_health())
-
     if allied:
         return _observe_ally(state, creature_ref, knowledge)
 

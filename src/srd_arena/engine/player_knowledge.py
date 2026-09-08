@@ -3,8 +3,10 @@
 from dataclasses import dataclass, field
 
 from srd_arena.domain.creatures import ObservableAppearance
+from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 
 from .observation_models import PositionObservation
+from .player_events import public_damage_from_event
 from .player_observation_models import HealthBand
 
 
@@ -19,7 +21,6 @@ class KnownCreatureFacts:
     effects: tuple[str, ...] = ()
     health_band: HealthBand = HealthBand.UNKNOWN
     observed_damage_total: int = 0
-    last_visible_health: int | None = None
 
 
 @dataclass
@@ -35,17 +36,15 @@ class TeamKnowledge:
 
         return self.creatures.setdefault(creature_ref, KnownCreatureFacts())
 
-    def remember_visible_health(self, creature_ref: str, current_health: int) -> None:
-        """Accumulate damage across consecutive visible snapshots."""
+    def record_events(self, events: tuple[CombatEvent, ...]) -> None:
+        """Remember damage events whose targets were visible to this team."""
 
-        facts = self.facts_for(creature_ref)
-        if (
-            creature_ref in self.visible_in_previous_projection
-            and facts.last_visible_health is not None
-            and current_health < facts.last_visible_health
-        ):
-            facts.observed_damage_total += facts.last_visible_health - current_health
-        facts.last_visible_health = current_health
+        for event in events:
+            for damage in public_damage_from_event(event):
+                if damage.target_ref in self.visible_in_previous_projection:
+                    self.facts_for(
+                        damage.target_ref
+                    ).observed_damage_total += damage.amount
 
     def finish_projection(self, visible_creature_refs: set[str]) -> None:
         """Record which opponents remained visible for the next damage delta."""

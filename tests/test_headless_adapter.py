@@ -6,10 +6,15 @@ from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     ActionObservation,
     ActionReasonObservation,
+    DecisionObservation,
     EncounterCompletionObservation,
     EncounterTerminationReason,
     GameObservation,
+    GridObservation,
+    PlayerCommandResult,
+    PlayerObservation,
     SceneObservation,
+    SelectAction,
 )
 from srd_arena.frontends.headless import (
     EpisodeState,
@@ -23,6 +28,81 @@ FULL_CONTROL_ENCOUNTER_ID = "archive/full_control_showcase"
 
 def _adapter() -> HeadlessGameAdapter:
     return HeadlessGameAdapter(EncounterCatalog(encounter_root=ENCOUNTERS_ROOT))
+
+
+def _player_observation(
+    *actions: ActionObservation,
+    decision_id: str = "turn:1",
+) -> PlayerObservation:
+    return PlayerObservation(
+        schema_id="player-observation-v1-draft",
+        perspective_team_id="heroes",
+        encounter_id="demo",
+        grid=GridObservation(5, 5),
+        round_number=1,
+        decision=DecisionObservation(decision_id, "turn", "warlock"),
+        creatures=(),
+        initiative_order=("warlock",),
+        action_details=actions,
+        terrain=(),
+        completion=None,
+        requires_automatic_advance=False,
+    )
+
+
+def test_player_action_map_and_submission_stay_on_player_safe_boundary() -> None:
+    from unittest.mock import Mock
+
+    action = ActionObservation("wait", "Wait", "wait", "warlock")
+    observation = _player_observation(action)
+    expected = PlayerCommandResult(update=Mock())
+    session = Mock()
+    session.observe_player.return_value = observation
+    session.execute_player.return_value = expected
+    adapter = HeadlessGameAdapter(Mock())
+    adapter._session = session
+
+    action_map = adapter.player_decision_action_map("heroes")
+    result = adapter.select_player_action_index(
+        "heroes",
+        0,
+        expected_decision_id=action_map.decision_id,
+    )
+
+    assert action_map.slots[0].action_id == "wait"
+    assert action_map.legal_action_mask == (True,)
+    assert result is expected
+    session.execute.assert_not_called()
+    session.execute_player.assert_called_once_with(
+        "heroes",
+        SelectAction("wait", "turn:1"),
+    )
+
+
+def test_start_player_encounter_returns_only_player_observation(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from unittest.mock import Mock
+
+    observation = _player_observation()
+    catalog, session = Mock(), Mock()
+    catalog.available_encounters.return_value = (Mock(id="demo", label="Demo"),)
+    catalog.load_encounter.return_value = Mock()
+    session.observe.return_value = Mock()
+    session.observe_player.return_value = observation
+    monkeypatch.setattr(
+        "srd_arena.frontends.headless.adapter.Session",
+        lambda _encounter, *, seed=None, decision_epoch=0: session,
+    )
+
+    result = HeadlessGameAdapter(catalog).start_player_encounter(
+        "demo",
+        "heroes",
+        seed=42,
+    )
+
+    assert result is observation
+    session.observe_player.assert_called_once_with("heroes")
 
 
 def test_headless_adapter_drives_game_by_stable_ids() -> None:

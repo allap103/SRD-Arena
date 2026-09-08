@@ -5,14 +5,25 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
+from srd_arena.domain.encounters.actions.option_discovery.spell_selection import (
+    spell_target_selection_actions,
+)
+from srd_arena.domain.encounters.actions.options import decision_actions
+from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
+from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 from srd_arena.domain.encounters.turn_lifecycle import surviving_team_ids
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.action_configuration import (
     configure_action as configure_engine_action,
 )
-from srd_arena.engine.commands import CommandResult, GameCommand, GameUpdate
+from srd_arena.engine.commands import (
+    CommandResult,
+    GameCommand,
+    GameUpdate,
+    PlayerCommandResult,
+)
 from srd_arena.engine.interactions import execute_game_command, game_update
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.observations import (
@@ -20,6 +31,7 @@ from srd_arena.engine.observations import (
     GameObservation,
     observe_session,
 )
+from srd_arena.engine.player_interactions import execute_player_game_command
 from srd_arena.engine.player_knowledge import TeamKnowledge
 from srd_arena.engine.player_observation_models import PlayerObservation
 from srd_arena.engine.player_observations import observe_player_session
@@ -134,6 +146,15 @@ class Session:
 
         return execute_game_command(self, command)
 
+    def execute_player(
+        self,
+        perspective_team_id: str,
+        command: GameCommand,
+    ) -> PlayerCommandResult:
+        """Execute a command through the non-privileged player boundary."""
+
+        return execute_player_game_command(self, perspective_team_id, command)
+
     def _choose(self, action_id: str) -> EngineOutcome:
         """Execute one action advertised by the current engine read.
 
@@ -167,6 +188,55 @@ class Session:
                 raise RuntimeError("No encounter is active.")
         self._decision_revision += 1
         return outcome
+
+    def _choose_player_action(self, action_id: str) -> EngineOutcome:
+        """Attempt one action advertised by a player-relative observation.
+
+        Player observations may intentionally expose an attempt whose private
+        target requirement fails. Such candidates still enter the ordinary
+        domain execution pipeline, which reports the failure without spending
+        the action's resources.
+        """
+
+        self._ensure_encounter_state()
+        state = self.encounter_state
+        if state is None:
+            raise RuntimeError("No encounter is active.")
+        action = next(
+            (
+                candidate
+                for candidate in self._player_action_candidates()
+                if candidate.id == action_id
+            ),
+            None,
+        )
+        if action is None:
+            raise KeyError(f"Action '{action_id}' is unavailable.")
+        outcome = self._apply_encounter_action(
+            action,
+            selected_choice_text=action.label,
+        )
+        self._decision_revision += 1
+        return outcome
+
+    def _player_action_candidates(self) -> tuple[EncounterAction, ...]:
+        """Return current candidates including privately ineligible targets."""
+
+        state = self.encounter_state
+        if state is None:
+            return ()
+        decision = state.current_decision()
+        if decision.kind == "turn":
+            return tuple(creature_action_candidates(state, decision.creature_ref))
+        if decision.kind == "spell_targets":
+            return tuple(
+                spell_target_selection_actions(
+                    state,
+                    decision.creature_ref,
+                    include_unavailable=True,
+                )
+            )
+        return tuple(decision_actions(state))
 
     @property
     def seed(self) -> int | None:
@@ -280,12 +350,14 @@ class Session:
                     ("system", self.pending_encounter_completion.message),
                 ]
 
-        return EngineOutcome(
+        outcome = EngineOutcome(
             selected_choice_text=selected_choice_text,
             selected_action_id=action.id,
             messages=tuple(messages),
             events=tuple(progress.events),
         )
+        self._record_player_events(outcome.events)
+        return outcome
 
     def advance_until_input_required(self) -> GameUpdate:
         """Advance automatic controllers until an external decision is needed.
@@ -358,10 +430,21 @@ class Session:
                 ]
 
         self._decision_revision += 1
-        return EngineOutcome(
+        outcome = EngineOutcome(
             messages=tuple(progress.messages),
             events=tuple(progress.events),
         )
+        self._record_player_events(outcome.events)
+        return outcome
+
+    def _record_player_events(
+        self,
+        events: tuple[CombatEvent, ...],
+    ) -> None:
+        """Update initialized team-knowledge ledgers from structured events."""
+
+        for knowledge in self._player_knowledge.values():
+            knowledge.record_events(events)
 
     def _ensure_encounter_state(self) -> None:
         encounter = self.encounter

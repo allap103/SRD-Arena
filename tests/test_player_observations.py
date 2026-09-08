@@ -10,6 +10,7 @@ from srd_arena.domain.creatures import (
     ObservableAppearance,
 )
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
+from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 from srd_arena.engine.api import HealthBand, KnowledgeState, Session
 
 
@@ -102,12 +103,52 @@ def test_enemy_health_uses_bands_and_observed_damage() -> None:
     goblin = session.encounter_state.creatures["goblin_1"].creature
 
     goblin.take_damage(3)
+    session._record_player_events(
+        (
+            CombatEvent(
+                seq=1,
+                type="attack_resolved",
+                data={"target_ref": "goblin_1", "damage": 3},
+            ),
+        )
+    )
     observed = session.observe_player("heroes").creature("goblin_1")
 
     assert observed.health is None
     assert observed.maximum_health is None
     assert observed.health_band is HealthBand.WOUNDED
     assert observed.observed_damage_total == 3
+
+
+def test_unseen_damage_is_not_reconstructed_from_later_health() -> None:
+    session = _session()
+    session.observe_player("heroes")
+    assert session.encounter_state is not None
+    state = session.encounter_state
+    state.conditions.append(
+        build_applied_condition(
+            condition=Condition.INVISIBLE,
+            source_ref="goblin_1",
+            source_label="Goblin Warrior",
+            target_ref="goblin_1",
+        )
+    )
+    session.observe_player("heroes")
+    state.creatures["goblin_1"].creature.take_damage(3)
+    session._record_player_events(
+        (
+            CombatEvent(
+                seq=1,
+                type="attack_resolved",
+                data={"target_ref": "goblin_1", "damage": 3},
+            ),
+        )
+    )
+
+    hidden = session.observe_player("heroes").creature("goblin_1")
+
+    assert hidden.health_band is HealthBand.UNHURT
+    assert hidden.observed_damage_total == 0
 
 
 def test_only_obvious_enemy_conditions_are_exposed() -> None:

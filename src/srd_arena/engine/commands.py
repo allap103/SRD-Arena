@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 
 from .observations import GameObservation
+from .player_observation_models import PlayerObservation
 from .values import EngineValue, freeze_mapping
 
 
@@ -101,6 +102,18 @@ class GameUpdate:
 
 
 @dataclass(frozen=True)
+class PlayerGameUpdate:
+    """Result of one accepted command without a privileged state snapshot."""
+
+    observation: PlayerObservation
+    messages: tuple[tuple[str, str], ...]
+    events: tuple[GameEvent, ...]
+    selected_action_id: str | None
+    selected_choice_text: str | None
+    should_exit: bool
+
+
+@dataclass(frozen=True)
 class CommandFailure:
     """Structured explanation for a command rejected by the engine."""
 
@@ -131,4 +144,22 @@ class CommandResult:
         >>> CommandResult(failure=CommandFailure("stale", "Decision changed")).accepted
         False
         """
+        return self.update is not None
+
+
+@dataclass(frozen=True)
+class PlayerCommandResult:
+    """Exactly one player-safe update or rejected-command failure."""
+
+    update: PlayerGameUpdate | None = None
+    failure: CommandFailure | None = None
+
+    def __post_init__(self) -> None:
+        if (self.update is None) == (self.failure is None):
+            raise ValueError("A command result requires exactly one update or failure.")
+
+    @property
+    def accepted(self) -> bool:
+        """Return whether the player command produced an engine update."""
+
         return self.update is not None

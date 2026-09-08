@@ -8,6 +8,9 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
 )
+from srd_arena.domain.encounters.actions.option_discovery.spell_selection import (
+    spell_target_selection_actions,
+)
 from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.encounter_models.actions import (
     ActionCost,
@@ -93,6 +96,19 @@ def read_session(session: Session) -> SessionRead:
                 candidates,
             )
         )
+    elif (
+        decision.kind == "spell_targets"
+        and creature_controller(state, decision.creature_ref) == "external"
+    ):
+        candidates = spell_target_selection_actions(
+            state,
+            decision.creature_ref,
+            include_unavailable=True,
+        )
+        action_options = [
+            _action_option(action, state.action_eligibility(action))
+            for action in candidates
+        ]
     else:
         action_options = [
             _action_option(action) for action in session._encounter_actions

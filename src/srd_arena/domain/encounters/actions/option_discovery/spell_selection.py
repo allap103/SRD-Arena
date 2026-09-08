@@ -18,6 +18,8 @@ if TYPE_CHECKING:
 def spell_target_selection_actions(
     state: EncounterState,
     creature_ref: str,
+    *,
+    include_unavailable: bool = False,
 ) -> list[EncounterAction]:
     """Build actions that mutate or confirm the current staged target selection.
 
@@ -166,6 +168,8 @@ def spell_target_selection_actions(
             creature_ref=creature_ref,
         )
     )
+    if include_unavailable:
+        return actions
     return [
         action
         for action in actions

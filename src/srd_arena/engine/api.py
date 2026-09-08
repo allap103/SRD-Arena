@@ -15,6 +15,8 @@ from .commands import (
     GameCommand,
     GameEvent,
     GameUpdate,
+    PlayerCommandResult,
+    PlayerGameUpdate,
     SelectAction,
     SetResourceAllocation,
 )
@@ -85,7 +87,9 @@ __all__ = [
     "InventoryItemObservation",
     "KnowledgeState",
     "OngoingEffectObservation",
+    "PlayerCommandResult",
     "PlayerCreatureObservation",
+    "PlayerGameUpdate",
     "PlayerObservation",
     "PositionObservation",
     "ResourcePoolObservation",

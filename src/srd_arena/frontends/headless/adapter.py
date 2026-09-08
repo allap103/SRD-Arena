@@ -15,6 +15,7 @@ from srd_arena.engine.api import (
     GameCommand,
     GameObservation,
     GameUpdate,
+    PlayerCommandResult,
     PlayerObservation,
     SelectAction,
     Session,
@@ -249,6 +250,18 @@ class HeadlessGameAdapter:
 
         return self._require_session().observe_player(perspective_team_id)
 
+    def start_player_encounter(
+        self,
+        encounter_id: str,
+        perspective_team_id: str,
+        *,
+        seed: int | None = None,
+    ) -> PlayerObservation:
+        """Start an encounter and return only the requested team's observation."""
+
+        self.start_encounter(encounter_id, seed=seed)
+        return self.observe_player(perspective_team_id)
+
     def available_actions(self) -> tuple[ActionObservation, ...]:
         """Return implemented, eligible actions at the current decision point.
 
@@ -310,40 +323,27 @@ class HeadlessGameAdapter:
         observation = self.observe()
         if observation.encounter is None:
             raise RuntimeError("No encounter decision is currently available.")
-        actions = tuple(
-            sorted(
-                (
-                    action
-                    for action in observation.scene.action_details
-                    if not action.kind.startswith("system_")
-                ),
-                key=lambda action: action.id,
-            )
-        )
-        slots = tuple(
-            NumericActionSlot(
-                index=index,
-                action_id=action.id,
-                label=action.label,
-                kind=action.kind,
-                required_configuration=action.required_configuration,
-            )
-            for index, action in enumerate(actions)
-        )
-        accepts_actions = (
-            observation.completion is None and self._truncation_reason is None
-        )
-        legal_action_mask = tuple(
-            accepts_actions
-            and action.enabled
-            and action.availability == "available"
-            and action.required_configuration is None
-            for action in actions
-        )
-        return DecisionActionMap(
+        return _decision_action_map(
             decision_id=observation.encounter.decision.id,
-            slots=slots,
-            legal_action_mask=legal_action_mask,
+            actions=observation.scene.action_details,
+            accepts_actions=(
+                observation.completion is None and self._truncation_reason is None
+            ),
+        )
+
+    def player_decision_action_map(
+        self,
+        perspective_team_id: str,
+    ) -> DecisionActionMap:
+        """Return a deterministic action map derived only from player-known facts."""
+
+        observation = self.observe_player(perspective_team_id)
+        return _decision_action_map(
+            decision_id=observation.decision.id,
+            actions=observation.action_details,
+            accepts_actions=(
+                observation.completion is None and self._truncation_reason is None
+            ),
         )
 
     def select_action_index(
@@ -391,6 +391,53 @@ class HeadlessGameAdapter:
             expected_decision_id=expected_decision_id,
         )
 
+    def select_player_action_index(
+        self,
+        perspective_team_id: str,
+        action_index: int,
+        *,
+        expected_decision_id: str,
+    ) -> PlayerCommandResult:
+        """Submit one legal index from a player-relative decision map."""
+
+        if self._truncation_reason is not None:
+            return PlayerCommandResult(
+                failure=CommandFailure(
+                    code="episode_truncated",
+                    message="Reset the episode before submitting another command.",
+                )
+            )
+        action_map = self.player_decision_action_map(perspective_team_id)
+        if action_map.decision_id != expected_decision_id:
+            return PlayerCommandResult(
+                failure=CommandFailure(
+                    code="stale_decision",
+                    message=(
+                        f"Decision '{expected_decision_id}' is stale; "
+                        f"the current decision is '{action_map.decision_id}'."
+                    ),
+                )
+            )
+        if not 0 <= action_index < len(action_map.slots):
+            return PlayerCommandResult(
+                failure=CommandFailure(
+                    code="invalid_action_index",
+                    message=f"Action index {action_index} is outside the current map.",
+                )
+            )
+        if not action_map.legal_action_mask[action_index]:
+            return PlayerCommandResult(
+                failure=CommandFailure(
+                    code="action_unavailable",
+                    message=f"Action index {action_index} is not currently legal.",
+                )
+            )
+        return self.select_player_action(
+            perspective_team_id,
+            action_map.slots[action_index].action_id,
+            expected_decision_id=expected_decision_id,
+        )
+
     def select_action(
         self,
         action_id: str,
@@ -418,6 +465,23 @@ class HeadlessGameAdapter:
             )
         )
 
+    def select_player_action(
+        self,
+        perspective_team_id: str,
+        action_id: str,
+        *,
+        expected_decision_id: str,
+    ) -> PlayerCommandResult:
+        """Submit one action through the player-relative command boundary."""
+
+        return self.submit_player(
+            perspective_team_id,
+            SelectAction(
+                action_id=action_id,
+                expected_decision_id=expected_decision_id,
+            ),
+        )
+
     def submit(self, command: GameCommand) -> CommandResult:
         """Submit any engine command, including staged targeting.
 
@@ -439,6 +503,25 @@ class HeadlessGameAdapter:
                 )
             )
         return self._require_session().execute(command)
+
+    def submit_player(
+        self,
+        perspective_team_id: str,
+        command: GameCommand,
+    ) -> PlayerCommandResult:
+        """Submit a command and return only a player-relative update."""
+
+        if self._truncation_reason is not None:
+            return PlayerCommandResult(
+                failure=CommandFailure(
+                    code="episode_truncated",
+                    message="Reset the episode before submitting another command.",
+                )
+            )
+        return self._require_session().execute_player(
+            perspective_team_id,
+            command,
+        )
 
     def advance_until_input_required(self) -> GameUpdate:
         """Advance scripted controllers until external input is required.
@@ -538,3 +621,41 @@ class HeadlessGameAdapter:
         if self._session is None:
             raise RuntimeError("Start an encounter before interacting with the game.")
         return self._session
+
+
+def _decision_action_map(
+    *,
+    decision_id: str,
+    actions: tuple[ActionObservation, ...],
+    accepts_actions: bool,
+) -> DecisionActionMap:
+    """Build the shared deterministic index mapping for one observation."""
+
+    ordered_actions = tuple(
+        sorted(
+            (action for action in actions if not action.kind.startswith("system_")),
+            key=lambda action: action.id,
+        )
+    )
+    slots = tuple(
+        NumericActionSlot(
+            index=index,
+            action_id=action.id,
+            label=action.label,
+            kind=action.kind,
+            required_configuration=action.required_configuration,
+        )
+        for index, action in enumerate(ordered_actions)
+    )
+    legal_action_mask = tuple(
+        accepts_actions
+        and action.enabled
+        and action.availability == "available"
+        and action.required_configuration is None
+        for action in ordered_actions
+    )
+    return DecisionActionMap(
+        decision_id=decision_id,
+        slots=slots,
+        legal_action_mask=legal_action_mask,
+    )
