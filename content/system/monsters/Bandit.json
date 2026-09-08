@@ -1,6 +1,9 @@
 {
   "name": "Bandit",
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Humanoid"
+  },
   "page": 27,
   "srd52": true,
   "basicRules2024": true,

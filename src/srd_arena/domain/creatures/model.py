@@ -10,6 +10,7 @@ from srd_arena.domain.effects.triggered import TriggeredEffect
 from srd_arena.domain.equipment import ArmorCategory, Item
 from srd_arena.domain.rolls.saving_throws import Ability
 
+from .appearance import ObservableAppearance
 from .attributes import Attributes
 from .character_profiles import CharacterProfile
 from .class_features import ClassFeature
@@ -68,6 +69,9 @@ class Creature:
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
     temporary_hit_points: int = 0
+    observable_appearance: ObservableAppearance = field(
+        default_factory=ObservableAppearance
+    )
 
     def __post_init__(self) -> None:
         if self.current_health is None:

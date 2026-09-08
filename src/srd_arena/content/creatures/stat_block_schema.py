@@ -11,6 +11,7 @@ from .actions.multiattack import (
     iter_stat_block_references,
 )
 from .actions.schema import NonMultiattackCapabilitySchema
+from .schema import ObservableAppearanceSchema
 
 BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
 
@@ -146,6 +147,13 @@ class BestiaryActionSchema(SourceModel):
         return value
 
 
+class BestiaryGearSchema(SourceModel):
+    """Describe a visible carried item with an optional authored quantity."""
+
+    item: str
+    quantity: int = Field(default=1, ge=1)
+
+
 class BestiaryMonsterSchema(SourceModel):
     """Define the authored stat-block fields with name and source."""
 
@@ -155,6 +163,8 @@ class BestiaryMonsterSchema(SourceModel):
     speed: BestiarySpeedSchema = Field(default_factory=BestiarySpeedSchema)
     hp: BestiaryHitPointsSchema = Field(default_factory=BestiaryHitPointsSchema)
     ac: list[int | BestiaryArmorClassSchema] = Field(default_factory=list)
+    gear: list[str | BestiaryGearSchema] = Field(default_factory=list)
+    appearance: ObservableAppearanceSchema | None = None
     action: list[BestiaryActionSchema] = Field(default_factory=list)
     bonus: list[BestiaryActionSchema] = Field(default_factory=list)
     reaction: list[BestiaryActionSchema] = Field(default_factory=list)

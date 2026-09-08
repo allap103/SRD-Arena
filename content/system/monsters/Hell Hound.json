@@ -1,6 +1,11 @@
 {
   "name": "Hell Hound",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "natural",
+    "apparent_creature_type": "Fiend",
+    "obvious_features": ["Fiendish canine body", "Fangs"]
+  },
   "page": 165,
   "srd52": true,
   "basicRules2024": true,

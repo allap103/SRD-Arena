@@ -1,5 +1,10 @@
 """Expose the public creatures package API."""
 
+from .appearance import (
+    ApparentArmorCategory,
+    ApparentFocusKind,
+    ObservableAppearance,
+)
 from .armor_class import ArmorClassCalculation
 from .attributes import Attributes, Movement
 from .character_profiles import CharacterOptionRef, CharacterProfile
@@ -42,6 +47,8 @@ from .stat_block_actions import (
 from .statistics import CreatureStatistics
 
 __all__ = [
+    "ApparentArmorCategory",
+    "ApparentFocusKind",
     "ArmorClassCalculation",
     "AttackActionDefinition",
     "Attributes",
@@ -65,6 +72,7 @@ __all__ = [
     "MultiattackReplacement",
     "MultiattackRequirement",
     "MultiattackStep",
+    "ObservableAppearance",
     "ParryReactionDefinition",
     "ResourceRecovery",
     "RestType",

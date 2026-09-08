@@ -1,6 +1,12 @@
 {
   "name": "Animated Armor",
   "source": "XMM",
+  "appearance": {
+    "armor_label": "Animated Plate Armor",
+    "armor_category": "heavy",
+    "apparent_creature_type": "Construct",
+    "obvious_features": ["Empty moving suit of armor"]
+  },
   "page": 16,
   "srd52": true,
   "basicRules2024": true,

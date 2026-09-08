@@ -4,6 +4,10 @@
     "Goblinoids"
   ],
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Goblinoid",
+    "obvious_features": ["Goblinoid features"]
+  },
   "page": 170,
   "srd52": true,
   "basicRules2024": true,

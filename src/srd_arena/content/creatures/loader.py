@@ -25,6 +25,7 @@ from .actions.builder import (
     build_stat_block_actions,
 )
 from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
+from .appearance import build_observable_appearance
 from .attributes import build_creature_attributes, build_creature_size
 from .catalog import BestiaryCatalog
 from .character_options import (
@@ -182,6 +183,7 @@ def build_creature(
         max_health_override=(
             stat_block.average_hit_points if stat_block is not None else None
         ),
+        observable_appearance=build_observable_appearance(schema, stat_block),
     )
 
 
@@ -225,7 +227,7 @@ def _resolve_creature_schema(
         template = local_template
 
     template_data = template.model_dump(
-        exclude={"id", "player_character", "character_snapshot"}
+        exclude_unset=True, exclude={"id", "player_character", "character_snapshot"}
     )
     instance_data = instance.model_dump(
         exclude_unset=True,

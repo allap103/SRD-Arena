@@ -136,7 +136,7 @@ class CharacterSnapshotCatalog:
 
         build = self.find_build(build_id)
         snapshot = self.snapshot(build_id, level)
-        data = snapshot.creature.model_dump()
+        data = snapshot.creature.model_dump(exclude_unset=True)
         data["class_ref"] = build.class_ref.model_dump()
         data["character_profile"] = {
             "build_id": build.id,

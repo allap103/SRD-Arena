@@ -1,6 +1,11 @@
 {
   "name": "Giant Spider",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "natural",
+    "apparent_creature_type": "Beast",
+    "obvious_features": ["Eight legs", "Fangs"]
+  },
   "page": 359,
   "srd52": true,
   "basicRules2024": true,

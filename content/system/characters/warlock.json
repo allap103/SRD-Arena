@@ -16,6 +16,11 @@
         "name": "Canonical Warlock",
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 8,
           "level": 1,
@@ -67,6 +72,11 @@
         "name": "Canonical Warlock",
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 13,
           "level": 2,
@@ -123,6 +133,11 @@
         "name": "Canonical Warlock",
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 18,
           "level": 3,
@@ -183,6 +198,11 @@
         "name": "Canonical Warlock",
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 23,
           "level": 4,
@@ -245,6 +265,11 @@
         "name": "Canonical Warlock",
         "description": "The fixed Warlock build used by the RL curriculum.",
         "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 28,
           "level": 5,

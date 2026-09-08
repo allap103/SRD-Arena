@@ -1,6 +1,11 @@
 {
   "name": "Zombie",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Undead",
+    "obvious_features": ["Decaying humanoid body"]
+  },
   "page": 346,
   "srd52": true,
   "basicRules2024": true,

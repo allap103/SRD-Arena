@@ -20,6 +20,9 @@ from srd_arena.engine.observations import (
     GameObservation,
     observe_session,
 )
+from srd_arena.engine.player_knowledge import TeamKnowledge
+from srd_arena.engine.player_observation_models import PlayerObservation
+from srd_arena.engine.player_observations import observe_player_session
 from srd_arena.engine.queries import (
     EXIT_CHOICE_TEXT,
     RESTART_CHOICE_TEXT,
@@ -74,6 +77,7 @@ class Session:
         self.pending_encounter_completion: PendingEncounterCompletion | None = None
         self._decision_epoch = decision_epoch
         self._decision_revision = 0
+        self._player_knowledge: dict[str, TeamKnowledge] = {}
 
     def _read(self) -> SessionRead:
         """Return typed internal inputs used to construct an observation.
@@ -104,6 +108,15 @@ class Session:
         """
 
         return observe_session(self)
+
+    def observe_player(self, perspective_team_id: str) -> PlayerObservation:
+        """Return one allied team's partial, shared-knowledge observation."""
+
+        knowledge = self._player_knowledge.setdefault(
+            perspective_team_id,
+            TeamKnowledge(perspective_team_id),
+        )
+        return observe_player_session(self, perspective_team_id, knowledge)
 
     def execute(self, command: GameCommand) -> CommandResult:
         """Validate and execute one frontend-neutral interaction command.
@@ -383,6 +396,7 @@ class Session:
         self.pending_encounter_completion = None
         self.encounter_state = None
         self._encounter_actions = []
+        self._player_knowledge.clear()
         self._dice = (
             DiceRoller.seeded(seed) if seed is not None else self._dice.restarted()
         )

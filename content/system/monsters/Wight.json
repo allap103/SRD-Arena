@@ -1,6 +1,11 @@
 {
   "name": "Wight",
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Undead",
+    "visible_weapons": ["Necrotic Sword", "Necrotic Bow"],
+    "obvious_features": ["Undead humanoid form"]
+  },
   "page": 332,
   "srd52": true,
   "basicRules2024": true,

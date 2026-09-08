@@ -17,6 +17,10 @@
         "name": "Canonical Barbarian",
         "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
         "token_image": "tokens/human-bear_barbarian.png",
+        "appearance": {
+          "armor_category": "none",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 12,
           "level": 1,
@@ -54,6 +58,10 @@
         "name": "Canonical Barbarian",
         "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
         "token_image": "tokens/human-bear_barbarian.png",
+        "appearance": {
+          "armor_category": "none",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 19,
           "level": 2,
@@ -93,6 +101,10 @@
         "name": "Canonical Barbarian",
         "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
         "token_image": "tokens/human-bear_barbarian.png",
+        "appearance": {
+          "armor_category": "none",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 26,
           "level": 3,
@@ -132,6 +144,10 @@
         "name": "Canonical Barbarian",
         "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
         "token_image": "tokens/human-bear_barbarian.png",
+        "appearance": {
+          "armor_category": "none",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 33,
           "level": 4,
@@ -171,6 +187,10 @@
         "name": "Canonical Barbarian",
         "description": "The fixed scripted Barbarian ally used by the RL curriculum.",
         "token_image": "tokens/human-bear_barbarian.png",
+        "appearance": {
+          "armor_category": "none",
+          "apparent_creature_type": "Humanoid"
+        },
         "attributes": {
           "base_health": 40,
           "level": 5,

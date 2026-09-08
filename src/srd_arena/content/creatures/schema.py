@@ -38,6 +38,37 @@ class CreatureItemReferenceSchema(BaseModel):
 ItemIdOrReference = str | CreatureItemReferenceSchema
 
 
+class ObservableAppearanceSchema(BaseModel):
+    """Validate ordinary visual facts without encoding hidden combat statistics."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    armor_label: str | None = None
+    armor_category: Literal[
+        "unknown",
+        "none",
+        "light",
+        "medium",
+        "heavy",
+        "natural",
+        "other",
+    ] = "unknown"
+    has_shield: bool = False
+    visible_weapons: tuple[str, ...] = ()
+    spellcasting_focus_label: str | None = None
+    spellcasting_focus_kind: Literal[
+        "none",
+        "arcane",
+        "divine",
+        "druidic",
+        "component_pouch",
+        "other",
+        "unknown",
+    ] = "none"
+    obvious_features: tuple[str, ...] = ()
+    apparent_creature_type: str | None = None
+
+
 class CharacterSnapshotReferenceSchema(BaseModel):
     """Select one level of a canonical character build."""
 
@@ -123,6 +154,7 @@ class CreatureSchema(BaseModel):
     attributes: AttributesSchema = Field(default_factory=AttributesSchema)
     inventory: list[ItemIdOrReference] = Field(default_factory=list)
     equipment: dict[EquipmentSlot, ItemIdOrReference] = Field(default_factory=dict)
+    appearance: ObservableAppearanceSchema | None = None
     metadata: dict[str, object] = Field(default_factory=dict)
     class_ref: StatBlockReferenceSchema | None = None
     spellcasting: SpellcastingSchema | None = None

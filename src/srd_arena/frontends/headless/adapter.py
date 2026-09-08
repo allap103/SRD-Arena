@@ -15,6 +15,7 @@ from srd_arena.engine.api import (
     GameCommand,
     GameObservation,
     GameUpdate,
+    PlayerObservation,
     SelectAction,
     Session,
 )
@@ -242,6 +243,11 @@ class HeadlessGameAdapter:
         """
 
         return self._require_session().observe()
+
+    def observe_player(self, perspective_team_id: str) -> PlayerObservation:
+        """Return the framework-neutral partial observation for one allied team."""
+
+        return self._require_session().observe_player(perspective_team_id)
 
     def available_actions(self) -> tuple[ActionObservation, ...]:
         """Return implemented, eligible actions at the current decision point.

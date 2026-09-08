@@ -1,6 +1,9 @@
 {
   "name": "Scout",
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Humanoid"
+  },
   "page": 270,
   "srd52": true,
   "basicRules2024": true,

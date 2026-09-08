@@ -1,6 +1,11 @@
 {
   "name": "Owlbear",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "natural",
+    "apparent_creature_type": "Monstrosity",
+    "obvious_features": ["Owl-like head", "Feathers", "Claws"]
+  },
   "page": 234,
   "srd52": true,
   "basicRules2024": true,

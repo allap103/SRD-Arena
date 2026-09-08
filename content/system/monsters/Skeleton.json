@@ -1,6 +1,11 @@
 {
   "name": "Skeleton",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Undead",
+    "obvious_features": ["Exposed animated skeleton"]
+  },
   "page": 282,
   "srd52": true,
   "basicRules2024": true,

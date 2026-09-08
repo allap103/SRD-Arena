@@ -1,6 +1,11 @@
 {
   "name": "Ogre",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Giant",
+    "obvious_features": ["Large giant stature"]
+  },
   "page": 231,
   "srd52": true,
   "basicRules2024": true,

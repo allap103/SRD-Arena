@@ -1,6 +1,11 @@
 {
   "name": "Wolf",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Beast",
+    "obvious_features": ["Fur", "Fangs"]
+  },
   "page": 373,
   "srd52": true,
   "basicRules2024": true,
