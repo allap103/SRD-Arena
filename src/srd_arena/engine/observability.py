@@ -56,6 +56,8 @@ def effect_observability(effect: OngoingEffect) -> Observability:
 
     if effect.obscures_vision:
         return Observability.OBVIOUS
+    if effect.identity.source.definition_id == "stinking_cloud" and effect.area is None:
+        return Observability.AFTER_TRIGGER
     return EFFECT_OBSERVABILITY.get(
         effect.identity.source.definition_id.casefold().replace("-", "_"),
         Observability.HIDDEN,

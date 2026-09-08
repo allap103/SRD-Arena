@@ -10,6 +10,7 @@ from srd_arena.domain.effects import EffectResult
 from srd_arena.domain.effects.rule_effects import AttackHitDamage, RollAdjustment
 from srd_arena.domain.effects.runtime import EffectTag, OngoingEffectKind, Rounds
 from srd_arena.domain.encounters.defeat import resolve_creature_defeat
+from srd_arena.domain.encounters.effect_lifecycle.concentration import end_concentration
 from srd_arena.domain.encounters.effect_lifecycle.removal import remove_ongoing_effects
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.rule_queries.damage_riders import attack_hit_damage
@@ -70,9 +71,26 @@ def _cast_hex(
     assert any(event.type == "spell_cast" for event in result.events)
 
 
+def test_player_concentration_snapshot_clears_when_hex_ends() -> None:
+    session = _session()
+    _cast_hex(session, "goblin_1")
+    before = session.observe_player("heroes").creature("warlock")
+    assert before.concentrating_on == ("hex",)
+    opponent = next(team for team in session._read().team_ids if team != "heroes")
+    assert session.observe_player(opponent).creature("warlock").concentrating_on is None
+    assert session.encounter_state is not None
+    end_concentration(session.encounter_state, "warlock")
+    assert session.observe_player("heroes").creature("warlock").concentrating_on == ()
+    assert before.concentrating_on == ("hex",)
+
+
 def test_hex_applies_a_sourced_concentration_curse_and_selected_check_penalty() -> None:
     session = _session()
+    assert session.observe_player("heroes").creature("warlock").concentrating_on == ()
     _cast_hex(session, "goblin_1", "strength")
+    assert session.observe_player("heroes").creature("warlock").concentrating_on == (
+        "hex",
+    )
     assert session.encounter_state is not None
     state = session.encounter_state
 

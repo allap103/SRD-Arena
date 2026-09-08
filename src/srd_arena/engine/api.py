@@ -52,11 +52,13 @@ from .player_observation_models import (
     HealthBand,
     KnowledgeState,
     PlayerCreatureObservation,
+    PlayerDecisionContext,
     PlayerObservation,
     PublicCombatEventObservation,
     PublicEventKind,
 )
 from .session import Session, SessionFactory
+from .spell_capability_observations import SpellCapabilityObservation
 
 __all__ = [
     "PLAYER_OBSERVATION_SCHEMA_ID",
@@ -91,6 +93,7 @@ __all__ = [
     "OngoingEffectObservation",
     "PlayerCommandResult",
     "PlayerCreatureObservation",
+    "PlayerDecisionContext",
     "PlayerGameUpdate",
     "PlayerObservation",
     "PositionObservation",
@@ -102,6 +105,7 @@ __all__ = [
     "Session",
     "SessionFactory",
     "SetResourceAllocation",
+    "SpellCapabilityObservation",
     "SpellSlotObservation",
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",

@@ -9,8 +9,12 @@ from .observation_models import (
     EncounterCompletionObservation,
     GridObservation,
     PositionObservation,
+    ResourcePoolObservation,
+    SpellSlotObservation,
+    TargetingObservation,
     TerrainCellObservation,
 )
+from .spell_capability_observations import SpellCapabilityObservation
 
 PLAYER_OBSERVATION_SCHEMA_ID = "player-observation-v1-draft"
 
@@ -47,6 +51,7 @@ class PublicEventKind(StrEnum):
 
     ATTACK = "attack"
     CONDITION = "condition"
+    EFFECT = "effect"
     DEFEAT = "defeat"
     FEATURE = "feature"
     ITEM = "item"
@@ -58,7 +63,11 @@ class PublicEventKind(StrEnum):
 
 @dataclass(frozen=True)
 class PublicCombatEventObservation:
-    """Expose one visible combat occurrence without internal resolution data."""
+    """Expose a visible occurrence with a team-local, episode-local sequence.
+
+    ``seq`` counts published records, not internal events. It stays monotonic
+    when older records leave the bounded history and restarts with the episode.
+    """
 
     seq: int
     kind: PublicEventKind
@@ -85,7 +94,12 @@ class AppearanceObservation:
 
 @dataclass(frozen=True)
 class PlayerCreatureObservation:
-    """Expose only facts available to the observing creature's allied team."""
+    """Expose only facts available to the observing creature's allied team.
+
+    Resource and concentration fields are exact for allies and ``None`` for
+    enemies. An empty allied tuple means no slots, pools, or concentration;
+    it is distinct from an opponent's unknown state.
+    """
 
     creature_ref: str
     allegiance: CreatureAllegiance
@@ -107,6 +121,30 @@ class PlayerCreatureObservation:
     bonus_action_available: bool | None = None
     reaction_available: bool | None = None
     movement_remaining_feet: int | None = None
+    actions_remaining: int | None = None
+    attacks_remaining: int | None = None
+    attacks_per_attack_action: int | None = None
+    spell_slots: tuple[SpellSlotObservation, ...] | None = None
+    resource_pools: tuple[ResourcePoolObservation, ...] | None = None
+    concentrating_on: tuple[str, ...] | None = None
+    spell_capabilities: tuple[SpellCapabilityObservation, ...] | None = None
+
+
+@dataclass(frozen=True)
+class PlayerDecisionContext:
+    """Describe an owned interrupt without disclosing private resolution data.
+
+    Participant references are limited to currently perceived creatures. The
+    enclosing decision ID addresses the response; internal occurrence IDs and
+    continuation objects are deliberately omitted.
+    """
+
+    trigger: str
+    can_pass: bool
+    actor_ref: str | None = None
+    target_ref: str | None = None
+    roll_kind: str | None = None
+    offered_roll_mode: str | None = None
 
 
 @dataclass(frozen=True)
@@ -126,6 +164,8 @@ class PlayerObservation:
     recent_events: tuple[PublicCombatEventObservation, ...]
     completion: EncounterCompletionObservation | None
     requires_automatic_advance: bool
+    targeting: TargetingObservation | None = None
+    decision_context: PlayerDecisionContext | None = None
 
     def creature(self, creature_ref: str) -> PlayerCreatureObservation:
         """Return a semantic creature row by its stable encounter reference."""

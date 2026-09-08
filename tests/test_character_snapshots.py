@@ -27,6 +27,7 @@ from srd_arena.domain.encounters.rule_queries.numeric import (
 )
 from srd_arena.domain.equipment import Item
 from srd_arena.engine.session import Session
+from srd_arena.engine.spell_capability_observations import observe_spell_capabilities
 
 WARLOCK_TRAINING_ENCOUNTER_DIR = (
     Path(__file__).parents[1] / "content" / "encounters" / "warlock_training"
@@ -41,6 +42,25 @@ def snapshot_catalog() -> CharacterSnapshotCatalog:
 @pytest.fixture(scope="module")
 def items_by_id() -> dict[str, Item]:
     return {item.id: item for item in load_system_items(SYSTEM_CONTENT_ROOT)}
+
+
+@pytest.mark.parametrize("level", [1, 2, 3, 4, 5])
+def test_canonical_spell_catalog_scales_across_levels(
+    snapshot_catalog: CharacterSnapshotCatalog,
+    level: int,
+) -> None:
+    creature = build_creature(
+        snapshot_catalog.creature_template("warlock", level),
+        classes=load_class_catalog(SYSTEM_CONTENT_ROOT),
+        optional_features=load_optional_feature_catalog(SYSTEM_CONTENT_ROOT),
+        spells=load_spell_catalog(SYSTEM_CONTENT_ROOT),
+    )
+    catalog = observe_spell_capabilities(creature)
+    blast = next(entry for entry in catalog if entry.spell_id == "eldritch_blast")
+    assert blast.maximum_targets == (2 if level == 5 else 1)
+    assert creature.spellcasting is not None
+    assert blast.attack_bonus == creature.spellcasting.attack_bonus
+    assert any(entry.grant_id == "fiendish_vigor" for entry in catalog) == (level == 5)
 
 
 @pytest.mark.parametrize(

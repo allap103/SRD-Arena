@@ -214,6 +214,55 @@ def test_failed_turn_start_save_poisons_and_prohibits_actions_for_that_turn() ->
     }
     assert progress.events[-1].type == "ongoing_area_effect_resolved"
     assert as_mapping(progress.events[-1].data["save_detail"])["success"] is False
+    symptoms = [
+        event for event in progress.events if event.type.endswith("_manifested")
+    ]
+    assert {event.type for event in symptoms} == {
+        "condition_manifested",
+        "effect_manifested",
+    }
+    condition_event = next(
+        event for event in symptoms if event.type == "condition_manifested"
+    )
+    assert any(
+        applied.id == condition_event.data["condition_id"]
+        for applied in state.conditions
+    )
+    effect_event = next(
+        event for event in symptoms if event.type == "effect_manifested"
+    )
+    assert effect_event.data["effect_id"] == child.identity.id
+    # Model a witness with appropriate perception; ordinary sight cannot see
+    # through the cloud. The visibility query, not the event, grants access.
+    from unittest.mock import patch
+
+    from srd_arena.engine.player_knowledge import TeamKnowledge
+    from srd_arena.engine.player_observations import observe_player_session
+
+    knowledge = TeamKnowledge("heroes")
+    from dataclasses import replace
+
+    # Explicitly model event-time special sight for this witness.
+    knowledge.record_events(
+        tuple(
+            replace(event, visible_by_team=(("heroes", frozenset({"goblin_1"})),))
+            for event in progress.events
+        )
+    )
+    with patch(
+        "srd_arena.engine.player_observations.rule_queries.creature_can_see_creature",
+        return_value=True,
+    ):
+        seen = observe_player_session(session, "heroes", knowledge).creature("goblin_1")
+        assert "poisoned" in seen.known_conditions
+        assert child.label in seen.known_effects
+        expire_ongoing_effects_for_turn_end(state, "goblin_1")
+        expire_conditions_for_turn_end(state, "goblin_1")
+        ended = observe_player_session(session, "heroes", knowledge).creature(
+            "goblin_1"
+        )
+        assert "poisoned" not in ended.known_conditions
+        assert child.label not in ended.known_effects
 
 
 def test_successful_turn_start_save_creates_no_target_state() -> None:
@@ -222,7 +271,9 @@ def test_successful_turn_start_save_creates_no_target_state() -> None:
     assert session.encounter_state is not None
     state = session.encounter_state
 
-    resolve_turn_start_area_effects(state, "goblin_1", EncounterProgress())
+    progress = EncounterProgress()
+    resolve_turn_start_area_effects(state, "goblin_1", progress)
+    assert not any(event.type.endswith("_manifested") for event in progress.events)
 
     assert not state.has_condition("goblin_1", Condition.POISONED)
     assert all(effect.identity.parent_id is None for effect in state.ongoing_effects)

@@ -1,6 +1,7 @@
 """Project complete engine state into a team-relative semantic observation."""
 
 from srd_arena.domain.creatures import ObservableAppearance
+from srd_arena.domain.effects.runtime import OngoingEffectKind
 from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.encounter import EncounterState
 
@@ -14,7 +15,9 @@ from .observation_models import (
     TerrainCellObservation,
 )
 from .player_action_observations import player_action_observations
+from .player_decision_observations import observe_player_decision
 from .player_knowledge import TeamKnowledge
+from .player_movement_observations import player_movement_observations
 from .player_observation_models import (
     PLAYER_OBSERVATION_SCHEMA_ID,
     AppearanceObservation,
@@ -26,6 +29,9 @@ from .player_observation_models import (
 )
 from .protocols import GameEngine
 from .queries import SessionRead
+from .resource_observations import observe_resource_pools, observe_spell_slots
+from .spell_capability_observations import observe_spell_capabilities
+from .targeting_observations import observe_player_targeting
 
 
 def observe_player_session(
@@ -75,14 +81,14 @@ def observe_player_session(
                 knowledge=knowledge,
             )
         )
-    knowledge.finish_projection(
-        {creature.creature_ref for creature in creatures if creature.currently_visible}
-    )
 
     completion = _observe_completion(read)
     grid = state.definition.grid
     decision_team_id = read.creature_team_ids[decision.creature_ref]
     scene = observe_scene(read)
+    visible_refs = frozenset(
+        creature.creature_ref for creature in creatures if creature.currently_visible
+    )
     return PlayerObservation(
         schema_id=PLAYER_OBSERVATION_SCHEMA_ID,
         perspective_team_id=perspective_team_id,
@@ -98,16 +104,16 @@ def observe_player_session(
         initiative_order=tuple(state.initiative_order),
         action_details=(
             player_action_observations(
-                tuple(
-                    action
-                    for action in scene.action_details
-                    if not action.kind.startswith("system_")
+                player_movement_observations(
+                    tuple(
+                        action
+                        for action in scene.action_details
+                        if not action.kind.startswith("system_")
+                    ),
+                    state,
+                    visible_refs,
                 ),
-                visible_creature_refs=frozenset(
-                    creature.creature_ref
-                    for creature in creatures
-                    if creature.currently_visible
-                ),
+                visible_creature_refs=visible_refs,
             )
             if decision_team_id == perspective_team_id
             else ()
@@ -123,6 +129,10 @@ def observe_player_session(
         recent_events=tuple(knowledge.recent_events),
         completion=completion,
         requires_automatic_advance=read.requires_automatic_advance,
+        targeting=observe_player_targeting(state, frozenset(allied_refs)),
+        decision_context=observe_player_decision(
+            decision, allied_refs=frozenset(allied_refs), visible_refs=visible_refs
+        ),
     )
 
 
@@ -149,12 +159,37 @@ def _observe_player_creature(
             creature_ref,
         ).value
         facts.health_band = _health_band(creature.get_health(), maximum_health)
+        active_conditions = state.effective_conditions_for(creature_ref).conditions
+        active_condition_ids = {
+            provider_id
+            for applied in active_conditions
+            for provider_id in applied.provider_ids
+        }
+        facts.manifested_conditions = {
+            instance_id: name
+            for instance_id, name in facts.manifested_conditions.items()
+            if instance_id in active_condition_ids
+        }
+        active_effect_ids = {
+            effect.identity.id
+            for effect in state.ongoing_effects
+            if creature_ref in effect.target_refs
+        }
+        facts.manifested_effects = {
+            instance_id: name
+            for instance_id, name in facts.manifested_effects.items()
+            if instance_id in active_effect_ids
+        }
         facts.conditions = tuple(
             dict.fromkeys(
                 applied.condition.value
-                for applied in state.effective_conditions_for(creature_ref).conditions
+                for applied in active_conditions
                 if allied
                 or condition_observability(applied.condition) is Observability.OBVIOUS
+                or any(
+                    provider_id in facts.manifested_conditions
+                    for provider_id in applied.provider_ids
+                )
             )
         )
         facts.effects = tuple(
@@ -162,7 +197,11 @@ def _observe_player_creature(
                 effect.label or effect.identity.source.definition_id
                 for effect in state.ongoing_effects
                 if creature_ref in effect.target_refs
-                and (allied or effect_observability(effect) is Observability.OBVIOUS)
+                and (
+                    allied
+                    or effect_observability(effect) is Observability.OBVIOUS
+                    or effect.identity.id in facts.manifested_effects
+                )
             )
         )
     if allied:
@@ -237,6 +276,22 @@ def _observe_ally(
             creature_ref,
         ).allowed,
         movement_remaining_feet=state.definition.grid.feet_for_squares(remaining),
+        actions_remaining=creature_state.actions_remaining,
+        attacks_remaining=creature_state.attacks_remaining,
+        attacks_per_attack_action=rule_queries.attack_limit(
+            state, creature_ref, creature.combat_profile.attacks_per_attack_action
+        ).value,
+        spell_slots=observe_spell_slots(creature),
+        spell_capabilities=observe_spell_capabilities(creature),
+        resource_pools=observe_resource_pools(creature),
+        concentrating_on=tuple(
+            dict.fromkeys(
+                effect.identity.source.definition_id
+                for effect in state.ongoing_effects
+                if effect.kind is OngoingEffectKind.CONCENTRATION
+                and effect.identity.source.applied_by_ref == creature_ref
+            )
+        ),
     )
 
 

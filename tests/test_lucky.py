@@ -121,6 +121,13 @@ def test_lucky_advantage_is_addressed_to_one_eldritch_blast_beam() -> None:
     session._choose(confirm.id)
 
     assert state.current_decision().kind == "d20_roll_modifier"
+    context = session.observe_player("heroes").decision_context
+    assert context is not None
+    assert context.trigger == "d20_roll_modifier"
+    assert context.roll_kind == "attack_roll"
+    assert context.offered_roll_mode == "advantage"
+    assert context.actor_ref == "warlock"
+    assert context.target_ref == "ogre_target"
     resolved = _use_lucky(session)
     events = list(resolved.events)
     while state.current_decision().kind == "forced_movement":

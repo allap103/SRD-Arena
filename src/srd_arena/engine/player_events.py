@@ -3,12 +3,13 @@
 from __future__ import annotations
 
 from collections.abc import Mapping, Sequence
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 
 from .observability import Observability, condition_observability
+from .player_manifestations import manifested_state
 from .player_observation_models import (
     PublicCombatEventObservation,
     PublicEventKind,
@@ -65,9 +66,48 @@ def public_events_from_event(
     event: CombatEvent,
     *,
     visible_creature_refs: frozenset[str],
+    first_sequence: int = 1,
+) -> tuple[PublicCombatEventObservation, ...]:
+    """Project visible records and number them independently of internal events.
+
+    The team ledger supplies its next sequence number. Numbering happens after
+    filtering, so hidden targets and events cannot leave gaps. One internal
+    event may produce several public records, each with its own number.
+    """
+
+    return tuple(
+        replace(record, seq=sequence)
+        for sequence, record in enumerate(
+            _project_event(event, visible_creature_refs=visible_creature_refs),
+            start=first_sequence,
+        )
+    )
+
+
+def _project_event(
+    event: CombatEvent,
+    *,
+    visible_creature_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     """Project one internal event into conservative player-visible records."""
 
+    evidence = manifested_state(event)
+    if evidence is not None and event.creature_ref in visible_creature_refs:
+        return (
+            PublicCombatEventObservation(
+                event.seq,
+                PublicEventKind.CONDITION
+                if evidence.is_condition
+                else PublicEventKind.EFFECT,
+                target_ref=event.creature_ref,
+                source_id=(
+                    f"condition:{evidence.name}"
+                    if evidence.is_condition
+                    else "effect:stinking_cloud"
+                ),
+                outcome="manifested",
+            ),
+        )
     if event.type == "attack_resolved":
         return _attack_event(event, visible_creature_refs)
     if event.type == "attack_hit_retaliation":

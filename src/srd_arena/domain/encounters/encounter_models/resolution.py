@@ -26,6 +26,7 @@ class CombatEvent:
     frame_id: str | None = None
     action_id: str | None = None
     data: dict[str, object] = field(default_factory=dict)
+    visible_by_team: tuple[tuple[str, frozenset[str]], ...] | None = None
 
 
 @dataclass

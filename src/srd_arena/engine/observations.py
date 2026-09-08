@@ -2,8 +2,6 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.capabilities import LimitedUsePool, RechargePool
-from srd_arena.domain.creatures import Creature
 from srd_arena.domain.effects.runtime import OngoingEffect
 from srd_arena.domain.encounters import rule_queries
 from srd_arena.domain.encounters.encounter import EncounterState
@@ -44,6 +42,8 @@ from .observation_models import (
     TargetResourceLimitObservation,
     TerrainCellObservation,
 )
+from .resource_observations import observe_resource_pools, observe_spell_slots
+from .targeting_observations import observe_targeting
 from .values import freeze_mapping
 
 __all__ = [
@@ -140,7 +140,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
             _observe_effect(effect) for effect in state.ongoing_effects
         ),
         team_ids=read.team_ids,
-        targeting=_observe_targeting(state),
+        targeting=observe_targeting(state),
         relationships=tuple(
             CreatureRelationshipObservation(
                 id=relationship.identity.id,
@@ -165,42 +165,6 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
     )
 
 
-def _observe_targeting(state: EncounterState) -> TargetingObservation | None:
-    pending = state.interrupts.pending_spell_cast
-    if pending is None:
-        return None
-    actor = state.creatures[state.current_decision().creature_ref].creature
-    spell = (
-        next(
-            (
-                spell
-                for spell in actor.spellcasting.learned_spells
-                if spell.id == pending.spell_id
-            ),
-            None,
-        )
-        if actor.spellcasting is not None
-        else None
-    )
-    return TargetingObservation(
-        source_id=pending.spell_id,
-        source_label=spell.name if spell is not None else pending.spell_id,
-        selected_target_refs=tuple(pending.selected_target_refs),
-        maximum_targets=pending.maximum_targets,
-        repeat_target_allocations=pending.repeat_target_allocations,
-        require_full_target_count=pending.require_full_target_count,
-        resource_pool_total=pending.resource_pool_total,
-        resource_allocations=tuple(
-            TargetResourceAllocationObservation(target_ref=target_ref, amount=amount)
-            for target_ref, amount in pending.resource_allocations.items()
-        ),
-        resource_limits=tuple(
-            TargetResourceLimitObservation(target_ref=target_ref, maximum=maximum)
-            for target_ref, maximum in pending.resource_allocation_limits.items()
-        ),
-    )
-
-
 def _observe_creature(
     read: SessionRead,
     state: EncounterState,
@@ -210,11 +174,6 @@ def _observe_creature(
     creature = creature_state.creature
     attributes = creature.attributes
     feature_definitions = creature.combat_profile.feature_actions
-    spellcasting = creature.spellcasting
-    slots_max = spellcasting.spell_slots_max if spellcasting is not None else {}
-    slots_remaining = (
-        spellcasting.spell_slots_remaining if spellcasting is not None else {}
-    )
     movement = rule_queries.movement_budget(state, creature_ref)
     movement_remaining = (
         creature_state.movement_remaining
@@ -288,15 +247,7 @@ def _observe_creature(
                 condition.condition.value for condition in effective_conditions
             )
         ),
-        spell_slots=tuple(
-            SpellSlotObservation(
-                level=level,
-                remaining=slots_remaining.get(level, maximum),
-                maximum=maximum,
-            )
-            for level, maximum in sorted(slots_max.items())
-            if maximum > 0
-        ),
+        spell_slots=observe_spell_slots(creature),
         feature_actions=tuple(
             FeatureActionObservation(
                 feature_id=definition.feature_id,
@@ -334,7 +285,7 @@ def _observe_creature(
             )
             for cell in creature_occupied_cells(state, creature_ref)
         ),
-        resource_pools=_observe_resource_pools(creature),
+        resource_pools=observe_resource_pools(creature),
         defenses=CreatureDefenseObservation(
             condition_immunities=tuple(
                 sorted(
@@ -356,59 +307,6 @@ def _observe_creature(
             ),
         ),
     )
-
-
-def _observe_resource_pools(
-    creature: Creature,
-) -> tuple[ResourcePoolObservation, ...]:
-    """Project tracked feature and stat-block counters by stable pool identity."""
-
-    resources = [
-        ResourcePoolObservation(
-            id=f"feature:{feature_id}",
-            source_id=feature_id,
-            kind="feature_uses",
-            remaining=remaining,
-            maximum=creature.combat_profile.feature_uses_max[feature_id],
-            refresh=tuple(
-                sorted(creature.combat_profile.feature_recharge.get(feature_id, {}))
-            ),
-        )
-        for feature_id, remaining in sorted(creature.feature_uses_remaining.items())
-    ]
-    for action_name, remaining in sorted(creature.stat_block_action_resources.items()):
-        definition = creature.stat_block_actions.get(action_name)
-        pool = getattr(definition, "resource_pool", None)
-        refresh: tuple[str, ...]
-        recharge_die_sides: int | None
-        recharge_minimum: int | None
-        if isinstance(pool, LimitedUsePool):
-            maximum = pool.maximum
-            refresh = (pool.refresh,)
-            recharge_die_sides = None
-            recharge_minimum = None
-        elif isinstance(pool, RechargePool):
-            maximum = 1
-            refresh = ("turn_start_recharge",)
-            recharge_die_sides = pool.die_sides
-            recharge_minimum = pool.minimum
-        else:
-            raise RuntimeError(
-                f"Tracked stat-block resource '{action_name}' has no pool definition."
-            )
-        resources.append(
-            ResourcePoolObservation(
-                id=pool.id,
-                source_id=action_name,
-                kind=pool.kind,
-                remaining=remaining,
-                maximum=maximum,
-                refresh=refresh,
-                recharge_die_sides=recharge_die_sides,
-                recharge_minimum=recharge_minimum,
-            )
-        )
-    return tuple(resources)
 
 
 def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:

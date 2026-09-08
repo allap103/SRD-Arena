@@ -28,6 +28,9 @@ def create_event(
     (7, 'turn_started', 'hero', 8)
     """
 
+    # Imported here to avoid the encounter/query module initialization cycle.
+    from .event_visibility import event_visibility
+
     event = CombatEvent(
         seq=state.event_sequence,
         type=event_type,
@@ -35,6 +38,11 @@ def create_event(
         frame_id=frame_id,
         action_id=action_id,
         data=data or {},
+        visible_by_team=(
+            event_visibility(state)
+            if getattr(state, "capture_event_visibility", False) is True
+            else None
+        ),
     )
     state.event_sequence += 1
     return event

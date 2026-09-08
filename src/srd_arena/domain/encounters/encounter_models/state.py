@@ -166,6 +166,9 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    # Sessions enable perception snapshots; isolated rules callers can emit
+    # lightweight events when they do not maintain player knowledge.
+    capture_event_visibility: bool = field(default=False, repr=False)
     active_d20_action_id: str | None = None
     active_d20_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
     runtime_state_sequence: int = 1

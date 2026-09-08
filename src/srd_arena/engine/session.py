@@ -13,6 +13,7 @@ from srd_arena.domain.encounters.creature_control import creature_action_candida
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
 from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
+from srd_arena.domain.encounters.event_visibility import event_visibility
 from srd_arena.domain.encounters.turn_lifecycle import surviving_team_ids
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.action_configuration import (
@@ -471,8 +472,16 @@ class Session:
     ) -> None:
         """Update initialized team-knowledge ledgers from structured events."""
 
-        for knowledge in self._player_knowledge.values():
-            knowledge.record_events(events)
+        if self.encounter_state is None or not events:
+            return
+        # Normal events carry their own emission-time snapshot. Synthetic events
+        # supplied directly by callers use current sight, never the last UI read.
+        visibility = dict(event_visibility(self.encounter_state))
+        for team_id, visible in visibility.items():
+            knowledge = self._player_knowledge.setdefault(
+                team_id, TeamKnowledge(team_id)
+            )
+            knowledge.record_events(events, fallback_visibility=visible)
 
     def _ensure_encounter_state(self) -> None:
         encounter = self.encounter
@@ -489,6 +498,7 @@ class Session:
             self.geometry_config,
             self._dice,
         )
+        self.encounter_state.capture_event_visibility = True
         self._encounter_actions = []
 
     def _restart_encounter(self) -> EngineOutcome:

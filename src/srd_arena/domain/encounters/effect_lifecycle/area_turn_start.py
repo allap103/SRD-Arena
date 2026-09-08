@@ -119,7 +119,7 @@ def _resolve_area_save(
         ),
     )
     if not save.check.success:
-        _apply_failed_save(state, effect, creature_ref)
+        _apply_failed_save(state, effect, creature_ref, progress)
     _publish_result(
         state,
         effect,
@@ -147,6 +147,7 @@ def _apply_failed_save(
     state: EncounterState,
     effect: OngoingEffect,
     creature_ref: str,
+    progress: EncounterProgress | None,
 ) -> None:
     save_rule = effect.lifecycle.area_turn_start_save
     assert save_rule is not None
@@ -183,7 +184,7 @@ def _apply_failed_save(
     state.ongoing_effects.append(child)
     source_ref = source.applied_by_ref or "system"
     for condition in save_rule.failure_conditions:
-        apply_condition(
+        result = apply_condition(
             state,
             build_applied_condition(
                 condition=condition,
@@ -197,6 +198,33 @@ def _apply_failed_save(
                 parent_id=child_id,
                 root_id=effect.identity.root_id,
             ),
+        )
+        if progress is not None and source.definition_id == "stinking_cloud":
+            for applied in result.applied:
+                progress.events.append(
+                    create_event(
+                        state,
+                        "condition_manifested",
+                        creature_ref=creature_ref,
+                        data={
+                            "condition_id": applied.id,
+                            "condition": applied.condition.value,
+                            "manifestation": "stinking_cloud_retching",
+                        },
+                    )
+                )
+    if progress is not None and source.definition_id == "stinking_cloud":
+        progress.events.append(
+            create_event(
+                state,
+                "effect_manifested",
+                creature_ref=creature_ref,
+                data={
+                    "effect_id": child_id,
+                    "definition_id": source.definition_id,
+                    "manifestation": "stinking_cloud_retching",
+                },
+            )
         )
 
 

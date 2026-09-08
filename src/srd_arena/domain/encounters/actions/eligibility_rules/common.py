@@ -133,8 +133,13 @@ class MovementRule:
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
+        *,
+        ignored_occupants: frozenset[CreatureRef] = frozenset(),
     ) -> EligibilityFailure | None:
         """Validate movement direction, budget, and destination occupancy.
+
+        ``ignored_occupants`` supports knowledge-relative previews. Execution
+        leaves it empty so unseen creatures still block actual placement.
 
         >>> from unittest.mock import Mock
         >>> action = EncounterAction("Move", "move", value="sideways")
@@ -189,7 +194,7 @@ class MovementRule:
                 state,
                 moving_ref,
                 destination,
-                ignored_refs=moving_refs,
+                ignored_refs=moving_refs | ignored_occupants,
             )
             for moving_ref, destination in destinations.items()
         ) or any(
