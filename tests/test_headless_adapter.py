@@ -45,6 +45,7 @@ def _player_observation(
         initiative_order=("warlock",),
         action_details=actions,
         terrain=(),
+        recent_events=(),
         completion=None,
         requires_automatic_advance=False,
     )
@@ -103,6 +104,22 @@ def test_start_player_encounter_returns_only_player_observation(
 
     assert result is observation
     session.observe_player.assert_called_once_with("heroes")
+
+
+def test_player_automatic_advance_uses_only_the_safe_session_method() -> None:
+    from unittest.mock import Mock
+
+    expected = Mock()
+    session = Mock()
+    session.advance_player_until_input_required.return_value = expected
+    adapter = HeadlessGameAdapter(Mock())
+    adapter._session = session
+
+    result = adapter.advance_player_until_input_required("heroes")
+
+    assert result is expected
+    session.advance_until_input_required.assert_not_called()
+    session.advance_player_until_input_required.assert_called_once_with("heroes")
 
 
 def test_headless_adapter_drives_game_by_stable_ids() -> None:

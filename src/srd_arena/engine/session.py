@@ -23,6 +23,7 @@ from srd_arena.engine.commands import (
     GameCommand,
     GameUpdate,
     PlayerCommandResult,
+    PlayerGameUpdate,
 )
 from srd_arena.engine.interactions import execute_game_command, game_update
 from srd_arena.engine.models import EngineOutcome
@@ -31,7 +32,10 @@ from srd_arena.engine.observations import (
     GameObservation,
     observe_session,
 )
-from srd_arena.engine.player_interactions import execute_player_game_command
+from srd_arena.engine.player_interactions import (
+    execute_player_game_command,
+    player_game_update,
+)
 from srd_arena.engine.player_knowledge import TeamKnowledge
 from srd_arena.engine.player_observation_models import PlayerObservation
 from srd_arena.engine.player_observations import observe_player_session
@@ -380,6 +384,18 @@ class Session:
         """
         return game_update(self, self._advance_automatic(single_action=False))
 
+    def advance_player_until_input_required(
+        self,
+        perspective_team_id: str,
+    ) -> PlayerGameUpdate:
+        """Advance scripted turns and return only player-relative state."""
+
+        return player_game_update(
+            self,
+            perspective_team_id,
+            self._advance_automatic(single_action=False),
+        )
+
     def advance_one_automatic_action(self) -> GameUpdate:
         """Resolve one scripted action without introducing a time delay.
 
@@ -403,6 +419,18 @@ class Session:
         (('Goblin', 'Moves'),)
         """
         return game_update(self, self._advance_automatic(single_action=True))
+
+    def advance_one_player_automatic_action(
+        self,
+        perspective_team_id: str,
+    ) -> PlayerGameUpdate:
+        """Resolve one scripted action and return only player-relative state."""
+
+        return player_game_update(
+            self,
+            perspective_team_id,
+            self._advance_automatic(single_action=True),
+        )
 
     def _advance_automatic(self, *, single_action: bool) -> EngineOutcome:
         """Resolve scripted activity with the requested execution granularity."""

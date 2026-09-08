@@ -16,6 +16,7 @@ from srd_arena.engine.api import (
     GameObservation,
     GameUpdate,
     PlayerCommandResult,
+    PlayerGameUpdate,
     PlayerObservation,
     SelectAction,
     Session,
@@ -539,6 +540,17 @@ class HeadlessGameAdapter:
         self._require_active_episode()
         return self._require_session().advance_until_input_required()
 
+    def advance_player_until_input_required(
+        self,
+        perspective_team_id: str,
+    ) -> PlayerGameUpdate:
+        """Advance scripted controllers without returning privileged state."""
+
+        self._require_active_episode()
+        return self._require_session().advance_player_until_input_required(
+            perspective_team_id
+        )
+
     def advance_one_automatic_action(self) -> GameUpdate:
         """Resolve one scripted action for step-oriented clients.
 
@@ -554,6 +566,17 @@ class HeadlessGameAdapter:
 
         self._require_active_episode()
         return self._require_session().advance_one_automatic_action()
+
+    def advance_one_player_automatic_action(
+        self,
+        perspective_team_id: str,
+    ) -> PlayerGameUpdate:
+        """Resolve one scripted action through the player-safe boundary."""
+
+        self._require_active_episode()
+        return self._require_session().advance_one_player_automatic_action(
+            perspective_team_id
+        )
 
     @property
     def seed(self) -> int | None:

@@ -55,7 +55,6 @@ def observe_player_session(
         for creature_ref in allied_refs
         if state.creatures[creature_ref].is_alive
     )
-    visible_enemies: set[str] = set()
     creatures: list[PlayerCreatureObservation] = []
     for creature_ref in state.creatures:
         allied = creature_ref in allied_refs
@@ -67,8 +66,6 @@ def observe_player_session(
             )
             for viewer_ref in living_viewers
         )
-        if visible and not allied:
-            visible_enemies.add(creature_ref)
         creatures.append(
             _observe_player_creature(
                 state=state,
@@ -78,7 +75,9 @@ def observe_player_session(
                 knowledge=knowledge,
             )
         )
-    knowledge.finish_projection(visible_enemies)
+    knowledge.finish_projection(
+        {creature.creature_ref for creature in creatures if creature.currently_visible}
+    )
 
     completion = _observe_completion(read)
     grid = state.definition.grid
@@ -121,6 +120,7 @@ def observe_player_session(
             )
             for cell in state.definition.terrain
         ),
+        recent_events=tuple(knowledge.recent_events),
         completion=completion,
         requires_automatic_advance=read.requires_automatic_advance,
     )
@@ -191,6 +191,7 @@ def _observe_player_creature(
         observed_damage_total=facts.observed_damage_total if known else None,
         known_conditions=facts.conditions,
         known_effects=facts.effects,
+        observed_capability_ids=facts.observed_capability_ids,
     )
 
 
@@ -224,6 +225,7 @@ def _observe_ally(
         observed_damage_total=None,
         known_conditions=facts.conditions,
         known_effects=facts.effects,
+        observed_capability_ids=(),
         health=creature.get_health(),
         maximum_health=maximum_health,
         temporary_hit_points=creature.temporary_hit_points,

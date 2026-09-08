@@ -199,3 +199,55 @@ def test_hidden_enemy_retains_only_last_known_position() -> None:
     assert hidden.health is None
     assert hidden.maximum_health is None
     assert hidden.armor_class is None
+
+
+def test_visible_enemy_action_enters_public_history_and_capability_knowledge() -> None:
+    session = _session()
+    session.observe_player("heroes")
+
+    session._record_player_events(
+        (
+            CombatEvent(
+                10,
+                "attack_resolved",
+                creature_ref="goblin_1",
+                data={
+                    "target_ref": "warlock",
+                    "attack_name": "Scimitar",
+                    "hit": True,
+                    "damage": 4,
+                    "attack_roll_detail": {"modifier": 100},
+                },
+            ),
+        )
+    )
+    observation = session.observe_player("heroes")
+
+    assert observation.creature("goblin_1").observed_capability_ids == (
+        "attack:scimitar",
+    )
+    [event] = observation.recent_events
+    assert event.actor_ref == "goblin_1"
+    assert event.target_ref == "warlock"
+    assert event.amount == 4
+    assert not hasattr(event, "data")
+
+
+def test_public_event_history_is_bounded_to_eight_records() -> None:
+    session = _session()
+    session.observe_player("heroes")
+
+    session._record_player_events(
+        tuple(
+            CombatEvent(
+                sequence,
+                "movement_resolved",
+                creature_ref="goblin_1",
+            )
+            for sequence in range(1, 11)
+        )
+    )
+
+    assert tuple(
+        event.seq for event in session.observe_player("heroes").recent_events
+    ) == tuple(range(3, 11))

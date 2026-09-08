@@ -42,6 +42,33 @@ class KnowledgeState(StrEnum):
     UNKNOWN = "unknown"
 
 
+class PublicEventKind(StrEnum):
+    """Classify the small set of occurrences exposed to player controllers."""
+
+    ATTACK = "attack"
+    CONDITION = "condition"
+    DEFEAT = "defeat"
+    FEATURE = "feature"
+    ITEM = "item"
+    MOVEMENT = "movement"
+    RETALIATION = "retaliation"
+    SPELL = "spell"
+    STAT_BLOCK_ACTION = "stat_block_action"
+
+
+@dataclass(frozen=True)
+class PublicCombatEventObservation:
+    """Expose one visible combat occurrence without internal resolution data."""
+
+    seq: int
+    kind: PublicEventKind
+    actor_ref: str | None = None
+    target_ref: str | None = None
+    source_id: str | None = None
+    outcome: str | None = None
+    amount: int | None = None
+
+
 @dataclass(frozen=True)
 class AppearanceObservation:
     """Expose ordinary visible equipment and anatomy without private statistics."""
@@ -71,6 +98,7 @@ class PlayerCreatureObservation:
     observed_damage_total: int | None
     known_conditions: tuple[str, ...]
     known_effects: tuple[str, ...]
+    observed_capability_ids: tuple[str, ...]
     health: int | None = None
     maximum_health: int | None = None
     temporary_hit_points: int | None = None
@@ -95,6 +123,7 @@ class PlayerObservation:
     initiative_order: tuple[str, ...]
     action_details: tuple[ActionObservation, ...]
     terrain: tuple[TerrainCellObservation, ...]
+    recent_events: tuple[PublicCombatEventObservation, ...]
     completion: EncounterCompletionObservation | None
     requires_automatic_advance: bool
 

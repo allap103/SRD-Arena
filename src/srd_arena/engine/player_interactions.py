@@ -10,7 +10,8 @@ from .commands import (
     PlayerGameUpdate,
     SelectAction,
 )
-from .interactions import execute_game_command, game_update
+from .interactions import execute_game_command
+from .models import EngineOutcome
 from .protocols import PlayerGameEngine
 
 
@@ -48,15 +49,14 @@ def execute_player_game_command(
                 f"{option.required_configuration} configuration.",
             )
         try:
-            update = game_update(
+            update = player_game_update(
                 session,
+                perspective_team_id,
                 session._choose_player_action(command.action_id),
             )
         except (KeyError, RuntimeError, ValueError) as error:
             return _reject("command_rejected", str(error))
-        return PlayerCommandResult(
-            update=_player_update(session, perspective_team_id, update)
-        )
+        return PlayerCommandResult(update=update)
 
     result = execute_game_command(session, command)
     if result.failure is not None:
@@ -82,6 +82,23 @@ def _player_update(
         selected_action_id=update.selected_action_id,
         selected_choice_text=update.selected_choice_text,
         should_exit=update.should_exit,
+    )
+
+
+def player_game_update(
+    session: PlayerGameEngine,
+    perspective_team_id: str,
+    outcome: EngineOutcome,
+) -> PlayerGameUpdate:
+    """Translate an engine outcome directly into a player-safe update."""
+
+    return PlayerGameUpdate(
+        observation=session.observe_player(perspective_team_id),
+        messages=(),
+        events=(),
+        selected_action_id=outcome.selected_action_id,
+        selected_choice_text=outcome.selected_choice_text,
+        should_exit=outcome.should_exit,
     )
 
 

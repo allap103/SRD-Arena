@@ -53,6 +53,8 @@ from .player_observation_models import (
     KnowledgeState,
     PlayerCreatureObservation,
     PlayerObservation,
+    PublicCombatEventObservation,
+    PublicEventKind,
 )
 from .session import Session, SessionFactory
 
@@ -92,6 +94,8 @@ __all__ = [
     "PlayerGameUpdate",
     "PlayerObservation",
     "PositionObservation",
+    "PublicCombatEventObservation",
+    "PublicEventKind",
     "ResourcePoolObservation",
     "SceneObservation",
     "SelectAction",
