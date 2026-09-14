@@ -20,6 +20,7 @@ from .commands import (
     SelectAction,
     SetResourceAllocation,
 )
+from .filtered_observations import FILTERED_OBSERVATION_SCHEMA_ID, PolicyProjector
 from .gameplay_observation_models import (
     GameplayConditionObservation,
     GameplayCreatureObservation,
@@ -28,6 +29,7 @@ from .gameplay_observation_models import (
     GameplayObservation,
     GameplayTeamObservation,
 )
+from .observation_policy import ObservationPolicy
 from .observations import (
     ActionObservation,
     ActionReasonObservation,
@@ -69,6 +71,7 @@ from .session import Session, SessionFactory
 from .spell_capability_observations import SpellCapabilityObservation
 
 __all__ = [
+    "FILTERED_OBSERVATION_SCHEMA_ID",
     "PLAYER_OBSERVATION_SCHEMA_ID",
     "ActionObservation",
     "ActionReasonObservation",
@@ -104,12 +107,14 @@ __all__ = [
     "InitiativeObservation",
     "InventoryItemObservation",
     "KnowledgeState",
+    "ObservationPolicy",
     "OngoingEffectObservation",
     "PlayerCommandResult",
     "PlayerCreatureObservation",
     "PlayerDecisionContext",
     "PlayerGameUpdate",
     "PlayerObservation",
+    "PolicyProjector",
     "PositionObservation",
     "PublicCombatEventObservation",
     "PublicEventKind",

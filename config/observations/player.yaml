@@ -1,0 +1,132 @@
+# Supported initial policy; see config/observations/README.md.
+schema_version: 1
+name: player
+perspective:
+  knowledge_sharing: team
+visibility:
+  own: always
+  ally: always
+  enemy: perceived
+memory:
+  own: current_only
+  ally: current_only
+  enemy: last_known
+  demonstrated_facts: retain
+creatures:
+  position:
+    own: exact
+    ally: exact
+    enemy: exact
+  size:
+    own: exact
+    ally: exact
+    enemy: exact
+  appearance:
+    own: visible_equipment
+    ally: visible_equipment
+    enemy: visible_equipment
+  creature_type:
+    own: apparent
+    ally: apparent
+    enemy: apparent
+  health:
+    disclosure:
+      own: exact
+      ally: exact
+      enemy: interval
+    intervals:
+      boundaries:
+      - 0.0
+      - 0.25
+      - 0.5
+      - 0.75
+      - 1.0
+      distinguish_full_health: true
+  temporary_health:
+    own: exact
+    ally: exact
+    enemy: hidden
+  defeated:
+    own: include
+    ally: include
+    enemy: include
+  armor_class:
+    own: exact
+    ally: exact
+    enemy: hidden
+  ability_scores:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  saving_throw_modifiers:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  skill_modifiers:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  movement:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  action_economy:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  resources:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  capabilities:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  defenses:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  conditions:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  effects:
+    disclosure:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+    duration:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+    mechanics:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+  relationships:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+battlefield:
+  dimensions: include
+  terrain: all
+  environment: all
+  persistent_areas: hidden
+encounter:
+  round: include
+  active_turn: include
+  initiative: order
+  roster: all
+history:
+  events: perceived
+  recent_event_limit: 8
+  accumulated:
+    damage_received:
+      own: exact
+      ally: exact
+      enemy: exact
+    demonstrated_capabilities: false
+    demonstrated_defenses: false
+decisions:
+  context: permitted
+  capability_descriptions: hidden

@@ -1,0 +1,6 @@
+{"action_id":"initiative-swap-warlock-keep","command":"select_action","expected_decision_id":"initiative-swap-warlock@1:0","type":"command"}
+{"action_id":"d20_roll_1-decline-0","command":"select_action","expected_decision_id":"d20_roll_1@1:7","type":"command"}
+{"action_id":"warlock-wait","command":"select_action","expected_decision_id":"turn-warlock@1:9","type":"command"}
+{"action_id":"warlock-wait","command":"select_action","expected_decision_id":"turn-warlock@1:28","type":"command"}
+{"action_id":"warlock-wait","command":"select_action","expected_decision_id":"turn-warlock@1:44","type":"command"}
+{"action_id":"warlock-wait","command":"select_action","expected_decision_id":"turn-warlock@1:54","type":"command"}

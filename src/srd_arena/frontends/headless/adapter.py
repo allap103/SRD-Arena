@@ -35,6 +35,7 @@ class EpisodeState(StrEnum):
 class EpisodeTruncationReason(StrEnum):
     """Non-rules reason a headless episode stopped before combat ended."""
 
+    CONTROLLER_INPUT_ENDED = "controller_input_ended"
     STEP_LIMIT = "step_limit"
     TURN_LIMIT = "turn_limit"
 

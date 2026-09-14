@@ -22,6 +22,24 @@ or
 To run the application with seed 42. 
 Note that die rolls will only be the same between different executions of the same encounter if participants also perform the same steps between encounters.
 
+## Headless observations
+
+Run a YAML-filtered encounter without importing Qt:
+
+```sh
+uv run srd-arena --headless --encounter warlock_training --seed 42 \
+  --perspective-creature warlock \
+  --observation-config config/observations/player.yaml \
+  --controller stdin --max-steps 1000 --max-rounds 100
+```
+
+The process emits JSON Lines and accepts decision-tagged commands on stdin.
+Closing stdin produces an explicit truncation result. Three supported presets
+select interval, exact, or hidden enemy health. The initial policy slice uses
+team perception; advanced modes fail validation until implemented. See the
+[policy settings and controller protocol](config/observations/README.md) and
+[replay examples](examples/headless/README.md).
+
 ## Quality checks
 
     uv run pytest -q
