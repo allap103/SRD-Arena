@@ -299,7 +299,7 @@ class TargetingObservation:
 
 @dataclass(frozen=True)
 class EncounterObservation:
-    """Complete client-visible snapshot of the active encounter."""
+    """Legacy privileged encounter view within the shared gameplay snapshot."""
 
     encounter_id: str
     grid: GridObservation
@@ -345,7 +345,7 @@ class EncounterCompletionObservation:
 
 @dataclass(frozen=True)
 class GameObservation:
-    """Everything a client may inspect about the current decision point."""
+    """Legacy client view; unrestricted facts and history live in GameplayObservation."""
 
     scene: SceneObservation
     encounter: EncounterObservation | None

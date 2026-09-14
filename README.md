@@ -43,6 +43,13 @@ Authored JSON content is validated and translated into domain definitions by
 the content package. GUI and headless clients discover encounters through the
 public content API and drive them through the public engine API.
 
+`Session.observe_gameplay()` returns the shared immutable gameplay snapshot,
+including unrestricted current facts and the complete recorded episode event
+history. `Session.observe()` returns its legacy GUI-facing view;
+`Session.observe_player(team_id)` applies team perception and remembered
+knowledge to that same source. The gameplay contract is still a draft with
+incomplete capability/effect descriptors; it is not a runtime checkpoint.
+
 ## Implemented player-character scope
 
 Player-character support includes fixed Fighter examples and validated,

@@ -14,6 +14,7 @@ from srd_arena.engine.api import (
     EncounterTerminationReason,
     GameCommand,
     GameObservation,
+    GameplayObservation,
     GameUpdate,
     PlayerCommandResult,
     PlayerGameUpdate,
@@ -245,6 +246,17 @@ class HeadlessGameAdapter:
         """
 
         return self._require_session().observe()
+
+    def observe_gameplay(self) -> GameplayObservation:
+        """Return unrestricted gameplay facts and the complete recorded history.
+
+        >>> adapter = HeadlessGameAdapter(EncounterCatalog())
+        >>> _ = adapter.start_encounter("warlock_training", seed=42)
+        >>> adapter.observe_gameplay().history
+        ()
+        """
+
+        return self._require_session().observe_gameplay()
 
     def observe_player(self, perspective_team_id: str) -> PlayerObservation:
         """Return the framework-neutral partial observation for one allied team."""

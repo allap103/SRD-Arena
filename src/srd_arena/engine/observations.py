@@ -84,12 +84,18 @@ def observe_session(session: GameEngine) -> GameObservation:
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
-    >>> observation = observe_session(SimpleNamespace(_read=lambda: read))
+    >>> from .gameplay_observations import capture_gameplay
+    >>> observation = observe_session(SimpleNamespace(observe_gameplay=lambda: capture_gameplay(read)))
     >>> (observation.scene.scene_id, observation.encounter)
     ('intro', None)
     """
 
-    read = session._read()
+    return session.observe_gameplay().game
+
+
+def observe_game_state(read: SessionRead) -> GameObservation:
+    """Capture the legacy client view as part of the shared gameplay snapshot."""
+
     state = read.encounter_state
     scene = observe_scene(read)
     completion = None

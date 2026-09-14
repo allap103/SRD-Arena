@@ -26,6 +26,11 @@ from srd_arena.engine.commands import (
     PlayerCommandResult,
     PlayerGameUpdate,
 )
+from srd_arena.engine.gameplay_observation_models import (
+    GameplayEventObservation,
+    GameplayObservation,
+)
+from srd_arena.engine.gameplay_observations import capture_gameplay
 from srd_arena.engine.interactions import execute_game_command, game_update
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.observations import (
@@ -47,6 +52,7 @@ from srd_arena.engine.queries import (
     SessionRead,
 )
 from srd_arena.engine.session_queries import read_session
+from srd_arena.engine.values import freeze_mapping
 
 
 @dataclass
@@ -95,6 +101,8 @@ class Session:
         self._decision_epoch = decision_epoch
         self._decision_revision = 0
         self._player_knowledge: dict[str, TeamKnowledge] = {}
+        self._gameplay_history: list[GameplayEventObservation] = []
+        self._history_episode = 0
 
     def _read(self) -> SessionRead:
         """Return typed internal inputs used to construct an observation.
@@ -116,7 +124,8 @@ class Session:
 
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.queries import SessionRead
-        >>> session = Session.__new__(Session)
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session(EncounterDefinition("demo", Grid(1, 1)))
         >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
@@ -125,6 +134,24 @@ class Session:
         """
 
         return observe_session(self)
+
+    def observe_gameplay(self) -> GameplayObservation:
+        """Return unrestricted gameplay facts and the full recorded episode history.
+
+        >>> from srd_arena.content.encounters import EncounterCatalog
+        >>> session = Session(EncounterCatalog().load_encounter("warlock_training"), seed=42)
+        >>> snapshot = session.observe_gameplay()
+        >>> snapshot.schema_id
+        'gameplay-observation-v1-draft'
+        >>> snapshot.history
+        ()
+        """
+
+        return capture_gameplay(
+            self._read(),
+            history=tuple(self._gameplay_history),
+            episode_id=(self._decision_epoch, self._history_episode),
+        )
 
     def observe_player(self, perspective_team_id: str) -> PlayerObservation:
         """Return one allied team's partial, shared-knowledge observation."""
@@ -141,7 +168,8 @@ class Session:
         >>> from unittest.mock import Mock
         >>> from srd_arena.engine.commands import SelectAction
         >>> from srd_arena.engine.queries import SessionRead
-        >>> session = Session.__new__(Session)
+        >>> from srd_arena.domain.geometry import Grid
+        >>> session = Session(EncounterDefinition("demo", Grid(1, 1)))
         >>> session._read = Mock(return_value=SessionRead(
         ...     "demo", (), None, None, (), {}, {}, {}, False
         ... ))
@@ -361,7 +389,7 @@ class Session:
             messages=tuple(messages),
             events=tuple(progress.events),
         )
-        self._record_player_events(outcome.events)
+        self._record_gameplay_events(outcome.events)
         return outcome
 
     def advance_until_input_required(self) -> GameUpdate:
@@ -463,25 +491,44 @@ class Session:
             messages=tuple(progress.messages),
             events=tuple(progress.events),
         )
-        self._record_player_events(outcome.events)
+        self._record_gameplay_events(outcome.events)
         return outcome
 
-    def _record_player_events(
+    def _record_gameplay_events(
         self,
         events: tuple[CombatEvent, ...],
     ) -> None:
-        """Update initialized team-knowledge ledgers from structured events."""
+        """Retain detached events before updating team knowledge from the journal."""
 
         if self.encounter_state is None or not events:
             return
         # Normal events carry their own emission-time snapshot. Synthetic events
         # supplied directly by callers use current sight, never the last UI read.
         visibility = dict(event_visibility(self.encounter_state))
-        for team_id, visible in visibility.items():
+        self._gameplay_history.extend(
+            GameplayEventObservation(
+                seq=event.seq,
+                type=event.type,
+                creature_ref=event.creature_ref,
+                frame_id=event.frame_id,
+                action_id=event.action_id,
+                data=freeze_mapping(event.data),
+                visible_by_team=(
+                    event.visible_by_team
+                    if event.visible_by_team is not None
+                    else tuple(visibility.items())
+                ),
+            )
+            for event in events
+        )
+        for team_id in visibility:
             knowledge = self._player_knowledge.setdefault(
                 team_id, TeamKnowledge(team_id)
             )
-            knowledge.record_events(events, fallback_visibility=visible)
+            knowledge.record_history(
+                (self._decision_epoch, self._history_episode),
+                tuple(self._gameplay_history),
+            )
 
     def _ensure_encounter_state(self) -> None:
         encounter = self.encounter
@@ -518,6 +565,8 @@ class Session:
         self.encounter_state = None
         self._encounter_actions = []
         self._player_knowledge.clear()
+        self._gameplay_history.clear()
+        self._history_episode += 1
         self._dice = (
             DiceRoller.seeded(seed) if seed is not None else self._dice.restarted()
         )

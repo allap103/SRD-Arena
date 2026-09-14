@@ -2,17 +2,22 @@
 
 from __future__ import annotations
 
-from typing import Protocol
+from typing import TYPE_CHECKING, Protocol
 
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.player_observation_models import PlayerObservation
 from srd_arena.engine.queries import ActionConfiguration, SessionRead
+
+if TYPE_CHECKING:
+    from srd_arena.engine.gameplay_observation_models import GameplayObservation
 
 
 class GameEngine(Protocol):
     """Low-level session operations used by engine command handlers."""
 
     def _read(self) -> SessionRead: ...
+
+    def observe_gameplay(self) -> GameplayObservation: ...
 
     def _choose(self, action_id: str) -> EngineOutcome: ...
 

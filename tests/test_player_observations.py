@@ -103,7 +103,7 @@ def test_enemy_health_uses_bands_and_observed_damage() -> None:
     goblin = session.encounter_state.creatures["goblin_1"].creature
 
     goblin.take_damage(3)
-    session._record_player_events(
+    session._record_gameplay_events(
         (
             CombatEvent(
                 seq=1,
@@ -135,7 +135,7 @@ def test_unseen_damage_is_not_reconstructed_from_later_health() -> None:
     )
     session.observe_player("heroes")
     state.creatures["goblin_1"].creature.take_damage(3)
-    session._record_player_events(
+    session._record_gameplay_events(
         (
             CombatEvent(
                 seq=1,
@@ -205,7 +205,7 @@ def test_visible_enemy_action_enters_public_history_and_capability_knowledge() -
     session = _session()
     session.observe_player("heroes")
 
-    session._record_player_events(
+    session._record_gameplay_events(
         (
             CombatEvent(
                 10,
@@ -237,7 +237,7 @@ def test_public_event_history_is_bounded_to_eight_records() -> None:
     session = _session()
     session.observe_player("heroes")
 
-    session._record_player_events(
+    session._record_gameplay_events(
         tuple(
             CombatEvent(
                 sequence,

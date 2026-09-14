@@ -39,13 +39,14 @@ def execute_game_command(
     A stale command is rejected before it can reach the engine.
 
     >>> from types import SimpleNamespace
+    >>> from .gameplay_observations import capture_gameplay
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
     ...     scene_id="intro", action_options=(),
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
-    >>> session = SimpleNamespace(_read=lambda: read)
+    >>> session = SimpleNamespace(_read=lambda: read, observe_gameplay=lambda: capture_gameplay(read))
     >>> result = execute_game_command(session, SelectAction("wait", "old"))
     >>> (result.accepted, result.failure.code)
     (False, 'stale_decision')
@@ -83,6 +84,7 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
     """Translate an accepted operation result into a public engine update.
 
     >>> from types import SimpleNamespace
+    >>> from .gameplay_observations import capture_gameplay
     >>> from srd_arena.engine.queries import SessionRead
     >>> read = SessionRead(
     ...     scene_id="intro", action_options=(),
@@ -90,7 +92,7 @@ def game_update(session: GameEngine, result: EngineOutcome) -> GameUpdate:
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
     >>> update = game_update(
-    ...     SimpleNamespace(_read=lambda: read),
+    ...     SimpleNamespace(_read=lambda: read, observe_gameplay=lambda: capture_gameplay(read)),
     ...     EngineOutcome(selected_action_id="wait", messages=(("Hero", "Waits"),)))
     >>> (update.selected_action_id, update.messages)
     ('wait', (('Hero', 'Waits'),))

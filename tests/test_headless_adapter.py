@@ -261,10 +261,13 @@ def test_seeded_reset_replays_a_multi_command_combat_trace() -> None:
     adapter.start_encounter(FULL_CONTROL_ENCOUNTER_ID, seed=42)
 
     first_trace = _run_attack_and_wait_trace(adapter, steps=8)
+    first_history = adapter.observe_gameplay().history
+    assert first_history
     adapter.reset()
     replayed_trace = _run_attack_and_wait_trace(adapter, steps=8)
 
     assert replayed_trace == first_trace
+    assert adapter.observe_gameplay().history == first_history
 
 
 def test_headless_adapter_reports_and_clears_explicit_truncation() -> None:

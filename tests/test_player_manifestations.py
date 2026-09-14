@@ -62,7 +62,7 @@ def test_discovery_tracks_instance_and_preserves_last_known_state_out_of_view() 
         "poisoned"
         not in session.observe_player("heroes").creature("goblin_1").known_conditions
     )
-    session._record_player_events(
+    session._record_gameplay_events(
         (
             CombatEvent(
                 1,

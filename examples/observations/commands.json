@@ -1,0 +1,17 @@
+[
+  {
+    "decision_id": "initiative-swap-warlock@0:0",
+    "action_id": "initiative-swap-warlock-keep",
+    "kind": "keep_initiative"
+  },
+  {
+    "decision_id": "d20_roll_1@0:2",
+    "action_id": "d20_roll_1-decline-0",
+    "kind": "decline_d20_modifier"
+  },
+  {
+    "decision_id": "turn-warlock@0:4",
+    "action_id": "warlock-wait",
+    "kind": "wait"
+  }
+]

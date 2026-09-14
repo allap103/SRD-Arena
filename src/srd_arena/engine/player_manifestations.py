@@ -2,7 +2,7 @@
 
 from dataclasses import dataclass
 
-from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
+from .event_facts import EventFacts
 
 
 @dataclass(frozen=True)
@@ -14,7 +14,7 @@ class ManifestedState:
     is_condition: bool
 
 
-def manifested_state(event: CombatEvent) -> ManifestedState | None:
+def manifested_state(event: EventFacts) -> ManifestedState | None:
     """Recognize supported manifestations emitted by focused rules handlers.
 
     Retching from Stinking Cloud identifies its Poisoned application and

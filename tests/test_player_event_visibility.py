@@ -40,7 +40,7 @@ def test_batched_events_retain_their_own_visibility(
     # Resolution ends with the target hidden again: final-state sight is also
     # insufficient to reconstruct the visibility of this batch.
     state.conditions.append(invisibility)
-    session._record_player_events((visible_damage, hidden_damage, revealed_damage))
+    session._record_gameplay_events((visible_damage, hidden_damage, revealed_damage))
     observed = session.observe_player("heroes")
     assert not observed.creature("goblin_1").currently_visible
     assert observed.creature("goblin_1").observed_damage_total == 7
@@ -54,7 +54,7 @@ def test_events_before_first_player_projection_are_remembered() -> None:
     event = create_event(
         state, "attack_resolved", data={"target_ref": "goblin_1", "damage": 3}
     )
-    session._record_player_events((event,))
+    session._record_gameplay_events((event,))
     assert (
         session.observe_player("heroes").creature("goblin_1").observed_damage_total == 3
     )

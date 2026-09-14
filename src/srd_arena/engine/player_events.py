@@ -6,8 +6,8 @@ from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, replace
 
 from srd_arena.domain.effects.conditions import Condition
-from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
 
+from .event_facts import EventFacts
 from .observability import Observability, condition_observability
 from .player_manifestations import manifested_state
 from .player_observation_models import (
@@ -24,7 +24,7 @@ class PublicDamage:
     amount: int
 
 
-def public_damage_from_event(event: CombatEvent) -> tuple[PublicDamage, ...]:
+def public_damage_from_event(event: EventFacts) -> tuple[PublicDamage, ...]:
     """Return applied creature damage encoded by one supported event shape."""
 
     data = event.data
@@ -63,7 +63,7 @@ def public_damage_from_event(event: CombatEvent) -> tuple[PublicDamage, ...]:
 
 
 def public_events_from_event(
-    event: CombatEvent,
+    event: EventFacts,
     *,
     visible_creature_refs: frozenset[str],
     first_sequence: int = 1,
@@ -85,7 +85,7 @@ def public_events_from_event(
 
 
 def _project_event(
-    event: CombatEvent,
+    event: EventFacts,
     *,
     visible_creature_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
@@ -152,7 +152,7 @@ def _project_event(
 
 
 def _attack_event(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     actor_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -190,7 +190,7 @@ def _attack_event(
 
 
 def _retaliation_event(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     actor_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -217,7 +217,7 @@ def _retaliation_event(
 
 
 def _stat_block_events(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     actor_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -259,7 +259,7 @@ def _stat_block_events(
 
 
 def _spell_events(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     actor_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -314,7 +314,7 @@ def _spell_events(
 
 
 def _defeat_event(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     target_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -336,7 +336,7 @@ def _defeat_event(
 
 
 def _condition_event(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
 ) -> tuple[PublicCombatEventObservation, ...]:
     target_ref = _visible_ref(event.creature_ref, visible_refs)
@@ -361,7 +361,7 @@ def _condition_event(
 
 
 def _source_use_event(
-    event: CombatEvent,
+    event: EventFacts,
     visible_refs: frozenset[str],
     *,
     kind: PublicEventKind,

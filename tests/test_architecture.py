@@ -595,3 +595,16 @@ def _import_boundary(module: str) -> str:
 
 def _is_package_or_child(module: str, package: str) -> bool:
     return module == package or module.startswith(f"{package}.")
+
+
+def test_player_projection_consumes_snapshots_without_domain_state() -> None:
+    """Keep perception queries at capture, not in the detached player projector."""
+
+    path = PACKAGE_ROOT / "engine" / "player_observations.py"
+    imported = [module for _, module in _imports(path, _module_name(path))]
+    assert not any(module.startswith("srd_arena.domain") for module in imported)
+    tree = ast.parse(path.read_text())
+    assert not any(
+        isinstance(node, ast.Attribute) and node.attr in {"_read", "encounter_state"}
+        for node in ast.walk(tree)
+    )

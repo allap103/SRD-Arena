@@ -2,13 +2,15 @@
 
 from dataclasses import dataclass, field
 
-from srd_arena.domain.creatures import ObservableAppearance
-from srd_arena.domain.encounters.encounter_models.resolution import CombatEvent
-
+from .event_facts import EventFacts
 from .observation_models import PositionObservation
 from .player_events import public_damage_from_event, public_events_from_event
 from .player_manifestations import manifested_state
-from .player_observation_models import HealthBand, PublicCombatEventObservation
+from .player_observation_models import (
+    AppearanceObservation,
+    HealthBand,
+    PublicCombatEventObservation,
+)
 
 _RECENT_EVENT_LIMIT = 8
 _CAPABILITY_SOURCE_PREFIXES = frozenset(
@@ -21,7 +23,7 @@ class KnownCreatureFacts:
     """Retain public facts after a creature leaves the team's current view."""
 
     last_known_position: PositionObservation | None = None
-    appearance: ObservableAppearance | None = None
+    appearance: AppearanceObservation | None = None
     size: str | None = None
     conditions: tuple[str, ...] = ()
     effects: tuple[str, ...] = ()
@@ -41,6 +43,27 @@ class TeamKnowledge:
     recent_events: list[PublicCombatEventObservation] = field(default_factory=list)
     _next_event_sequence: int = field(default=1, init=False, repr=False)
 
+    _history_episode: tuple[int, int] | None = field(
+        default=None, init=False, repr=False
+    )
+    _history_cursor: int = field(default=0, init=False, repr=False)
+
+    def record_history(
+        self, episode_id: tuple[int, int], history: tuple[EventFacts, ...]
+    ) -> None:
+        """Consume each retained event once, resetting memory on episode change."""
+
+        if self._history_episode is not None and self._history_episode != episode_id:
+            self.creatures.clear()
+            self.recent_events.clear()
+            self._next_event_sequence = 1
+            self._history_cursor = 0
+        self._history_episode = episode_id
+        if len(history) < self._history_cursor:
+            raise ValueError("Player knowledge cannot consume history backwards.")
+        self.record_events(history[self._history_cursor :])
+        self._history_cursor = len(history)
+
     def facts_for(self, creature_ref: str) -> KnownCreatureFacts:
         """Return existing facts or create an empty stable knowledge record."""
 
@@ -48,7 +71,7 @@ class TeamKnowledge:
 
     def record_events(
         self,
-        events: tuple[CombatEvent, ...],
+        events: tuple[EventFacts, ...],
         *,
         fallback_visibility: frozenset[str] = frozenset(),
     ) -> None:

@@ -87,14 +87,16 @@ def test_team_counters_are_independent_and_survive_history_eviction() -> None:
 def test_session_reset_restarts_public_numbering() -> None:
     session = Session(EncounterCatalog().load_encounter("warlock_training"), seed=42)
     session.observe_player("heroes")
-    session._record_player_events((_movement(40, "warlock"), _movement(90, "warlock")))
+    session._record_gameplay_events(
+        (_movement(40, "warlock"), _movement(90, "warlock"))
+    )
     assert [event.seq for event in session.observe_player("heroes").recent_events] == [
         1,
         2,
     ]
     session.reset()
     assert session.observe_player("heroes").recent_events == ()
-    session._record_player_events((_movement(800, "warlock"),))
+    session._record_gameplay_events((_movement(800, "warlock"),))
     assert [event.seq for event in session.observe_player("heroes").recent_events] == [
         1
     ]

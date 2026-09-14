@@ -20,6 +20,14 @@ from .commands import (
     SelectAction,
     SetResourceAllocation,
 )
+from .gameplay_observation_models import (
+    GameplayConditionObservation,
+    GameplayCreatureObservation,
+    GameplayEffectObservation,
+    GameplayEventObservation,
+    GameplayObservation,
+    GameplayTeamObservation,
+)
 from .observations import (
     ActionObservation,
     ActionReasonObservation,
@@ -85,6 +93,12 @@ __all__ = [
     "GameEvent",
     "GameObservation",
     "GameUpdate",
+    "GameplayConditionObservation",
+    "GameplayCreatureObservation",
+    "GameplayEffectObservation",
+    "GameplayEventObservation",
+    "GameplayObservation",
+    "GameplayTeamObservation",
     "GridObservation",
     "HealthBand",
     "InitiativeObservation",

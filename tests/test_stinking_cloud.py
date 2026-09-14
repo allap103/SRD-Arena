@@ -250,7 +250,7 @@ def test_failed_turn_start_save_poisons_and_prohibits_actions_for_that_turn() ->
         )
     )
     with patch(
-        "srd_arena.engine.player_observations.rule_queries.creature_can_see_creature",
+        "srd_arena.domain.encounters.event_visibility.creature_can_see_creature",
         return_value=True,
     ):
         seen = observe_player_session(session, "heroes", knowledge).creature("goblin_1")
