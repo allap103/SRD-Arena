@@ -34,6 +34,12 @@ def main(argv: Sequence[str] | None = None) -> None:
     parser.add_argument("--perspective-creature")
     parser.add_argument("--observation-config", type=Path)
     parser.add_argument("--controller", choices=("stdin",))
+    parser.add_argument(
+        "--output-format",
+        choices=("auto", "jsonl", "pretty"),
+        default="auto",
+        help="Headless output: auto uses indented JSON on terminals and JSON Lines in pipes/files.",
+    )
     parser.add_argument("--max-steps", type=int, default=1000)
     parser.add_argument("--max-rounds", type=int, default=100)
     arguments = parser.parse_args(argv)
@@ -66,6 +72,7 @@ def main(argv: Sequence[str] | None = None) -> None:
                 max_rounds=arguments.max_rounds,
                 stdin=sys.stdin,
                 stdout=sys.stdout,
+                output_format=arguments.output_format,
             )
         except (PolicyConfigError, HeadlessSetupError) as exc:
             parser.error(str(exc))
@@ -81,6 +88,7 @@ def main(argv: Sequence[str] | None = None) -> None:
             arguments.perspective_creature,
             arguments.observation_config,
             arguments.controller,
+            arguments.output_format != "auto",
         )
     ):
         parser.error("Controller options require --headless")

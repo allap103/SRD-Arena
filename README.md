@@ -33,7 +33,9 @@ uv run srd-arena --headless --encounter warlock_training --seed 42 \
   --controller stdin --max-steps 1000 --max-rounds 100
 ```
 
-The process emits JSON Lines and accepts decision-tagged commands on stdin.
+The process displays indented JSON in terminals and emits JSON Lines to pipes
+and files. Use `--output-format pretty` or `--output-format jsonl` to override
+automatic detection. It accepts decision-tagged commands on stdin.
 Closing stdin produces an explicit truncation result. Three supported presets
 select interval, exact, or hidden enemy health. The initial policy slice uses
 team perception; advanced modes fail validation until implemented. See the

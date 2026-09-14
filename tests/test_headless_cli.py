@@ -225,3 +225,61 @@ def test_limits_during_automatic_advance(
     rounds = records(run_cli(commands, extra=("--max-rounds", "1")))
     assert rounds[-1]["truncation_reason"] == "turn_limit"
     assert rounds[-2]["observation"]["round_number"] == 2
+
+
+def decode_pretty_stream(source: str) -> list[dict[str, Any]]:
+    """Read consecutive multiline JSON objects without relying on line framing."""
+    decoder = json.JSONDecoder()
+    result = []
+    while source.strip():
+        source = source.lstrip()
+        record, end = decoder.raw_decode(source)
+        result.append(record)
+        source = source[end:]
+    return result
+
+
+def test_pretty_cli_preserves_records_and_errors() -> None:
+    commands = "not json\n"
+    compact = records(run_cli(commands))
+    pretty = run_cli(commands, extra=("--output-format", "pretty"))
+    assert pretty.returncode == 0, pretty.stderr
+    assert '\n  "type": ' in pretty.stdout
+    assert decode_pretty_stream(pretty.stdout) == compact
+    assert (
+        run_cli(commands, extra=("--output-format", "jsonl")).stdout
+        == run_cli(commands).stdout
+    )
+
+
+@pytest.mark.parametrize(
+    "output_format,indented", [("auto", True), ("jsonl", False), ("pretty", True)]
+)
+def test_terminal_auto_format_and_override(output_format: str, indented: bool) -> None:
+    from io import StringIO
+    from typing import Literal, cast
+
+    from srd_arena.frontends.headless.cli import run_headless
+
+    class TerminalBuffer(StringIO):
+        def isatty(self) -> bool:
+            return True
+
+    output = TerminalBuffer()
+    run_headless(
+        catalog=EncounterCatalog(),
+        encounter_id="warlock_training",
+        perspective_creature="warlock",
+        config_path=Path("config/observations/player.yaml"),
+        seed=42,
+        max_steps=100,
+        max_rounds=10,
+        stdin=StringIO(),
+        stdout=output,
+        output_format=cast(Literal["auto", "jsonl", "pretty"], output_format),
+    )
+    assert ('\n  "type": ' in output.getvalue()) == indented
+    assert (
+        decode_pretty_stream(output.getvalue())[-1]["truncation_reason"]
+        == "controller_input_ended"
+    )

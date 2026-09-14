@@ -4,7 +4,7 @@ import json
 from dataclasses import fields
 from importlib.metadata import version
 from pathlib import Path
-from typing import TextIO
+from typing import Literal, TextIO
 
 from pydantic import TypeAdapter
 
@@ -25,7 +25,7 @@ from srd_arena.frontends.headless.adapter import (
     HeadlessGameAdapter,
 )
 from srd_arena.frontends.headless.config import load_policy, policy_digest
-from srd_arena.frontends.headless.serialization import canonical_json
+from srd_arena.frontends.headless.serialization import canonical_json, json_value
 
 MAX_COMMAND_CHARS = 65536
 _COMMANDS = {
@@ -78,6 +78,7 @@ def run_headless(
     max_rounds: int,
     stdin: TextIO,
     stdout: TextIO,
+    output_format: Literal["auto", "jsonl", "pretty"] = "auto",
 ) -> None:
     """Run one episode, counting accepted commands and single automatic actions.
 
@@ -85,6 +86,9 @@ def run_headless(
     commands are recoverable. EOF truncates; combat completion takes precedence
     over limits. Unexpected failures propagate to the CLI's stderr boundary.
     """
+    if output_format not in {"auto", "jsonl", "pretty"}:
+        raise HeadlessSetupError("Unknown output format")
+    pretty = output_format == "pretty" or (output_format == "auto" and stdout.isatty())
     policy = load_policy(config_path)
     if max_steps < 1 or max_rounds < 1:
         raise HeadlessSetupError("Step and round limits must be positive")
@@ -110,7 +114,12 @@ def run_headless(
     projector = PolicyProjector(policy, perspective_creature)
 
     def emit(record: object) -> None:
-        stdout.write(canonical_json(record) + "\n")
+        if pretty:
+            stdout.write(
+                json.dumps(json_value(record), indent=2, allow_nan=False) + "\n\n"
+            )
+        else:
+            stdout.write(canonical_json(record) + "\n")
         stdout.flush()
 
     emit(

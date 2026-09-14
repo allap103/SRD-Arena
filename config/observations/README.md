@@ -90,8 +90,17 @@ projection; the YAML does not alter combat rules or visibility for targeting.
 
 ## JSON Lines protocol (version 1)
 
-Stdout contains only JSON records, flushed after each line. Stderr contains
-setup/runtime diagnostics. Records are:
+Output defaults to `--output-format auto`: terminals display indented JSON
+with blank lines between records; pipes and redirected files retain compact
+JSON Lines. Use `--output-format pretty` to force readable JSON (including in
+an IDE console), or `--output-format jsonl` to force the controller protocol.
+Formatting preserves all fields and values, including nulls and metadata.
+Stdin commands remain one JSON record per line in every output mode.
+
+For example, append `--output-format pretty` to the launch command above.
+Pretty output contains multiline JSON objects and is not a JSON Lines stream.
+Each record is flushed immediately. Stderr contains setup/runtime diagnostics.
+Records are:
 
 - `metadata`: package/source/output/policy versions, SHA-256 of canonical resolved
   policy, resolved settings, encounter, seed, fixed perspective and limits.
