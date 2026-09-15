@@ -42,10 +42,23 @@ team perception; advanced modes fail validation until implemented. See the
 [policy settings and controller protocol](config/observations/README.md) and
 [replay examples](examples/headless/README.md).
 
+## Experimental RL training
+
+The `training` extra provides a PyTorch learner and a numerical, in-process RL
+environment for overfitting one encounter. Start with the
+[training instructions](config/training/README.md). To watch a saved model play:
+
+```sh
+uv run --extra training srd-arena-watch --run-dir runs/first-experiment
+```
+
+The spectator GUI has pause, single-step, restart, and playback delay controls.
+
 ## Quality checks
 
-    uv run pytest -q
-    uv run mypy --strict .
+    uv sync --extra training --dev
+    uv run --extra training pytest -q
+    uv run --extra training mypy --strict .
     uv run ruff check .
     uv run ruff format --check .
 

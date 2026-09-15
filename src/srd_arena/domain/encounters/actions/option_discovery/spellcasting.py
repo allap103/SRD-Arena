@@ -56,6 +56,12 @@ def spell_cast_block_reason_for(
     """Return the rule reason that prevents this creature from casting a spell."""
 
     creature_ref = state.current_decision().creature_ref
+    if (
+        consumes_spell_slot
+        and spell.level > 0
+        and creature_ref in state.turn.spell_slot_users
+    ):
+        return "You have already expended a spell slot to cast a spell this turn."
     prohibitions = invocation_prohibitions(
         state,
         InvocationStartContext(
@@ -148,6 +154,8 @@ def spend_spell_resources(
     >>> state = SimpleNamespace(
     ...     active_actions_remaining=1, active_magic_actions_remaining=1,
     ...     active_creature_state=actor,
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
+    ...     turn=SimpleNamespace(spell_slot_users=set()),
     ...     active_bonus_action_available=True, active_reaction_available=True,
     ... )
     >>> spend_spell_resources(state, casting, spell, ActionCost(action=1))
@@ -165,3 +173,4 @@ def spend_spell_resources(
     if consumes_spell_slot and spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
         spellcasting.spend_slot(slot_level)
+        state.turn.spell_slot_users.add(state.current_decision().creature_ref)

@@ -1343,8 +1343,10 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
         if is_spell_action(action, "hold_person", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, hold)
-    state.creatures["player"].actions_remaining = 1
-    state.creatures["player"].magic_actions_remaining = 1
+    # Replacing concentration with another slot-based spell needs a new turn.
+    advance_turn(state)
+    while state.current_decision().creature_ref != "player":
+        advance_turn(state)
     protection = next(
         action
         for action in state.available_actions()
@@ -1420,6 +1422,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution() -> None
 
     assert caster.get_health() == initial_health
     assert caster.spellcasting.spell_slots_remaining[1] == 0
+    assert caster_ref in state.turn.spell_slot_users
     assert state.active_actions_remaining == 0
     assert not any(event.type == "spell_cast" for event in result.events)
     check = next(

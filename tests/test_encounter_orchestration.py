@@ -222,6 +222,11 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert not any(event.type == "movement_resolved" for event in resolved.events)
+    assert session.observe().requires_automatic_advance
+    advanced = session.advance_one_automatic_action()
+    assert advanced.observation.encounter is not None
+    assert advanced.observation.encounter.decision.creature_ref != "champion_2"
+    assert not advanced.observation.requires_automatic_advance
 
 
 def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:

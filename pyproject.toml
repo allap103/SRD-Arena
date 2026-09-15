@@ -8,8 +8,14 @@ dependencies = [
     "PySide6>=6.8,<7"
 ]
 
+[project.optional-dependencies]
+training = ["numpy>=2.3,<3", "torch>=2.10,<3"]
+
 [project.scripts]
 srd-arena = "srd_arena.main:main"
+srd-arena-train = "srd_arena.training.train:main"
+srd-arena-evaluate = "srd_arena.training.evaluate:main"
+srd-arena-watch = "srd_arena.training.watch:main"
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -27,6 +33,7 @@ package = true
 
 [dependency-groups]
 dev = [
+    "numpy>=2.3,<3",
     "hypothesis>=6.0,<7",
     "interrogate>=1.7.0",
     "mypy>=2.1.0",

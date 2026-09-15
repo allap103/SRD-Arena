@@ -33,6 +33,7 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
+from srd_arena.domain.encounters.turn_lifecycle import advance_turn
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.domain.spells import Spell
@@ -475,8 +476,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     caster.spellcasting.spell_slots_remaining[3] = 1
     caster.spellcasting.spell_slots_remaining[1] = 1
     caster.current_health = caster.get_max_health() - 5
-    rolls = iter((1, 1))
-    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(
         session,
@@ -485,9 +485,10 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     )
 
     assert state.ongoing_effects[0].target_refs == ("player",)
-    state.active_creature_state.actions_remaining = 1
-    state.active_creature_state.action_used_this_turn = False
-    state.active_creature_state.magic_actions_remaining = 1
+    # Slow remains after the failed repeat save; a new turn permits another slot.
+    advance_turn(state)
+    while state.current_decision().creature_ref != "player":
+        advance_turn(state)
     initial_health = caster.get_health()
     cure = next(
         action

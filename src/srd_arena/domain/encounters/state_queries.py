@@ -144,7 +144,7 @@ def active_creature(state: EncounterState) -> CreatureRef:
 
 
 def requires_automatic_advance(state: EncounterState) -> bool:
-    """Return whether the current decision belongs to an automatic controller.
+    """Advance scripted decisions and turns whose external actor was defeated.
 
     >>> from types import SimpleNamespace
     >>> decision = DecisionFrame("turn-goblin", "goblin", "turn", "normal_turn")
@@ -159,8 +159,9 @@ def requires_automatic_advance(state: EncounterState) -> bool:
     True
     """
 
-    return (
-        creature_controller(state, state.current_decision().creature_ref) == "scripted"
+    decision = state.current_decision()
+    return creature_controller(state, decision.creature_ref) == "scripted" or (
+        decision.kind == "turn" and not state.creatures[decision.creature_ref].is_alive
     )
 
 

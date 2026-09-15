@@ -57,9 +57,13 @@ class RoundState:
 
 @dataclass
 class TurnState:
-    """Track the current position within initiative order."""
+    """Track initiative and which casters spent a slot during this turn.
+
+    The slot limit is per caster on any creature's turn, including reactions.
+    """
 
     index: int = 0
+    spell_slot_users: set[CreatureRef] = field(default_factory=set)
 
 
 @dataclass

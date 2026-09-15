@@ -20,7 +20,13 @@ from .commands import (
     SelectAction,
     SetResourceAllocation,
 )
-from .filtered_observations import FILTERED_OBSERVATION_SCHEMA_ID, PolicyProjector
+from .filtered_observations import (
+    FILTERED_OBSERVATION_SCHEMA_ID,
+    FilteredAction,
+    FilteredCreature,
+    FilteredObservation,
+    PolicyProjector,
+)
 from .gameplay_observation_models import (
     GameplayConditionObservation,
     GameplayCreatureObservation,
@@ -92,6 +98,9 @@ __all__ = [
     "EncounterObservation",
     "EncounterTerminationReason",
     "FeatureActionObservation",
+    "FilteredAction",
+    "FilteredCreature",
+    "FilteredObservation",
     "GameCommand",
     "GameEvent",
     "GameObservation",

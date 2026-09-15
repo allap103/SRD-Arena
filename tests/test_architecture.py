@@ -16,6 +16,23 @@ class DependencyRule:
 RULES = (
     DependencyRule(
         package="srd_arena.domain",
+        forbidden=("srd_arena.training", "torch", "numpy", "gymnasium"),
+    ),
+    DependencyRule(
+        package="srd_arena.engine",
+        forbidden=("srd_arena.training", "torch", "numpy", "gymnasium"),
+    ),
+    DependencyRule(
+        package="srd_arena.content",
+        forbidden=("srd_arena.training", "torch", "numpy", "gymnasium"),
+    ),
+    DependencyRule(package="srd_arena.frontends", forbidden=("srd_arena.training",)),
+    DependencyRule(
+        package="srd_arena.frontends.rl",
+        forbidden=("srd_arena.domain", "srd_arena.frontends.gui", "torch"),
+    ),
+    DependencyRule(
+        package="srd_arena.domain",
         forbidden=(
             "srd_arena.content",
             "srd_arena.frontends",

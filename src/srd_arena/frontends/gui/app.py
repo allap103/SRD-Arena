@@ -5,6 +5,7 @@ from __future__ import annotations
 from pathlib import Path
 
 from PySide6.QtCore import QTimer
+from PySide6.QtGui import QCloseEvent
 from PySide6.QtWidgets import QHBoxLayout, QMainWindow, QWidget
 
 from srd_arena.content.encounters import EncounterPresentation
@@ -63,9 +64,13 @@ class GameWindow(QMainWindow):
         presentation_config: EncounterPresentation | None = None,
         show_encounter_json: bool = False,
         pause_between_automatic_actions: bool = True,
+        interactive: bool = True,
+        manage_automatic_actions: bool = True,
     ):
         super().__init__()
         self.presenter = presenter
+        self._interactive = interactive
+        self._manage_automatic_actions = manage_automatic_actions
         self._encounter_presentation_config = (
             presentation_config or EncounterPresentation()
         )
@@ -127,6 +132,11 @@ class GameWindow(QMainWindow):
 
         self.refresh_view()
 
+    def closeEvent(self, event: QCloseEvent) -> None:
+        """Close auxiliary windows together with their owning game."""
+        self.sidebar.close_combat_log_window()
+        super().closeEvent(event)
+
     def _close_window(self) -> None:
         self.close()
 
@@ -166,7 +176,9 @@ class GameWindow(QMainWindow):
                 encounter is not None and encounter.completion_message is not None
             ),
             can_restart=(
-                encounter is not None and encounter.restart_action is not None
+                encounter is not None
+                and encounter.restart_action is not None
+                and getattr(self, "_interactive", True)
             ),
         )
         self._schedule_ai_step_if_needed()
@@ -240,6 +252,8 @@ class GameWindow(QMainWindow):
             self._select_action(action.id)
 
     def _open_action_menu(self, economy: str, bucket: str) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         self._clear_movement_plan()
         self.presenter.clear_target_mode()
         self._action_menu_scope = ActionMenuScope(economy=economy, bucket=bucket)
@@ -254,6 +268,8 @@ class GameWindow(QMainWindow):
         self.refresh_view()
 
     def _end_turn(self) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         if self._presentation is None or self._presentation.encounter is None:
             return
         self.presenter.clear_target_mode()
@@ -263,6 +279,8 @@ class GameWindow(QMainWindow):
             self._select_action(action.id)
 
     def _select_action(self, action_id: str) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         self._clear_movement_plan()
         previous_scope = self._action_menu_scope
         self._action_menu_scope = None
@@ -303,6 +321,8 @@ class GameWindow(QMainWindow):
             self._select_action(action.id)
 
     def _toggle_target_action(self, mode: TargetSelectionMode) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         self._clear_movement_plan()
         self.presenter.toggle_target_mode(mode)
         self.refresh_view()
@@ -312,6 +332,8 @@ class GameWindow(QMainWindow):
         creature_ref: str,
         remove_allocation: bool = False,
     ) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         if self._presentation is None or self._presentation.encounter is None:
             return
         pending_target_mode = self.presenter.pending_target_mode
@@ -347,6 +369,8 @@ class GameWindow(QMainWindow):
         self._select_action(action.id)
 
     def _handle_battlefield_cell_clicked(self, x: int, y: int) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         path = (
             self._movement_plan.path_to((x, y))
             if self._movement_plan is not None
@@ -370,6 +394,8 @@ class GameWindow(QMainWindow):
         self.surface.battlefield.set_movement_plan(plan)
 
     def _confirm_movement_path(self, path: tuple[str, ...]) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         plan = self._movement_plan
         self._clear_movement_plan()
         if plan is None:
@@ -396,6 +422,8 @@ class GameWindow(QMainWindow):
             self.surface.battlefield.set_movement_plan(None)
 
     def _cancel_battlefield_interaction(self) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         self._clear_movement_plan()
         if self._presentation is not None and self._presentation.encounter is not None:
             cancel = cancel_targeting_action(
@@ -410,6 +438,8 @@ class GameWindow(QMainWindow):
         self.refresh_view()
 
     def _set_spell_resource_allocation(self, target_ref: str, amount: int) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         update = self._handle_command_update(
             self.presenter.set_resource_allocation(target_ref, amount)
         )
@@ -417,6 +447,8 @@ class GameWindow(QMainWindow):
             self._apply_turn_result(update)
 
     def _handle_battlefield_point_clicked(self, x: float, y: float) -> None:
+        if not getattr(self, "_interactive", True):
+            return
         if self._presentation is None or self._presentation.encounter is None:
             return
         action = pending_aim_action(
@@ -458,6 +490,11 @@ class GameWindow(QMainWindow):
                 self._available_follow_up_attack_mode(follow_up_attack_mode)
             )
         self.refresh_view()
+
+    def apply_external_update(self, update: GameUpdate) -> None:
+        """Render a controller-driven update without submitting another command."""
+        self.presenter.refresh()
+        self._apply_turn_result(update)
 
     def _available_follow_up_attack_mode(
         self,
@@ -504,6 +541,8 @@ class GameWindow(QMainWindow):
         self.sidebar.scroll_combat_log_to_bottom()
 
     def _schedule_ai_step_if_needed(self) -> None:
+        if not getattr(self, "_manage_automatic_actions", True):
+            return
         observation = self.presenter.observation
         if (
             self._automatic_step_scheduled

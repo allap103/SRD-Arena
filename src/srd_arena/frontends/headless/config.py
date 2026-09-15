@@ -41,8 +41,8 @@ class _UniqueSafeLoader(yaml.SafeLoader):
         return result
 
 
-def load_policy(path: Path) -> ObservationPolicy:
-    """Read a complete policy and reject unsupported requests before launch."""
+def load_yaml_document(path: Path) -> object:
+    """Read one bounded YAML document without aliases, tags or duplicate keys."""
     try:
         with path.open("rb") as stream:
             raw = stream.read(MAX_POLICY_BYTES + 1)
@@ -68,13 +68,20 @@ def load_policy(path: Path) -> ObservationPolicy:
                     )
             elif isinstance(event, CollectionEndEvent):
                 depth -= 1
-        value = yaml.load(source, Loader=_UniqueSafeLoader)
+        return yaml.load(source, Loader=_UniqueSafeLoader)
+    except (OSError, UnicodeError, yaml.YAMLError, ValueError, TypeError) as exc:
+        raise PolicyConfigError(f"{path}: {exc}") from exc
+
+
+def load_policy(path: Path) -> ObservationPolicy:
+    """Read a complete policy and reject unsupported requests before launch."""
+    try:
         policy = ObservationPolicy.model_validate_json(
-            canonical_json(value), strict=True
+            canonical_json(load_yaml_document(path)), strict=True
         )
         policy.validate_support()
         return policy
-    except (OSError, UnicodeError, yaml.YAMLError, ValueError, TypeError) as exc:
+    except (ValueError, TypeError) as exc:
         raise PolicyConfigError(f"{path}: {exc}") from exc
 
 

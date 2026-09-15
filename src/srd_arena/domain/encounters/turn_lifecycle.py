@@ -181,6 +181,7 @@ def skip_defeated_turn(
 
 
 def _advance_initiative(state: EncounterState) -> None:
+    state.turn.spell_slot_users.clear()
     state.turn.index += 1
     if state.turn.index >= turn_count(state):
         state.turn.index = 0

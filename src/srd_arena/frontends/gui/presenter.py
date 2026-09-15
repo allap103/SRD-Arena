@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from srd_arena.engine.api import (
@@ -36,9 +37,20 @@ class ActionSelection:
 class GamePresenter:
     """Own engine interaction state on behalf of the PySide6 view."""
 
-    def __init__(self, session: Session) -> None:
+    def __init__(
+        self,
+        session: Session | None,
+        *,
+        observe: Callable[[], GameObservation] | None = None,
+    ) -> None:
+        if session is None and observe is None:
+            raise ValueError("A session or spectator observation source is required")
         self._session = session
-        self._observation = session.observe()
+        if observe is None:
+            assert session is not None
+            observe = session.observe
+        self._observe = observe
+        self._observation = observe()
         self._pending_target_mode: TargetSelectionMode | None = None
 
     @property
@@ -65,7 +77,7 @@ class GamePresenter:
         True
         """
 
-        self._observation = self._session.observe()
+        self._observation = self._observe()
         return self._observation
 
     def select_action(self, action_id: str) -> ActionSelection | None:
@@ -287,7 +299,7 @@ class GamePresenter:
         True
         """
 
-        update = self._session.advance_one_automatic_action()
+        update = self._require_session().advance_one_automatic_action()
         self._observation = update.observation
         return update
 
@@ -306,7 +318,7 @@ class GamePresenter:
         True
         """
 
-        update = self._session.advance_until_input_required()
+        update = self._require_session().advance_until_input_required()
         self._observation = update.observation
         return update
 
@@ -390,9 +402,14 @@ class GamePresenter:
         return decision_id
 
     def _execute(self, command: GameCommand) -> GameUpdate | None:
-        result = self._session.execute(command)
+        result = self._require_session().execute(command)
         if result.update is None:
             self.refresh()
             return None
         self._observation = result.update.observation
         return result.update
+
+    def _require_session(self) -> Session:
+        if self._session is None:
+            raise RuntimeError("Spectator controls cannot change the game")
+        return self._session
