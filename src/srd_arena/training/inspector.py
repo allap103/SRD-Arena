@@ -70,6 +70,23 @@ def render(run: Path) -> None:
             )
             chart(metrics, ["rejected_commands", "decisions", "engine_steps"], window)
         st.dataframe(metrics, hide_index=True)
+    completed_local = {
+        r["episode"] for r in summaries if Path(r["source_run"]) == run.resolve()
+    }
+    incomplete = [
+        p
+        for p in sorted((run / "traces").glob("episode-*.jsonl"))
+        if int(p.stem.split("-")[-1]) not in completed_local
+    ]
+    if incomplete and (not summaries or st.toggle("Inspect unfinished episodes")):
+        name = st.selectbox("Unfinished trace", [p.name for p in incomplete])
+        path = run / "traces" / name
+        rows = read_jsonl(path)
+        st.info(
+            "This trace has no completed episode summary. Its last command is not necessarily a completed turn."
+        )
+        render_trace(path, list(rows[0]["before"]) if rows else [])
+        return
     if not summaries:
         st.info("No combat summaries yet. Older runs may have only training metrics.")
         return
@@ -106,7 +123,7 @@ def render(run: Path) -> None:
         hide_index=True,
     )
     st.caption(
-        "Recorded attack damage comes from attack events; it excludes spell damage and is not a complete damage-credit metric."
+        "Attack and spell damage are separate recorded-event totals. Spell damage uses applied_damage per target; persistent effects and missing event details may be absent."
     )
     with st.expander("Episode event totals and rejection reasons"):
         st.json({k: summary[k] for k in ("event_counts", "rejection_reasons")})
@@ -122,7 +139,7 @@ def render_trace(path: Path, actors: list[str]) -> None:
             "No detailed trace for this episode. Use --trace-every 1 to record every episode."
         )
         return
-    turns = sorted({(r["round"], r["turn_actor"] or "setup") for r in rows})
+    turns = list(dict.fromkeys((r["round"], r["turn_actor"] or "setup") for r in rows))
     turn_labels = {f"Round {t[0]} — {t[1]}": t for t in turns}
     turn = turn_labels[st.selectbox("Turn", list(turn_labels))]
     shown = [
@@ -220,6 +237,19 @@ def main() -> None:
             "No training records found. Start training with --trace-every 1 to capture turn details."
         )
         return
+    comparisons = sorted(args.runs_dir.rglob("comparison.json"))
+    if comparisons:
+        with st.expander("Evaluation comparisons"):
+            names = {str(p.relative_to(args.runs_dir)): p for p in comparisons}
+            selected_report = names[st.selectbox("Comparison", list(names))]
+            report = json.loads(selected_report.read_text())
+            st.dataframe(
+                [
+                    {k: v for k, v in r.items() if k != "creature_means"}
+                    for r in report["controllers"]
+                ],
+                hide_index=True,
+            )
     run_labels = {str(p.relative_to(args.runs_dir)): p for p in runs}
     run = run_labels[st.selectbox("Run", list(run_labels))]
     try:

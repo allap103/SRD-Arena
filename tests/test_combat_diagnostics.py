@@ -95,3 +95,53 @@ def test_policy_and_training_are_identical_with_detailed_logging(
     decisions = [r["policy"] for r in rows if r["controller"] == "model"]
     assert decisions and all(0 < d["selected_probability"] <= 1 for d in decisions)
     assert all(d["top_choices"] for d in decisions)
+
+
+def test_accepted_failed_spell_and_reaction_keep_distinct_attribution() -> None:
+    from dataclasses import replace
+
+    from srd_arena.engine.api import GameplayEventObservation
+    from srd_arena.frontends.rl.diagnostics import CommandBoundary
+
+    config = load_training_config(Path("config/training/single_encounter.yaml"))
+    environment = config.environment()
+    environment.reset(seed=42)
+    before = environment.spectator_snapshot()
+    seq = before.history[-1].seq + 1 if before.history else 1
+    # A failed spell is still a recorded spell cast. A reaction attack retains
+    # its own actor/frame rather than being credited to the casting decision.
+    spell = GameplayEventObservation(
+        seq,
+        "spell_cast",
+        "warlock",
+        "spell-frame",
+        "spell-action",
+        {
+            "success": False,
+            "damage_roll_details": ({"target_ref": "goblin_1", "applied_damage": 0},),
+        },
+    )
+    reaction = GameplayEventObservation(
+        seq + 1,
+        "attack_resolved",
+        "goblin_1",
+        "reaction-frame",
+        "reaction-action",
+        {"damage": 3},
+    )
+    after = replace(before, history=(*before.history, spell, reaction))
+    output = io.StringIO()
+    recorder = EpisodeRecorder(1, output)
+    recorder.record(CommandBoundary(before, before, "initial", None, None, None, 0))
+    recorder.record(CommandBoundary(before, after, "model", None, None, None, 0))
+    row = json.loads(output.getvalue().splitlines()[-1])
+    assert row["accepted"] is True and row["rejection"] is None
+    assert row["events"][0]["data"]["success"] is False
+    assert row["events"][1]["actor"] == "goblin_1"
+    assert recorder.summary()["creatures"]["warlock"]["spell_cast_events"] == 1
+    assert recorder.summary()["creatures"]["goblin_1"]["recorded_attack_damage"] == 3
+    recorder.record(
+        CommandBoundary(after, after, "model", None, None, "target_unavailable", 0)
+    )
+    assert recorder.summary()["rejection_reasons"] == {"target_unavailable": 1}
+    assert recorder.summary()["creatures"]["warlock"]["spell_cast_events"] == 1

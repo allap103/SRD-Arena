@@ -1,6 +1,7 @@
 """Versioned local combat records derived only from spectator boundaries."""
 
 from collections import Counter
+from collections.abc import Mapping
 from typing import Any, TextIO
 
 from srd_arena.engine.api import GameplayObservation
@@ -46,7 +47,7 @@ class EpisodeRecorder:
         self.episode = episode
         self.stream = stream
         self.sequence = 0
-        self.last_event_seq = 0
+        self.history_count = 0
         self.rounds = 0
         self.turns: set[tuple[int, str | None]] = set()
         self.actions: Counter[tuple[str, str, str]] = Counter()
@@ -87,9 +88,8 @@ class EpisodeRecorder:
         decision_kind = encounter.decision.kind if encounter else None
         if before.active_turn_ref is not None:
             self.turns.add((round_number, before.active_turn_ref))
-        events = [e for e in after.history if e.seq > self.last_event_seq]
-        if events:
-            self.last_event_seq = events[-1].seq
+        events = after.history[self.history_count :]
+        self.history_count = len(after.history)
         for event in events:
             self.event_counts[event.type] += 1
         for c in after.creatures:
@@ -106,6 +106,9 @@ class EpisodeRecorder:
                     "attack_events": 0,
                     "spell_cast_events": 0,
                     "recorded_attack_damage": 0,
+                    "recorded_spell_damage": 0,
+                    "recorded_spell_damage_to_allies": 0,
+                    "recorded_spell_damage_to_enemies": 0,
                     "health_start": c.combat.health,
                 },
             )
@@ -125,6 +128,25 @@ class EpisodeRecorder:
                     stats["recorded_attack_damage"] += damage
             elif event.type == "spell_cast":
                 stats["spell_cast_events"] += 1
+                # Use only the full per-target list, never both its legacy first
+                # detail alias and the full list (which would double count).
+                details = event.data.get("damage_roll_details", ())
+                if isinstance(details, (tuple, list)):
+                    for detail in details:
+                        if not isinstance(detail, Mapping):
+                            continue
+                        damage = detail.get("applied_damage")
+                        if not isinstance(damage, (int, float)):
+                            continue
+                        stats["recorded_spell_damage"] += damage
+                        target = self.creatures.get(str(detail.get("target_ref")))
+                        if target is not None:
+                            relation = (
+                                "allies"
+                                if stats["team"] == target["team"]
+                                else "enemies"
+                            )
+                            stats["recorded_spell_damage_to_" + relation] += damage
         selected_id = (
             getattr(boundary.command, "action_id", None)
             if boundary.command is not None

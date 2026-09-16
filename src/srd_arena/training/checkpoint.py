@@ -1,5 +1,7 @@
 """Shared loading boundary for evaluation and spectator playback."""
 
+import hashlib
+import io
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Literal
@@ -19,6 +21,8 @@ class LoadedCheckpoint:
     config: TrainingConfig
     model: CandidatePolicy
     device: torch.device
+    completed_episodes: int = 0
+    checkpoint_sha256: str = ""
 
 
 def load_checkpoint(
@@ -27,8 +31,9 @@ def load_checkpoint(
     """Validate encoder/disclosure identity before loading weights for inference."""
     config = load_training_config(run_dir / "config.json")
     device = select_device(device_name)
+    checkpoint_bytes = (run_dir / "policy.pt").read_bytes()
     checkpoint = torch.load(
-        run_dir / "policy.pt", map_location="cpu", weights_only=True
+        io.BytesIO(checkpoint_bytes), map_location="cpu", weights_only=True
     )
     policy = load_policy(Path(config.observation_config))
     if (
@@ -40,4 +45,10 @@ def load_checkpoint(
     model = CandidatePolicy(checkpoint["hidden_size"]).to(device)
     model.load_state_dict(checkpoint["state_dict"])
     model.eval()
-    return LoadedCheckpoint(config, model, device)
+    return LoadedCheckpoint(
+        config,
+        model,
+        device,
+        checkpoint.get("completed_episodes", 0),
+        hashlib.sha256(checkpoint_bytes).hexdigest(),
+    )

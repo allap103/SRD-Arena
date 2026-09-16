@@ -6,7 +6,7 @@ Install the optional local tools with `uv sync --extra training --extra observab
 uv run --extra training --extra observability srd-arena-train \
   --config config/training/goblin_pressure.yaml --run-dir runs/observed-goblins \
   --episodes 10 --device cuda --tensorboard --trace-every 1
-uv run --extra observability tensorboard --logdir runs --host 127.0.0.1
+uv run --extra training --extra observability tensorboard --logdir runs --host 127.0.0.1
 ```
 
 Open TensorBoard at http://localhost:6006. Select runs to compare. Scalar steps
@@ -57,7 +57,7 @@ serialization and disk work; use sampled traces for long runs.
 ## Local inspector
 
 ```bash
-uv run --extra observability srd-arena-inspect --runs-dir runs
+uv run --extra training --extra observability srd-arena-inspect --runs-dir runs
 ```
 
 Open http://localhost:8501. Choose a run, inspect loss/outcome curves, select an
@@ -71,3 +71,59 @@ Branches remain separate, and a missing parent leaves only the available history
 Older runs still display their metrics even without combat summaries. Run files
 remain ordinary local JSON/JSONL; the inspector does not load model weights or
 need CUDA. No cloud account or frontend build is required.
+
+## Fixed-protocol evaluation
+
+```bash
+uv run --extra training --extra observability srd-arena-evaluate \
+  --run-dir runs/observed-goblins --output-dir runs/goblin-comparison \
+  --compare --episodes 10 --seed 123 --device cuda --trace-every 1 --tensorboard
+```
+
+The comparison copies one checkpoint and its frozen configuration/policy into the
+new output directory before evaluating sample, greedy, random and wait controllers.
+Each controller gets the same combat seed and limits; episode i uses controller
+seed `123 + i - 1`, independently of previous episodes. `--encounter-seed` can
+explicitly override the saved combat seed for evaluation. These results remain
+checks on one encounter, not evidence of held-out generalization.
+
+`comparison.json` contains the aggregate controller reports. Each controller
+subdirectory contains `evaluation.json`, per-episode `metrics.jsonl`, combat
+summaries and selected traces, all usable in the inspector. Report manifests
+record checkpoint SHA-256, cumulative training episode count, seeds and source
+metadata. TensorBoard uses `eval/` tags separately from `train/` metrics.
+For one controller, use `--mode greedy` (or sample/random/wait) instead of
+`--compare`. Existing output directories are rejected.
+
+Reports include wins/losses/draws/truncations, mean rounds/decisions/engine steps,
+rejections and per-creature mean command/resource statistics. Spell-damage totals
+use each `spell_cast` event's complete `damage_roll_details` list and its explicit
+`applied_damage`, separately for allies/enemies where target teams are known.
+They do not double-count the legacy first-detail alias and do not infer damage
+from nearby health changes. Unrecorded or later persistent effects remain outside
+these direct-spell totals. Engine events in the detailed trace remain the source
+for exact saves, effects and attribution.
+
+The inspector also exposes traces without a completed summary as unfinished
+episodes, and shows comparison tables when `comparison.json` files are present.
+Turn ordering follows the observed timeline rather than alphabetical creature order.
+
+Tool references: [PyTorch TensorBoard integration](https://docs.pytorch.org/tutorials/recipes/recipes/tensorboard_with_pytorch.html)
+and [Streamlit interactive tables](https://docs.streamlit.io/develop/api-reference/data/st.dataframe).
+
+## Validation and overhead
+
+On 2026-09-16 the full suite passed 1,654 tests, with the CUDA resume test skipped
+in the sandbox. A separate GPU check confirmed identical model weights and CUDA
+RNG state with/without detailed tracing and TensorBoard. CPU tests also compare
+policy arrays, actions, outcomes and trained weights; Streamlit interaction and
+both localhost servers were checked.
+
+Three interleaved idle-controller runs per mode on `warlock_goblin_pressure`,
+combat seed 42, measured median rollout times of 4.43 s without recording, 4.33 s
+with summaries, and 4.65 s with full traces. Summary overhead was within timing
+noise; full traces added about 5% in this probe and wrote about 2.5 MB per episode.
+All nine runs had identical outcomes (49 decisions, 228 engine steps). These are
+simulation/recording measurements without neural inference, optimization or
+TensorBoard writes, not estimates of complete training throughput. Long runs
+should sample traces according to their storage and inspection needs.
