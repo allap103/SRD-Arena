@@ -25,6 +25,7 @@ from srd_arena.frontends.rl.environment import ArenaEnvironment, Transition
 from srd_arena.frontends.rl.rewards import REWARD_SCHEMA_ID
 from srd_arena.training.baselines import idle_action
 from srd_arena.training.config import TrainingConfig, load_training_config
+from srd_arena.training.diagnostics import EpisodeRecorder
 from srd_arena.training.model import MODEL_SCHEMA_ID, CandidatePolicy, select_device
 from srd_arena.training.progress import EpisodeProgress
 from srd_arena.training.resume import capture_training_state, restore_training_state
@@ -38,8 +39,12 @@ def rollout(
     mode: Literal["sample", "greedy", "random", "wait"] = "sample",
     rng: np.random.Generator | None = None,
     progress: EpisodeProgress | None = None,
+    diagnostics: EpisodeRecorder | None = None,
 ) -> tuple[list[tuple[EncodedObservation, int]], Transition]:
     """Collect a bounded episode; all baseline choices use the filtered interface."""
+    previous_diagnostic = environment.diagnostic_callback
+    if diagnostics is not None:
+        environment.diagnostic_callback = diagnostics.record
     previous_callback = environment.progress_callback
     if progress is not None:
         environment.progress_callback = progress.engine_progress
@@ -74,6 +79,7 @@ def rollout(
         return trajectory, transition
     finally:
         environment.progress_callback = previous_callback
+        environment.diagnostic_callback = previous_diagnostic
 
 
 def update_policy(

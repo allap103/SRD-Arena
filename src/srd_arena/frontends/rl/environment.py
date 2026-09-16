@@ -2,12 +2,15 @@
 
 from collections.abc import Callable
 from dataclasses import dataclass
+from time import perf_counter
 
 from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     FilteredObservation,
+    GameCommand,
     GameplayObservation,
     ObservationPolicy,
+    PlayerGameUpdate,
     PolicyProjector,
 )
 from srd_arena.frontends.headless.adapter import (
@@ -15,6 +18,7 @@ from srd_arena.frontends.headless.adapter import (
     HeadlessGameAdapter,
 )
 from srd_arena.frontends.rl.actions import Candidate, candidates
+from srd_arena.frontends.rl.diagnostics import CommandBoundary
 from srd_arena.frontends.rl.encoding import EncodedObservation, Encoder
 from srd_arena.frontends.rl.rewards import terminal_reward
 
@@ -84,6 +88,12 @@ class ArenaEnvironment:
         self._done = True
         self._limit: str | None = None
         # Optional diagnostics; never part of the observation or policy input.
+        self.diagnostic_callback: Callable[[CommandBoundary], None] | None = None
+        self._diagnostic_before: GameplayObservation | None = None
+        self._diagnostic_pending: (
+            tuple[str, GameCommand | None, PlayerGameUpdate | None, str | None, float]
+            | None
+        ) = None
         self.progress_callback: (
             Callable[[GameplayObservation, int, int], None] | None
         ) = None
@@ -95,6 +105,8 @@ class ArenaEnvironment:
 
     def reset(self, *, seed: int, advance_automatic: bool = True) -> Transition:
         """Start a reproducible episode and run to the first owned decision."""
+        self._diagnostic_before = None
+        self._diagnostic_pending = None
         self._adapter.start_encounter(self.encounter_id, seed=seed)
         snapshot = self._adapter.observe_gameplay()
         own = next(
@@ -135,6 +147,7 @@ class ArenaEnvironment:
         ):
             raise ValueError("Stale decision ID")
         choice = self._choices[index]
+        started = perf_counter()
         result = self._adapter.submit_player(self._team, choice.command)
         self._decisions += 1
         rejection = None
@@ -144,6 +157,14 @@ class ArenaEnvironment:
             self._rejected += 1
             assert result.failure is not None
             rejection = result.failure.code
+        if self.diagnostic_callback is not None:
+            self._diagnostic_pending = (
+                "model",
+                choice.command,
+                result.update,
+                rejection,
+                perf_counter() - started,
+            )
         return self._advance(rejection=rejection, advance_automatic=advance_automatic)
 
     @property
@@ -163,9 +184,21 @@ class ArenaEnvironment:
         """Advance exactly one scripted action and retain the next visible boundary."""
         if not self.automatic_pending:
             raise RuntimeError("No automatic action is pending")
-        self._adapter.advance_one_player_automatic_action(self._team)
-        self._engine_steps += 1
+        self._automatic_step()
         return self._advance(advance_automatic=False)
+
+    def _automatic_step(self) -> None:
+        started = perf_counter()
+        update = self._adapter.advance_one_player_automatic_action(self._team)
+        self._engine_steps += 1
+        if self.diagnostic_callback is not None:
+            self._diagnostic_pending = (
+                "scripted",
+                None,
+                update,
+                None,
+                perf_counter() - started,
+            )
 
     def _advance(
         self, *, rejection: str | None = None, advance_automatic: bool = True
@@ -173,6 +206,21 @@ class ArenaEnvironment:
         assert self._projector is not None and self._encoder is not None
         while True:
             snapshot = self._adapter.observe_gameplay()
+            if self.diagnostic_callback is not None:
+                if self._diagnostic_before is None:
+                    self.diagnostic_callback(
+                        CommandBoundary(
+                            snapshot, snapshot, "initial", None, None, None, 0.0
+                        )
+                    )
+                elif self._diagnostic_pending is not None:
+                    self.diagnostic_callback(
+                        CommandBoundary(
+                            self._diagnostic_before, snapshot, *self._diagnostic_pending
+                        )
+                    )
+                self._diagnostic_before = snapshot
+                self._diagnostic_pending = None
             if (
                 self.progress_callback is not None
                 and snapshot.game.encounter is not None
@@ -207,8 +255,7 @@ class ArenaEnvironment:
                 break
             if not advance_automatic:
                 break
-            self._adapter.advance_one_player_automatic_action(self._team)
-            self._engine_steps += 1
+            self._automatic_step()
         status = self._adapter.episode_status()
         self._done = status.terminated or status.truncated
         self._choices = (
