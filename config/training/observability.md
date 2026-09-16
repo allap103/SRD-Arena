@@ -53,3 +53,21 @@ Diagnostics are privileged spectator data. They do not enter the observation
 encoder, influence reward, change action availability or provide legal-action
 pruning. Additional snapshot reads are not required. Detailed logging does add
 serialization and disk work; use sampled traces for long runs.
+
+## Local inspector
+
+```bash
+uv run --extra observability srd-arena-inspect --runs-dir runs
+```
+
+Open http://localhost:8501. Choose a run, inspect loss/outcome curves, select an
+interval and combatants for command totals, then choose an episode and turn.
+Expand commands for top alternatives, before/after state, and engine events.
+Exact action/frame ID searches show recorded links across command boundaries.
+The refresh button reloads live files; an unfinished JSONL tail is ignored.
+
+The inspector reads ancestor logs up to the recorded resume branch point.
+Branches remain separate, and a missing parent leaves only the available history.
+Older runs still display their metrics even without combat summaries. Run files
+remain ordinary local JSON/JSONL; the inspector does not load model weights or
+need CUDA. No cloud account or frontend build is required.

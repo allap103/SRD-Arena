@@ -16,6 +16,7 @@ observability = ["tensorboard>=2.20,<3", "streamlit>=1.50,<2"]
 srd-arena = "srd_arena.main:main"
 srd-arena-train = "srd_arena.training.train:main"
 srd-arena-evaluate = "srd_arena.training.evaluate:main"
+srd-arena-inspect = "srd_arena.training.inspect:main"
 srd-arena-watch = "srd_arena.training.watch:main"
 
 [build-system]
