@@ -1,8 +1,10 @@
 """Project detached gameplay facts through the supported information policy."""
 
+from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
+from .area_observation_models import ConeTemplateObservation
 from .gameplay_observation_models import (
     GameplayCreatureObservation,
     GameplayObservation,
@@ -27,7 +29,7 @@ from .player_observation_models import (
 )
 from .spell_capability_observations import SpellCapabilityObservation
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v2"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v3"
 
 
 @dataclass(frozen=True)
@@ -107,6 +109,7 @@ class FilteredAction:
     availability: str
     required_configuration: str | None
     spell: SpellCapabilityObservation | None = None
+    cone_template: ConeTemplateObservation | None = None
 
 
 @dataclass(frozen=True)
@@ -256,7 +259,8 @@ class PolicyProjector:
                     a.enabled,
                     a.availability,
                     a.required_configuration,
-                    self._spell_descriptor(snapshot, a, groups),
+                    (descriptor := self._spell_descriptor(snapshot, a, groups)),
+                    self._cone_template(a, descriptor),
                 )
                 for a in actions
             ),
@@ -267,6 +271,25 @@ class PolicyProjector:
             snapshot.game.completion,
             snapshot.game.requires_automatic_advance,
         )
+
+    def _cone_template(
+        self, action: ActionObservation, descriptor: SpellCapabilityObservation | None
+    ) -> ConeTemplateObservation | None:
+        """Expose only dimensions/threshold from permitted Burning Hands previews."""
+        if descriptor is None or descriptor.spell_id != "burning_hands":
+            return None
+        preview = action.area_preview
+        if preview is None or preview.get("shape") != "cone":
+            return None
+        shape = preview.get("continuous_area")
+        if not isinstance(shape, Mapping):
+            return None
+        length, threshold = shape.get("length"), shape.get("coverage_threshold")
+        if not isinstance(length, (int, float)) or not isinstance(
+            threshold, (int, float)
+        ):
+            return None
+        return ConeTemplateObservation(int(length), float(threshold))
 
     def _spell_descriptor(
         self,

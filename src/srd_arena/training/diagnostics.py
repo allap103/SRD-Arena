@@ -69,6 +69,7 @@ class EpisodeRecorder:
                 "target": c.target_ref,
                 "aim": c.aim,
                 "amount": c.amount,
+                "affected_refs": c.affected_refs,
                 "command": json_value(c.command),
             }
 

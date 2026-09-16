@@ -14,7 +14,7 @@ from srd_arena.frontends.rl.encoding import (
     EncodedObservation,
 )
 
-MODEL_SCHEMA_ID = "entity-candidate-actor-critic-v1"
+MODEL_SCHEMA_ID = "entity-candidate-actor-critic-v2"
 
 
 def select_device(requested: Literal["auto", "cpu", "cuda"]) -> torch.device:
@@ -51,7 +51,7 @@ class CandidatePolicy(nn.Module):
             nn.Linear(len(ACTION_FEATURES), hidden_size), nn.Tanh()
         )
         self.actor = nn.Sequential(
-            nn.Linear(len(GLOBAL_FEATURES) + 4 * hidden_size + 2, hidden_size),
+            nn.Linear(len(GLOBAL_FEATURES) + 5 * hidden_size + 2, hidden_size),
             nn.Tanh(),
             nn.Linear(hidden_size, 1),
         )
@@ -62,7 +62,7 @@ class CandidatePolicy(nn.Module):
         )
 
     def forward(self, observation: EncodedObservation) -> tuple[Tensor, Tensor]:
-        """Return masked action logits and the public-state value estimate."""
+        """Score candidates using actors, targets and pooled covered creature features."""
         device = next(self.parameters()).device
         global_features = torch.as_tensor(
             observation.global_features, dtype=torch.float32, device=device
@@ -83,6 +83,12 @@ class CandidatePolicy(nn.Module):
         actions = self.action(
             torch.as_tensor(observation.actions, dtype=torch.float32, device=device)
         )
+        coverage = torch.as_tensor(
+            observation.affected_entity_mask, dtype=entities.dtype, device=device
+        )
+        affected = (coverage @ entities) / coverage.sum(dim=1, keepdim=True).clamp(
+            min=1
+        )
         count = len(observation.actions)
         features = torch.cat(
             (
@@ -91,6 +97,7 @@ class CandidatePolicy(nn.Module):
                 extended[actors],
                 extended[targets],
                 actions,
+                affected,
                 (actors >= 0)[:, None],
                 (targets >= 0)[:, None],
             ),

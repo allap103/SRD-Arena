@@ -5,6 +5,8 @@ this module. Implementation modules remain free to change without becoming
 accidental frontend dependencies.
 """
 
+from .area_coverage import burning_hands_aims
+from .area_observation_models import AreaAimObservation, ConeTemplateObservation
 from .commands import (
     AimAction,
     CancelTargeting,
@@ -83,11 +85,13 @@ __all__ = [
     "ActionReasonObservation",
     "AimAction",
     "AppearanceObservation",
+    "AreaAimObservation",
     "AttributeObservation",
     "CancelTargeting",
     "ChangeTarget",
     "CommandFailure",
     "CommandResult",
+    "ConeTemplateObservation",
     "ConfirmTargeting",
     "CreatureAllegiance",
     "CreatureDefenseObservation",
@@ -138,4 +142,5 @@ __all__ = [
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",
     "TargetingObservation",
+    "burning_hands_aims",
 ]

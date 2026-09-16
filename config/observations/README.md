@@ -68,12 +68,18 @@ intervals use `(lower, upper]`; zero is `[0, 0]`. With
 interval excludes 1. Temporary HP is separate. `hidden` yields null, never zero.
 A stale row carries its last admitted value, not the current hidden value.
 
-`filtered-observation-v2` has a fixed layout for the supported slice. Properties
+`filtered-observation-v3` has a fixed layout for the supported slice. Properties
 whose only supported mode is `hidden` have no output field. Supported optional
 fields use null when hidden/unknown; `knowledge` distinguishes current,
 last-known and unknown creature rows. Resolved policy metadata distinguishes
 hidden fields from unknown values. Health has nullable `current`, `maximum`,
 and `interval` members, with only the selected representation populated.
+
+Permitted allied Burning Hands actions also carry a nullable `cone_template`
+with length in squares and the encounter's cell-overlap threshold. This supports
+coverage calculations from disclosed positions, footprints and terrain; it does
+not expose hidden occupants. Hiding capability descriptions also hides this
+template. See [the training coverage contract](../training/burning-hands-coverage.md).
 
 Recent events use emission-time visibility, independent numbering after
 filtering, and configurable retention. The current conservative event vocabulary

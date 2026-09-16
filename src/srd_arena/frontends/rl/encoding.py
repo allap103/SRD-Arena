@@ -13,7 +13,7 @@ from srd_arena.frontends.rl.spell_encoding import (
     spell_features,
 )
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v2"
+ENCODER_SCHEMA_ID = "experimental-encoder-v3"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -101,6 +101,10 @@ ACTION_FEATURES = (
     "amount",
     "amount_known",
     "remove",
+    "coverage_known",
+    "affected_own_count",
+    "affected_ally_count",
+    "affected_enemy_count",
     *SPELL_FEATURES,
 )
 
@@ -178,6 +182,7 @@ class EncodedObservation:
     actor_slots: NDArray[np.int64]
     target_slots: NDArray[np.int64]
     action_mask: NDArray[np.bool_]
+    affected_entity_mask: NDArray[np.bool_]
 
 
 class Encoder:
@@ -231,6 +236,7 @@ class Encoder:
         action_rows = np.zeros((len(choices), len(ACTION_FEATURES)))
         actors = np.full(len(choices), -1, dtype=np.int64)
         targets = np.full(len(choices), -1, dtype=np.int64)
+        affected = np.zeros((len(choices), self.max_entities), dtype=np.bool_)
         slots = {ref: slot for slot, ref in enumerate(self.refs)}
         spell_vectors: dict[int, tuple[float, ...]] = {}
         for index, choice in enumerate(choices):
@@ -249,8 +255,19 @@ class Encoder:
                 float(choice.aim is not None),
                 *_known(choice.amount, 100),
                 float(choice.remove),
+                float(choice.affected_refs is not None),
+                *(
+                    sum(
+                        by_ref[ref].allegiance == group
+                        for ref in (choice.affected_refs or ())
+                    )
+                    / 10
+                    for group in ("own", "ally", "enemy")
+                ),
                 *spell_vectors[descriptor_key],
             )
+            for ref in choice.affected_refs or ():
+                affected[index, slots[ref]] = True
             actors[index] = slots.get(choice.actor_ref, -1)
             targets[index] = (
                 slots.get(choice.target_ref, -1) if choice.target_ref else -1
@@ -263,6 +280,7 @@ class Encoder:
             actors,
             targets,
             np.ones(len(choices), dtype=np.bool_),
+            affected,
         )
         for array in (global_features, entities, action_rows):
             if not np.isfinite(array).all():
@@ -284,6 +302,14 @@ def encoder_manifest() -> dict[str, object]:
             "round": 100,
             "target_counts": 10,
         },
+        "coverage": {
+            "schema": "burning-hands-disclosed-footprints-v1",
+            "affected_entity_mask": "candidate_by_stable_entity_slot",
+            "aim_grammar": "existing_integer_coordinates",
+            "membership": "current_disclosed_living_footprints_after_total_cover",
+            "empty_group": "retained",
+            "missing_information": "uncompressed_aims_with_unknown_coverage",
+        },
         "spell_scales": SPELL_NUMBERS,
         "mechanics_scales": {
             "quantities": 100,
@@ -293,7 +319,8 @@ def encoder_manifest() -> dict[str, object]:
             "casting_modifier": 20,
         },
         "omitted": [
-            "candidate_coverage",
+            "coverage_for_spells_other_than_burning_hands",
+            "coverage_after_movement",
             "full_requirement_and_custom_rule_interpretation",
             "contextual_spell_feature_modifiers",
             "terrain",
