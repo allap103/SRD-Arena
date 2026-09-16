@@ -7,8 +7,13 @@ from numpy.typing import NDArray
 
 from srd_arena.engine.api import FilteredCreature, FilteredObservation
 from srd_arena.frontends.rl.actions import Candidate
+from srd_arena.frontends.rl.spell_encoding import (
+    SPELL_FEATURES,
+    SPELL_NUMBERS,
+    spell_features,
+)
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v1"
+ENCODER_SCHEMA_ID = "experimental-encoder-v2"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -96,6 +101,7 @@ ACTION_FEATURES = (
     "amount",
     "amount_known",
     "remove",
+    *SPELL_FEATURES,
 )
 
 
@@ -226,7 +232,11 @@ class Encoder:
         actors = np.full(len(choices), -1, dtype=np.int64)
         targets = np.full(len(choices), -1, dtype=np.int64)
         slots = {ref: slot for slot, ref in enumerate(self.refs)}
+        spell_vectors: dict[int, tuple[float, ...]] = {}
         for index, choice in enumerate(choices):
+            descriptor_key = id(choice.spell)
+            if descriptor_key not in spell_vectors:
+                spell_vectors[descriptor_key] = spell_features(choice.spell)
             kind = (
                 ACTION_KINDS.index(choice.kind)
                 if choice.kind in ACTION_KINDS
@@ -239,6 +249,7 @@ class Encoder:
                 float(choice.aim is not None),
                 *_known(choice.amount, 100),
                 float(choice.remove),
+                *spell_vectors[descriptor_key],
             )
             actors[index] = slots.get(choice.actor_ref, -1)
             targets[index] = (
@@ -273,14 +284,24 @@ def encoder_manifest() -> dict[str, object]:
             "round": 100,
             "target_counts": 10,
         },
+        "spell_scales": SPELL_NUMBERS,
+        "mechanics_scales": {
+            "quantities": 100,
+            "duration_rounds": 100,
+            "distance_feet": 120,
+            "caster_level": 20,
+            "casting_modifier": 20,
+        },
         "omitted": [
+            "candidate_coverage",
+            "full_requirement_and_custom_rule_interpretation",
+            "contextual_spell_feature_modifiers",
             "terrain",
             "appearance",
             "size",
             "type",
             "event_sequence",
             "initiative_order",
-            "capability_identity",
             "movement_direction",
             "optional_decision_context",
         ],

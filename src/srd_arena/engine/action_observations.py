@@ -53,6 +53,7 @@ class _ActionSemantics:
     source_label: str | None = None
     source_level: int | None = None
     resource_level: int | None = None
+    grant_id: str | None = None
     feature_id: str | None = None
     effect_id: str | None = None
     movement_direction: str | None = None
@@ -123,6 +124,7 @@ def _observe_action(
         source_label=semantics.source_label,
         source_level=semantics.source_level,
         resource_level=semantics.resource_level,
+        grant_id=semantics.grant_id,
         feature_id=semantics.feature_id,
         effect_id=semantics.effect_id,
         movement_direction=semantics.movement_direction,
@@ -154,6 +156,7 @@ def _action_semantics(
             source_label=(spell.name if spell is not None else details.source_id),
             source_level=spell.level if spell is not None else None,
             resource_level=details.resource_level,
+            grant_id=details.grant_id,
             target_ref=details.target_ref,
             aim_point=details.aim_point,
             area_preview=_spell_area_preview(

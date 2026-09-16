@@ -214,7 +214,7 @@ class ObservationPolicy(PolicyValue):
             "history.events": ("perceived", "hidden"),
             "history.accumulated.demonstrated_capabilities": (False,),
             "history.accumulated.demonstrated_defenses": (False,),
-            "decisions.capability_descriptions": ("hidden",),
+            "decisions.capability_descriptions": ("hidden", "permitted"),
         }
         for group in ("own", "ally", "enemy"):
             for key, modes in {

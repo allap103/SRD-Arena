@@ -1,5 +1,6 @@
 """Policy optimization, checkpoint replay, and explicit device contracts."""
 
+import json
 from pathlib import Path
 
 import numpy as np
@@ -11,6 +12,7 @@ from srd_arena.frontends.rl.environment import ArenaEnvironment, Transition
 from srd_arena.training.config import load_training_config
 from srd_arena.training.evaluate import evaluate
 from srd_arena.training.model import CandidatePolicy, select_device
+from srd_arena.training.progress import EpisodeProgress
 from srd_arena.training.train import run_training, update_policy
 
 
@@ -59,6 +61,22 @@ def test_training_checkpoint_reloads_and_replays(tmp_path: Path) -> None:
     with pytest.raises(FileExistsError):
         run_training(config, run)
     assert (run / "observation-policy.json").exists()
+    progress = [
+        json.loads(line) for line in (run / "progress.jsonl").read_text().splitlines()
+    ]
+    phases = [r["phase"] for r in progress if r["event"] == "progress"]
+    assert phases.count("reset") == phases.count("done") == 2
+    assert "update" in phases and "checkpoint" in phases
+    metrics = [
+        json.loads(line) for line in (run / "metrics.jsonl").read_text().splitlines()
+    ]
+    for record in metrics:
+        assert (
+            record["episode_seconds"]
+            >= record["rollout_seconds"] + record["update_seconds"]
+        )
+        assert record["reset_seconds"] >= 0 and record["inference_seconds"] >= 0
+        assert record["environment_seconds"] >= 0 and record["checkpoint_seconds"] >= 0
 
 
 def test_explicit_cuda_does_not_silently_fallback(
@@ -90,12 +108,13 @@ def test_completed_update_survives_a_later_rollout_failure(
         model: CandidatePolicy,
         *,
         seed: int,
+        progress: EpisodeProgress | None = None,
     ) -> tuple[list[tuple[EncodedObservation, int]], Transition]:
         nonlocal calls
         calls += 1
         if calls == 2:
             raise RuntimeError("simulated rollout failure")
-        return original(environment, model, seed=seed)
+        return original(environment, model, seed=seed, progress=progress)
 
     monkeypatch.setattr(training, "rollout", failing_rollout)
     with pytest.raises(RuntimeError, match="simulated rollout failure"):

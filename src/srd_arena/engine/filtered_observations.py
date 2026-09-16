@@ -8,6 +8,7 @@ from .gameplay_observation_models import (
     GameplayObservation,
 )
 from .observation_models import (
+    ActionObservation,
     DecisionObservation,
     EncounterCompletionObservation,
     GridObservation,
@@ -24,8 +25,9 @@ from .player_observation_models import (
     PublicCombatEventObservation,
     PublicEventKind,
 )
+from .spell_capability_observations import SpellCapabilityObservation
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v1"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v2"
 
 
 @dataclass(frozen=True)
@@ -104,6 +106,7 @@ class FilteredAction:
     enabled: bool
     availability: str
     required_configuration: str | None
+    spell: SpellCapabilityObservation | None = None
 
 
 @dataclass(frozen=True)
@@ -253,6 +256,7 @@ class PolicyProjector:
                     a.enabled,
                     a.availability,
                     a.required_configuration,
+                    self._spell_descriptor(snapshot, a, groups),
                 )
                 for a in actions
             ),
@@ -263,6 +267,38 @@ class PolicyProjector:
             snapshot.game.completion,
             snapshot.game.requires_automatic_advance,
         )
+
+    def _spell_descriptor(
+        self,
+        snapshot: GameplayObservation,
+        action: ActionObservation,
+        groups: dict[str, Group],
+    ) -> SpellCapabilityObservation | None:
+        """Join public action metadata to an allied catalog, never an enemy sheet."""
+        if (
+            self.policy.decisions.capability_descriptions != "permitted"
+            or groups.get(action.creature_ref) not in ("own", "ally")
+            or action.source_id is None
+        ):
+            return None
+        creature = next(
+            c
+            for c in snapshot.creatures
+            if c.combat.creature_ref == action.creature_ref
+        )
+        matches = tuple(
+            s
+            for s in creature.spell_capabilities
+            if s.spell_id == action.source_id
+            and s.grant_id == action.grant_id
+            and s.cast_level
+            == (
+                action.resource_level
+                if action.resource_level is not None
+                else s.spell_level
+            )
+        )
+        return matches[0] if len(matches) == 1 else None
 
     def _current_row(
         self, creature: GameplayCreatureObservation, group: Group, visible: bool

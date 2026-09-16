@@ -1,5 +1,6 @@
 """Single-controller environment over the existing public headless API."""
 
+from collections.abc import Callable
 from dataclasses import dataclass
 
 from srd_arena.content.encounters import EncounterCatalog
@@ -82,6 +83,10 @@ class ArenaEnvironment:
         self._rejected = 0
         self._done = True
         self._limit: str | None = None
+        # Optional diagnostics; never part of the observation or policy input.
+        self.progress_callback: (
+            Callable[[GameplayObservation, int, int], None] | None
+        ) = None
 
     @property
     def choices(self) -> tuple[Candidate, ...]:
@@ -168,6 +173,15 @@ class ArenaEnvironment:
         assert self._projector is not None and self._encoder is not None
         while True:
             snapshot = self._adapter.observe_gameplay()
+            if (
+                self.progress_callback is not None
+                and snapshot.game.encounter is not None
+            ):
+                self.progress_callback(
+                    snapshot,
+                    self._decisions,
+                    self._engine_steps,
+                )
             self._observation = self._projector.project(snapshot)
             if self._observation.completion is not None:
                 break

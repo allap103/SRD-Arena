@@ -72,39 +72,42 @@ def resolve_slow(
                 dc=context.creature.spellcasting.save_dc,
             ),
         ),
-        rule_effects=(
-            SpeedMultiplier(1, 2),
-            ArmorClassAdjustment(-2),
-            RollAdjustment(
-                RollModifier(
-                    roll="saving_throw",
-                    mode="subtract",
-                    value=2,
-                    ability="dexterity",
-                )
-            ),
-            ReactionProhibition(),
-            ActionEconomyRestriction(
-                frozenset(
-                    {
-                        ActionEconomyKind.ACTION,
-                        ActionEconomyKind.BONUS_ACTION,
-                    }
-                )
-            ),
-            AttackLimit(1),
-            InvocationFailureChance(
-                invocation_kinds=frozenset({"cast_spell"}),
-                required_components=frozenset({"somatic"}),
-                numerator=1,
-                denominator=4,
-                code="slow.somatic_spell_failure",
-                message="The spell fails because its gestures are too slow.",
-            ),
-        ),
+        rule_effects=SLOW_RULE_EFFECTS,
     )
     return replace(
         result,
         effects=[*result.effects, slow_effect],
         details=replace(details, success=True),
     )
+
+
+SLOW_RULE_EFFECTS = (
+    SpeedMultiplier(1, 2),
+    ArmorClassAdjustment(-2),
+    RollAdjustment(
+        RollModifier(
+            roll="saving_throw",
+            mode="subtract",
+            value=2,
+            ability="dexterity",
+        )
+    ),
+    ReactionProhibition(),
+    ActionEconomyRestriction(
+        frozenset(
+            {
+                ActionEconomyKind.ACTION,
+                ActionEconomyKind.BONUS_ACTION,
+            }
+        )
+    ),
+    AttackLimit(1),
+    InvocationFailureChance(
+        invocation_kinds=frozenset({"cast_spell"}),
+        required_components=frozenset({"somatic"}),
+        numerator=1,
+        denominator=4,
+        code="slow.somatic_spell_failure",
+        message="The spell fails because its gestures are too slow.",
+    ),
+)

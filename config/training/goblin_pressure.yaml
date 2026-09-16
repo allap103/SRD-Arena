@@ -1,7 +1,7 @@
 schema_version: 1
 encounter: warlock_goblin_pressure
 perspective_creature: warlock
-observation_config: ../observations/player.yaml
+observation_config: ../observations/training.yaml
 encounter_seed: 42
 learner_seed: 7
 episodes: 150

@@ -45,6 +45,7 @@ class ActionObservation:
     source_label: str | None = None
     source_level: int | None = None
     resource_level: int | None = None
+    grant_id: str | None = None
     feature_id: str | None = None
     effect_id: str | None = None
     movement_direction: str | None = None

@@ -11,9 +11,10 @@ from srd_arena.engine.api import (
     GameCommand,
     SelectAction,
     SetResourceAllocation,
+    SpellCapabilityObservation,
 )
 
-ACTION_SCHEMA_ID = "experimental-candidates-v1"
+ACTION_SCHEMA_ID = "experimental-candidates-v2"
 
 
 @dataclass(frozen=True)
@@ -27,6 +28,7 @@ class Candidate:
     aim: tuple[float, float] | None = None
     amount: int | None = None
     remove: bool = False
+    spell: SpellCapabilityObservation | None = None
 
 
 def candidates(
@@ -121,4 +123,10 @@ def candidates(
             result.append(Candidate(SelectAction(action.id, decision), *base))
         if len(result) > maximum:
             raise ValueError(f"Decision exceeds {maximum} action candidates")
-    return tuple(result)
+    from dataclasses import replace
+
+    descriptors = {a.id: a.spell for a in observation.action_details}
+    return tuple(
+        replace(c, spell=descriptors.get(getattr(c.command, "action_id", "")))
+        for c in result
+    )

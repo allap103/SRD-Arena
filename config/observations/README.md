@@ -54,7 +54,7 @@ are frozen Pydantic records; YAML/file handling stays in the headless frontend.
 | Recent events | `perceived` or `hidden`; limit 0–10000 |
 | Accumulated damage received | `exact` or `hidden`, independently by group |
 | Decision context | `permitted` or `hidden` |
-| Capability descriptions | `hidden` |
+| Decision capability descriptions | `hidden` or `permitted` (allied spell descriptors) |
 
 Exact allied HP is required because existing targeting allocation limits can
 reveal missing allied HP. Additional modes require consistent source evidence,
@@ -68,7 +68,7 @@ intervals use `(lower, upper]`; zero is `[0, 0]`. With
 interval excludes 1. Temporary HP is separate. `hidden` yields null, never zero.
 A stale row carries its last admitted value, not the current hidden value.
 
-`filtered-observation-v1` has a fixed layout for the supported slice. Properties
+`filtered-observation-v2` has a fixed layout for the supported slice. Properties
 whose only supported mode is `hidden` have no output field. Supported optional
 fields use null when hidden/unknown; `knowledge` distinguishes current,
 last-known and unknown creature rows. Resolved policy metadata distinguishes
@@ -87,6 +87,49 @@ Mandatory action IDs, kinds, actor/target references, availability and required
 configuration remain available. IDs are opaque command tokens. Optional labels,
 reasons, costs and previews are omitted. Targeting uses the existing team-safe
 projection; the YAML does not alter combat rules or visibility for targeting.
+
+## Spell descriptions for training
+
+`training.yaml` extends the player profile with:
+
+```yaml
+decisions:
+  context: permitted
+  capability_descriptions: permitted
+```
+
+Each spell action then carries a nullable `spell` descriptor: stable spell/grant
+identity, cast level, intrinsic action/slot costs, range, area, concentration and
+initial attack/save metadata. A descriptor is joined by public source ID, cast
+level and grant ID; command IDs are never parsed. Only the acting ally's known
+spell catalog supplies it. Enemy catalogs are never exposed, even for an enemy
+turn. `hidden` produces `spell: null`, and `player.yaml`/`minimal.yaml` retain
+that behavior. The separate creature capability-catalog modes remain unsupported.
+
+`spell.mechanics` (`spell-mechanics-v1`) preserves the authored target rules,
+resolution branches, damage/healing/temporary-HP effects, conditions, repeat
+saves, triggers, follow-ups, duration, components and scaling. `cast_dice`,
+`cast_bonus` and `cast_value` supplement authored quantities at the selected
+cast level using runtime scaling helpers. Quantities describe intrinsic effects
+per application, before target defenses and contextual feature modifiers.
+They contain neither rolled outcomes nor hidden target facts.
+
+Custom resolvers are marked `implementation: custom`; Stinking Cloud's save,
+poison/action prohibition and obscuring area, and Slow's rule effects, have
+explicit supplements shared with runtime code. These describe implemented
+mechanics; they do not promise a complete simulation of every spell interaction
+or unimplemented SRD feature. Actual ongoing battlefield effects are a separate
+observation category and remain hidden in this profile.
+
+Try the richer headless observation:
+
+```bash
+uv run --extra training srd-arena --headless \
+  --encounter warlock_training --seed 42 \
+  --perspective-creature warlock \
+  --observation-config config/observations/training.yaml \
+  --controller stdin --max-steps 1000 --max-rounds 100
+```
 
 ## JSON Lines protocol (version 1)
 

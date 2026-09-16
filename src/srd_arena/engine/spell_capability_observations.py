@@ -1,6 +1,8 @@
 """Describe allied spell invocations without tying the catalog to availability."""
 
-from dataclasses import dataclass
+from collections.abc import Mapping
+from dataclasses import dataclass, field
+from functools import lru_cache
 
 from srd_arena.domain.capabilities import (
     AttackResolution,
@@ -18,6 +20,9 @@ from srd_arena.domain.spells.rules import (
     spell_max_targets,
 )
 
+from .spell_mechanics_observations import observe_spell_mechanics
+from .values import EngineValue, freeze_mapping
+
 
 @dataclass(frozen=True)
 class SpellCapabilityObservation:
@@ -25,8 +30,7 @@ class SpellCapabilityObservation:
 
     Costs are intrinsic invocation costs; current availability stays in action
     options. Resolution metadata describes the initial declarative resolution,
-    not every ongoing or custom rule. Damage/healing details are not yet part
-    of this draft descriptor. ``maximum_targets=None`` denotes area-wide targeting.
+    with full authored branches and custom supplements in ``mechanics``. ``maximum_targets=None`` denotes area-wide targeting.
     """
 
     id: str
@@ -51,6 +55,11 @@ class SpellCapabilityObservation:
     save_dc: int | None
     custom_resolver_id: str | None
     temporary_hit_point_dice: str
+    mechanics: Mapping[str, EngineValue] = field(default_factory=dict, hash=False)
+
+    def __post_init__(self) -> None:
+        """Keep nested descriptors detached and immutable."""
+        object.__setattr__(self, "mechanics", freeze_mapping(self.mechanics))
 
 
 def observe_spell_capabilities(
@@ -95,6 +104,33 @@ def _describe(
 ) -> SpellCapabilityObservation:
     casting = creature.spellcasting
     assert casting is not None
+    return _describe_values(
+        spell,
+        level,
+        grant,
+        creature.attributes.level,
+        casting.attack_bonus,
+        casting.save_dc,
+        casting.ability_modifier,
+    )
+
+
+@lru_cache(maxsize=2048)
+def _describe_values(
+    spell: Spell,
+    level: int,
+    grant: SpellInvocationGrant | None,
+    caster_level: int,
+    casting_attack_bonus: int,
+    casting_save_dc: int,
+    casting_modifier: int,
+) -> SpellCapabilityObservation:
+    """Reuse immutable descriptors keyed by definitions and all contributing stats.
+
+    Slot balances and condition instances are intentionally absent: this catalog
+    describes intrinsic capabilities, not live eligibility. The bounded cache
+    never retains mutable creatures or sessions.
+    """
     definition = spell.definition
     resolution = definition.resolution if definition is not None else None
     economy = spell_action_economy(spell)
@@ -104,7 +140,7 @@ def _describe(
         attack_bonus = (
             resolution.attack_bonus.value
             if isinstance(resolution.attack_bonus, FixedAttackBonus)
-            else casting.attack_bonus
+            else casting_attack_bonus
         )
     if isinstance(resolution, SavingThrowResolution):
         difficulty = resolution.difficulty
@@ -113,7 +149,7 @@ def _describe(
             if isinstance(difficulty, FixedDifficultyClass)
             else 10 + level
             if difficulty.derivation == "ten_plus_spell_level"
-            else casting.save_dc
+            else casting_save_dc
         )
     target = definition.target if definition is not None else None
     return SpellCapabilityObservation(
@@ -133,7 +169,7 @@ def _describe(
         target_kind=target.kind if target is not None else None,
         maximum_targets=None
         if target is not None and target.kind == "area" and target.occupants != "chosen"
-        else spell_max_targets(spell, level, caster_level=creature.attributes.level),
+        else spell_max_targets(spell, level, caster_level=caster_level),
         area_shape=spell_area_shape(spell),
         area_size_feet=spell.area_size_feet,
         concentration=spell.concentration,
@@ -145,4 +181,11 @@ def _describe(
         save_dc=save_dc,
         custom_resolver_id=spell.resolver_id,
         temporary_hit_point_dice=grant.temporary_hit_point_dice if grant else "roll",
+        mechanics=observe_spell_mechanics(
+            spell,
+            level,
+            caster_level=caster_level,
+            casting_modifier=casting_modifier,
+            casting_save_dc=casting_save_dc,
+        ),
     )
