@@ -1,6 +1,7 @@
 """PyTorch candidate policy with shared entity processing and a value baseline."""
 
-from typing import Literal
+from collections.abc import Callable
+from typing import Any, Literal
 
 import torch
 from torch import Tensor, nn
@@ -101,18 +102,44 @@ class CandidatePolicy(nn.Module):
         value = self.critic(torch.cat((global_features, pooled))).squeeze(-1)
         return logits, value
 
-    def choose(self, observation: EncodedObservation, *, greedy: bool = False) -> int:
+    def choose(
+        self,
+        observation: EncodedObservation,
+        *,
+        greedy: bool = False,
+        report: Callable[[dict[str, Any]], None] | None = None,
+    ) -> int:
         """Select an admitted candidate without retaining an inference graph."""
         if not observation.action_mask.any():
             raise ValueError("Cannot choose from an empty action mask")
         with torch.no_grad():
-            logits, _ = self(observation)
+            logits, value = self(observation)
             if not torch.isfinite(
                 logits[torch.as_tensor(observation.action_mask, device=logits.device)]
             ).all():
                 raise ValueError("Policy produced nonfinite logits")
-            return int(
+            selected = int(
                 (
                     logits.argmax() if greedy else Categorical(logits=logits).sample()  # type: ignore[no-untyped-call]
                 ).item()
             )
+
+            if report is not None:
+                distribution = Categorical(logits=logits)
+                probs = distribution.probs.detach().cpu()
+                top = probs.topk(min(5, int(observation.action_mask.sum())))
+                report(
+                    {
+                        "mode": "greedy" if greedy else "sample",
+                        "selected_index": selected,
+                        "selected_probability": float(probs[selected]),
+                        "value_estimate": float(value.detach().cpu()),
+                        "entropy": float(distribution.entropy().detach().cpu()),  # type: ignore[no-untyped-call]
+                        "candidate_count": int(observation.action_mask.sum()),
+                        "top_choices": [
+                            {"index": int(i), "probability": float(p)}
+                            for i, p in zip(top.indices, top.values, strict=True)
+                        ],
+                    }
+                )
+            return selected

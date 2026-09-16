@@ -5,6 +5,7 @@ from typing import Any, TextIO
 
 from srd_arena.engine.api import GameplayObservation
 from srd_arena.frontends.headless.serialization import canonical_json, json_value
+from srd_arena.frontends.rl.actions import Candidate
 from srd_arena.frontends.rl.diagnostics import CommandBoundary
 
 DIAGNOSTIC_SCHEMA = "combat-diagnostics-v1"
@@ -53,6 +54,27 @@ class EpisodeRecorder:
         self.event_counts: Counter[str] = Counter()
         self.creatures: dict[str, Any] = {}
         self.pending_policy: dict[str, Any] | None = None
+
+    def record_choice(
+        self, selection: dict[str, Any], choices: tuple[Candidate, ...]
+    ) -> None:
+        """Attach readable candidate semantics without changing model inputs."""
+
+        def describe(index: int) -> dict[str, Any]:
+            c = choices[index]
+            return {
+                "kind": c.kind,
+                "spell": c.spell.spell_id if c.spell else None,
+                "target": c.target_ref,
+                "aim": c.aim,
+                "amount": c.amount,
+                "command": json_value(c.command),
+            }
+
+        selection["selected"] = describe(selection["selected_index"])
+        for option in selection.get("top_choices", []):
+            option.update(describe(option["index"]))
+        self.pending_policy = selection
 
     def record(self, boundary: CommandBoundary) -> None:
         """Consume one existing snapshot boundary without observing the engine."""

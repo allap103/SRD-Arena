@@ -4,6 +4,8 @@ This experiment establishes a working observation → decision → game → rewa
 parameter-update loop. It deliberately repeats one authored encounter and one
 combat seed. It makes no claim of generalization or competent play.
 
+See [observability.md](observability.md) for local training charts and combat diagnostics.
+
 ## Run
 
 ```sh

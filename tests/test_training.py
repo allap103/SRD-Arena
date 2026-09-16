@@ -10,6 +10,7 @@ import torch
 from srd_arena.frontends.rl.encoding import EncodedObservation
 from srd_arena.frontends.rl.environment import ArenaEnvironment, Transition
 from srd_arena.training.config import load_training_config
+from srd_arena.training.diagnostics import EpisodeRecorder
 from srd_arena.training.evaluate import evaluate
 from srd_arena.training.model import CandidatePolicy, select_device
 from srd_arena.training.progress import EpisodeProgress
@@ -109,12 +110,15 @@ def test_completed_update_survives_a_later_rollout_failure(
         *,
         seed: int,
         progress: EpisodeProgress | None = None,
+        diagnostics: EpisodeRecorder | None = None,
     ) -> tuple[list[tuple[EncodedObservation, int]], Transition]:
         nonlocal calls
         calls += 1
         if calls == 2:
             raise RuntimeError("simulated rollout failure")
-        return original(environment, model, seed=seed, progress=progress)
+        return original(
+            environment, model, seed=seed, progress=progress, diagnostics=diagnostics
+        )
 
     monkeypatch.setattr(training, "rollout", failing_rollout)
     with pytest.raises(RuntimeError, match="simulated rollout failure"):

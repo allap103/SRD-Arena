@@ -10,6 +10,7 @@ dependencies = [
 
 [project.optional-dependencies]
 training = ["numpy>=2.3,<3", "torch>=2.10,<3"]
+observability = ["tensorboard>=2.20,<3", "streamlit>=1.50,<2"]
 
 [project.scripts]
 srd-arena = "srd_arena.main:main"

@@ -7,6 +7,7 @@ import platform
 import random
 import subprocess
 import sys
+from contextlib import ExitStack
 from importlib.metadata import version
 from pathlib import Path
 from time import perf_counter
@@ -65,7 +66,33 @@ def rollout(
             elif mode == "wait":
                 action = idle_action(environment.choices)
             else:
-                action = model.choose(transition.observation, greedy=mode == "greedy")
+                action = model.choose(
+                    transition.observation,
+                    greedy=mode == "greedy",
+                    report=(
+                        lambda selection: diagnostics.record_choice(
+                            selection, environment.choices
+                        )
+                    )
+                    if diagnostics is not None and diagnostics.stream is not None
+                    else None,
+                )
+            if (
+                diagnostics is not None
+                and diagnostics.stream is not None
+                and mode in {"wait", "random"}
+            ):
+                diagnostics.record_choice(
+                    {
+                        "mode": mode,
+                        "selected_index": action,
+                        "selected_probability": 1 / len(environment.choices)
+                        if mode == "random"
+                        else None,
+                        "candidate_count": len(environment.choices),
+                    },
+                    environment.choices,
+                )
             if progress is not None:
                 progress.inference_seconds += perf_counter() - started
                 progress.report("engine")
@@ -90,6 +117,7 @@ def update_policy(
     entropy_coefficient: float,
     *,
     progress: EpisodeProgress | None = None,
+    metrics: dict[str, float] | None = None,
 ) -> float:
     """Apply Monte Carlo actor/critic gradients with undiscounted terminal return.
 
@@ -97,6 +125,8 @@ def update_policy(
     cost is introduced for multi-stage actions. The critic baseline is detached
     from the policy advantage; entropy is an exploration regularizer.
     """
+    if metrics is not None:
+        metrics.update(policy_loss=0.0, value_loss=0.0, entropy=0.0, gradient_norm=0.0)
     if not trajectory:
         return 0.0
     optimizer.zero_grad()
@@ -106,18 +136,31 @@ def update_policy(
         distribution = Categorical(logits=logits)
         chosen = torch.tensor(action, device=logits.device)
         advantage = reward - value.detach()
+        entropy = distribution.entropy()  # type: ignore[no-untyped-call]
         loss = (
             -distribution.log_prob(chosen) * advantage  # type: ignore[no-untyped-call]
             + 0.5 * (value - reward).square()
-            - entropy_coefficient * distribution.entropy()  # type: ignore[no-untyped-call]
+            - entropy_coefficient * entropy
         ) / len(trajectory)
+        if metrics is not None:
+            metrics["policy_loss"] += float(
+                (-distribution.log_prob(chosen) * advantage).detach().cpu()  # type: ignore[no-untyped-call]
+            ) / len(trajectory)
+            metrics["value_loss"] += float(
+                (0.5 * (value - reward).square()).detach().cpu()
+            ) / len(trajectory)
+            metrics["entropy"] += float(entropy.detach().cpu()) / len(trajectory)
         if not torch.isfinite(loss):
             raise ValueError("Nonfinite training loss")
         loss.backward()
         total += float(loss.detach().cpu())
         if progress is not None:
             progress.optimization_progress(sample_index, len(trajectory))
-    torch.nn.utils.clip_grad_norm_(model.parameters(), 1.0, error_if_nonfinite=True)
+    norm = torch.nn.utils.clip_grad_norm_(
+        model.parameters(), 1.0, error_if_nonfinite=True
+    )
+    if metrics is not None:
+        metrics["gradient_norm"] = float(norm.detach().cpu())
     optimizer.step()
     return total
 
@@ -128,10 +171,19 @@ def run_training(
     *,
     progress_interval: float = 2.0,
     resume_from: Path | None = None,
+    trace_every: int = 0,
+    tensorboard: bool = False,
 ) -> Path:
     """Save resolved settings, per-episode metrics, and a reloadable checkpoint."""
     if not math.isfinite(progress_interval) or progress_interval < 0:
         raise ValueError("Progress interval must be finite and nonnegative")
+    if trace_every < 0:
+        raise ValueError("Trace interval must be nonnegative")
+    if tensorboard:
+        try:
+            from torch.utils.tensorboard import SummaryWriter
+        except ImportError as exc:
+            raise ValueError("TensorBoard requires the observability extra") from exc
     print("Initializing training environment and model...", file=sys.stderr, flush=True)
     device = select_device(config.device)
     torch.manual_seed(config.learner_seed)
@@ -188,6 +240,11 @@ def run_training(
         "reward_schema": REWARD_SCHEMA_ID,
         "model_schema": MODEL_SCHEMA_ID,
         "encoder": encoder_manifest(),
+        "diagnostics": {
+            "schema": "combat-diagnostics-v1",
+            "trace_every": trace_every,
+            "tensorboard": tensorboard,
+        },
         "resume_from": str(resume_from.resolve()) if resume_from is not None else None,
         "starting_episode": completed + 1,
         "target_completed_episodes": completed + config.episodes,
@@ -195,76 +252,130 @@ def run_training(
     (run_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
     checkpoint = run_dir / "policy.pt"
     with (
+        ExitStack() as outputs,
+        (run_dir / "combat-summary.jsonl").open("w") as combat_stream,
         (run_dir / "metrics.jsonl").open("w") as stream,
         (run_dir / "progress.jsonl").open("w") as progress_stream,
     ):
+        writer = (
+            outputs.enter_context(SummaryWriter(str(run_dir / "tensorboard")))
+            if tensorboard
+            else None
+        )
+        if writer is not None:
+            writer.add_text(
+                "configuration", resolved.model_dump_json(indent=2), completed
+            )
+        wins = 0
         for episode in range(completed, completed + config.episodes):
-            progress = EpisodeProgress(
-                episode + 1,
-                completed + config.episodes,
-                progress_stream,
-                interval=progress_interval,
-            )
-            progress.report("reset", force=True)
-            episode_started = perf_counter()
-            trajectory, terminal = rollout(
-                environment, model, seed=config.encounter_seed, progress=progress
-            )
-            rollout_seconds = perf_counter() - episode_started
-            progress.update_total = len(trajectory)
-            progress.report("update", force=True)
-            update_started = perf_counter()
-            loss = update_policy(
-                model,
-                optimizer,
-                trajectory,
-                terminal.reward,
-                config.entropy_coefficient,
-                progress=progress,
-            )
-            if device.type == "cuda":
-                torch.cuda.synchronize(device)
-            update_seconds = perf_counter() - update_started
-            record = {
-                "episode": episode + 1,
-                "seed": config.encounter_seed,
-                "reward": terminal.reward,
-                "terminated": terminal.terminated,
-                "truncated": terminal.truncated,
-                "loss": loss,
-                **terminal.info,
-                **progress.timings(),
-                "rollout_seconds": rollout_seconds,
-                "update_seconds": update_seconds,
-                "episode_seconds": perf_counter() - episode_started,
-            }
-            # Keep the most recently completed update if a later rollout fails.
-            # Replace atomically so viewers never open a half-written checkpoint.
-            progress.report("checkpoint", force=True)
-            checkpoint_started = perf_counter()
-            temporary = checkpoint.with_suffix(".tmp")
-            torch.save(
-                {
-                    "model_schema": MODEL_SCHEMA_ID,
-                    "encoder": encoder_manifest(),
-                    "policy_digest": policy_digest(policy),
-                    "hidden_size": config.hidden_size,
-                    "completed_episodes": episode + 1,
-                    "training_state": capture_training_state(config, optimizer, device),
-                    "state_dict": {
-                        k: v.detach().cpu() for k, v in model.state_dict().items()
+            with ExitStack() as episode_outputs:
+                trace = None
+                if trace_every and (episode == 0 or (episode + 1) % trace_every == 0):
+                    (run_dir / "traces").mkdir(exist_ok=True)
+                    trace = episode_outputs.enter_context(
+                        (run_dir / "traces" / f"episode-{episode + 1:06d}.jsonl").open(
+                            "w"
+                        )
+                    )
+                recorder = EpisodeRecorder(episode + 1, trace)
+                progress = EpisodeProgress(
+                    episode + 1,
+                    completed + config.episodes,
+                    progress_stream,
+                    interval=progress_interval,
+                )
+                progress.report("reset", force=True)
+                episode_started = perf_counter()
+                trajectory, terminal = rollout(
+                    environment,
+                    model,
+                    seed=config.encounter_seed,
+                    progress=progress,
+                    diagnostics=recorder,
+                )
+                rollout_seconds = perf_counter() - episode_started
+                progress.update_total = len(trajectory)
+                progress.report("update", force=True)
+                update_started = perf_counter()
+                learning_metrics: dict[str, float] = {}
+                loss = update_policy(
+                    model,
+                    optimizer,
+                    trajectory,
+                    terminal.reward,
+                    config.entropy_coefficient,
+                    progress=progress,
+                    metrics=learning_metrics,
+                )
+                if device.type == "cuda":
+                    torch.cuda.synchronize(device)
+                update_seconds = perf_counter() - update_started
+                record = {
+                    "episode": episode + 1,
+                    "seed": config.encounter_seed,
+                    "reward": terminal.reward,
+                    "terminated": terminal.terminated,
+                    "truncated": terminal.truncated,
+                    "loss": loss,
+                    **learning_metrics,
+                    **terminal.info,
+                    **progress.timings(),
+                    "rollout_seconds": rollout_seconds,
+                    "update_seconds": update_seconds,
+                    "episode_seconds": perf_counter() - episode_started,
+                }
+                # Keep the most recently completed update if a later rollout fails.
+                # Replace atomically so viewers never open a half-written checkpoint.
+                progress.report("checkpoint", force=True)
+                checkpoint_started = perf_counter()
+                temporary = checkpoint.with_suffix(".tmp")
+                torch.save(
+                    {
+                        "model_schema": MODEL_SCHEMA_ID,
+                        "encoder": encoder_manifest(),
+                        "policy_digest": policy_digest(policy),
+                        "hidden_size": config.hidden_size,
+                        "completed_episodes": episode + 1,
+                        "training_state": capture_training_state(
+                            config, optimizer, device
+                        ),
+                        "state_dict": {
+                            k: v.detach().cpu() for k, v in model.state_dict().items()
+                        },
                     },
-                },
-                temporary,
-            )
-            temporary.replace(checkpoint)
-            record["checkpoint_seconds"] = perf_counter() - checkpoint_started
-            record["episode_seconds"] = perf_counter() - episode_started
-            line = canonical_json(record)
-            stream.write(line + "\n")
-            stream.flush()
-            print(line, flush=True)
-            progress.report("done", force=True)
+                    temporary,
+                )
+                temporary.replace(checkpoint)
+                record["checkpoint_seconds"] = perf_counter() - checkpoint_started
+                record["episode_seconds"] = perf_counter() - episode_started
+                line = canonical_json(record)
+                stream.write(line + "\n")
+                stream.flush()
+                print(line, flush=True)
+                summary = recorder.summary()
+                summary.update(
+                    reward=terminal.reward,
+                    terminated=terminal.terminated,
+                    truncated=terminal.truncated,
+                )
+                combat_stream.write(canonical_json(summary) + "\n")
+                combat_stream.flush()
+                wins += terminal.reward > 0
+                if writer is not None:
+                    for key, value in {
+                        **learning_metrics,
+                        "loss": loss,
+                        "reward": terminal.reward,
+                        "win_rate": wins / (episode - completed + 1),
+                        "truncated": int(terminal.truncated),
+                        "rounds": recorder.rounds,
+                        "rejected_commands": terminal.info["rejected_commands"],
+                        **progress.timings(),
+                        "update_seconds": update_seconds,
+                    }.items():
+                        writer.add_scalar("train/" + key, value, episode + 1)
+                    writer.flush()
+                progress.report("done", force=True)
     return checkpoint
 
 
@@ -291,6 +402,17 @@ def main() -> None:
         default=2.0,
         help="Seconds between live progress reports (default: 2; 0 disables periodic reports; turn logs remain)",
     )
+    parser.add_argument(
+        "--trace-every",
+        type=int,
+        default=0,
+        help="Save full combat traces every N cumulative episodes, plus episode 1; 0 saves summaries only",
+    )
+    parser.add_argument(
+        "--tensorboard",
+        action="store_true",
+        help="Write TensorBoard learning metrics (requires observability extra)",
+    )
     args = parser.parse_args()
     try:
         if args.resume is not None and args.episodes is None:
@@ -314,6 +436,8 @@ def main() -> None:
             args.run_dir,
             progress_interval=args.progress_interval,
             resume_from=args.resume,
+            trace_every=args.trace_every,
+            tensorboard=args.tensorboard,
         )
         print(canonical_json({"checkpoint": str(checkpoint)}))
     except (OSError, ValueError, RuntimeError) as exc:
