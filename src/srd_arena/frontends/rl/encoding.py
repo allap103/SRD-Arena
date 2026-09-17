@@ -13,7 +13,7 @@ from srd_arena.frontends.rl.spell_encoding import (
     spell_features,
 )
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v3"
+ENCODER_SCHEMA_ID = "experimental-encoder-v4"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -303,12 +303,12 @@ def encoder_manifest() -> dict[str, object]:
             "target_counts": 10,
         },
         "coverage": {
-            "schema": "burning-hands-disclosed-footprints-v1",
+            "schema": "area-disclosed-footprints-v2",
             "affected_entity_mask": "candidate_by_stable_entity_slot",
             "aim_grammar": "existing_integer_coordinates",
             "membership": "current_disclosed_living_footprints_after_total_cover",
-            "empty_group": "retained",
-            "missing_information": "uncompressed_aims_with_unknown_coverage",
+            "aim_retention": "all_integer_coordinates_no_grouping",
+            "missing_information": "all_aims_with_unknown_coverage",
         },
         "spell_scales": SPELL_NUMBERS,
         "mechanics_scales": {
@@ -319,7 +319,7 @@ def encoder_manifest() -> dict[str, object]:
             "casting_modifier": 20,
         },
         "omitted": [
-            "coverage_for_spells_other_than_burning_hands",
+            "coverage_for_unsupported_area_geometry",
             "coverage_after_movement",
             "full_requirement_and_custom_rule_interpretation",
             "contextual_spell_feature_modifiers",

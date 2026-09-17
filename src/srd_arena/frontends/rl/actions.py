@@ -12,10 +12,10 @@ from srd_arena.engine.api import (
     SelectAction,
     SetResourceAllocation,
     SpellCapabilityObservation,
-    burning_hands_aims,
+    area_aims,
 )
 
-ACTION_SCHEMA_ID = "experimental-candidates-v3"
+ACTION_SCHEMA_ID = "experimental-candidates-v4"
 
 
 @dataclass(frozen=True)
@@ -38,8 +38,8 @@ def candidates(
 ) -> tuple[Candidate, ...]:
     """Expand advertised choices, grid-cell aims, and public resource amounts.
 
-    Aimed actions use integer coordinates in the experimental grammar. Burning
-    Hands groups those aims by disclosed footprint coverage. Fractional
+    Aimed actions retain every integer coordinate, annotated with disclosed
+    creature coverage when area geometry is available. Fractional
     aiming is deliberately outside this initial discrete action space. These
     are permitted attempts, not privileged guarantees of successful execution.
     No failed-attempt pruning or private legality probes are performed.
@@ -53,31 +53,21 @@ def candidates(
             continue
         base = (action.kind, action.creature_ref, action.target_ref)
         if action.required_configuration == "aim":
-            grouped = burning_hands_aims(observation, action)
-            if grouped is not None:
-                result.extend(
-                    Candidate(
-                        AimAction(action.id, *group.aim, decision),
-                        *base,
-                        aim=group.aim,
-                        affected_refs=group.creature_refs,
-                    )
-                    for group in grouped
-                )
-            else:
-                if observation.grid.width * observation.grid.height > maximum - len(
-                    result
-                ):
-                    raise ValueError(f"Decision exceeds {maximum} action candidates")
-                for y in range(observation.grid.height):
-                    for x in range(observation.grid.width):
-                        result.append(
-                            Candidate(
-                                AimAction(action.id, float(x), float(y), decision),
-                                *base,
-                                aim=(float(x), float(y)),
-                            )
+            if observation.grid.width * observation.grid.height > maximum - len(result):
+                raise ValueError(f"Decision exceeds {maximum} action candidates")
+            coverage = area_aims(observation, action)
+            by_aim = {item.aim: item.creature_refs for item in coverage or ()}
+            for y in range(observation.grid.height):
+                for x in range(observation.grid.width):
+                    aim = (float(x), float(y))
+                    result.append(
+                        Candidate(
+                            AimAction(action.id, *aim, decision),
+                            *base,
+                            aim=aim,
+                            affected_refs=by_aim.get(aim),
                         )
+                    )
         elif action.required_configuration is not None:
             raise ValueError(
                 f"Unsupported action configuration: {action.required_configuration}"

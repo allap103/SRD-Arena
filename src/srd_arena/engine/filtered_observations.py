@@ -2,9 +2,9 @@
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field, replace
-from typing import Literal
+from typing import Literal, cast
 
-from .area_observation_models import ConeTemplateObservation
+from .area_observation_models import AreaTemplateObservation
 from .gameplay_observation_models import (
     GameplayCreatureObservation,
     GameplayObservation,
@@ -29,7 +29,7 @@ from .player_observation_models import (
 )
 from .spell_capability_observations import SpellCapabilityObservation
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v3"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v4"
 
 
 @dataclass(frozen=True)
@@ -109,7 +109,7 @@ class FilteredAction:
     availability: str
     required_configuration: str | None
     spell: SpellCapabilityObservation | None = None
-    cone_template: ConeTemplateObservation | None = None
+    area_template: AreaTemplateObservation | None = None
 
 
 @dataclass(frozen=True)
@@ -260,7 +260,7 @@ class PolicyProjector:
                     a.availability,
                     a.required_configuration,
                     (descriptor := self._spell_descriptor(snapshot, a, groups)),
-                    self._cone_template(a, descriptor),
+                    self._area_template(a, descriptor),
                 )
                 for a in actions
             ),
@@ -272,24 +272,47 @@ class PolicyProjector:
             snapshot.game.requires_automatic_advance,
         )
 
-    def _cone_template(
+    def _area_template(
         self, action: ActionObservation, descriptor: SpellCapabilityObservation | None
-    ) -> ConeTemplateObservation | None:
-        """Expose only dimensions/threshold from permitted Burning Hands previews."""
-        if descriptor is None or descriptor.spell_id != "burning_hands":
+    ) -> AreaTemplateObservation | None:
+        """Expose geometry from permitted allied spell previews, without occupants."""
+        if descriptor is None:
             return None
         preview = action.area_preview
-        if preview is None or preview.get("shape") != "cone":
+        if preview is None:
             return None
-        shape = preview.get("continuous_area")
-        if not isinstance(shape, Mapping):
+        geometry = preview.get("continuous_area")
+        if not isinstance(geometry, Mapping):
             return None
-        length, threshold = shape.get("length"), shape.get("coverage_threshold")
-        if not isinstance(length, (int, float)) or not isinstance(
-            threshold, (int, float)
+        shape = geometry.get("shape")
+        if not isinstance(shape, str) or shape not in (
+            "cone",
+            "line",
+            "cube",
+            "radius",
         ):
             return None
-        return ConeTemplateObservation(int(length), float(threshold))
+        directional = geometry.get("direction") is not None
+        if (directional and shape == "radius") or (
+            not directional and shape not in ("cube", "radius")
+        ):
+            return None
+        size = geometry.get("radius" if shape == "radius" else "length")
+        threshold = geometry.get("coverage_threshold")
+        width = geometry.get("width")
+        if not isinstance(size, (int, float)) or size <= 0:
+            return None
+        if directional and not isinstance(threshold, (int, float)):
+            return None
+        if shape == "line" and not isinstance(width, (int, float)):
+            return None
+        return AreaTemplateObservation(
+            cast(Literal["cone", "line", "cube", "radius"], shape),
+            "directional" if directional else "point",
+            int(size),
+            float(width) if isinstance(width, (int, float)) else None,
+            float(threshold) if isinstance(threshold, (int, float)) else None,
+        )
 
     def _spell_descriptor(
         self,

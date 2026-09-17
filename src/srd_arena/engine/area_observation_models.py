@@ -1,19 +1,23 @@
 """Public geometric parameters and potential creature coverage for aimed actions."""
 
 from dataclasses import dataclass
+from typing import Literal
 
 
 @dataclass(frozen=True)
-class ConeTemplateObservation:
-    """A cone's public dimensions and the encounter's rasterization policy."""
+class AreaTemplateObservation:
+    """Public area geometry; size is radius for radius areas, length otherwise."""
 
-    length_squares: int
-    coverage_threshold: float
+    shape: Literal["cone", "line", "cube", "radius"]
+    placement: Literal["point", "directional"]
+    size_squares: int
+    width_squares: float | None = None
+    coverage_threshold: float | None = None
 
 
 @dataclass(frozen=True)
 class AreaAimObservation:
-    """One representative aim and its currently disclosed living footprints.
+    """One integer aim and its currently disclosed living footprints.
 
     Membership predicts geometric coverage, not successful saves, damage,
     private target eligibility or the absence of hidden creatures.

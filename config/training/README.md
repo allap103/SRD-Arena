@@ -244,7 +244,7 @@ confirm/cancel controls. A public attempt may still fail the real rules; masks
 are never computed by probing hidden state. The original decision token stays
 attached to each command. Candidate order is not a model feature.
 
-Encoder v3 consumes `config/observations/training.yaml`. Each spell candidate
+Encoder v4 consumes `config/observations/training.yaml`. Each spell candidate
 includes the existing identity/cost/range/save descriptors and numerical summaries
 of its `spell-mechanics-v1` tree. Features distinguish outcome branches for damage,
 healing, temporary HP and conditions, plus concentration, duration, repeat saves,
@@ -252,31 +252,33 @@ ending triggers, movement effects and persistent obscuring areas. Fixed spell an
 category vocabularies include unknown buckets. Spell identity supplements mechanics;
 it is not inferred from an opaque action token.
 
-Burning Hands aims are grouped by the distinct sets of currently disclosed living
-creatures covered by the cone. Each group carries an entity mask and separate
-own/ally/enemy counts; the policy pools the covered creature embeddings when
-scoring it. Movement remains a separate decision, and groups are recomputed from
-the resulting observation. See [burning-hands-coverage.md](burning-hands-coverage.md)
-for geometry, missing-information behavior and limitations.
+All supported aimed spell areas retain every integer aim coordinate. Each aim
+carries coverage of currently disclosed living creatures: an entity mask and
+separate own/ally/enemy counts. The policy pools covered creature embeddings
+when scoring it. A shared geometric template handles directional cones, lines
+and cubes, and point-centered cubes and radius areas without spell-name checks.
+Movement remains separate; coverage is recomputed from the resulting observation.
+See [area-coverage.md](area-coverage.md) for geometry, missing-information behavior
+and limitations.
 
 The semantic descriptor preserves more detail than the numeric summary. Arbitrary
 requirements, choice interactions, custom-rule parameters and contextual feature
 modifiers are not fully interpreted numerically. The encoder also omits terrain
 channels, appearance/type/size, initiative order, event sequences, optional decision
 context and movement directions. Candidates can still collide when only omitted
-features differ. Coverage for other spells and move-and-cast plans are not yet
-implemented. Representative aims remain integer coordinates. The manifest records feature
-order, scales and these limits.
+features differ. Coverage predicts initial geometric membership only; future
+persistent-area occupancy and move-and-cast plans are not implemented. Aims remain
+integer coordinates. The manifest records feature order, scales and these limits.
 
-The coverage features and policy input shape require new training. Existing v1
-and v2 encoder checkpoints are rejected by schema/manifest validation, including
-for resume. The historical 150-episode results above belong to v1 and are not
+The new coverage semantics and observation/action schemas require fresh training.
+Existing v1–v3 encoder checkpoints are rejected by schema/manifest validation,
+including for resume. The historical 150-episode results above belong to v1 and are not
 evidence for this encoder. The original experiment is saved in commit `ba20684`.
 No historical run files are rewritten by this change.
 
 The PyTorch network embeds each creature with shared weights, pools unpadded
-rows, and scores candidates using actor/target/covered-creature embeddings, global information,
-and candidate parameters. An action mask excludes inadmissible/padded entries.
+rows, and scores candidates using actor/target/covered-creature embeddings,
+global information and candidate parameters. An action mask excludes inadmissible/padded entries.
 The critic uses the same permitted state features. A small episodic actor/critic
 update uses terminal returns, gradient clipping and Adam; this is not PPO.
 

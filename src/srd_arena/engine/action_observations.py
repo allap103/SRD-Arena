@@ -8,6 +8,9 @@ from types import MappingProxyType
 from typing import cast
 
 from srd_arena.domain.creatures import Creature, StatBlockActionDefinition
+from srd_arena.domain.encounters.actions.option_discovery.spellcasting import (
+    spell_range_squares_for,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.geometry import (
@@ -21,7 +24,6 @@ from srd_arena.domain.geometry import (
 from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.rules import (
     spell_area_shape,
-    spell_range_squares,
 )
 from srd_arena.engine.queries import (
     ActionOption,
@@ -247,7 +249,7 @@ def _spell_area_preview(
         )
     if spell.geometry_mode != "directional_area":
         return None
-    length = spell_range_squares(spell, grid)
+    length = spell_range_squares_for(state, spell, creature_state.creature)
     if length is None:
         return None
     return cast(
