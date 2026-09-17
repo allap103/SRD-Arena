@@ -30,9 +30,6 @@ from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
 from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
     expire_ongoing_effects_for_turn_start,
 )
-from srd_arena.domain.encounters.encounter import (
-    EncounterAction,
-)
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
@@ -57,6 +54,7 @@ from tests.encounter_runtime_support import (
 )
 from tests.encounter_runtime_support import (
     TACTICAL_ENCOUNTER_DIR,
+    complete_spell_action,
     is_spell_action,
     player_first_initiative,
     spell_payload,
@@ -809,20 +807,9 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "mass_healing_word", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
-    add_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    result = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_2"))
     )
-    _ORCHESTRATOR.submit(state, add_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-
-    result = _ORCHESTRATOR.submit(state, confirm)
 
     event = next(event for event in result.events if event.type == "spell_cast")
     details = [
@@ -1207,19 +1194,7 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
             slot_level=3,
         )
     )
-    _ORCHESTRATOR.submit(state, initial)
-    add_target = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_1"
-    )
-    _ORCHESTRATOR.submit(state, add_target)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, confirm)
+    _ORCHESTRATOR.submit(state, complete_spell_action(initial, ("player", "goblin_1")))
 
     assert (
         rule_queries.effective_maximum_health(state, "player").value
@@ -1284,41 +1259,19 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "mass_heal")
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
-    for target_ref, amount in (("player", 300), ("goblin_1", 400)):
-        _ORCHESTRATOR.submit(
-            state,
-            EncounterAction(
-                label="Set healing allocation",
-                kind="set_spell_resource_allocation",
-                value=f"{target_ref}~{amount}",
-                id=f"player-spell-allocation-{target_ref}",
-                creature_ref="player",
-            ),
-        )
     rejected = _ORCHESTRATOR.submit(
         state,
-        EncounterAction(
-            label="Over-allocate healing",
-            kind="set_spell_resource_allocation",
-            value="player~301",
-            id="player-spell-allocation-player",
-            creature_ref="player",
+        complete_spell_action(
+            initial, ("player", "goblin_1"), (("player", 301), ("goblin_1", 400))
         ),
     )
-    assert rejected.events[-1].data["success"] is False
-    assert rejected.events[-1].data["reason_code"] == "resource_pool_exceeded"
-    assert "remaining healing pool" in rejected.messages[-1][1]
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
+    assert rejected.events[-1].data["reason_code"] == "invalid_allocation"
+    result = _ORCHESTRATOR.submit(
+        state,
+        complete_spell_action(
+            initial, ("player", "goblin_1"), (("player", 300), ("goblin_1", 400))
+        ),
     )
-    result = _ORCHESTRATOR.submit(state, confirm)
 
     assert caster.get_health() == 400
     assert target.creature.get_health() == 500

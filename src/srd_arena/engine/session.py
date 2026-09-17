@@ -5,9 +5,6 @@ from copy import deepcopy
 from dataclasses import dataclass
 
 from srd_arena.domain.encounters import EncounterDefinition, EncounterOrchestrator
-from srd_arena.domain.encounters.actions.option_discovery.spell_selection import (
-    spell_target_selection_actions,
-)
 from srd_arena.domain.encounters.actions.options import decision_actions
 from srd_arena.domain.encounters.creature_control import creature_action_candidates
 from srd_arena.domain.encounters.encounter import EncounterState
@@ -53,6 +50,8 @@ from srd_arena.engine.queries import (
 )
 from srd_arena.engine.session_queries import read_session
 from srd_arena.engine.values import freeze_mapping
+
+from .spell_cast_observation_models import SpellCastOptions
 
 
 @dataclass
@@ -261,14 +260,6 @@ class Session:
         decision = state.current_decision()
         if decision.kind == "turn":
             return tuple(creature_action_candidates(state, decision.creature_ref))
-        if decision.kind == "spell_targets":
-            return tuple(
-                spell_target_selection_actions(
-                    state,
-                    decision.creature_ref,
-                    include_unavailable=True,
-                )
-            )
         return tuple(decision_actions(state))
 
     @property
@@ -337,6 +328,35 @@ class Session:
             action,
             selected_choice_text=action.label,
         )
+
+    def prepare_spell(
+        self,
+        action_id: str,
+        expected_decision_id: str,
+        aim: tuple[float, float] | None = None,
+    ) -> SpellCastOptions:
+        """Read configuration choices for a GUI draft without opening a decision."""
+        from dataclasses import replace
+
+        from .queries import SpellOptionDetails
+        from .spell_cast_observations import observe_spell_cast_options
+
+        current = self.observe()
+        if (
+            current.encounter is None
+            or current.encounter.decision.id != expected_decision_id
+        ):
+            raise ValueError("Stale spell preparation.")
+        read = self._read()
+        option = next((a for a in read.action_options if a.id == action_id), None)
+        if option is None or not isinstance(option.details, SpellOptionDetails):
+            raise ValueError("Spell action unavailable.")
+        if aim is not None:
+            option = replace(option, details=replace(option.details, aim_point=aim))
+        options = observe_spell_cast_options(self.encounter_state, option)
+        if options is None:
+            raise ValueError("Spell configuration unavailable.")
+        return options
 
     def _configure_action(
         self,

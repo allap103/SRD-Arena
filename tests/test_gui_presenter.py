@@ -4,15 +4,11 @@ from typing import cast
 
 from srd_arena.engine.commands import (
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
     CommandFailure,
     CommandResult,
-    ConfirmTargeting,
     GameCommand,
     GameUpdate,
     SelectAction,
-    SetResourceAllocation,
 )
 from srd_arena.engine.observations import (
     ActionObservation,
@@ -70,10 +66,6 @@ def test_presenter_constructs_commands_with_the_current_decision() -> None:
     assert stub.commands == [
         SelectAction("attack", "decision-1"),
         AimAction("fireball", 3.5, 4.5, "decision-2"),
-        ChangeTarget("goblin", True, "decision-2", "eldritch_blast"),
-        SetResourceAllocation("goblin", 20, "decision-2"),
-        ConfirmTargeting("decision-2"),
-        CancelTargeting("decision-2"),
     ]
     assert presenter.observation == updated
 

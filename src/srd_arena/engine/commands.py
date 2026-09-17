@@ -30,46 +30,17 @@ class AimAction:
 
 
 @dataclass(frozen=True)
-class ChangeTarget:
-    """Add or remove a creature from an active staged target selection."""
+class CastSpell:
+    """Submit one complete cast, with ordered targets, allocations and optional aim."""
 
-    target_ref: str
-    remove: bool
+    action_id: str
     expected_decision_id: str
-    source_trigger_id: str | None = None
+    target_refs: tuple[str, ...] = ()
+    allocations: tuple[tuple[str, int], ...] = ()
+    aim: tuple[float, float] | None = None
 
 
-@dataclass(frozen=True)
-class SetResourceAllocation:
-    """Assign an amount from a shared action resource to one target."""
-
-    target_ref: str
-    amount: int
-    expected_decision_id: str
-
-
-@dataclass(frozen=True)
-class ConfirmTargeting:
-    """Confirm the targets and allocations staged for the current decision."""
-
-    expected_decision_id: str
-
-
-@dataclass(frozen=True)
-class CancelTargeting:
-    """Cancel the target selection staged for the current decision."""
-
-    expected_decision_id: str
-
-
-GameCommand = (
-    SelectAction
-    | AimAction
-    | ChangeTarget
-    | SetResourceAllocation
-    | ConfirmTargeting
-    | CancelTargeting
-)
+GameCommand = SelectAction | AimAction | CastSpell
 
 
 @dataclass(frozen=True)

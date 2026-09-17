@@ -8,6 +8,7 @@ from enum import StrEnum
 from types import MappingProxyType
 from typing import Literal
 
+from .spell_cast_observation_models import SpellCastOptions
 from .values import EngineValue, freeze_mapping
 
 
@@ -56,6 +57,7 @@ class ActionObservation:
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
     required_configuration: Literal["aim"] | None = None
+    spell_cast: SpellCastOptions | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cost", freeze_mapping(self.cost))

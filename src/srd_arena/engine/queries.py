@@ -140,14 +140,15 @@ class ActionAim:
 
 
 @dataclass(frozen=True)
-class ActionResourceAllocation:
-    """Request an exact resource amount for one target in a staged action."""
+class ActionSpellCast:
+    """Configure all target choices before submitting a spell action."""
 
-    target_ref: str
-    amount: int
+    target_refs: tuple[str, ...]
+    allocations: tuple[tuple[str, int], ...]
+    aim: tuple[float, float] | None
 
 
-ActionConfiguration = ActionAim | ActionResourceAllocation
+ActionConfiguration = ActionAim | ActionSpellCast
 
 
 @dataclass(frozen=True)

@@ -25,9 +25,6 @@ from .actions.creature_actions.lifecycle import (
 from .actions.creature_actions.movement import execute_movement
 from .actions.creature_actions.prone import execute_prone_action
 from .actions.creature_actions.spell_invocation import execute_spell_invocation
-from .actions.creature_actions.spell_selection import (
-    execute_spell_selection_action,
-)
 from .actions.creature_actions.standard import execute_standard_action
 from .actions.d20_roll_modifiers import (
     action_d20_occurrences,
@@ -73,10 +70,6 @@ def execute_creature_action(
     ...     return_value=context,
     ... ), patch(
     ...     "srd_arena.domain.encounters.creature_control.execute_capability_action",
-    ...     return_value=False,
-    ... ), patch(
-    ...     "srd_arena.domain.encounters.creature_control."
-    ...     "execute_spell_selection_action",
     ...     return_value=False,
     ... ), patch(
     ...     "srd_arena.domain.encounters.creature_control.execute_standard_action",
@@ -162,13 +155,6 @@ def continue_creature_action(
             state,
             action,
             decision,
-            progress,
-            action_id,
-        )
-        or execute_spell_selection_action(
-            state,
-            actor,
-            action,
             progress,
             action_id,
         )

@@ -1,4 +1,4 @@
-"""Plan pre-invocation spell targeting and automated controller choices."""
+"""Describe spell configuration requirements and automated controller choices."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ class SpellInvocationPlan:
     require_full_target_count: bool
     resource_pool_total: int | None
     resource_allocation_limits: dict[str, int]
-    staged_selection_needed: bool
+    configuration_needed: bool
 
 
 def plan_spell_invocation(
@@ -50,7 +50,7 @@ def plan_spell_invocation(
     actor: Creature,
     payload: SpellActionPayload,
 ) -> SpellInvocationPlan:
-    """Derive target counts, candidate allocations, and staging requirements.
+    """Derive target counts, candidate allocations, and configuration requirements.
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.spells.rules import spell_action_payload
@@ -61,7 +61,7 @@ def plan_spell_invocation(
     ...     SimpleNamespace(), actor,
     ...     spell_action_payload("unknown", "target"),
     ... )
-    >>> (plan.spell_id, plan.selected_target_refs, plan.staged_selection_needed)
+    >>> (plan.spell_id, plan.selected_target_refs, plan.configuration_needed)
     ('unknown', ('target',), False)
     """
 
@@ -121,7 +121,7 @@ def plan_spell_invocation(
             else min(maximum_targets, len(area_target_refs))
         )
         selected_targets = list(area_target_refs[:maximum_targets])
-    staged_selection_needed = bool(
+    configuration_needed = bool(
         resource_pool_total is not None
         or (maximum_targets > 1 and selected_targets)
         or (
@@ -141,7 +141,7 @@ def plan_spell_invocation(
         require_full_target_count=require_full_target_count,
         resource_pool_total=resource_pool_total,
         resource_allocation_limits=resource_allocation_limits,
-        staged_selection_needed=staged_selection_needed,
+        configuration_needed=configuration_needed,
     )
 
 
@@ -160,7 +160,7 @@ def automatic_spell_payload(
     ...     aim_point=None, slot_level=None, selected_target_refs=("goblin",),
     ...     maximum_targets=2, repeat_target_allocations=True,
     ...     require_full_target_count=True, resource_pool_total=None,
-    ...     resource_allocation_limits={}, staged_selection_needed=True,
+    ...     resource_allocation_limits={}, configuration_needed=True,
     ... )
     >>> automatic_spell_payload(
     ...     SimpleNamespace(), SimpleNamespace(),

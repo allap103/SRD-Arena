@@ -19,7 +19,6 @@ from .option_discovery.spell_areas import (
     spell_area_targets,
     targets_in_area,
 )
-from .option_discovery.spell_selection import spell_target_selection_actions
 from .option_discovery.spell_targets import (
     spell_action_targets,
     spell_target_context,
@@ -104,8 +103,6 @@ def decision_actions(state: EncounterState) -> list[EncounterAction]:
         return reckless_attack_actions(state)
     if decision.kind == "weapon_mastery":
         return weapon_mastery_actions(state)
-    if decision.kind == "spell_targets":
-        return spell_target_selection_actions(state, decision.creature_ref)
     return available_creature_actions(state, decision.creature_ref)
 
 
@@ -122,7 +119,6 @@ __all__ = [
     "spell_cast_block_reason_for",
     "spell_range_squares_for",
     "spell_target_context",
-    "spell_target_selection_actions",
     "spell_targets_self_only_for",
     "spend_spell_resources",
     "targets_in_area",

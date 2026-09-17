@@ -14,7 +14,7 @@ from srd_arena.frontends.rl.encoding import (
     EncodedObservation,
 )
 
-MODEL_SCHEMA_ID = "entity-candidate-actor-critic-v2"
+MODEL_SCHEMA_ID = "entity-candidate-actor-critic-v3"
 
 
 def select_device(requested: Literal["auto", "cpu", "cuda"]) -> torch.device:
@@ -51,7 +51,7 @@ class CandidatePolicy(nn.Module):
             nn.Linear(len(ACTION_FEATURES), hidden_size), nn.Tanh()
         )
         self.actor = nn.Sequential(
-            nn.Linear(len(GLOBAL_FEATURES) + 5 * hidden_size + 2, hidden_size),
+            nn.Linear(len(GLOBAL_FEATURES) + 8 * hidden_size + 2, hidden_size),
             nn.Tanh(),
             nn.Linear(hidden_size, 1),
         )
@@ -89,6 +89,10 @@ class CandidatePolicy(nn.Module):
         affected = (coverage @ entities) / coverage.sum(dim=1, keepdim=True).clamp(
             min=1
         )
+        selected_weights = torch.as_tensor(
+            observation.selected_entity_weights, dtype=entities.dtype, device=device
+        )
+        selected = (selected_weights @ entities).flatten(start_dim=1)
         count = len(observation.actions)
         features = torch.cat(
             (
@@ -98,6 +102,7 @@ class CandidatePolicy(nn.Module):
                 extended[targets],
                 actions,
                 affected,
+                selected,
                 (actors >= 0)[:, None],
                 (targets >= 0)[:, None],
             ),

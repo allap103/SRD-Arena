@@ -31,6 +31,7 @@ from srd_arena.engine.queries import ActionOption, SpellOptionDetails
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
     player_first_initiative,
+    submit_complete_spell,
     use_deterministic_dice,
 )
 
@@ -76,19 +77,8 @@ def _cast_command(
     target_ref: str,
     instruction: str,
 ) -> None:
-    session._choose(
-        _command_option(
-            session,
-            target_ref=target_ref,
-            instruction=instruction,
-        ).id
-    )
-    confirm = next(
-        option
-        for option in session._read().action_options
-        if option.enabled and option.kind == "confirm_spell_targets"
-    )
-    session._choose(confirm.id)
+    option = _command_option(session, target_ref=target_ref, instruction=instruction)
+    submit_complete_spell(session, option.id, (target_ref,))
 
 
 def test_command_translates_closed_options_next_turn_duration_and_upcasting() -> None:

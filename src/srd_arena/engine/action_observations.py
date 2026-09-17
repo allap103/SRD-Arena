@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import cast
 
@@ -46,6 +46,8 @@ from .observation_models import (
     ActionReasonObservation,
     SceneObservation,
 )
+from .spell_cast_observation_models import SpellCastOptions
+from .spell_cast_observations import observe_spell_cast_options
 from .values import EngineValue
 
 
@@ -81,10 +83,11 @@ def observe_scene(read: SessionRead) -> SceneObservation:
     ('demo', 'Exit')
     """
 
+    cast_cache: dict[tuple[str, SpellOptionDetails], SpellCastOptions | None] = {}
     return SceneObservation(
         scene_id=read.scene_id,
         action_details=tuple(
-            _observe_action(option, read.encounter_state)
+            _observe_action(option, read.encounter_state, cast_cache)
             for option in read.action_options
         ),
     )
@@ -93,6 +96,7 @@ def observe_scene(read: SessionRead) -> SceneObservation:
 def _observe_action(
     option: ActionOption,
     state: EncounterState | None,
+    cast_cache: dict[tuple[str, SpellOptionDetails], SpellCastOptions | None],
 ) -> ActionObservation:
     reason_entries = tuple(
         dict.fromkeys(
@@ -100,6 +104,17 @@ def _observe_action(
         )
     )
     semantics = _action_semantics(option, state)
+    cast_options = None
+    if isinstance(option.details, SpellOptionDetails):
+        details = option.details
+        key = (option.creature_ref, replace(details, target_ref=None, target_refs=()))
+        if key not in cast_cache:
+            cast_cache[key] = observe_spell_cast_options(state, option)
+        cast_options = cast_cache[key]
+        if cast_options is not None:
+            cast_options = replace(
+                cast_options, initial_target_refs=details.target_refs
+            )
     return ActionObservation(
         id=option.id,
         label=option.label,
@@ -137,6 +152,7 @@ def _observe_action(
         aim_point=semantics.aim_point,
         area_preview=semantics.area_preview,
         required_configuration=option.required_configuration,
+        spell_cast=cast_options,
     )
 
 

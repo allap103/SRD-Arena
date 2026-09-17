@@ -9,18 +9,15 @@ from .area_coverage import area_aims
 from .area_observation_models import AreaAimObservation, AreaTemplateObservation
 from .commands import (
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
+    CastSpell,
     CommandFailure,
     CommandResult,
-    ConfirmTargeting,
     GameCommand,
     GameEvent,
     GameUpdate,
     PlayerCommandResult,
     PlayerGameUpdate,
     SelectAction,
-    SetResourceAllocation,
 )
 from .filtered_observations import (
     FILTERED_OBSERVATION_SCHEMA_ID,
@@ -77,6 +74,7 @@ from .player_observation_models import (
 )
 from .session import Session, SessionFactory
 from .spell_capability_observations import SpellCapabilityObservation
+from .spell_cast_observation_models import SpellCastOptions
 
 __all__ = [
     "FILTERED_OBSERVATION_SCHEMA_ID",
@@ -88,11 +86,9 @@ __all__ = [
     "AreaAimObservation",
     "AreaTemplateObservation",
     "AttributeObservation",
-    "CancelTargeting",
-    "ChangeTarget",
+    "CastSpell",
     "CommandFailure",
     "CommandResult",
-    "ConfirmTargeting",
     "CreatureAllegiance",
     "CreatureDefenseObservation",
     "CreatureObservation",
@@ -136,8 +132,8 @@ __all__ = [
     "SelectAction",
     "Session",
     "SessionFactory",
-    "SetResourceAllocation",
     "SpellCapabilityObservation",
+    "SpellCastOptions",
     "SpellSlotObservation",
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",

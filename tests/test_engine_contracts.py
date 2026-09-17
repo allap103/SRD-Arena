@@ -7,17 +7,14 @@ import pytest
 from srd_arena.engine.api import (
     ActionObservation,
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
+    CastSpell,
     CommandFailure,
     CommandResult,
-    ConfirmTargeting,
     GameEvent,
     GameObservation,
     GameUpdate,
     SceneObservation,
     SelectAction,
-    SetResourceAllocation,
 )
 
 
@@ -93,11 +90,8 @@ def test_public_commands_and_observations_are_transport_shaped() -> None:
     )
     boundary_values = (
         SelectAction("wait", expected_decision_id="decision-1"),
+        CastSpell("spell", "decision-1", ("target",)),
         AimAction("fireball", 4.5, 3.5, expected_decision_id="decision-1"),
-        ChangeTarget("target", False, "decision-1"),
-        SetResourceAllocation("target", 10, "decision-1"),
-        ConfirmTargeting("decision-1"),
-        CancelTargeting("decision-1"),
         observation,
         CommandResult(update=update),
     )

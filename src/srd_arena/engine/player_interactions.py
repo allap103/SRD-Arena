@@ -4,16 +4,13 @@ from __future__ import annotations
 
 from .commands import (
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
+    CastSpell,
     CommandFailure,
-    ConfirmTargeting,
     GameCommand,
     GameUpdate,
     PlayerCommandResult,
     PlayerGameUpdate,
     SelectAction,
-    SetResourceAllocation,
 )
 from .interactions import execute_game_command
 from .models import EngineOutcome
@@ -53,6 +50,17 @@ def execute_player_game_command(
             return _reject(
                 "action_unavailable",
                 f"Action '{command.action_id}' is not available.",
+            )
+        if (
+            option.spell_cast is not None
+            and option.spell_cast.select_targets
+            and (
+                option.spell_cast.maximum_targets > 1
+                or option.spell_cast.resource_pool is not None
+            )
+        ):
+            return _reject(
+                "action_configuration_required", "Submit a complete spell cast."
             )
         if option.required_configuration is not None:
             return _reject(
@@ -98,38 +106,27 @@ def _configuration_is_advertised(
     """
 
     options = tuple(action for action in observation.action_details if action.enabled)
+    if isinstance(command, CastSpell):
+        action = next(
+            (a for a in options if a.id == command.action_id and a.kind == "spell"),
+            None,
+        )
+        if action is None or action.spell_cast is None:
+            return False
+        allowed = set(action.spell_cast.target_refs)
+        allied = {
+            c.creature_ref
+            for c in observation.creatures
+            if c.allegiance is CreatureAllegiance.ALLY
+        }
+        return all(ref in allowed for ref in command.target_refs) and all(
+            ref in allied for ref, _ in command.allocations
+        )
     if isinstance(command, AimAction):
         return any(
             action.id == command.action_id and action.required_configuration == "aim"
             for action in options
         )
-    if isinstance(command, ChangeTarget):
-        return any(
-            action.kind == "toggle_spell_target"
-            and action.target_ref == command.target_ref
-            and (
-                command.source_trigger_id is None
-                or action.source_trigger_id == command.source_trigger_id
-            )
-            for action in options
-        )
-    if isinstance(command, SetResourceAllocation):
-        return any(
-            creature.creature_ref == command.target_ref
-            and creature.allegiance is CreatureAllegiance.ALLY
-            for creature in observation.creatures
-        ) and any(
-            action.kind == "set_spell_resource_allocation"
-            and action.target_ref == command.target_ref
-            for action in options
-        )
-    if isinstance(command, (ConfirmTargeting, CancelTargeting)):
-        kind = (
-            "confirm_spell_targets"
-            if isinstance(command, ConfirmTargeting)
-            else "cancel_spell_targets"
-        )
-        return any(action.kind == kind for action in options)
     return False
 
 

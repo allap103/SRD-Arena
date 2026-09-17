@@ -1,21 +1,19 @@
 """Decision-local numerical candidates built only from permitted observations."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from srd_arena.engine.api import (
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
-    ConfirmTargeting,
+    CastSpell,
     FilteredObservation,
     GameCommand,
     SelectAction,
-    SetResourceAllocation,
     SpellCapabilityObservation,
+    SpellCastOptions,
     area_aims,
 )
 
-ACTION_SCHEMA_ID = "experimental-candidates-v4"
+ACTION_SCHEMA_ID = "experimental-candidates-v5"
 
 
 @dataclass(frozen=True)
@@ -31,6 +29,10 @@ class Candidate:
     remove: bool = False
     spell: SpellCapabilityObservation | None = None
     affected_refs: tuple[str, ...] | None = None
+    selected_refs: tuple[str, ...] = ()
+    allocations: tuple[tuple[str, int], ...] = ()
+    cast_options: SpellCastOptions | None = None
+    cast_complete: bool = True
 
 
 def candidates(
@@ -52,11 +54,70 @@ def candidates(
         if not action.enabled or action.availability != "available":
             continue
         base = (action.kind, action.creature_ref, action.target_ref)
-        if action.required_configuration == "aim":
+        if action.spell_cast is not None:
+            options = action.spell_cast
+            aims = (
+                tuple(
+                    (float(x), float(y))
+                    for y in range(observation.grid.height)
+                    for x in range(observation.grid.width)
+                )
+                if action.required_configuration == "aim"
+                else (None,)
+            )
+            coverage = {
+                item.aim: item.creature_refs
+                for item in area_aims(observation, action) or ()
+            }
+            for aim in aims:
+                local = options
+                if (
+                    options.select_targets
+                    and action.area_template is not None
+                    and aim is not None
+                ):
+                    refs = coverage.get(aim)
+                    if refs is None:
+                        raise ValueError(
+                            "Selective area casting requires disclosed coverage"
+                        )
+                    local = replace(
+                        options,
+                        target_refs=refs,
+                        initial_target_refs=(),
+                        maximum_targets=(
+                            len(refs)
+                            if options.maximum_is_area_count
+                            else min(options.maximum_targets, len(refs))
+                        ),
+                    )
+                refs = (
+                    local.initial_target_refs
+                    if local.select_targets and local.resource_pool is None
+                    else ()
+                )
+                if len(result) >= maximum:
+                    raise ValueError(f"Decision exceeds {maximum} action candidates")
+                result.append(
+                    Candidate(
+                        CastSpell(action.id, decision, refs, (), aim),
+                        *base,
+                        aim=aim,
+                        affected_refs=coverage.get(aim) if aim is not None else None,
+                        selected_refs=refs,
+                        cast_options=local,
+                        cast_complete=not local.select_targets
+                        or (
+                            local.resource_pool is None
+                            and len(refs) >= local.maximum_targets
+                        ),
+                    )
+                )
+        elif action.required_configuration == "aim":
             if observation.grid.width * observation.grid.height > maximum - len(result):
                 raise ValueError(f"Decision exceeds {maximum} action candidates")
-            coverage = area_aims(observation, action)
-            by_aim = {item.aim: item.creature_refs for item in coverage or ()}
+            aimed_coverage = area_aims(observation, action)
+            by_aim = {item.aim: item.creature_refs for item in aimed_coverage or ()}
             for y in range(observation.grid.height):
                 for x in range(observation.grid.width):
                     aim = (float(x), float(y))
@@ -72,66 +133,10 @@ def candidates(
             raise ValueError(
                 f"Unsupported action configuration: {action.required_configuration}"
             )
-        elif action.kind == "set_spell_resource_allocation":
-            targeting = observation.targeting
-            if targeting is None or action.target_ref is None:
-                raise ValueError(
-                    "Allocation action is missing public targeting metadata"
-                )
-            limit = next(
-                (
-                    x.maximum
-                    for x in targeting.resource_limits
-                    if x.target_ref == action.target_ref
-                ),
-                None,
-            )
-            if limit is None:
-                raise ValueError(
-                    "Allocation action is missing a permitted resource limit"
-                )
-            if limit > maximum:
-                raise ValueError("Resource allocation exceeds candidate capacity")
-            for amount in range(limit + 1):
-                result.append(
-                    Candidate(
-                        SetResourceAllocation(action.target_ref, amount, decision),
-                        *base,
-                        amount=amount,
-                    )
-                )
-        elif action.kind == "toggle_spell_target":
-            if observation.targeting is None or action.target_ref is None:
-                raise ValueError("Target action is missing targeting metadata")
-            selected = action.target_ref in observation.targeting.selected_target_refs
-            removes = (
-                (False, True)
-                if selected and observation.targeting.repeat_target_allocations
-                else (selected,)
-            )
-            for remove in removes:
-                result.append(
-                    Candidate(
-                        ChangeTarget(
-                            action.target_ref,
-                            remove,
-                            decision,
-                            action.source_trigger_id,
-                        ),
-                        *base,
-                        remove=remove,
-                    )
-                )
-        elif action.kind == "confirm_spell_targets":
-            result.append(Candidate(ConfirmTargeting(decision), *base))
-        elif action.kind == "cancel_spell_targets":
-            result.append(Candidate(CancelTargeting(decision), *base))
         else:
             result.append(Candidate(SelectAction(action.id, decision), *base))
         if len(result) > maximum:
             raise ValueError(f"Decision exceeds {maximum} action candidates")
-    from dataclasses import replace
-
     descriptors = {a.id: a.spell for a in observation.action_details}
     return tuple(
         replace(c, spell=descriptors.get(getattr(c.command, "action_id", "")))

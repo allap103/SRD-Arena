@@ -21,6 +21,7 @@ class SpellActionPayload:
     slot_level: int | None = None
     healing_allocations: tuple[tuple[str, int], ...] = ()
     grant_id: str | None = None
+    selection_complete: bool = False
 
     @property
     def target_ref(self) -> str | None:

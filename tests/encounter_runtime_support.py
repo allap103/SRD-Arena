@@ -231,3 +231,42 @@ def choose_directional_spell(
         action.id,
         ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )
+
+
+def complete_spell_action(
+    action: EncounterAction,
+    targets: tuple[str, ...],
+    allocations: tuple[tuple[str, int], ...] = (),
+    aim: tuple[float, float] | None = None,
+) -> EncounterAction:
+    """Supply all choices to a domain spell action before submitting it."""
+    from dataclasses import replace
+
+    assert isinstance(action.value, SpellActionPayload)
+    return replace(
+        action,
+        aim_committed=True,
+        value=replace(
+            action.value,
+            target_refs=targets,
+            healing_allocations=allocations,
+            aim_point=aim if aim is not None else action.value.aim_point,
+            selection_complete=True,
+        ),
+    )
+
+
+def submit_complete_spell(
+    session: Session,
+    action_id: str,
+    targets: tuple[str, ...],
+    allocations: tuple[tuple[str, int], ...] = (),
+    aim: tuple[float, float] | None = None,
+) -> EngineOutcome:
+    """Submit one complete cast through the engine configuration boundary."""
+    from srd_arena.engine.queries import ActionSpellCast
+
+    session._read()
+    return session._configure_action(
+        action_id, ActionSpellCast(targets, allocations, aim)
+    )

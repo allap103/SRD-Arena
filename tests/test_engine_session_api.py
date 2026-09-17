@@ -9,12 +9,11 @@ from srd_arena.domain.encounters.grappling_state import apply_grapple
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.engine.api import (
     AimAction,
-    ConfirmTargeting,
+    CastSpell,
     EncounterTerminationReason,
     GameObservation,
     SelectAction,
     Session,
-    SetResourceAllocation,
 )
 from srd_arena.engine.session import PendingEncounterCompletion
 
@@ -318,35 +317,16 @@ def test_session_controls_numeric_target_allocation() -> None:
         for action in observation.scene.action_details
         if action.kind == "spell" and action.enabled
     )
-    started = session.execute(SelectAction(cast.id, observation.encounter.decision.id))
-    assert started.update is not None
-    targeting = started.update.observation.encounter
-    assert targeting is not None and targeting.targeting is not None
-    assert targeting.targeting.resource_pool_total == 700
-
-    allocation = session.execute(
-        SetResourceAllocation(
-            target_ref="healer",
-            amount=200,
-            expected_decision_id=targeting.decision.id,
-        )
-    )
-    assert allocation.update is not None
-    allocated = allocation.update.observation.encounter
-    assert allocated is not None and allocated.targeting is not None
-    assert allocated.targeting.resource_allocations[0].amount == 200
-
+    assert cast.spell_cast is not None
+    assert cast.spell_cast.resource_pool == 700
+    token = observation.encounter.decision.id
+    before = session.observe_gameplay()
     invalid = session.execute(
-        SetResourceAllocation(
-            target_ref="healer",
-            amount=201,
-            expected_decision_id=allocated.decision.id,
-        )
+        CastSpell(cast.id, token, ("healer",), (("healer", 201),))
     )
-    assert invalid.failure is not None
-    assert invalid.failure.code == "invalid_allocation"
-
+    assert not invalid.accepted
+    assert session.observe_gameplay() == before
     confirmed = session.execute(
-        ConfirmTargeting(expected_decision_id=allocated.decision.id)
+        CastSpell(cast.id, token, ("healer",), (("healer", 200),))
     )
-    assert confirmed.accepted is True
+    assert confirmed.accepted

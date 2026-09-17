@@ -9,12 +9,11 @@ import pytest
 from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     AimAction,
+    CastSpell,
     FilteredAction,
     PolicyProjector,
     Session,
-    SetResourceAllocation,
-    TargetingObservation,
-    TargetResourceLimitObservation,
+    SpellCastOptions,
 )
 from srd_arena.frontends.headless.adapter import EpisodeState, EpisodeStatus
 from srd_arena.frontends.rl.actions import candidates
@@ -158,26 +157,17 @@ def test_aim_and_allocation_candidates_use_public_parameters(
         candidates(replace(observation, action_details=(aim,)), maximum=1)
     allocation = replace(
         aim,
-        kind="set_spell_resource_allocation",
-        target_ref="warlock",
         required_configuration=None,
+        spell_cast=SpellCastOptions(
+            ("warlock",), (), 1, False, False, True, 3, (("warlock", 3),)
+        ),
     )
-    targeting = TargetingObservation(
-        "heal",
-        "Heal",
-        ("warlock",),
-        1,
-        False,
-        False,
-        3,
-        (),
-        (TargetResourceLimitObservation("warlock", 3),),
-    )
-    choices = candidates(
-        replace(observation, action_details=(allocation,), targeting=targeting)
-    )
-    assert [c.amount for c in choices] == [0, 1, 2, 3]
-    assert all(isinstance(c.command, SetResourceAllocation) for c in choices)
+    base = candidates(replace(observation, action_details=(allocation,)))[0]
+    from srd_arena.frontends.rl.spell_candidates import preparation_choices
+
+    choices = preparation_choices(base, maximum=100)
+    assert [c.amount for c in choices] == [1, 2, 3]
+    assert all(isinstance(c.command, CastSpell) for c in choices)
 
 
 def test_rewards_do_not_use_remaining_resources() -> None:

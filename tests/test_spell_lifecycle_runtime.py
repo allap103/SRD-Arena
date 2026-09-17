@@ -50,9 +50,6 @@ from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
 from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
     expire_ongoing_effects_for_turn_start,
 )
-from srd_arena.domain.encounters.encounter import (
-    EncounterAction,
-)
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.rule_queries import has_condition_save_advantage
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
@@ -67,6 +64,7 @@ from tests.encounter_runtime_support import (
 )
 from tests.encounter_runtime_support import (
     TACTICAL_ENCOUNTER_DIR,
+    complete_spell_action,
     is_spell_action,
     player_first_initiative,
     spell_payload,
@@ -457,40 +455,14 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
             slot_level=3,
         )
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.current_decision().kind == "spell_targets"
-    assert caster.spellcasting.spell_slots_remaining[3] == 1
-    assert not any(
-        action.kind == "toggle_spell_target" and action.value == "goblin_3"
-        for action in state.available_actions()
-    )
     rejected = _ORCHESTRATOR.submit(
-        state,
-        EncounterAction(
-            "Add invalid target",
-            "toggle_spell_target",
-            "goblin_3",
-            id="crafted-invalid-spell-target",
-            creature_ref="player",
-        ),
+        state, complete_spell_action(initial, ("goblin_1", "goblin_3"))
     )
-    assert rejected.events[-1].data["success"] is False
-    assert rejected.events[-1].data["reason_code"] == ("target_creature_type_required")
-    assert "creature types: humanoid" in rejected.messages[-1][1]
-    add_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    assert rejected.events[-1].data["reason_code"] == "target_creature_type_required"
+    assert caster.spellcasting.spell_slots_remaining[3] == 1
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_2"))
     )
-    _ORCHESTRATOR.submit(state, add_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     assert resolved.paused_for_decision is False
     assert state.current_decision().kind == "turn"
@@ -522,38 +494,9 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         for action in state.available_actions()
         if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.selected_target_refs == ["goblin_1"]
-    assert not any(
-        action.kind == "confirm_spell_targets" for action in state.available_actions()
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_1", "goblin_2"))
     )
-
-    for target_ref in ("goblin_1", "goblin_2"):
-        add_ray = next(
-            action
-            for action in state.available_actions()
-            if action.kind == "toggle_spell_target"
-            and action.value == target_ref
-            and action.id.endswith("-add")
-        )
-        _ORCHESTRATOR.submit(state, add_ray)
-
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.selected_target_refs == [
-        "goblin_1",
-        "goblin_1",
-        "goblin_2",
-    ]
-
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -590,16 +533,13 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
         for action in state.available_actions()
         if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
+    from srd_arena.frontends.gui.presenter import GamePresenter
 
-    cancel = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "cancel_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, cancel)
-
-    assert state.interrupts.pending_spell_cast is None
+    presenter = GamePresenter(session)
+    before = session.observe_gameplay()
+    assert presenter.select_action(initial.id) is not None
+    assert presenter.cancel_targeting() is not None
+    assert session.observe_gameplay() == before
     assert state.current_decision().kind == "turn"
     assert caster.spellcasting.spell_slots_remaining[2] == 1
     assert state.active_actions_remaining == 1
@@ -658,25 +598,9 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "eldritch_blast", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
-
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.maximum_targets == 3
-    for target_ref in ("goblin_1", "goblin_2"):
-        add_beam = next(
-            action
-            for action in state.available_actions()
-            if action.kind == "toggle_spell_target"
-            and action.value == target_ref
-            and action.id.endswith("-add")
-        )
-        _ORCHESTRATOR.submit(state, add_beam)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_1", "goblin_2"))
     )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -824,24 +748,20 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures() -> None:
     state.creatures["goblin_3"].creature.current_health = 0
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
-    _choose_directional_spell(
-        session,
-        "Cast Sleep",
-        (origin.x, origin.y),
+    from srd_arena.frontends.gui.presenter import GamePresenter
+
+    presenter = GamePresenter(session)
+    option = next(
+        a for a in presenter.observation.scene.action_details if a.label == "Cast Sleep"
     )
-    assert state.current_decision().kind == "spell_targets"
-    remove_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    before = session.observe_gameplay()
+    assert presenter.aim_action(option.id, origin.x, origin.y) is not None
+    assert (
+        presenter.change_target("goblin_2", remove=True, source_trigger_id="sleep")
+        is not None
     )
-    _ORCHESTRATOR.submit(state, remove_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, confirm)
+    assert session.observe_gameplay() == before
+    assert presenter.confirm_targeting() is not None
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     assert state.has_condition("goblin_2", Condition.INCAPACITATED) is False

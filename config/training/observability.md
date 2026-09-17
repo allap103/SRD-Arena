@@ -127,3 +127,19 @@ All nine runs had identical outcomes (49 decisions, 228 engine steps). These are
 simulation/recording measurements without neural inference, optimization or
 TensorBoard writes, not estimates of complete training throughput. Long runs
 should sample traces according to their storage and inspection needs.
+
+## Complete-cast preparation
+
+The model now assembles targets locally before one engine submission. Traces
+attach a `preparation` list to the outer policy decision, recording selected
+references, allocations, completion status and (for learned decisions) each
+local choice's probability, entropy and top candidate indices. The outer
+`selected_probability` describes the initial spell/aim choice, not the joint
+probability of the entire cast.
+
+The submitted command contains the final ordered `target_refs` and `allocations`.
+Preparation creates no game events and consumes no engine steps or environment
+decisions. Its policy inference time is included in inference timing. These local
+choices do contribute training samples, so trajectory length can exceed the
+number of submitted environment decisions. Actual reaction, D20 modifier and
+between-projectile choices remain separate engine decisions.

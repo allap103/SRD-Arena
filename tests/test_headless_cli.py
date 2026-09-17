@@ -118,10 +118,15 @@ def test_strict_command_input(data: str) -> None:
     [
         ("select_action", {"action_id": "action"}),
         ("aim_action", {"action_id": "action", "x": 1, "y": 2}),
-        ("change_target", {"target_ref": "target", "remove": False}),
-        ("set_resource_allocation", {"target_ref": "target", "amount": 2}),
-        ("confirm_targeting", {}),
-        ("cancel_targeting", {}),
+        (
+            "cast_spell",
+            {
+                "action_id": "spell",
+                "target_refs": ["target"],
+                "allocations": [],
+                "aim": None,
+            },
+        ),
     ],
 )
 def test_all_command_shapes(name: str, payload: dict[str, object]) -> None:

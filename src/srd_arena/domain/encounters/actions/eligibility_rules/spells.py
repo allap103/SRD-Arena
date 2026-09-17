@@ -22,8 +22,8 @@ from ..capability_support import (
 from ..option_discovery.spell_areas import spell_area_targets
 from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
+from .complete_spell import complete_spell_failure
 from .models import EligibilityFailure
-from .spell_selection import check_staged_spell_selection
 from .spell_targeting import spell_target_eligibility
 from .teleportation import teleport_destination_failure
 
@@ -79,6 +79,10 @@ class SpellActionRule:
                 "spell_unavailable",
                 "This spell is not known.",
             )
+        if payload.selection_complete:
+            failure = complete_spell_failure(state, actor_ref, payload, spell)
+            if failure is not None:
+                return failure
         if spell.definition is not None:
             runtime_issue = capability_runtime_issue(
                 spell.definition
@@ -172,30 +176,3 @@ class SpellActionRule:
                 "No valid spell target is available.",
             )
         return None
-
-
-class SpellTargetSelectionRule:
-    """Check staged target counts, allocations, and changing eligibility."""
-
-    def check(
-        self,
-        state: EncounterState,
-        actor_ref: CreatureRef,
-        action: EncounterAction,
-    ) -> EligibilityFailure | None:
-        """Validate one staged target, allocation, or confirmation choice.
-
-        >>> from unittest.mock import Mock
-        >>> action = EncounterAction('Confirm', 'confirm_spell_targets')
-        >>> SpellTargetSelectionRule().check(
-        ...     Mock(interrupts=Mock(pending_spell_cast=None)), 'hero', action).code
-        'spell_selection_unavailable'
-        """
-
-        if action.kind not in {
-            "toggle_spell_target",
-            "set_spell_resource_allocation",
-            "confirm_spell_targets",
-        }:
-            return None
-        return check_staged_spell_selection(state, actor_ref, action)

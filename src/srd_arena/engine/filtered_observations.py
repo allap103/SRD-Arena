@@ -28,8 +28,9 @@ from .player_observation_models import (
     PublicEventKind,
 )
 from .spell_capability_observations import SpellCapabilityObservation
+from .spell_cast_observation_models import SpellCastOptions
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v4"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v5"
 
 
 @dataclass(frozen=True)
@@ -110,6 +111,7 @@ class FilteredAction:
     required_configuration: str | None
     spell: SpellCapabilityObservation | None = None
     area_template: AreaTemplateObservation | None = None
+    spell_cast: SpellCastOptions | None = None
 
 
 @dataclass(frozen=True)
@@ -228,6 +230,9 @@ class PolicyProjector:
         actions = player_action_observations(
             tuple(a for a in team.movement_actions if not a.kind.startswith("system_")),
             visible_creature_refs=team.visible_creature_refs,
+            allied_creature_refs=frozenset(
+                ref for ref, group in groups.items() if group != "enemy"
+            ),
         )
         return FilteredObservation(
             FILTERED_OBSERVATION_SCHEMA_ID,
@@ -261,6 +266,7 @@ class PolicyProjector:
                     a.required_configuration,
                     (descriptor := self._spell_descriptor(snapshot, a, groups)),
                     self._area_template(a, descriptor),
+                    a.spell_cast,
                 )
                 for a in actions
             ),

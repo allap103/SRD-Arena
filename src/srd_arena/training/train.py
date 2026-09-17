@@ -11,7 +11,7 @@ from contextlib import ExitStack
 from importlib.metadata import version
 from pathlib import Path
 from time import perf_counter
-from typing import Literal, cast
+from typing import Any, Literal, cast
 
 import numpy as np
 import torch
@@ -20,7 +20,7 @@ from torch.distributions import Categorical
 from srd_arena.engine.api import FILTERED_OBSERVATION_SCHEMA_ID
 from srd_arena.frontends.headless.config import load_policy, policy_digest
 from srd_arena.frontends.headless.serialization import canonical_json
-from srd_arena.frontends.rl.actions import ACTION_SCHEMA_ID
+from srd_arena.frontends.rl.actions import ACTION_SCHEMA_ID, Candidate
 from srd_arena.frontends.rl.encoding import EncodedObservation, encoder_manifest
 from srd_arena.frontends.rl.environment import ArenaEnvironment, Transition
 from srd_arena.frontends.rl.rewards import REWARD_SCHEMA_ID
@@ -97,9 +97,36 @@ def rollout(
                 progress.inference_seconds += perf_counter() - started
                 progress.report("engine")
             trajectory.append((transition.observation, action))
+
+            def select_preparation(
+                encoded: EncodedObservation, choices: tuple[Candidate, ...]
+            ) -> int:
+                selection: dict[str, Any] = {}
+                if mode == "random":
+                    assert rng is not None
+                    picked = int(rng.integers(len(choices)))
+                elif mode == "wait":
+                    picked = 0
+                else:
+                    picked = model.choose(
+                        encoded,
+                        greedy=mode == "greedy",
+                        report=selection.update
+                        if diagnostics is not None and diagnostics.stream is not None
+                        else None,
+                    )
+                trajectory.append((encoded, picked))
+                if diagnostics is not None:
+                    diagnostics.record_preparation(picked, choices, selection)
+                return picked
+
+            started = perf_counter()
+            prepared = environment.prepare_action(action, select_preparation)
+            if progress is not None:
+                progress.inference_seconds += perf_counter() - started
             started = perf_counter()
             transition = environment.step(
-                action, expected_decision_id=transition.decision_id
+                prepared, expected_decision_id=transition.decision_id
             )
             if progress is not None:
                 progress.environment_seconds += perf_counter() - started

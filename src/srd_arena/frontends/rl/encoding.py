@@ -13,7 +13,7 @@ from srd_arena.frontends.rl.spell_encoding import (
     spell_features,
 )
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v4"
+ENCODER_SCHEMA_ID = "experimental-encoder-v5"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -101,6 +101,7 @@ ACTION_FEATURES = (
     "amount",
     "amount_known",
     "remove",
+    "cast_complete",
     "coverage_known",
     "affected_own_count",
     "affected_ally_count",
@@ -183,6 +184,7 @@ class EncodedObservation:
     target_slots: NDArray[np.int64]
     action_mask: NDArray[np.bool_]
     affected_entity_mask: NDArray[np.bool_]
+    selected_entity_weights: Array
 
 
 class Encoder:
@@ -237,6 +239,7 @@ class Encoder:
         actors = np.full(len(choices), -1, dtype=np.int64)
         targets = np.full(len(choices), -1, dtype=np.int64)
         affected = np.zeros((len(choices), self.max_entities), dtype=np.bool_)
+        selected = np.zeros((len(choices), 3, self.max_entities))
         slots = {ref: slot for slot, ref in enumerate(self.refs)}
         spell_vectors: dict[int, tuple[float, ...]] = {}
         for index, choice in enumerate(choices):
@@ -255,6 +258,7 @@ class Encoder:
                 float(choice.aim is not None),
                 *_known(choice.amount, 100),
                 float(choice.remove),
+                float(choice.cast_complete),
                 float(choice.affected_refs is not None),
                 *(
                     sum(
@@ -266,6 +270,11 @@ class Encoder:
                 ),
                 *spell_vectors[descriptor_key],
             )
+            for order, ref in enumerate(choice.selected_refs):
+                selected[index, 0, slots[ref]] += 1
+                selected[index, 1, slots[ref]] += 1 / (order + 1)
+            for ref, amount in choice.allocations:
+                selected[index, 2, slots[ref]] = amount / 100
             for ref in choice.affected_refs or ():
                 affected[index, slots[ref]] = True
             actors[index] = slots.get(choice.actor_ref, -1)
@@ -281,6 +290,7 @@ class Encoder:
             targets,
             np.ones(len(choices), dtype=np.bool_),
             affected,
+            selected,
         )
         for array in (global_features, entities, action_rows):
             if not np.isfinite(array).all():
@@ -301,6 +311,15 @@ def encoder_manifest() -> dict[str, object]:
             "armor_class": 30,
             "round": 100,
             "target_counts": 10,
+        },
+        "spell_selection": {
+            "schema": "complete-cast-v1",
+            "assembly": "monotonic_local_choices_one_engine_submission",
+            "entity_channels": [
+                "target_count",
+                "reciprocal_order_weight",
+                "allocated_resource_divided_by_100",
+            ],
         },
         "coverage": {
             "schema": "area-disclosed-footprints-v2",

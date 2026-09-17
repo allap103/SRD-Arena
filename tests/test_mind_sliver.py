@@ -13,6 +13,7 @@ from srd_arena.engine.queries import ActionOption, SpellOptionDetails
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
     player_first_initiative,
+    submit_complete_spell,
     use_deterministic_dice,
 )
 
@@ -83,14 +84,7 @@ def test_mind_sliver_penalty_is_consumed_by_the_targets_next_save() -> None:
         for action in session._read().action_options
         if action.enabled and _is_spell_option(action, "hideous_laughter", "goblin_1")
     )
-    opened = session._choose(action.id)
-    assert [event.type for event in opened.events] == ["action_declared"]
-    confirm = next(
-        option
-        for option in session._read().action_options
-        if option.kind == "confirm_spell_targets"
-    )
-    result = session._choose(confirm.id)
+    result = submit_complete_spell(session, action.id, ("goblin_1",))
 
     spell_event = next(event for event in result.events if event.type == "spell_cast")
     save = spell_event.data["save_detail"]

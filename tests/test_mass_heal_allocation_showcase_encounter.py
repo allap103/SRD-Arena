@@ -38,14 +38,13 @@ def test_mass_heal_showcase_starts_with_more_than_700_missing_hit_points() -> No
         for action in state.available_actions()
         if is_spell_action(action, "mass_heal")
     )
-    result = _ORCHESTRATOR.submit(state, cast)
-
-    assert result.paused_for_decision
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
-    assert state.interrupts.pending_spell_cast.resource_allocation_limits == {
+    option = next(a for a in session.observe().scene.action_details if a.id == cast.id)
+    assert option.spell_cast is not None
+    assert option.spell_cast.resource_pool == 700
+    assert dict(option.spell_cast.resource_limits) == {
         "healer": 200,
         "guardian": 450,
         "champion": 200,
         "scout": 50,
     }
+    assert not hasattr(state.interrupts, "pending_spell_cast")

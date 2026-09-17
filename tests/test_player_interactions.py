@@ -10,16 +10,14 @@ from srd_arena.engine.api import (
     PlayerObservation,
     SelectAction,
     Session,
+    SpellCastOptions,
 )
 from srd_arena.engine.commands import (
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
+    CastSpell,
     CommandFailure,
     CommandResult,
-    ConfirmTargeting,
     GameCommand,
-    SetResourceAllocation,
 )
 from srd_arena.engine.player_interactions import _configuration_is_advertised
 
@@ -91,10 +89,7 @@ def test_private_target_failure_is_not_disclosed_after_attempt() -> None:
     [
         SelectAction("guessed", "current"),
         AimAction("guessed", 1, 1, "current"),
-        ChangeTarget("animated_armor", False, "current"),
-        SetResourceAllocation("animated_armor", 1, "current"),
-        ConfirmTargeting("current"),
-        CancelTargeting("current"),
+        CastSpell("guessed", "current", ("animated_armor",)),
     ],
 )
 def test_every_player_command_requires_decision_ownership(command: GameCommand) -> None:
@@ -118,35 +113,15 @@ def test_every_player_command_requires_decision_ownership(command: GameCommand) 
             ),
         ),
         (
-            ChangeTarget("animated_armor", False, "current"),
+            CastSpell("cast", "current", ("condition_mage",)),
             ActionObservation(
-                "target",
-                "Target",
-                "toggle_spell_target",
+                "cast",
+                "Cast",
+                "spell",
                 "condition_mage",
-                target_ref="animated_armor",
-            ),
-        ),
-        (
-            SetResourceAllocation("condition_mage", 1, "current"),
-            ActionObservation(
-                "allocate",
-                "Allocate",
-                "set_spell_resource_allocation",
-                "condition_mage",
-                target_ref="condition_mage",
-            ),
-        ),
-        (
-            ConfirmTargeting("current"),
-            ActionObservation(
-                "confirm", "Confirm", "confirm_spell_targets", "condition_mage"
-            ),
-        ),
-        (
-            CancelTargeting("current"),
-            ActionObservation(
-                "cancel", "Cancel", "cancel_spell_targets", "condition_mage"
+                spell_cast=SpellCastOptions(
+                    ("condition_mage",), ("condition_mage",), 1, False, False, True
+                ),
             ),
         ),
     ],
@@ -198,24 +173,22 @@ def test_configuration_requires_an_enabled_public_option(
         assert "Hidden" not in result.failure.message
 
 
-def test_configuration_rejects_wrong_trigger_and_enemy_allocation() -> None:
+def test_configuration_rejects_unadvertised_targets_and_enemy_allocation() -> None:
     observation = _session().observe_player("inflictors")
     option = ActionObservation(
-        "target",
-        "Target",
-        "toggle_spell_target",
+        "cast",
+        "Cast",
+        "spell",
         "condition_mage",
-        target_ref="animated_armor",
-        source_trigger_id="actual",
+        spell_cast=SpellCastOptions(("animated_armor",), (), 1, False, False, True),
+    )
+    view = replace(observation, action_details=(option,))
+    assert not _configuration_is_advertised(
+        view, CastSpell("cast", view.decision.id, ("missing",))
     )
     assert not _configuration_is_advertised(
-        replace(observation, action_details=(option,)),
-        ChangeTarget("animated_armor", False, observation.decision.id, "guessed"),
-    )
-    assert not _configuration_is_advertised(
-        replace(
-            observation,
-            action_details=(replace(option, kind="set_spell_resource_allocation"),),
+        view,
+        CastSpell(
+            "cast", view.decision.id, ("animated_armor",), (("animated_armor", 1),)
         ),
-        SetResourceAllocation("animated_armor", 1, observation.decision.id),
     )

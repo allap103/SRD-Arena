@@ -12,13 +12,10 @@ from srd_arena.content.encounters import EncounterCatalog
 from srd_arena.engine.api import (
     FILTERED_OBSERVATION_SCHEMA_ID,
     AimAction,
-    CancelTargeting,
-    ChangeTarget,
-    ConfirmTargeting,
+    CastSpell,
     GameCommand,
     PolicyProjector,
     SelectAction,
-    SetResourceAllocation,
 )
 from srd_arena.frontends.headless.adapter import (
     EpisodeTruncationReason,
@@ -30,11 +27,8 @@ from srd_arena.frontends.headless.serialization import canonical_json, json_valu
 MAX_COMMAND_CHARS = 65536
 _COMMANDS = {
     "select_action": SelectAction,
+    "cast_spell": CastSpell,
     "aim_action": AimAction,
-    "change_target": ChangeTarget,
-    "set_resource_allocation": SetResourceAllocation,
-    "confirm_targeting": ConfirmTargeting,
-    "cancel_targeting": CancelTargeting,
 }
 
 

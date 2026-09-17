@@ -48,10 +48,9 @@ unchanged: an empty disclosed area can execute against hidden occupants or fail
 with `target_unavailable`. The adapter never probes hidden state to distinguish
 these cases.
 
-Schemas are `filtered-observation-v4`, `experimental-candidates-v4`,
-`experimental-encoder-v4` and `entity-candidate-actor-critic-v2`. The network
-shape is unchanged from the first coverage implementation, but its input
-semantics and candidate distribution changed. Older checkpoints are rejected;
+Schemas are `filtered-observation-v5`, `experimental-candidates-v5`,
+`experimental-encoder-v5` and `entity-candidate-actor-critic-v3`. The network now also encodes target count/order/allocation summaries for
+[complete casts](complete-casts.md). Its input semantics and shape changed. Older checkpoints are rejected;
 start a fresh run:
 
 ```bash

@@ -54,8 +54,9 @@ def test_goblin_pressure_separates_idle_and_blasting_warlock(
                     score = 1
                 ranks.append((score, -i, i))
             index = max(ranks)[2]
+        prepared = environment.prepare_action(index, lambda encoded, choices: 0)
         transition = environment.step(
-            index, expected_decision_id=transition.decision_id
+            prepared, expected_decision_id=transition.decision_id
         )
     assert transition.terminated and not transition.truncated
     assert transition.reward == (1.0 if participates else -1.0)

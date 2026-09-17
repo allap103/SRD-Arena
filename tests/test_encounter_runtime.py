@@ -693,19 +693,16 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
         and action.details.source_id == "eldritch_blast"
         and action.details.target_ref == "goblin_1"
     )
-    session._choose(initial.id)
-    assert state.interrupts.pending_spell_cast is not None
-    add = next(
-        action
-        for action in session._read().action_options
-        if action.kind == "toggle_spell_target"
-        and isinstance(action.details, SpellOptionDetails)
-        and action.details.target_ref == "goblin_1"
-        and action.id.endswith("-add")
-    )
-
     window = GameWindow.__new__(GameWindow)
     window.presenter = GamePresenter(session)
+    assert window.presenter.select_action(initial.id) is not None
+    add = next(
+        a
+        for a in window.presenter.observation.scene.action_details
+        if a.kind == "toggle_spell_target"
+        and a.target_ref == "goblin_1"
+        and a.id.endswith("-add")
+    )
     window._presentation = build_session_presentation(window.presenter.observation)
     window.presenter.set_target_mode(
         TargetSelectionMode(
@@ -723,7 +720,7 @@ def test_exact_spell_allocation_auto_confirms_after_final_click(
 
     GameWindow._select_action(window, add.id)
 
-    assert state.interrupts.pending_spell_cast is None
+    assert not hasattr(state.interrupts, "pending_spell_cast")
     assert state.current_decision().kind == "turn"
     assert state.active_actions_remaining == 0
 

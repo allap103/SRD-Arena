@@ -56,6 +56,25 @@ class EpisodeRecorder:
         self.creatures: dict[str, Any] = {}
         self.pending_policy: dict[str, Any] | None = None
 
+    def record_preparation(
+        self,
+        index: int,
+        choices: tuple[Candidate, ...],
+        selection: dict[str, Any] | None = None,
+    ) -> None:
+        """Record adapter-local target assembly separately from engine commands."""
+        if self.pending_policy is not None:
+            choice = choices[index]
+            self.pending_policy.setdefault("preparation", []).append(
+                {
+                    **(selection or {}),
+                    "selected_refs": choice.selected_refs,
+                    "allocations": choice.allocations,
+                    "complete": choice.cast_complete,
+                    "candidate_count": len(choices),
+                }
+            )
+
     def record_choice(
         self, selection: dict[str, Any], choices: tuple[Candidate, ...]
     ) -> None:
@@ -70,6 +89,8 @@ class EpisodeRecorder:
                 "aim": c.aim,
                 "amount": c.amount,
                 "affected_refs": c.affected_refs,
+                "selected_refs": c.selected_refs,
+                "allocations": c.allocations,
                 "command": json_value(c.command),
             }
 

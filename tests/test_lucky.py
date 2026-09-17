@@ -13,6 +13,7 @@ from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.session import Session
 from tests.encounter_runtime_support import (
     keep_alert_initiative,
+    submit_complete_spell,
     use_deterministic_dice,
 )
 
@@ -103,23 +104,11 @@ def test_lucky_advantage_is_addressed_to_one_eldritch_blast_beam() -> None:
     state.turn.index = state.initiative_order.index("warlock")
     state.creatures["warlock"].creature.feature_uses_remaining["lucky"] = 1
 
-    session._choose(_spell_action_id(session, "eldritch_blast", "ogre_target"))
-    add_second = next(
-        option
-        for option in session._read().action_options
-        if option.kind == "toggle_spell_target"
-        and option.details is not None
-        and getattr(option.details, "target_ref", None) == "ogre_target"
-        and option.id.endswith("-add")
+    submit_complete_spell(
+        session,
+        _spell_action_id(session, "eldritch_blast", "ogre_target"),
+        ("ogre_target", "ogre_target"),
     )
-    session._choose(add_second.id)
-    confirm = next(
-        option
-        for option in session._read().action_options
-        if option.kind == "confirm_spell_targets"
-    )
-    session._choose(confirm.id)
-
     assert state.current_decision().kind == "d20_roll_modifier"
     context = session.observe_player("heroes").decision_context
     assert context is not None

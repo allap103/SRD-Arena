@@ -68,7 +68,7 @@ intervals use `(lower, upper]`; zero is `[0, 0]`. With
 interval excludes 1. Temporary HP is separate. `hidden` yields null, never zero.
 A stale row carries its last admitted value, not the current hidden value.
 
-`filtered-observation-v4` has a fixed layout for the supported slice. Properties
+`filtered-observation-v5` has a fixed layout for the supported slice. Properties
 whose only supported mode is `hidden` have no output field. Supported optional
 fields use null when hidden/unknown; `knowledge` distinguishes current,
 last-known and unknown creature rows. Resolved policy metadata distinguishes
@@ -173,10 +173,25 @@ Every command has `type`, `command`, `expected_decision_id`. Payloads are:
 | --- | --- |
 | `select_action` | `action_id` |
 | `aim_action` | `action_id`, numeric `x`, numeric `y` |
-| `change_target` | `target_ref`, boolean `remove`, optional `source_trigger_id` |
-| `set_resource_allocation` | `target_ref`, integer `amount` |
-| `confirm_targeting` | None |
-| `cancel_targeting` | None |
+| `cast_spell` | `action_id`, ordered `target_refs`, `allocations` as target/amount pairs, optional `aim` as [x, y] |
+
+Spell actions expose mandatory `spell_cast` configuration options: candidate and
+initial target references, target-count/repetition rules, and allied resource
+allocation limits. These let clients assemble complete casts without an engine
+target-selection frame. Hidden targets and enemy allocation limits are omitted.
+GUI drafts are local and never appear in game observations; the legacy
+`targeting` field is null. The old add/remove/confirm/cancel command protocol has
+been removed. See [complete casts](../training/complete-casts.md).
+
+For example, submit two Eldritch Blast beam targets in order:
+
+```json
+{"type":"command","command":"cast_spell","action_id":"REPLACE_WITH_ADVERTISED_ACTION_ID","expected_decision_id":"REPLACE_WITH_OBSERVED_ID","target_refs":["goblin_1","goblin_2"],"allocations":[],"aim":null}
+```
+
+For an AoE that affects all occupants, pass its aim and leave `target_refs` empty;
+the engine determines occupants. Spells with chosen area targets also require
+their explicit selected references.
 
 A step is one accepted external command or one automatic action. Rejections
 consume no steps. A round limit of N permits rounds 1 through N and truncates

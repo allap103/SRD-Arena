@@ -67,7 +67,12 @@ class ModelPlayback:
             index = self.checkpoint.model.choose(
                 self.transition.observation, greedy=self.mode == "greedy"
             )
-            candidate = self.environment.choices[index]
+            candidate = self.environment.prepare_action(
+                index,
+                lambda encoded, choices: self.checkpoint.model.choose(
+                    encoded, greedy=self.mode == "greedy"
+                ),
+            )
             command = candidate.command
             selected_id = getattr(command, "action_id", None)
             # Human labels come from the spectator snapshot after selection;
@@ -81,12 +86,14 @@ class ModelPlayback:
             )
             if candidate.aim is not None:
                 label += f" at ({candidate.aim[0]:g}, {candidate.aim[1]:g})"
+            if candidate.selected_refs:
+                label += " → " + ", ".join(candidate.selected_refs)
             elif candidate.target_ref is not None:
                 label += f" → {candidate.target_ref}"
             if candidate.amount is not None:
                 label += f" ({candidate.amount})"
             self.transition = self.environment.step(
-                index,
+                candidate,
                 expected_decision_id=self.transition.decision_id,
                 advance_automatic=False,
             )

@@ -40,6 +40,7 @@ from tests.encounter_runtime_support import (
     choose_advertised_action,
     is_spell_action,
     keep_alert_initiative,
+    submit_complete_spell,
     use_deterministic_dice,
 )
 
@@ -127,21 +128,7 @@ def _cast_two_beam_eldritch_blast(
         for action in state.available_actions()
         if is_spell_action(action, "eldritch_blast", target_ref=target_ref)
     )
-    choose_advertised_action(session, initial)
-    add_second_beam = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target"
-        and action.value == target_ref
-        and action.id.endswith("-add")
-    )
-    choose_advertised_action(session, add_second_beam)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    result = choose_advertised_action(session, confirm)
+    result = submit_complete_spell(session, initial.id, (target_ref, target_ref))
     while state.current_decision().kind == "d20_roll_modifier":
         decline = next(
             action

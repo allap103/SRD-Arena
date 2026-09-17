@@ -21,6 +21,7 @@ from srd_arena.frontends.rl.actions import Candidate, candidates
 from srd_arena.frontends.rl.diagnostics import CommandBoundary
 from srd_arena.frontends.rl.encoding import EncodedObservation, Encoder
 from srd_arena.frontends.rl.rewards import terminal_reward
+from srd_arena.frontends.rl.spell_candidates import preparation_choices
 
 
 @dataclass(frozen=True)
@@ -129,9 +130,27 @@ class ArenaEnvironment:
         self._limit = None
         return self._advance(advance_automatic=advance_automatic)
 
-    def step(
+    def prepare_action(
         self,
         index: int,
+        select: Callable[[EncodedObservation, tuple[Candidate, ...]], int],
+    ) -> Candidate:
+        """Assemble one cast locally; invoke the policy only for unresolved choices."""
+        if self._encoder is None or self._observation is None:
+            raise RuntimeError("Reset before preparing an action")
+        draft = self._choices[index]
+        while not draft.cast_complete:
+            choices = preparation_choices(draft, maximum=self.max_candidates)
+            encoded = self._encoder.encode(self._observation, choices)
+            picked = select(encoded, choices)
+            if type(picked) is not int or not 0 <= picked < len(choices):
+                raise ValueError("Invalid preparation choice")
+            draft = choices[picked]
+        return draft
+
+    def step(
+        self,
+        index: int | Candidate,
         *,
         expected_decision_id: str | None = None,
         advance_automatic: bool = True,
@@ -139,14 +158,18 @@ class ArenaEnvironment:
         """Submit a candidate index and advance to the next external decision."""
         if self._done or self._observation is None:
             raise RuntimeError("Reset before stepping a finished environment")
-        if type(index) is not int or not 0 <= index < len(self._choices):
+        if not isinstance(index, Candidate) and (
+            type(index) is not int or not 0 <= index < len(self._choices)
+        ):
             raise ValueError("Action index is outside the current candidate map")
         if (
             expected_decision_id is not None
             and expected_decision_id != self._observation.decision.id
         ):
             raise ValueError("Stale decision ID")
-        choice = self._choices[index]
+        choice = index if isinstance(index, Candidate) else self._choices[index]
+        if not choice.cast_complete:
+            raise ValueError("Prepare the complete spell cast before stepping")
         started = perf_counter()
         result = self._adapter.submit_player(self._team, choice.command)
         self._decisions += 1

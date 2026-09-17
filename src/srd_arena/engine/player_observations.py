@@ -87,6 +87,11 @@ def project_player_observation(
                 if not action.kind.startswith("system_")
             ),
             visible_creature_refs=team.visible_creature_refs,
+            allied_creature_refs=frozenset(
+                c.combat.creature_ref
+                for c in snapshot.creatures
+                if c.combat.team_id == perspective_team_id
+            ),
         ),
         terrain=encounter.terrain,
         recent_events=tuple(knowledge.recent_events),

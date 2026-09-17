@@ -11,7 +11,7 @@ from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.spells.action_payloads import SpellActionPayload
 
-from .actions import CreatureRef, EncounterAction
+from .actions import CreatureRef
 
 if TYPE_CHECKING:
     from .resolution import ActionExecutionContext
@@ -225,23 +225,7 @@ class DecisionFrame:
 
 
 @dataclass
-class PendingSpellCast:
-    """Pre-invocation spell selection state; casting has not started yet."""
-
-    action: EncounterAction
-    spell_id: str
-    selected_target_refs: list[CreatureRef]
-    maximum_targets: int
-    repeat_target_allocations: bool = False
-    require_full_target_count: bool = False
-    resource_pool_total: int | None = None
-    resource_allocations: dict[CreatureRef, int] = field(default_factory=dict)
-    resource_allocation_limits: dict[CreatureRef, int] = field(default_factory=dict)
-
-
-@dataclass
 class InterruptState:
-    """Own nested decision frames and spell targeting staged before invocation."""
+    """Own nested decisions arising during game resolution."""
 
     decision_stack: list[DecisionFrame] = field(default_factory=list)
-    pending_spell_cast: PendingSpellCast | None = None

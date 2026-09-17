@@ -238,13 +238,14 @@ recorded in the encoder manifest. No normalization uses enemy private maxima.
 The board capacity is 24×24; excess entities/candidates produce errors rather
 than silent truncation.
 
-Candidates include every currently enabled/available advertised action, integer
-cell aims, target add/remove operations, each permitted integer allocation, and
-confirm/cancel controls. A public attempt may still fail the real rules; masks
+Candidates include currently enabled/available advertised actions and integer
+aim coordinates. Spell target and allocation choices are assembled locally
+through bounded policy decisions and submitted as one complete cast. There are
+no engine add/remove/confirm steps. See [complete-casts.md](complete-casts.md). A public attempt may still fail the real rules; masks
 are never computed by probing hidden state. The original decision token stays
 attached to each command. Candidate order is not a model feature.
 
-Encoder v4 consumes `config/observations/training.yaml`. Each spell candidate
+Encoder v5 consumes `config/observations/training.yaml`. Each spell candidate
 includes the existing identity/cost/range/save descriptors and numerical summaries
 of its `spell-mechanics-v1` tree. Features distinguish outcome branches for damage,
 healing, temporary HP and conditions, plus concentration, duration, repeat saves,
@@ -271,14 +272,15 @@ persistent-area occupancy and move-and-cast plans are not implemented. Aims rema
 integer coordinates. The manifest records feature order, scales and these limits.
 
 The new coverage semantics and observation/action schemas require fresh training.
-Existing v1–v3 encoder checkpoints are rejected by schema/manifest validation,
+Existing v1–v4 encoder checkpoints are rejected by schema/manifest validation,
 including for resume. The historical 150-episode results above belong to v1 and are not
 evidence for this encoder. The original experiment is saved in commit `ba20684`.
 No historical run files are rewritten by this change.
 
 The PyTorch network embeds each creature with shared weights, pools unpadded
 rows, and scores candidates using actor/target/covered-creature embeddings,
-global information and candidate parameters. An action mask excludes inadmissible/padded entries.
+global information, candidate parameters, and target count/order/allocation
+summaries. An action mask excludes inadmissible/padded entries.
 The critic uses the same permitted state features. A small episodic actor/critic
 update uses terminal returns, gradient clipping and Adam; this is not PPO.
 
