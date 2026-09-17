@@ -143,7 +143,7 @@ class SpellActionContext:
 
     creature: Creature
     spell: Spell
-    target: SpellTargetContext
+    target: SpellTargetContext | None
     current_round: int
     source_ref: str
     environment: SpellResolutionEnvironment

@@ -47,6 +47,7 @@ def resolve_follow_up(
         or follow_up.target.origin != "target"
         or follow_up.target.size_feet is None
         or not isinstance(follow_up.resolution, SavingThrowResolution)
+        or context.target is None
     ):
         return [], []
     assert context.creature.spellcasting is not None

@@ -1,4 +1,4 @@
-"""Validate spell invocation and staged target-selection candidates."""
+"""Validate spell invocation, complete target configuration, and aiming."""
 
 from __future__ import annotations
 
@@ -24,6 +24,7 @@ from ..option_discovery.spellcasting import spell_cast_block_reason_for
 from .common import target_requirement_failure
 from .complete_spell import complete_spell_failure
 from .models import EligibilityFailure
+from .spell_aim import spell_aim_failure
 from .spell_targeting import spell_target_eligibility
 from .teleportation import teleport_destination_failure
 
@@ -79,6 +80,9 @@ class SpellActionRule:
                 "spell_unavailable",
                 "This spell is not known.",
             )
+        aim_failure = spell_aim_failure(state, actor_ref, spell, payload.aim_point)
+        if aim_failure is not None:
+            return aim_failure
         if payload.selection_complete:
             failure = complete_spell_failure(state, actor_ref, payload, spell)
             if failure is not None:

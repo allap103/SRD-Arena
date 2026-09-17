@@ -56,4 +56,6 @@ def test_inspector_renders_real_episode_and_turn(
     turns = next(s for s in app.selectbox if s.label == "Turn")
     turns.select_index(len(turns.options) - 1).run(timeout=30)
     assert not app.exception
-    assert any("accepted" in e.label for e in app.expander)
+    assert any(
+        "accepted" in e.label or "cast resolved" in e.label for e in app.expander
+    )

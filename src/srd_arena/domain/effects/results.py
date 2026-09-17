@@ -60,8 +60,8 @@ class AttackHitRetaliationApplication:
 class SpellResolutionDetails:
     """Describe one spell result before it is serialized as a combat event."""
 
-    target_ref: str
-    target_label: str
+    target_ref: str | None
+    target_label: str | None
     targets: tuple[tuple[str, str], ...]
     affected_target_refs: tuple[str, ...]
     area: dict[str, object] | None

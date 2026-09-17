@@ -1,6 +1,5 @@
 """Validate a complete cast before resources, decisions or randomness change."""
 
-from math import isfinite
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.spells.rules import SpellActionPayload, spell_chooses_area_targets
@@ -23,16 +22,6 @@ def complete_spell_failure(
     actor = state.creatures[actor_ref].creature
     plan = plan_spell_invocation(state, actor, payload)
     area = spell.geometry_mode in {"point_area", "directional_area"}
-    if payload.aim_point is not None and (
-        len(payload.aim_point) != 2
-        or any(
-            not isinstance(v, (int, float)) or not isfinite(v)
-            for v in payload.aim_point
-        )
-    ):
-        return EligibilityFailure(
-            "invalid_aim", "An aim must contain two finite coordinates."
-        )
     if area and payload.aim_point is None:
         return EligibilityFailure("aim_required", "This spell requires an aim.")
     selects = not area or spell_chooses_area_targets(spell)

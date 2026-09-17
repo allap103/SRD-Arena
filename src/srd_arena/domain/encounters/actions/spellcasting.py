@@ -168,7 +168,7 @@ def resolve_spell_action(
         )
     )
     target = targets[0] if targets else None
-    if target is None or not targets:
+    if target is None and area is None:
         _record_failed_spell_action(
             state,
             progress,
@@ -246,6 +246,7 @@ def resolve_spell_action(
             message=f"{spell.name} is not implemented yet.",
             reason_code="spell_unimplemented",
             spell_id=spell.id,
+            cast_started=True,
         )
         return
 
@@ -280,8 +281,9 @@ def _record_failed_spell_action(
     message: str,
     reason_code: str,
     spell_id: str | None = None,
+    cast_started: bool = False,
 ) -> None:
-    """Record a cast rejected before source-neutral resolution begins."""
+    """Record a failed attempt, distinguishing validation from a committed cast."""
 
     reject_action(
         state,
@@ -291,7 +293,7 @@ def _record_failed_spell_action(
         action_kind="spell",
         message=message,
         reason_code=reason_code,
-        details={"spell_id": spell_id} if spell_id is not None else None,
+        details={"spell_id": spell_id, "cast_started": cast_started},
     )
 
 

@@ -115,8 +115,12 @@ def _resolve_declarative_spell(
         messages=messages,
         effects=effects,
         details=SpellResolutionDetails(
-            target_ref=context.target.target_ref,
-            target_label=context.target.target_label,
+            target_ref=context.target.target_ref
+            if context.target is not None
+            else None,
+            target_label=context.target.target_label
+            if context.target is not None
+            else None,
             targets=tuple(
                 (target.target_ref, target.target_label) for target in targets
             ),

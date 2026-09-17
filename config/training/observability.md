@@ -49,6 +49,20 @@ IDs. They can resolve earlier actions or belong to reactors; boundary proximity
 and health changes alone do not establish causal attribution. No general invocation
 or Counterspell-chain telemetry is invented where the engine has none.
 
+Each new trace row also has an `outcome` describing what was known at that
+boundary: rejected before casting, submitted and awaiting resolution, cast
+resolved (possibly with no immediate effect), or cast failed after spending
+resources. `accepted` continues to mean command acceptance only. Watch mode
+labels spell choices as attempts and reports their resolution separately.
+The inspector derives these labels from events, including older traces, and
+links later Lucky/interrupt resolutions to the original attempt by engine action
+ID. It never identifies a spell as rejected just because it caused no damage.
+
+The empty-area cast fix changes encounter behavior but not the model tensor
+schema. Existing compatible checkpoints can still load; old metrics and traces
+describe the earlier rules and are not rewritten. Evaluate or train under the
+corrected rules before comparing new results with those runs.
+
 Diagnostics are privileged spectator data. They do not enter the observation
 encoder, influence reward, change action availability or provide legal-action
 pruning. Additional snapshot reads are not required. Detailed logging does add

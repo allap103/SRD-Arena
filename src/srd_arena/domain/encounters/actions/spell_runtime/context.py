@@ -47,7 +47,7 @@ def build_spell_action_context(
     spell: Spell,
     payload: SpellActionPayload,
     creature_ref: str,
-    target: SpellTargetContext,
+    target: SpellTargetContext | None,
     targets: tuple[SpellTargetContext, ...],
     area: AreaOfEffect | None,
     cast_level: int | None,

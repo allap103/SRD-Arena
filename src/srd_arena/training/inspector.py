@@ -7,6 +7,7 @@ from typing import Any
 
 import streamlit as st
 
+from srd_arena.training.command_outcomes import command_outcome
 from srd_arena.training.inspection_data import action_totals, history, read_jsonl
 
 
@@ -150,13 +151,18 @@ def render_trace(path: Path, actors: list[str]) -> None:
     ]
     if not shown:
         st.info("No commands by the selected combatants in this turn.")
+    resolution_events = [e for row in rows for e in row["events"]]
     for row in shown:
         result = (
-            "rejected: " + row["rejection"]
-            if row["rejection"]
-            else "accepted"
-            if row["accepted"]
-            else "initial state"
+            "initial state"
+            if row["controller"] == "initial"
+            else command_outcome(
+                kind=row["kind"],
+                selected_id=row["action_id"],
+                rejection=row["rejection"],
+                events=row["events"],
+                resolution_events=resolution_events,
+            )
         )
         with st.expander(
             f"#{row['sequence']} {row['actor']} — {row['label']} — {result}"

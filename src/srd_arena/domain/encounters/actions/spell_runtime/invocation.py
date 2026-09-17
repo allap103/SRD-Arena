@@ -143,6 +143,7 @@ def begin_spell_invocation(
         reason_code=first_failure.code,
         details={
             "spell_id": spell.id,
+            "cast_started": True,
             "failure_codes": [failure.code for failure in result.failures],
             "provider_state_ids": [
                 failure.provider_state_id for failure in result.failures

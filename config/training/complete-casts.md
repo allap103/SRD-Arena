@@ -19,6 +19,15 @@ or advancing the decision. An accepted invocation can subsequently miss, meet a
 successful save, or fail through a spell mechanic. Area coverage remains
 geometric inclusion, not a guarantee of successful effects.
 
+A valid area cast with no creatures in its area still spends its normal action
+and spell slot. It emits `spell_cast` with empty `target_refs` and null primary
+target fields. Instant effects may affect nobody; persistent areas such as
+Stinking Cloud are still created and can affect creatures that enter later.
+This consumes the caster's slot allowance for the turn. Invalid coordinates,
+out-of-range point aims and malformed explicit target selections remain rejected
+before casting. Empty-area casting follows the same path for complete commands
+and the legacy `AimAction` adapter command.
+
 ## GUI
 
 The presenter keeps a local draft over an immutable observation. Adding/removing
@@ -47,9 +56,11 @@ policy in a bounded local sequence:
 There may be several neural-network evaluations for one cast, but only one
 engine submission. This uses the same network at each preparation choice;
 it does not introduce a separate model or enumerate complete combinations.
-All integer AoE placements remain available. When admitted information provides
-no target configuration, the adapter retains an empty attempt for the engine
-to reject rather than consulting hidden state.
+All integer AoE placements remain available. When a spell requires explicit
+creature selections and admitted information provides no target configuration,
+the adapter retains an empty attempt for engine validation without consulting
+hidden state. Area spells whose occupants are determined by geometry require
+no explicit creature selections.
 
 The encoder includes chosen-target counts, reciprocal-position weights for
 ordered sequences, and per-target resource amounts. These are compact summaries,

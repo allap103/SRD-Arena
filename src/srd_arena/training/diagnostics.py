@@ -9,6 +9,8 @@ from srd_arena.frontends.headless.serialization import canonical_json, json_valu
 from srd_arena.frontends.rl.actions import Candidate
 from srd_arena.frontends.rl.diagnostics import CommandBoundary
 
+from .command_outcomes import command_outcome
+
 DIAGNOSTIC_SCHEMA = "combat-diagnostics-v1"
 
 
@@ -224,6 +226,17 @@ class EpisodeRecorder:
                 if boundary.controller == "initial"
                 else boundary.rejection is None,
                 "rejection": boundary.rejection,
+                "outcome": "initial state"
+                if boundary.controller == "initial"
+                else command_outcome(
+                    kind=kind,
+                    selected_id=selected_id,
+                    rejection=boundary.rejection,
+                    events=(
+                        {"type": e.type, "action_id": e.action_id, "data": e.data}
+                        for e in events
+                    ),
+                ),
                 "command_seconds": boundary.seconds,
                 "policy": self.pending_policy
                 if boundary.controller == "model"

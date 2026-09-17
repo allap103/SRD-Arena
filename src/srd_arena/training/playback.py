@@ -6,6 +6,7 @@ import torch
 
 from srd_arena.engine.api import GameObservation, GameUpdate
 from srd_arena.training.checkpoint import LoadedCheckpoint
+from srd_arena.training.command_outcomes import command_outcome
 
 
 class ModelPlayback:
@@ -58,6 +59,7 @@ class ModelPlayback:
             return None
         before = self.environment.spectator_snapshot()
         selected_id = None
+        selected_kind = None
         if self.environment.automatic_pending:
             encounter = before.game.encounter
             assert encounter is not None
@@ -74,6 +76,7 @@ class ModelPlayback:
                 ),
             )
             command = candidate.command
+            selected_kind = candidate.kind
             selected_id = getattr(command, "action_id", None)
             # Human labels come from the spectator snapshot after selection;
             # they never influence the encoded observation or model choice.
@@ -81,7 +84,7 @@ class ModelPlayback:
                 (a for a in before.game.scene.action_details if a.id == selected_id),
                 None,
             )
-            label = "Model: " + (
+            label = ("Model attempt: " if candidate.kind == "spell" else "Model: ") + (
                 action.label if action else candidate.kind.replace("_", " ")
             )
             if candidate.aim is not None:
@@ -97,15 +100,38 @@ class ModelPlayback:
                 expected_decision_id=self.transition.decision_id,
                 advance_automatic=False,
             )
-            if self.transition.info["rejection"] is not None:
+            if (
+                selected_kind != "spell"
+                and self.transition.info["rejection"] is not None
+            ):
                 label += f" — rejected ({self.transition.info['rejection']})"
         after = self.environment.spectator_snapshot()
+        events = after.history[len(before.history) :]
+        if selected_kind == "spell":
+            rejection = self.transition.info["rejection"]
+            label += " — " + command_outcome(
+                kind="spell",
+                selected_id=selected_id,
+                rejection=str(rejection) if rejection is not None else None,
+                events=(
+                    {"type": e.type, "action_id": e.action_id, "data": e.data}
+                    for e in events
+                ),
+            )
+        else:
+            for event in events:
+                if event.type == "spell_cast":
+                    label += (
+                        f" | Cast resolved: {event.data.get('spell_name', 'spell')}"
+                    )
+                    if not event.data.get("success"):
+                        label += " (no immediate effect)"
         self.status = label
         self._update_status()
         return GameUpdate(
             observation=after.game,
             messages=(("info", label),),
-            events=after.history[len(before.history) :],
+            events=events,
             selected_action_id=selected_id,
             selected_choice_text=label,
             should_exit=False,

@@ -214,3 +214,105 @@ def test_old_target_edit_protocol_is_not_an_engine_command() -> None:
         parse_command(
             '{"type":"command","command":"change_target","expected_decision_id":"d","target_ref":"goblin_1","remove":false}'
         )
+
+
+@pytest.mark.parametrize(
+    "spell_id", ["hypnotic_pattern", "fireball", "burning_hands", "stinking_cloud"]
+)
+@pytest.mark.parametrize("legacy_aim", [False, True])
+def test_empty_area_cast_spends_resources_and_blocks_second_spell(
+    spell_id: str, legacy_aim: bool
+) -> None:
+    from srd_arena.domain.encounters.actions.option_discovery.spell_areas import (
+        spell_area_targets,
+    )
+    from srd_arena.domain.geometry import Position
+    from srd_arena.engine.api import AimAction
+
+    session = game()
+    state = session.encounter_state
+    assert state is not None
+    state.creatures["warlock"].position = Position(2, 0)
+    state.creatures["barbarian"].position = Position(5, 0)
+    state.round.number = 2
+    actor = state.creatures["warlock"]
+    casting = actor.creature.spellcasting
+    assert casting is not None
+    spell = next(s for s in casting.learned_spells if s.id == spell_id)
+    aim = (0.0, 8.0)
+    assert not spell_area_targets(state, actor.creature, spell, aim_point=aim)
+    view = session.observe()
+    assert view.encounter is not None
+    action = next(
+        a for a in view.scene.action_details if a.source_id == spell_id and a.enabled
+    )
+    second = next(
+        a
+        for a in view.scene.action_details
+        if a.source_id == "scorching_ray" and a.enabled
+    )
+    before_health = {ref: c.creature.get_health() for ref, c in state.creatures.items()}
+    result = session.execute(
+        AimAction(action.id, *aim, view.encounter.decision.id)
+        if legacy_aim
+        else CastSpell(action.id, view.encounter.decision.id, aim=aim)
+    )
+    assert result.accepted and result.update is not None
+    event = next(e for e in result.update.events if e.type == "spell_cast")
+    assert event.data["target_refs"] == ()
+    assert event.data["target_ref"] is None
+    assert event.data["success"] is (spell_id == "stinking_cloud")
+    assert casting.spell_slots_remaining == {3: 1}
+    assert actor.actions_remaining == 0
+    assert state.turn.spell_slot_users == {"warlock"}
+    assert before_health == {
+        ref: c.creature.get_health() for ref, c in state.creatures.items()
+    }
+    view = session.observe()
+    assert view.encounter is not None
+    before = session.observe_gameplay()
+    assert not session.execute(
+        CastSpell(second.id, view.encounter.decision.id, ("goblin_1",) * 4)
+    ).accepted
+    assert session.observe_gameplay() == before
+    if spell_id == "stinking_cloud":
+        from srd_arena.domain.effects import Condition
+        from srd_arena.domain.encounters.effect_lifecycle.area_turn_start import (
+            resolve_turn_start_area_effects,
+        )
+        from srd_arena.domain.encounters.encounter_models.resolution import (
+            EncounterProgress,
+        )
+        from tests.encounter_runtime_support import use_deterministic_dice
+
+        cloud = next(
+            e
+            for e in state.ongoing_effects
+            if e.identity.source.definition_id == spell_id
+        )
+        assert cloud.area is not None and cloud.target_refs == ()
+        state.creatures["goblin_1"].position = cloud.area.origin
+        use_deterministic_dice(session, die_roller=lambda sides: 1)
+        resolve_turn_start_area_effects(state, "goblin_1", EncounterProgress())
+        assert state.has_condition("goblin_1", Condition.POISONED)
+
+
+@pytest.mark.parametrize(
+    "aim", [(-0.5, 8), (12, 8), (float("nan"), 8), (float("inf"), 8)]
+)
+def test_invalid_area_coordinates_are_rejected_atomically(
+    aim: tuple[float, float],
+) -> None:
+    session = game()
+    view = session.observe()
+    assert view.encounter is not None
+    action = next(
+        a
+        for a in view.scene.action_details
+        if a.source_id == "hypnotic_pattern" and a.enabled
+    )
+    before = session.observe_gameplay()
+    assert not session.execute(
+        CastSpell(action.id, view.encounter.decision.id, aim=aim)
+    ).accepted
+    assert session.observe_gameplay() == before

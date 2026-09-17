@@ -88,3 +88,39 @@ def test_spectator_presenter_refuses_mutation() -> None:
     with pytest.raises(RuntimeError, match="Spectator"):
         presenter.advance_one_automatic_action()
     assert driver.observe() == initial
+
+
+def test_playback_labels_an_empty_cast_as_resolved_without_effect(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    from srd_arena.frontends.rl.encoding import EncodedObservation
+
+    loaded = checkpoint()
+    driver = ModelPlayback(loaded)
+    chosen_spell = False
+
+    def choose(observation: EncodedObservation, *, greedy: bool = False) -> int:
+        nonlocal chosen_spell
+        for index, candidate in enumerate(driver.environment.choices):
+            if (
+                candidate.spell is not None
+                and candidate.spell.spell_id == "hypnotic_pattern"
+                and candidate.affected_refs == ()
+                and candidate.aim is not None
+            ):
+                chosen_spell = True
+                return index
+        return 0
+
+    monkeypatch.setattr(loaded.model, "choose", choose)
+    for _ in range(100):
+        update = driver.advance()
+        assert update is not None
+        if chosen_spell:
+            label = update.selected_choice_text
+            assert label is not None
+            assert "Model attempt: Cast Hypnotic Pattern" in label
+            assert "cast resolved — no immediate effect" in label
+            assert any(e.type == "spell_cast" for e in update.events)
+            break
+    assert chosen_spell

@@ -120,7 +120,8 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         definition=definition,
         resolution=definition.resolution,
         definition_effects=definition_effects,
-        targets=context.targets or (context.target,),
+        targets=context.targets
+        or ((context.target,) if context.target is not None else ()),
         cast_level=rolls.cast_level,
         levels_above=rolls.levels_above,
         save_ability=rules.save_ability,
