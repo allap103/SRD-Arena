@@ -20,9 +20,9 @@ class RewardWeights(BaseModel):
     loss: float = Field(default=-1.0, le=0)
     draw: float = 0.0
     truncation: float = 0.0
-    party_member_down: float = Field(default=-0.1, le=0)
+    party_member_down: float = Field(default=-0.4, le=0)
     victory_health: float = Field(default=0.1, ge=0)
-    victory_spell_slots: float = Field(default=0.0, ge=0)
+    victory_spell_slots: float = Field(default=0.05, ge=0)
     victory_class_resources: float = Field(default=0.0, ge=0)
 
 

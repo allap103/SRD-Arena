@@ -34,7 +34,14 @@ def load_checkpoint(
     if "reward" not in config.model_fields_set:
         # Old inference checkpoints retain their original evaluation objective.
         config = config.model_copy(
-            update={"reward": RewardWeights(party_member_down=0.0, victory_health=0.0)}
+            update={
+                "reward": RewardWeights(
+                    party_member_down=0.0,
+                    victory_health=0.0,
+                    victory_spell_slots=0.0,
+                    victory_class_resources=0.0,
+                )
+            }
         )
     device = select_device(device_name)
     checkpoint_bytes = (run_dir / "policy.pt").read_bytes()

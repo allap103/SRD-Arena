@@ -206,9 +206,9 @@ interface, not a Gymnasium/PettingZoo adapter yet.
 ## Rewards and time
 
 The training YAML's `reward` section configures the final score. Defaults are
-+1 for a win, −1 for a loss, −0.1 per distinct party member who falls to 0 HP,
-and a victory-only bonus of up to +0.1 for remaining party health. Slot and
-class-resource preservation weights default to zero. Draw/truncation base
++1 for a win, −1 for a loss, −0.4 per distinct party member who falls to 0 HP,
+and victory-only bonuses of up to +0.1 for remaining party health and +0.05 for
+remaining spell slots. Class-resource preservation defaults to zero. Draw/truncation base
 weights are zero, but any accumulated fall penalty still applies.
 
 See [reward weights and scoring](rewards.md) for the full schema, normalization,

@@ -84,7 +84,7 @@ def test_weighted_preservation_is_normalized_and_victory_only() -> None:
         == terms["victory_class_resources"]
         == 0
     )
-    assert terms["party_member_down"] == -0.2
+    assert terms["party_member_down"] == -0.8
     for status in (
         finished("goblins"),
         finished(None),
@@ -99,7 +99,7 @@ def test_weighted_preservation_is_normalized_and_victory_only() -> None:
             == terms["victory_class_resources"]
             == 0
         )
-        assert terms["party_member_down"] == -0.2
+        assert terms["party_member_down"] == -0.8
     assert (
         sum(tracker.components(EpisodeStatus(EpisodeState.ACTIVE), spent).values()) == 0
     )
@@ -120,7 +120,7 @@ def test_fall_is_counted_once_even_if_recovered_between_snapshots() -> None:
     tracker.observe(recovered)
     assert tracker.fallen == {"barbarian"}
     assert (
-        tracker.components(finished("heroes"), recovered)["party_member_down"] == -0.1
+        tracker.components(finished("heroes"), recovered)["party_member_down"] == -0.4
     )
     assert EpisodeReward(snapshot, "heroes", RewardWeights()).fallen == set()
 

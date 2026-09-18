@@ -9,9 +9,9 @@ reward:
   loss: -1.0
   draw: 0.0
   truncation: 0.0
-  party_member_down: -0.1
+  party_member_down: -0.4
   victory_health: 0.1
-  victory_spell_slots: 0.0
+  victory_spell_slots: 0.05
   victory_class_resources: 0.0
 ```
 
@@ -39,11 +39,12 @@ measure remaining capacity, including any recovery during the encounter; they
 are not a cumulative cost for using abilities. Other resource kinds are not
 included in the class-resource term.
 
-With the defaults, a victory with half the party's combined maximum HP remaining
-and one party member having fallen scores `1 - 0.1 + 0.1 * 0.5 = 0.95`.
-A two-member party wipe scores `-1 - 2 * 0.1 = -1.2`.
+With the defaults, a victory with half the party's combined maximum HP remaining,
+all spell slots spent, and one party member having fallen scores
+`1 - 0.4 + 0.1 * 0.5 = 0.65`. Preserving all spell slots would add another 0.05.
+A two-member party wipe scores `-1 - 2 * 0.4 = -1.8`.
 
-To experiment with resource efficiency, set a small positive weight, for example
+To reduce the emphasis on slot preservation, use a smaller weight, for example
 `victory_spell_slots: 0.02`. To reproduce win/loss-only scoring, set all four
 secondary weights to zero. Omitted fields use their defaults; unknown keys,
 nonfinite values, strings and incorrect signs are rejected. Win/preservation

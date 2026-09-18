@@ -66,7 +66,7 @@ def test_goblin_pressure_separates_idle_and_blasting_warlock(
     assert transition.reward == pytest.approx(sum(components.values()))
     if not participates:
         assert transition.info["fallen_party_members"] == ["barbarian", "warlock"]
-        assert components["party_member_down"] == -0.2
+        assert components["party_member_down"] == -0.8
     casts = [
         event
         for event in environment.spectator_snapshot().history

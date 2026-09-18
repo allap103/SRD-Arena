@@ -168,5 +168,7 @@ def test_old_inference_config_retains_outcome_only_scoring(tmp_path: Path) -> No
     loaded = load_checkpoint(run, device_name="cpu")
     assert loaded.config.reward.party_member_down == 0
     assert loaded.config.reward.victory_health == 0
+    assert loaded.config.reward.victory_spell_slots == 0
+    assert loaded.config.reward.victory_class_resources == 0
     assert loaded.config.reward.win == 1
     assert loaded.config.reward.loss == -1
