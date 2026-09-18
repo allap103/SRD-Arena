@@ -81,11 +81,38 @@ serialization and disk work; use sampled traces for long runs.
 uv run --extra training --extra observability srd-arena-inspect --runs-dir runs
 ```
 
-Open http://localhost:8501. Choose a run, inspect loss/outcome curves, select an
-interval and combatants for command totals, then choose an episode and turn.
-Expand commands for top alternatives, before/after state, and engine events.
-Exact action/frame ID searches show recorded links across command boundaries.
-The refresh button reloads live files; an unfinished JSONL tail is ignored.
+Open http://localhost:8501. The sidebar shares the run selector and Refresh
+records button across six independent pages:
+
+- **Learning curves:** choose outcomes/rewards, loss/exploration, or performance.
+- **Episode table:** select scalar columns and outcomes; browse exact metrics.
+- **Combat totals:** aggregate a chosen episode interval and combatants. The
+  default interval is the most recent 100 episodes.
+- **Episode details:** choose an episode number, turn, and one command. Toggle
+  its before/after state, model alternatives or events only when needed. This
+  also supports unfinished episodes and exact action/frame ID searches.
+- **Comparisons:** view saved evaluation comparisons separately.
+- **Configuration:** inspect saved configuration and provenance.
+
+Only the active page executes. Tables send 50 rows by default (up to 250 per
+page). Charts use linear-time trailing means and display at most 1,000 evenly
+sampled points **after** smoothing. This sampling can omit short-lived spikes;
+use the exact Episode table for individual values. Nested combat snapshots are
+never sent for every command in a turn at once.
+
+File-revision caches are bounded. Metrics, byte indexes, event attribution and
+aggregates have separate caches; summary/trace indexes keep offsets and small
+labels, not full before/after records. Episode and command selection seek to
+their records. File size, modification time and inode changes invalidate cache
+keys. Changed files are reindexed; this is not an incremental live database.
+Refresh also clears caches and rescans runs. Live JSONL readers ignore the final
+line until its newline is written. Read-only inspection never edits run files.
+
+The UI uses [Streamlit's native multipage navigation](https://docs.streamlit.io/develop/concepts/multipage-apps/page-and-navigation).
+On the local 2,500-episode run, AppTest measured warm landing-page rerenders at
+approximately 0.15s versus 0.94s before the split, with no tables or JSON panels
+on the landing page instead of 27 tables and 49 JSON panels. These are local
+server-side test timings, not a browser latency guarantee.
 
 The inspector reads ancestor logs up to the recorded resume branch point.
 Branches remain separate, and a missing parent leaves only the available history.

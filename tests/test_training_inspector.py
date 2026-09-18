@@ -52,10 +52,20 @@ def test_inspector_renders_real_episode_and_turn(
     ).run(timeout=30)
     assert not app.exception
     assert not app.error
-    assert app.dataframe
+    assert not app.dataframe
+    app.switch_page("inspector_pages/table.py").run(timeout=30)
+    assert app.dataframe and not app.exception
+    app.switch_page("inspector_pages/combat.py").run(timeout=30)
+    assert app.dataframe and not app.exception
+    app.switch_page("inspector_pages/episodes.py").run(timeout=30)
     turns = next(s for s in app.selectbox if s.label == "Turn")
     turns.select_index(len(turns.options) - 1).run(timeout=30)
     assert not app.exception
     assert any(
-        "accepted" in e.label or "cast resolved" in e.label for e in app.expander
+        "accepted" in e.value or "cast resolved" in e.value for e in app.subheader
     )
+    assert not app.exception
+    app.switch_page("inspector_pages/configuration.py").run(timeout=30)
+    assert not app.exception and app.json
+    app.switch_page("inspector_pages/comparisons.py").run(timeout=30)
+    assert not app.exception and not app.error
