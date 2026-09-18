@@ -5,6 +5,8 @@ parameter-update loop. It deliberately repeats one authored encounter and one
 combat seed. It makes no claim of generalization or competent play.
 
 See [observability.md](observability.md) for local training charts and combat diagnostics.
+The matched-budget encoder-v5/v7 experiment is specified in
+[the context comparison protocol](experiments/context-v7.md).
 
 ## Run
 
