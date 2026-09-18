@@ -1,5 +1,7 @@
 # Controlled comparison of observation inputs
 
+Completed results: [context-v7-results.md](context-v7-results.md).
+
 The preserved baseline is `runs/goblin-reward-v2` (encoder v5, 2,500 episodes).
 The candidate is `runs/goblin-context-v7` (encoder v7, 2,500 episodes). This is a
 bundled movement/context/action-kind change, not separate feature ablations.
