@@ -252,7 +252,7 @@ no engine add/remove/confirm steps. See [complete-casts.md](complete-casts.md). 
 are never computed by probing hidden state. The original decision token stays
 attached to each command. Candidate order is not a model feature.
 
-Encoder v6 adds one-cell movement destinations (x/y divided by 24), signed
+The movement encoding adds one-cell movement destinations (x/y divided by 24), signed
 displacements (dx/dy in cells), and advertised movement cost (grid units divided
 by 24), each with a corresponding known flag. A diagonal normally costs one
 grid unit; terrain, crawling and other engine modifiers change the advertised
@@ -262,22 +262,46 @@ These remain attempts: no private occupancy or future move-and-cast outcome is
 revealed. Selected and top-choice movement descriptors are included in traces.
 
 This input change requires a fresh run; the 2,500-episode `goblin-reward-v2`
-checkpoint uses encoder v5 and cannot resume/evaluate with v6. Its files are
+checkpoint uses encoder v5 and cannot resume/evaluate with v7. Its files are
 preserved; use commit `173265e` in a separate checkout for old-model playback.
-For a fresh movement-aware experiment:
+For a fresh experiment with movement and decision context:
 
 ```bash
 uv run --extra training --extra observability srd-arena-train \
   --config config/training/goblin_pressure.yaml \
-  --run-dir runs/goblin-movement-v6 --episodes 2500 --device cuda \
+  --run-dir runs/goblin-context-v7 --episodes 2500 --device cuda \
   --progress-interval 1 --trace-every 10 --tensorboard
 ```
 
-Remaining resource balances, turn budgets and conditions are still omitted from
-the numerical state. This change adds movement semantics only; reward weights
-and action availability are unchanged.
+Encoder v7 also encodes current turn ownership, remaining/total movement in feet,
+action and attack counts, bonus-action/reaction availability, and whether this
+caster has already spent a spell slot during the current turn. Exact resources
+include remaining/maximum slots at levels 1–9, Luck and Rage counters, and
+separate aggregate buckets for other feature and non-feature pools. Counts use
+scale 10; movement budgets use 120 feet. These resource buckets deliberately do
+not distinguish every future feature's identity.
 
-Encoder v6 consumes `config/observations/training.yaml`. Each spell candidate
+Conditions use a fixed multi-hot vocabulary plus an unknown-name bucket.
+`conditions_known` means a disclosed list is available; `conditions_complete`
+means it is exhaustive. Opponent lists contain only obvious or explicitly
+manifested conditions: an absent flag is not proof of absence. Concentration
+includes an active flag and spell identity with an unknown-spell bucket. Each
+collection has a known flag, so hidden data differs from an exhausted or empty
+collection. Unknown/padded entities never receive private current state.
+
+The training profile permits allied resources, turn budgets, conditions and
+concentration; enemies retain only observable conditions. Minimal/player
+profiles continue hiding the new groups. Existing policy files default the new
+`creatures.concentration` field to hidden. Reward weights are unchanged.
+
+The action audit added dedicated kind features for Lucky, False Life, forced
+movement choices, compelled turns, waking a target and retargeting an effect.
+The opening goblin-pressure decision has no identical non-spell candidate
+encodings. This is not an exhaustive collision guarantee: forced-movement
+direction/distance and grapple-choice semantics still need richer descriptors;
+unknown feature resource identities are aggregated. These remain future work.
+
+Encoder v7 consumes `config/observations/training.yaml`. Each spell candidate
 includes the existing identity/cost/range/save descriptors and numerical summaries
 of its `spell-mechanics-v1` tree. Features distinguish outcome branches for damage,
 healing, temporary HP and conditions, plus concentration, duration, repeat saves,
@@ -304,7 +328,7 @@ persistent-area occupancy and move-and-cast plans are not implemented. Aims rema
 integer coordinates. The manifest records feature order, scales and these limits.
 
 The new coverage semantics and observation/action schemas require fresh training.
-Existing v1–v5 encoder checkpoints are rejected by schema/manifest validation,
+Existing v1–v6 encoder checkpoints are rejected by schema/manifest validation,
 including for resume. The historical 150-episode results above belong to v1 and are not
 evidence for this encoder. The original experiment is saved in commit `ba20684`.
 No historical run files are rewritten by this change.

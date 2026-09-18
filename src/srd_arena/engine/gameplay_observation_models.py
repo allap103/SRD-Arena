@@ -56,6 +56,7 @@ class GameplayCreatureObservation:
     spell_capabilities: tuple[SpellCapabilityObservation, ...]
     conditions: tuple[GameplayConditionObservation, ...]
     effects: tuple[GameplayEffectObservation, ...]
+    spell_slot_spent_this_turn: bool = False
 
 
 @dataclass(frozen=True)

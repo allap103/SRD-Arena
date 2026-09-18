@@ -113,6 +113,9 @@ class CreaturePolicy(PolicyValue):
     capabilities: ByCreature[Evidence]
     defenses: ByCreature[Evidence]
     conditions: ByCreature[Collection]
+    concentration: ByCreature[Exact] = ByCreature[Exact](
+        own="hidden", ally="hidden", enemy="hidden"
+    )
     effects: EffectsPolicy
     relationships: ByCreature[Collection]
 
@@ -227,12 +230,19 @@ class ObservationPolicy(PolicyValue):
                 "ability_scores": ("hidden",),
                 "saving_throw_modifiers": ("hidden",),
                 "skill_modifiers": ("hidden",),
-                "movement": ("hidden",),
-                "action_economy": ("hidden",),
-                "resources": ("hidden",),
+                "movement": ("hidden",) if group == "enemy" else ("hidden", "exact"),
+                "action_economy": ("hidden",)
+                if group == "enemy"
+                else ("hidden", "exact"),
+                "resources": ("hidden",) if group == "enemy" else ("hidden", "exact"),
                 "capabilities": ("hidden",),
                 "defenses": ("hidden",),
-                "conditions": ("hidden",),
+                "conditions": ("hidden", "observable")
+                if group == "enemy"
+                else ("hidden", "all"),
+                "concentration": ("hidden",)
+                if group == "enemy"
+                else ("hidden", "exact"),
                 "effects.disclosure": ("hidden",),
                 "effects.duration": ("hidden",),
                 "effects.mechanics": ("hidden",),

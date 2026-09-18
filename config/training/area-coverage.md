@@ -48,8 +48,8 @@ unchanged: an empty disclosed area can execute against hidden occupants or fail
 with `target_unavailable`. The adapter never probes hidden state to distinguish
 these cases.
 
-Schemas are `filtered-observation-v6`, `experimental-candidates-v6`,
-`experimental-encoder-v6` and `entity-candidate-actor-critic-v3`. The network now also encodes target count/order/allocation summaries for
+Schemas are `filtered-observation-v7`, `experimental-candidates-v6`,
+`experimental-encoder-v7` and `entity-candidate-actor-critic-v3`. The network now also encodes target count/order/allocation summaries for
 [complete casts](complete-casts.md). Its input semantics and shape changed. Older checkpoints are rejected;
 start a fresh run:
 

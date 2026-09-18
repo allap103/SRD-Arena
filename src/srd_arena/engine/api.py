@@ -19,6 +19,11 @@ from .commands import (
     PlayerGameUpdate,
     SelectAction,
 )
+from .decision_state_observations import (
+    ActionEconomyObservation,
+    MovementBudgetObservation,
+    ResourceObservation,
+)
 from .filtered_observations import (
     FILTERED_OBSERVATION_SCHEMA_ID,
     FilteredAction,
@@ -80,6 +85,7 @@ from .spell_cast_observation_models import SpellCastOptions
 __all__ = [
     "FILTERED_OBSERVATION_SCHEMA_ID",
     "PLAYER_OBSERVATION_SCHEMA_ID",
+    "ActionEconomyObservation",
     "ActionObservation",
     "ActionReasonObservation",
     "AimAction",
@@ -117,6 +123,7 @@ __all__ = [
     "InitiativeObservation",
     "InventoryItemObservation",
     "KnowledgeState",
+    "MovementBudgetObservation",
     "MovementStepObservation",
     "ObservationPolicy",
     "OngoingEffectObservation",
@@ -129,6 +136,7 @@ __all__ = [
     "PositionObservation",
     "PublicCombatEventObservation",
     "PublicEventKind",
+    "ResourceObservation",
     "ResourcePoolObservation",
     "SceneObservation",
     "SelectAction",

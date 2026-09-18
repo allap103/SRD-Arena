@@ -47,8 +47,11 @@ are frozen Pydantic records; YAML/file handling stays in the headless frontend.
 | Temporary health | Own/ally `exact`; enemy `exact`, `presence`, `hidden` |
 | Defeated | `include` or `omit`, independently by group |
 | Armor class | Own/ally `exact`; enemy `hidden` |
-| Ability/save/skill fields, movement, action economy, resources | `hidden` |
-| Capabilities, defenses, conditions, effects (including details), relationships | `hidden` |
+| Ability/save/skill fields | `hidden` |
+| Movement, action economy, resources | Own/ally `exact` or `hidden`; enemy `hidden` |
+| Conditions | Own/ally `all` or `hidden`; enemy `observable` or `hidden` |
+| Concentration | Own/ally `exact` or `hidden`; enemy `hidden` (defaults to hidden for all) |
+| Capabilities, defenses, effects (including details), relationships | `hidden` |
 | Board dimensions, terrain | `include`, `all` respectively |
 | Environment | `all` (currently sunlight) or `hidden` |
 | Persistent areas | `hidden` |
@@ -72,12 +75,24 @@ intervals use `(lower, upper]`; zero is `[0, 0]`. With
 interval excludes 1. Temporary HP is separate. `hidden` yields null, never zero.
 A stale row carries its last admitted value, not the current hidden value.
 
-`filtered-observation-v6` has a fixed layout for the supported slice. Properties
+`filtered-observation-v7` has a fixed layout for the supported slice. Properties
 whose only supported mode is `hidden` have no output field. Supported optional
 fields use null when hidden/unknown; `knowledge` distinguishes current,
 last-known and unknown creature rows. Resolved policy metadata distinguishes
 hidden fields from unknown values. Health has nullable `current`, `maximum`,
 and `interval` members, with only the selected representation populated.
+
+Encoder v7's training profile enables allied movement budgets, action economy,
+resources, conditions and concentration. Movement budgets are in feet; action
+economy includes the per-caster slot expenditure flag for the current turn.
+Resources include slot levels and typed class/feature pools. Null collections
+mean hidden; empty collections mean no disclosed entries. Conditions also carry
+`conditions_complete`: true for allied `all`, false for enemy `observable`.
+Observable conditions require current visibility and either obvious symptoms or
+an explicitly witnessed manifestation tied to the active condition instance.
+Unseen enemies retain only last-known facts according to the memory policy.
+An empty observable list does not imply that an opponent has no hidden condition.
+Concentration exposes spell definition IDs, never runtime effect instance IDs.
 
 Allied one-cell `move` actions carry a nullable `movement` descriptor with
 `displacement` (dx/dy in grid cells), `destination` (x/y or null), and `cost`

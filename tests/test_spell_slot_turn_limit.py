@@ -1,6 +1,7 @@
 """Enforce the 2024 one-slot-per-caster-per-turn rule through shared rules."""
 
 from dataclasses import replace
+from pathlib import Path
 
 import pytest
 
@@ -13,7 +14,8 @@ from srd_arena.domain.encounters.encounter_models.actions import ActionCost
 from srd_arena.domain.encounters.turn_lifecycle import advance_turn, skip_defeated_turn
 from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.metadata import SpellCastingTime
-from srd_arena.engine.api import AimAction, SelectAction, Session
+from srd_arena.engine.api import AimAction, PolicyProjector, SelectAction, Session
+from srd_arena.frontends.headless.config import load_policy
 from tests.encounter_runtime_support import player_first_initiative
 
 pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
@@ -60,6 +62,17 @@ def test_second_slot_cast_is_disabled_and_cannot_be_forced(
     assert casting is not None
     assert casting.spell_slots_remaining == {3: 1}
     assert state.turn.spell_slot_users == {"warlock"}
+    filtered = PolicyProjector(
+        load_policy(Path("config/observations/training.yaml")), "warlock"
+    ).project(game.observe_gameplay())
+    row = next(c for c in filtered.creatures if c.creature_ref == "warlock")
+    assert row.action_economy is not None and row.resources is not None
+    assert row.action_economy.spell_slot_spent_this_turn
+    assert row.action_economy.actions_remaining == warlock.actions_remaining
+    assert row.action_economy.bonus_action_available == warlock.bonus_action_available
+    assert row.resources.spell_slots[0].remaining == 1
+    if first in {"stinking_cloud", "hypnotic_pattern"}:
+        assert first in (row.concentrating_on or ())
     observation = game.observe()
     command = aim(game, second)
     second_action = next(

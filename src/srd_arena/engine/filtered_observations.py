@@ -5,11 +5,17 @@ from dataclasses import dataclass, field, replace
 from typing import Literal, cast
 
 from .area_observation_models import AreaTemplateObservation
+from .decision_state_observations import (
+    ActionEconomyObservation,
+    MovementBudgetObservation,
+    ResourceObservation,
+)
 from .gameplay_observation_models import (
     GameplayCreatureObservation,
     GameplayObservation,
 )
 from .movement_observations import MovementStepObservation, movement_step
+from .observability import Observability
 from .observation_models import (
     ActionObservation,
     DecisionObservation,
@@ -22,6 +28,7 @@ from .observation_models import (
 from .observation_policy import Group, HealthIntervals, ObservationPolicy
 from .player_action_observations import player_action_observations
 from .player_events import public_damage_from_event, public_events_from_event
+from .player_manifestations import manifested_state
 from .player_observation_models import (
     AppearanceObservation,
     PlayerDecisionContext,
@@ -31,7 +38,7 @@ from .player_observation_models import (
 from .spell_capability_observations import SpellCapabilityObservation
 from .spell_cast_observation_models import SpellCastOptions
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v6"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v7"
 
 
 @dataclass(frozen=True)
@@ -92,6 +99,12 @@ class FilteredCreature:
     defeated: bool | None = None
     armor_class: int | None = None
     observed_damage_total: int | None = None
+    movement: MovementBudgetObservation | None = None
+    action_economy: ActionEconomyObservation | None = None
+    resources: ResourceObservation | None = None
+    conditions: tuple[str, ...] | None = None
+    conditions_complete: bool | None = None
+    concentrating_on: tuple[str, ...] | None = None
 
 
 @dataclass(frozen=True)
@@ -155,6 +168,9 @@ class PolicyProjector:
     _sequence: int = field(default=1, init=False)
     _rows: dict[str, FilteredCreature] = field(default_factory=dict, init=False)
     _damage: dict[str, int] = field(default_factory=dict, init=False)
+    _manifested_conditions: dict[str, set[str]] = field(
+        default_factory=dict, init=False
+    )
     _events: list[PublicCombatEventObservation] = field(
         default_factory=list, init=False
     )
@@ -193,6 +209,7 @@ class PolicyProjector:
             self._sequence = 1
             self._rows.clear()
             self._damage.clear()
+            self._manifested_conditions.clear()
             self._events.clear()
         if len(snapshot.history) < self._cursor:
             raise ValueError("Policy memory cannot consume history backwards")
@@ -399,6 +416,43 @@ class PolicyProjector:
             combat.armor_class
             if policy.armor_class.for_group(group) == "exact"
             else None,
+            movement=MovementBudgetObservation(
+                combat.movement_remaining_feet, combat.movement_total_feet
+            )
+            if policy.movement.for_group(group) == "exact"
+            else None,
+            action_economy=ActionEconomyObservation(
+                creature.actions_remaining,
+                creature.bonus_action_available,
+                combat.reaction_available,
+                combat.attacks_remaining,
+                combat.attacks_per_attack_action,
+                creature.spell_slot_spent_this_turn,
+            )
+            if policy.action_economy.for_group(group) == "exact"
+            else None,
+            resources=ResourceObservation(combat.spell_slots, combat.resource_pools)
+            if policy.resources.for_group(group) == "exact"
+            else None,
+            conditions=tuple(
+                condition.name
+                for condition in creature.conditions
+                if policy.conditions.for_group(group) == "all"
+                or condition.observability is Observability.OBVIOUS
+                or any(
+                    provider
+                    in self._manifested_conditions.get(combat.creature_ref, set())
+                    for provider in condition.provider_ids
+                )
+            )
+            if policy.conditions.for_group(group) != "hidden"
+            else None,
+            concentrating_on=creature.concentrating_on
+            if policy.concentration.for_group(group) == "exact"
+            else None,
+            conditions_complete=policy.conditions.for_group(group) == "all"
+            if policy.conditions.for_group(group) != "hidden"
+            else None,
         )
 
     def _record_history(
@@ -406,6 +460,16 @@ class PolicyProjector:
     ) -> None:
         for event in snapshot.history[self._cursor :]:
             visible = dict(event.visible_by_team).get(team_id, frozenset())
+            evidence = manifested_state(event)
+            if (
+                evidence is not None
+                and evidence.is_condition
+                and event.creature_ref in visible
+            ):
+                assert event.creature_ref is not None
+                self._manifested_conditions.setdefault(event.creature_ref, set()).add(
+                    evidence.instance_id
+                )
             for damage in public_damage_from_event(event):
                 if (
                     damage.target_ref in visible

@@ -67,16 +67,16 @@ creatures:
     ally: hidden
     enemy: hidden
   movement:
-    own: hidden
-    ally: hidden
+    own: exact
+    ally: exact
     enemy: hidden
   action_economy:
-    own: hidden
-    ally: hidden
+    own: exact
+    ally: exact
     enemy: hidden
   resources:
-    own: hidden
-    ally: hidden
+    own: exact
+    ally: exact
     enemy: hidden
   capabilities:
     own: hidden
@@ -87,8 +87,12 @@ creatures:
     ally: hidden
     enemy: hidden
   conditions:
-    own: hidden
-    ally: hidden
+    own: all
+    ally: all
+    enemy: observable
+  concentration:
+    own: exact
+    ally: exact
     enemy: hidden
   effects:
     disclosure:

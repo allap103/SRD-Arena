@@ -20,7 +20,7 @@ from .queries import SessionRead
 from .spell_capability_observations import observe_spell_capabilities
 from .targeting_observations import observe_player_targeting
 
-GAMEPLAY_OBSERVATION_SCHEMA_ID = "gameplay-observation-v1-draft"
+GAMEPLAY_OBSERVATION_SCHEMA_ID = "gameplay-observation-v2-draft"
 
 
 def capture_gameplay(
@@ -67,6 +67,7 @@ def capture_gameplay(
                     apparent_creature_type=appearance.apparent_creature_type,
                 ),
                 actions_remaining=participant.actions_remaining,
+                spell_slot_spent_this_turn=ref in state.turn.spell_slot_users,
                 bonus_action_available=participant.bonus_action_available,
                 concentrating_on=tuple(
                     dict.fromkeys(

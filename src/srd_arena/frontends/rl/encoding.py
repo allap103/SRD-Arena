@@ -7,13 +7,18 @@ from numpy.typing import NDArray
 
 from srd_arena.engine.api import FilteredCreature, FilteredObservation
 from srd_arena.frontends.rl.actions import Candidate
+from srd_arena.frontends.rl.decision_state_encoding import (
+    DECISION_STATE_FEATURES,
+    RESOURCE_BUCKETS,
+    decision_state_features,
+)
 from srd_arena.frontends.rl.spell_encoding import (
     SPELL_FEATURES,
     SPELL_NUMBERS,
     spell_features,
 )
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v6"
+ENCODER_SCHEMA_ID = "experimental-encoder-v7"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -47,6 +52,12 @@ ACTION_KINDS = (
     "decline_reckless_attack",
     "stand_up",
     "drop_prone",
+    "use_lucky",
+    "false_life",
+    "forced_movement_choice",
+    "obey_compelled_turn",
+    "rouse_spell_target",
+    "retarget_effect",
 )
 ENTITY_FEATURES = (
     "own",
@@ -78,6 +89,9 @@ ENTITY_FEATURES = (
     "observed_damage_known",
     "is_decision_actor",
     "selected_target_count",
+    "is_active_turn",
+    "active_turn_known",
+    *DECISION_STATE_FEATURES,
 )
 GLOBAL_FEATURES = (
     "width",
@@ -172,6 +186,9 @@ def _entity(row: FilteredCreature, observation: FilteredObservation) -> list[flo
         *_known(row.observed_damage_total, 100),
         float(row.creature_ref == observation.decision.creature_ref),
         target_count / 10,
+        float(row.creature_ref == observation.active_turn_ref),
+        float(observation.active_turn_ref is not None),
+        *decision_state_features(row),
     ]
 
 
@@ -337,6 +354,16 @@ def encoder_manifest() -> dict[str, object]:
             "cost": "advertised_grid_movement_units_not_euclidean_distance",
             "missing_information": "explicit_known_flags",
             "availability": "player_safe_attempt_no_private_legality_probe",
+        },
+        "decision_state": {
+            "schema": "disclosed-budgets-status-v1",
+            "movement_feet_scale": 120,
+            "budget_and_resource_count_scale": 10,
+            "slot_levels": list(range(1, 10)),
+            "resource_buckets": RESOURCE_BUCKETS,
+            "conditions": "multi_hot_disclosed_names_not_private_absence",
+            "concentration": "multi_hot_spell_ids_plus_unknown",
+            "missing_information": "collection_known_flags_separate_from_zero",
         },
         "spell_selection": {
             "schema": "complete-cast-v1",

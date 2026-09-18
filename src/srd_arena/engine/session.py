@@ -141,7 +141,7 @@ class Session:
         >>> session = Session(EncounterCatalog().load_encounter("warlock_training"), seed=42)
         >>> snapshot = session.observe_gameplay()
         >>> snapshot.schema_id
-        'gameplay-observation-v1-draft'
+        'gameplay-observation-v2-draft'
         >>> snapshot.history
         ()
         """
