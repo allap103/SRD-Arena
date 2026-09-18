@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, Field
 from srd_arena.frontends.headless.config import load_policy, load_yaml_document
 from srd_arena.frontends.headless.serialization import canonical_json
 from srd_arena.frontends.rl.environment import ArenaEnvironment
+from srd_arena.frontends.rl.rewards import RewardWeights
 
 
 class TrainingConfig(BaseModel):
@@ -32,6 +33,7 @@ class TrainingConfig(BaseModel):
     learning_rate: float = Field(gt=0, le=1)
     entropy_coefficient: float = Field(ge=0, le=1)
     device: Literal["auto", "cpu", "cuda"]
+    reward: RewardWeights = Field(default_factory=RewardWeights)
 
     def environment(self) -> ArenaEnvironment:
         """Create an environment with the recorded disclosure and runner limits."""
@@ -44,6 +46,7 @@ class TrainingConfig(BaseModel):
             max_rounds=self.max_rounds,
             max_entities=self.max_entities,
             max_candidates=self.max_candidates,
+            reward_weights=self.reward,
         )
 
 

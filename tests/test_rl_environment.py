@@ -47,7 +47,11 @@ def test_wait_replay_reset_and_terminal_reward(
             break
         assert transition.reward == 0
     assert transition.terminated
-    assert transition.reward == 1
+    assert transition.info["episode_outcome"] == "win"
+    components = transition.info["reward_components"]
+    assert isinstance(components, dict)
+    assert components["outcome"] == 1
+    assert transition.reward == pytest.approx(sum(components.values()))
     assert transition.info["engine_steps"] == 62
     assert "resources" in transition.info
     assert len(environment.choices) == 0
@@ -170,7 +174,7 @@ def test_aim_and_allocation_candidates_use_public_parameters(
     assert all(isinstance(c.command, CastSpell) for c in choices)
 
 
-def test_rewards_do_not_use_remaining_resources() -> None:
+def test_original_outcome_only_baseline() -> None:
     from srd_arena.engine.api import EncounterTerminationReason
     from srd_arena.frontends.headless.adapter import EpisodeTruncationReason
 

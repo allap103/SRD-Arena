@@ -63,6 +63,13 @@ schema. Existing compatible checkpoints can still load; old metrics and traces
 describe the earlier rules and are not rewritten. Evaluate or train under the
 corrected rules before comparing new results with those runs.
 
+For configurable terminal rewards (`terminal-party-outcome-v2`), episode metrics
+and combat summaries include `reward_components` and `fallen_party_members`.
+TensorBoard has `reward/*` scalars, and the inspector has a Reward components
+chart. Outcome charts use `episode_outcome` rather than reward sign; older
+win/loss-only records retain the previous sign-based interpretation. See
+[reward configuration](rewards.md) for weights and normalization.
+
 Diagnostics are privileged spectator data. They do not enter the observation
 encoder, influence reward, change action availability or provide legal-action
 pruning. Additional snapshot reads are not required. Detailed logging does add

@@ -5,6 +5,7 @@ from pathlib import Path
 
 import pytest
 
+from srd_arena.frontends.rl.rewards import RewardWeights
 from srd_arena.training.config import load_training_config
 from srd_arena.training.evaluate import evaluate, main
 from srd_arena.training.train import run_training
@@ -17,7 +18,13 @@ def test_comparison_writes_inspectable_reports_without_modifying_checkpoint(
     config = load_training_config(
         Path("config/training/single_encounter.yaml")
     ).model_copy(
-        update={"episodes": 1, "max_decisions": 2, "hidden_size": 8, "device": "cpu"}
+        update={
+            "episodes": 1,
+            "max_decisions": 2,
+            "hidden_size": 8,
+            "device": "cpu",
+            "reward": RewardWeights(truncation=0.25),
+        }
     )
     source = tmp_path / "source"
     checkpoint = run_training(config, source, progress_interval=0)
@@ -47,6 +54,15 @@ def test_comparison_writes_inspectable_reports_without_modifying_checkpoint(
     assert len({r["checkpoint_sha256"] for r in reports}) == 1
     assert checkpoint.read_bytes() == original
     for report in reports:
+        assert report["truncated_episodes"] == 2
+        assert (
+            report["win_rate"]
+            == report["wins"]
+            == report["losses"]
+            == report["draws"]
+            == 0
+        )
+        assert report["mean_reward"] == 0.25
         assert report["checkpoint_completed_episodes"] == 1
         rows = [
             json.loads(line)
@@ -56,6 +72,7 @@ def test_comparison_writes_inspectable_reports_without_modifying_checkpoint(
         ]
         assert [r["sampling_seed"] for r in rows] == [123, 124]
         assert all(r["encounter_seed"] == config.encounter_seed for r in rows)
+        assert all(r["reward"] == sum(r["reward_components"].values()) for r in rows)
         assert len(list((output / report["mode"] / "traces").glob("*.jsonl"))) == 2
         assert (
             report["wins"]

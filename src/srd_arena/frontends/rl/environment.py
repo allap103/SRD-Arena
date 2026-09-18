@@ -20,7 +20,7 @@ from srd_arena.frontends.headless.adapter import (
 from srd_arena.frontends.rl.actions import Candidate, candidates
 from srd_arena.frontends.rl.diagnostics import CommandBoundary
 from srd_arena.frontends.rl.encoding import EncodedObservation, Encoder
-from srd_arena.frontends.rl.rewards import terminal_reward
+from srd_arena.frontends.rl.rewards import EpisodeReward, RewardWeights, episode_outcome
 from srd_arena.frontends.rl.spell_candidates import preparation_choices
 
 
@@ -56,6 +56,7 @@ class ArenaEnvironment:
         max_rounds: int = 100,
         max_entities: int = 10,
         max_candidates: int = 16384,
+        reward_weights: RewardWeights | None = None,
     ) -> None:
         if (
             min(
@@ -77,6 +78,8 @@ class ArenaEnvironment:
         self.max_rounds = max_rounds
         self.max_entities = max_entities
         self.max_candidates = max_candidates
+        self.reward_weights = reward_weights or RewardWeights()
+        self._reward: EpisodeReward | None = None
         self._adapter = HeadlessGameAdapter(EncounterCatalog())
         self._encoder: Encoder | None = None
         self._projector: PolicyProjector | None = None
@@ -121,6 +124,7 @@ class ArenaEnvironment:
         if own is None or not own.combat.is_alive:
             raise ValueError("Perspective must name a living creature")
         self._team = own.combat.team_id
+        self._reward = EpisodeReward(snapshot, self._team, self.reward_weights)
         self._projector = PolicyProjector(self.policy, self.perspective_creature)
         self._encoder = Encoder(
             self._projector.project(snapshot), max_entities=self.max_entities
@@ -227,8 +231,10 @@ class ArenaEnvironment:
         self, *, rejection: str | None = None, advance_automatic: bool = True
     ) -> Transition:
         assert self._projector is not None and self._encoder is not None
+        assert self._reward is not None
         while True:
             snapshot = self._adapter.observe_gameplay()
+            self._reward.observe(snapshot)
             if self.diagnostic_callback is not None:
                 if self._diagnostic_before is None:
                     self.diagnostic_callback(
@@ -289,6 +295,7 @@ class ArenaEnvironment:
         if not self._choices and not self._done and not self.automatic_pending:
             raise RuntimeError("No model action candidates at an external decision")
         info: dict[str, object] = {
+            "episode_outcome": episode_outcome(status, self._team),
             "decisions": self._decisions,
             "engine_steps": self._engine_steps,
             "rejected_commands": self._rejected,
@@ -297,6 +304,9 @@ class ArenaEnvironment:
             "truncation_reason": self._limit,
             "winning_team_id": status.winning_team_id,
         }
+        reward_components = self._reward.components(status, snapshot)
+        info["reward_components"] = reward_components
+        info["fallen_party_members"] = sorted(self._reward.fallen)
         if self._done:
             # Diagnostic outcome data is never sent to the encoder or model.
             allies = [
@@ -315,7 +325,7 @@ class ArenaEnvironment:
             }
         return Transition(
             self._encoder.encode(self._observation, self._choices),
-            terminal_reward(status, self._team),
+            sum(reward_components.values()),
             status.terminated,
             status.truncated,
             self._observation.decision.id,

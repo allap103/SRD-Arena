@@ -7,6 +7,7 @@ from pathlib import Path
 import pytest
 import torch
 
+from srd_arena.frontends.rl.rewards import RewardWeights
 from srd_arena.training.config import load_training_config
 from srd_arena.training.diagnostics import EpisodeRecorder
 from srd_arena.training.model import CandidatePolicy
@@ -54,7 +55,13 @@ def test_policy_and_training_are_identical_with_detailed_logging(
     config = load_training_config(
         Path("config/training/single_encounter.yaml")
     ).model_copy(
-        update={"episodes": 2, "max_decisions": 3, "hidden_size": 8, "device": "cpu"}
+        update={
+            "episodes": 2,
+            "max_decisions": 3,
+            "hidden_size": 8,
+            "device": "cpu",
+            "reward": RewardWeights(truncation=0.25),
+        }
     )
     plain = run_training(config, tmp_path / "plain", progress_interval=0)
     logged = run_training(
@@ -76,6 +83,8 @@ def test_policy_and_training_are_identical_with_detailed_logging(
         for line in (logged.parent / "metrics.jsonl").read_text().splitlines()
     ]
     for record in records:
+        assert record["reward"] == sum(record["reward_components"].values()) == 0.25
+        assert record["episode_outcome"] == "truncated"
         assert (
             abs(
                 record["loss"]
@@ -89,6 +98,8 @@ def test_policy_and_training_are_identical_with_detailed_logging(
         )
     events = event_module.EventAccumulator(str(logged.parent / "tensorboard")).Reload()
     assert [event.step for event in events.Scalars("train/value_loss")] == [1, 2]
+    assert [event.value for event in events.Scalars("train/win_rate")] == [0, 0]
+    assert [event.value for event in events.Scalars("reward/outcome")] == [0.25, 0.25]
     traces = sorted((logged.parent / "traces").glob("*.jsonl"))
     assert len(traces) == 2
     rows = [json.loads(line) for line in traces[0].read_text().splitlines()]

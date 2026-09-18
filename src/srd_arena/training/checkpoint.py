@@ -10,6 +10,7 @@ import torch
 
 from srd_arena.frontends.headless.config import load_policy, policy_digest
 from srd_arena.frontends.rl.encoding import encoder_manifest
+from srd_arena.frontends.rl.rewards import RewardWeights
 from srd_arena.training.config import TrainingConfig, load_training_config
 from srd_arena.training.model import MODEL_SCHEMA_ID, CandidatePolicy, select_device
 
@@ -30,6 +31,11 @@ def load_checkpoint(
 ) -> LoadedCheckpoint:
     """Validate encoder/disclosure identity before loading weights for inference."""
     config = load_training_config(run_dir / "config.json")
+    if "reward" not in config.model_fields_set:
+        # Old inference checkpoints retain their original evaluation objective.
+        config = config.model_copy(
+            update={"reward": RewardWeights(party_member_down=0.0, victory_health=0.0)}
+        )
     device = select_device(device_name)
     checkpoint_bytes = (run_dir / "policy.pt").read_bytes()
     checkpoint = torch.load(

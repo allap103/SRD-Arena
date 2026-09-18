@@ -265,6 +265,7 @@ def run_training(
         "observation_schema": FILTERED_OBSERVATION_SCHEMA_ID,
         "action_schema": ACTION_SCHEMA_ID,
         "reward_schema": REWARD_SCHEMA_ID,
+        "reward_weights": config.reward.model_dump(),
         "model_schema": MODEL_SCHEMA_ID,
         "encoder": encoder_manifest(),
         "diagnostics": {
@@ -382,12 +383,15 @@ def run_training(
                 summary = recorder.summary()
                 summary.update(
                     reward=terminal.reward,
+                    reward_components=terminal.info["reward_components"],
+                    episode_outcome=terminal.info["episode_outcome"],
+                    fallen_party_members=terminal.info["fallen_party_members"],
                     terminated=terminal.terminated,
                     truncated=terminal.truncated,
                 )
                 combat_stream.write(canonical_json(summary) + "\n")
                 combat_stream.flush()
-                wins += terminal.reward > 0
+                wins += terminal.info["episode_outcome"] == "win"
                 if writer is not None:
                     for key, value in {
                         **learning_metrics,
@@ -401,6 +405,10 @@ def run_training(
                         "update_seconds": update_seconds,
                     }.items():
                         writer.add_scalar("train/" + key, value, episode + 1)
+                    components = terminal.info["reward_components"]
+                    assert isinstance(components, dict)
+                    for key, value in components.items():
+                        writer.add_scalar("reward/" + key, value, episode + 1)
                     writer.flush()
                 progress.report("done", force=True)
     return checkpoint

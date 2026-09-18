@@ -14,3 +14,14 @@ hidden_size: 32
 learning_rate: 0.001
 entropy_coefficient: 0.01
 device: auto
+
+# Terminal score; preservation terms are normalized and victory-only.
+reward:
+  win: 1.0
+  loss: -1.0
+  draw: 0.0
+  truncation: 0.0
+  party_member_down: -0.1
+  victory_health: 0.1
+  victory_spell_slots: 0.0
+  victory_class_resources: 0.0

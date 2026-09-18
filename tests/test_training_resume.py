@@ -99,12 +99,23 @@ def test_split_training_matches_uninterrupted_training(
 
 
 @pytest.mark.parametrize(
-    "damage", ["legacy", "schema", "policy", "device", "rng", "settings"]
+    "damage",
+    [
+        "legacy",
+        "schema",
+        "policy",
+        "device",
+        "rng",
+        "settings",
+        "reward_schema",
+        "weights",
+    ],
 )
 def test_invalid_resume_does_not_create_output(tmp_path: Path, damage: str) -> None:
     parent = tmp_path / "parent"
     checkpoint_path = run_training(small_config(), parent, progress_interval=0)
     checkpoint = torch.load(checkpoint_path, weights_only=True)
+    config = small_config()
     if damage == "legacy":
         del checkpoint["training_state"]
     elif damage == "schema":
@@ -115,13 +126,19 @@ def test_invalid_resume_does_not_create_output(tmp_path: Path, damage: str) -> N
         checkpoint["training_state"]["device_type"] = "cuda"
     elif damage == "rng":
         del checkpoint["training_state"]["torch_rng"]
+    elif damage == "reward_schema":
+        checkpoint["training_state"]["reward_schema"] = "terminal-team-outcome-v1"
+    elif damage == "weights":
+        config = config.model_copy(
+            update={"reward": config.reward.model_copy(update={"victory_health": 0.2})}
+        )
     else:
         checkpoint["training_state"]["settings"]["learning_rate"] = 0.5
     torch.save(checkpoint, checkpoint_path)
     before = checkpoint_path.read_bytes()
     child = tmp_path / "child"
     with pytest.raises(ValueError):
-        run_training(small_config(), child, resume_from=parent, progress_interval=0)
+        run_training(config, child, resume_from=parent, progress_interval=0)
     assert not child.exists()
     assert checkpoint_path.read_bytes() == before
 
@@ -138,3 +155,18 @@ def test_resume_cli_requires_explicit_additional_episodes(
         main()
     assert error.value.code == 1
     assert "additional episodes" in capsys.readouterr().err
+
+
+def test_old_inference_config_retains_outcome_only_scoring(tmp_path: Path) -> None:
+    from srd_arena.training.checkpoint import load_checkpoint
+
+    run = tmp_path / "legacy"
+    run_training(small_config(), run, progress_interval=0)
+    config = json.loads((run / "config.json").read_text())
+    del config["reward"]
+    (run / "config.json").write_text(json.dumps(config))
+    loaded = load_checkpoint(run, device_name="cpu")
+    assert loaded.config.reward.party_member_down == 0
+    assert loaded.config.reward.victory_health == 0
+    assert loaded.config.reward.win == 1
+    assert loaded.config.reward.loss == -1

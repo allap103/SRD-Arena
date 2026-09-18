@@ -1,5 +1,9 @@
 # YAML observation policies
 
+Training reward weights live in the experiment YAML under `config/training/`.
+See [reward configuration](../training/rewards.md) for scoring and defaults.
+Observation policies below control which information the model receives.
+
 The headless CLI implements the first slice of policy schema version 1. Every
 policy must supply the complete explicit shape shown in `player.yaml`. Unknown
 keys, missing fields, coercions, and valid-but-unimplemented modes are errors.

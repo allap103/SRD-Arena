@@ -10,6 +10,7 @@ import numpy as np
 import torch
 
 from srd_arena.frontends.headless.serialization import canonical_json
+from srd_arena.frontends.rl.rewards import REWARD_SCHEMA_ID
 from srd_arena.training.checkpoint import load_checkpoint
 from srd_arena.training.diagnostics import EpisodeRecorder
 from srd_arena.training.train import rollout
@@ -75,6 +76,8 @@ def evaluate(
             manifest = {
                 "kind": "evaluation",
                 "schema": EVALUATION_SCHEMA,
+                "reward_schema": REWARD_SCHEMA_ID,
+                "reward_weights": config.reward.model_dump(),
                 "checkpoint_run": str(run_dir.resolve()),
                 "mode": mode,
                 "sampling_seed": seed,
@@ -118,6 +121,9 @@ def evaluate(
                 summary = recorder.summary()
                 summary.update(
                     reward=terminal.reward,
+                    reward_components=terminal.info["reward_components"],
+                    episode_outcome=terminal.info["episode_outcome"],
+                    fallen_party_members=terminal.info["fallen_party_members"],
                     terminated=terminal.terminated,
                     truncated=terminal.truncated,
                 )
@@ -152,6 +158,10 @@ def evaluate(
                         "rejected_commands",
                     ):
                         writer.add_scalar("eval/" + key, row[key], episode)
+                    components = row["reward_components"]
+                    assert isinstance(components, dict)
+                    for key, value in components.items():
+                        writer.add_scalar("reward/" + key, value, episode)
                     writer.flush()
     report = {
         "schema": EVALUATION_SCHEMA,
@@ -162,10 +172,16 @@ def evaluate(
         "device": str(device),
         "checkpoint_completed_episodes": loaded.completed_episodes,
         "checkpoint_sha256": loaded.checkpoint_sha256,
-        "win_rate": sum(r["reward"] > 0 for r in rows) / episodes,
-        "wins": sum(r["reward"] > 0 for r in rows),
-        "losses": sum(r["reward"] < 0 for r in rows),
-        "draws": sum(r["terminated"] and r["reward"] == 0 for r in rows),
+        "reward_schema": REWARD_SCHEMA_ID,
+        "reward_weights": config.reward.model_dump(),
+        "win_rate": sum(r["episode_outcome"] == "win" for r in rows) / episodes,
+        "wins": sum(r["episode_outcome"] == "win" for r in rows),
+        "losses": sum(r["episode_outcome"] == "loss" for r in rows),
+        "draws": sum(r["episode_outcome"] == "draw" for r in rows),
+        "mean_reward_components": {
+            key: sum(r["reward_components"][key] for r in rows) / episodes
+            for key in rows[0]["reward_components"]
+        },
         "mean_reward": sum(r["reward"] for r in rows) / episodes,
         "truncated_episodes": sum(r["truncated"] for r in rows),
         "rejected_commands": sum(r["rejected_commands"] for r in rows),

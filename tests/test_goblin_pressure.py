@@ -59,7 +59,14 @@ def test_goblin_pressure_separates_idle_and_blasting_warlock(
             prepared, expected_decision_id=transition.decision_id
         )
     assert transition.terminated and not transition.truncated
-    assert transition.reward == (1.0 if participates else -1.0)
+    assert transition.info["episode_outcome"] == ("win" if participates else "loss")
+    components = transition.info["reward_components"]
+    assert isinstance(components, dict)
+    assert components["outcome"] == (1.0 if participates else -1.0)
+    assert transition.reward == pytest.approx(sum(components.values()))
+    if not participates:
+        assert transition.info["fallen_party_members"] == ["barbarian", "warlock"]
+        assert components["party_member_down"] == -0.2
     casts = [
         event
         for event in environment.spectator_snapshot().history
@@ -84,3 +91,5 @@ def test_goblin_pressure_separates_idle_and_blasting_warlock(
         assert goblin_damage > 0
     else:
         assert not casts
+        reset = environment.reset(seed=config.encounter_seed)
+        assert reset.info["fallen_party_members"] == []

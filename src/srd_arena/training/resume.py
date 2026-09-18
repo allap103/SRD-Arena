@@ -64,6 +64,11 @@ def restore_training_state(
             "Checkpoint has no supported training state; older inference-only "
             "checkpoints cannot resume training"
         )
+    if state.get("reward_schema") != REWARD_SCHEMA_ID:
+        raise ValueError(
+            "Reward schema differs from this checkpoint; --resume cannot change "
+            "the training objective. Start a new run with the new reward settings."
+        )
     if (
         checkpoint.get("model_schema") != MODEL_SCHEMA_ID
         or checkpoint.get("encoder") != encoder_manifest()
@@ -72,10 +77,9 @@ def restore_training_state(
         or state.get("settings") != training_settings(config)
         or state.get("observation_schema") != FILTERED_OBSERVATION_SCHEMA_ID
         or state.get("action_schema") != ACTION_SCHEMA_ID
-        or state.get("reward_schema") != REWARD_SCHEMA_ID
     ):
         raise ValueError(
-            "Resume configuration, schema or observation policy does not match"
+            "Resume configuration (including reward weights), schema or observation policy does not match"
         )
     if state.get("device_type") != device.type:
         raise ValueError(

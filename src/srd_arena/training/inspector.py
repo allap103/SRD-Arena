@@ -59,7 +59,15 @@ def render(run: Path) -> None:
         chart(metrics, ["policy_loss", "value_loss", "loss"], window)
         chart(metrics, ["entropy", "gradient_norm"], window)
         chart(
-            [{**r, "win": int(r.get("reward", 0) > 0)} for r in metrics],
+            [
+                {
+                    **r,
+                    "win": int(r["episode_outcome"] == "win")
+                    if "episode_outcome" in r
+                    else int(r.get("reward", 0) > 0),
+                }
+                for r in metrics
+            ],
             ["reward", "win", "truncated"],
             window,
         )
@@ -70,6 +78,18 @@ def render(run: Path) -> None:
                 window,
             )
             chart(metrics, ["rejected_commands", "decisions", "engine_steps"], window)
+        component_rows = [
+            {"episode": row["episode"], **row["reward_components"]}
+            for row in metrics
+            if "reward_components" in row
+        ]
+        if component_rows:
+            with st.expander("Reward components"):
+                chart(
+                    component_rows,
+                    [key for key in component_rows[0] if key != "episode"],
+                    window,
+                )
         st.dataframe(metrics, hide_index=True)
     completed_local = {
         r["episode"] for r in summaries if Path(r["source_run"]) == run.resolve()

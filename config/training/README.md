@@ -153,8 +153,9 @@ uv run --extra training srd-arena-train \
 ```
 
 The configuration runs 150 episodes from scratch on seed 42, with a 150-decision,
-1500-engine-step and 40-round budget per episode. Terminal team wins/losses are
-still the only reward. Every completed update atomically replaces `policy.pt`,
+1500-engine-step and 40-round budget per episode. The terminal reward weights
+are configured in its YAML; see [reward configuration](rewards.md).
+Every completed update atomically replaces `policy.pt`,
 whose `completed_episodes` metadata distinguishes partial runs from complete
 ones. Newly created checkpoints also contain optimizer/RNG state for resume;
 historical checkpoints from earlier implementations do not.
@@ -204,11 +205,17 @@ interface, not a Gymnasium/PettingZoo adapter yet.
 
 ## Rewards and time
 
-A party win earns +1, a loss −1, and a draw/truncation 0. Intermediate commands
-have zero reward. The learner uses undiscounted terminal return for every
-command in the episode and a learned critic baseline. Entropy regularization
-encourages exploration; it is not a game resource bonus. Remaining HP, living
-allies, slots and resource totals are logged only as terminal diagnostics.
+The training YAML's `reward` section configures the final score. Defaults are
++1 for a win, −1 for a loss, −0.1 per distinct party member who falls to 0 HP,
+and a victory-only bonus of up to +0.1 for remaining party health. Slot and
+class-resource preservation weights default to zero. Draw/truncation base
+weights are zero, but any accumulated fall penalty still applies.
+
+See [reward weights and scoring](rewards.md) for the full schema, normalization,
+examples and checkpoint compatibility. Intermediate commands have zero reward.
+The learner uses undiscounted terminal return for every command in the episode
+and a learned critic baseline. Entropy regularization encourages exploration;
+it is not a game resource bonus. Win rates use actual encounter outcomes.
 
 One environment step is one model command attempt. Target selection and
 interrupt responses are ordinary decisions. Rejections keep the game state but
