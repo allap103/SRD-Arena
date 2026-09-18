@@ -13,7 +13,7 @@ from srd_arena.frontends.rl.spell_encoding import (
     spell_features,
 )
 
-ENCODER_SCHEMA_ID = "experimental-encoder-v5"
+ENCODER_SCHEMA_ID = "experimental-encoder-v6"
 type Array = NDArray[np.float64]
 # A checked, versioned registry. Unlisted kinds share the final unknown bucket.
 ACTION_KINDS = (
@@ -106,6 +106,14 @@ ACTION_FEATURES = (
     "affected_own_count",
     "affected_ally_count",
     "affected_enemy_count",
+    "movement_destination_x",
+    "movement_destination_y",
+    "movement_destination_known",
+    "movement_dx",
+    "movement_dy",
+    "movement_displacement_known",
+    "movement_cost",
+    "movement_cost_known",
     *SPELL_FEATURES,
 )
 
@@ -243,6 +251,8 @@ class Encoder:
         slots = {ref: slot for slot, ref in enumerate(self.refs)}
         spell_vectors: dict[int, tuple[float, ...]] = {}
         for index, choice in enumerate(choices):
+            movement = choice.movement
+            destination = movement.destination if movement else None
             descriptor_key = id(choice.spell)
             if descriptor_key not in spell_vectors:
                 spell_vectors[descriptor_key] = spell_features(choice.spell)
@@ -268,6 +278,13 @@ class Encoder:
                     / 10
                     for group in ("own", "ally", "enemy")
                 ),
+                destination.x / 24 if destination else 0.0,
+                destination.y / 24 if destination else 0.0,
+                float(destination is not None),
+                movement.displacement[0] if movement else 0.0,
+                movement.displacement[1] if movement else 0.0,
+                float(movement is not None),
+                *_known(movement.cost if movement else None, 24),
                 *spell_vectors[descriptor_key],
             )
             for order, ref in enumerate(choice.selected_refs):
@@ -311,6 +328,15 @@ def encoder_manifest() -> dict[str, object]:
             "armor_class": 30,
             "round": 100,
             "target_counts": 10,
+            "movement_cost_grid_units": 24,
+            "movement_displacement_cells": 1,
+        },
+        "movement": {
+            "schema": "advertised-grid-step-v1",
+            "destination": "current_disclosed_actor_position_plus_displacement",
+            "cost": "advertised_grid_movement_units_not_euclidean_distance",
+            "missing_information": "explicit_known_flags",
+            "availability": "player_safe_attempt_no_private_legality_probe",
         },
         "spell_selection": {
             "schema": "complete-cast-v1",
@@ -348,7 +374,6 @@ def encoder_manifest() -> dict[str, object]:
             "type",
             "event_sequence",
             "initiative_order",
-            "movement_direction",
             "optional_decision_context",
         ],
     }

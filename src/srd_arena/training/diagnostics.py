@@ -89,6 +89,7 @@ class EpisodeRecorder:
                 "spell": c.spell.spell_id if c.spell else None,
                 "target": c.target_ref,
                 "aim": c.aim,
+                "movement": json_value(c.movement),
                 "amount": c.amount,
                 "affected_refs": c.affected_refs,
                 "selected_refs": c.selected_refs,

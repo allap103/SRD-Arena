@@ -72,12 +72,19 @@ intervals use `(lower, upper]`; zero is `[0, 0]`. With
 interval excludes 1. Temporary HP is separate. `hidden` yields null, never zero.
 A stale row carries its last admitted value, not the current hidden value.
 
-`filtered-observation-v5` has a fixed layout for the supported slice. Properties
+`filtered-observation-v6` has a fixed layout for the supported slice. Properties
 whose only supported mode is `hidden` have no output field. Supported optional
 fields use null when hidden/unknown; `knowledge` distinguishes current,
 last-known and unknown creature rows. Resolved policy metadata distinguishes
 hidden fields from unknown values. Health has nullable `current`, `maximum`,
 and `interval` members, with only the selected representation populated.
+
+Allied one-cell `move` actions carry a nullable `movement` descriptor with
+`displacement` (dx/dy in grid cells), `destination` (x/y or null), and `cost`
+(advertised grid movement units or null). It is command semantics available
+even in the minimal profile. A diagonal normally costs one unit, and terrain or
+crawling can increase it. The destination uses only a disclosed current actor
+position. This is not a hidden-occupancy or successful-movement preview.
 
 Permitted allied AoE spell actions carry a nullable `area_template`: shape,
 point or directional placement, size in squares, optional line width and

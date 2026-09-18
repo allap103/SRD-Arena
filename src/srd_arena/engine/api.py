@@ -34,6 +34,7 @@ from .gameplay_observation_models import (
     GameplayObservation,
     GameplayTeamObservation,
 )
+from .movement_observations import MovementStepObservation
 from .observation_policy import ObservationPolicy
 from .observations import (
     ActionObservation,
@@ -116,6 +117,7 @@ __all__ = [
     "InitiativeObservation",
     "InventoryItemObservation",
     "KnowledgeState",
+    "MovementStepObservation",
     "ObservationPolicy",
     "OngoingEffectObservation",
     "PlayerCommandResult",

@@ -9,6 +9,7 @@ from .gameplay_observation_models import (
     GameplayCreatureObservation,
     GameplayObservation,
 )
+from .movement_observations import MovementStepObservation, movement_step
 from .observation_models import (
     ActionObservation,
     DecisionObservation,
@@ -30,7 +31,7 @@ from .player_observation_models import (
 from .spell_capability_observations import SpellCapabilityObservation
 from .spell_cast_observation_models import SpellCastOptions
 
-FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v5"
+FILTERED_OBSERVATION_SCHEMA_ID = "filtered-observation-v6"
 
 
 @dataclass(frozen=True)
@@ -112,6 +113,7 @@ class FilteredAction:
     spell: SpellCapabilityObservation | None = None
     area_template: AreaTemplateObservation | None = None
     spell_cast: SpellCastOptions | None = None
+    movement: MovementStepObservation | None = None
 
 
 @dataclass(frozen=True)
@@ -234,6 +236,9 @@ class PolicyProjector:
                 ref for ref, group in groups.items() if group != "enemy"
             ),
         )
+        positions = {
+            row.creature_ref: row.position for row in rows if row.knowledge == "current"
+        }
         return FilteredObservation(
             FILTERED_OBSERVATION_SCHEMA_ID,
             self.perspective_creature_ref,
@@ -267,6 +272,9 @@ class PolicyProjector:
                     (descriptor := self._spell_descriptor(snapshot, a, groups)),
                     self._area_template(a, descriptor),
                     a.spell_cast,
+                    movement_step(a, positions.get(a.creature_ref))
+                    if groups.get(a.creature_ref) in {"own", "ally"}
+                    else None,
                 )
                 for a in actions
             ),

@@ -80,8 +80,8 @@ Reaction and D20 choices after submission remain normal observed game decisions.
 
 ## Compatibility and checks
 
-Current schemas: `filtered-observation-v5`, `experimental-candidates-v5`,
-`experimental-encoder-v5`, `entity-candidate-actor-critic-v3`.
+Current schemas: `filtered-observation-v6`, `experimental-candidates-v6`,
+`experimental-encoder-v6`, `entity-candidate-actor-critic-v3`.
 Start fresh training; old checkpoints are rejected, not converted or deleted.
 The headless protocol now accepts `cast_spell`; the former target-edit,
 allocation-edit, confirm and cancel commands have been removed.

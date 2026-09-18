@@ -7,13 +7,14 @@ from srd_arena.engine.api import (
     CastSpell,
     FilteredObservation,
     GameCommand,
+    MovementStepObservation,
     SelectAction,
     SpellCapabilityObservation,
     SpellCastOptions,
     area_aims,
 )
 
-ACTION_SCHEMA_ID = "experimental-candidates-v5"
+ACTION_SCHEMA_ID = "experimental-candidates-v6"
 
 
 @dataclass(frozen=True)
@@ -33,6 +34,7 @@ class Candidate:
     allocations: tuple[tuple[str, int], ...] = ()
     cast_options: SpellCastOptions | None = None
     cast_complete: bool = True
+    movement: MovementStepObservation | None = None
 
 
 def candidates(
@@ -134,7 +136,11 @@ def candidates(
                 f"Unsupported action configuration: {action.required_configuration}"
             )
         else:
-            result.append(Candidate(SelectAction(action.id, decision), *base))
+            result.append(
+                Candidate(
+                    SelectAction(action.id, decision), *base, movement=action.movement
+                )
+            )
         if len(result) > maximum:
             raise ValueError(f"Decision exceeds {maximum} action candidates")
     descriptors = {a.id: a.spell for a in observation.action_details}

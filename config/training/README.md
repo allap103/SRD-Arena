@@ -252,7 +252,32 @@ no engine add/remove/confirm steps. See [complete-casts.md](complete-casts.md). 
 are never computed by probing hidden state. The original decision token stays
 attached to each command. Candidate order is not a model feature.
 
-Encoder v5 consumes `config/observations/training.yaml`. Each spell candidate
+Encoder v6 adds one-cell movement destinations (x/y divided by 24), signed
+displacements (dx/dy in cells), and advertised movement cost (grid units divided
+by 24), each with a corresponding known flag. A diagonal normally costs one
+grid unit; terrain, crawling and other engine modifiers change the advertised
+cost. Movement metadata comes from the player-safe filtered action descriptor,
+never action IDs or labels. Distinct directions now produce distinct inputs.
+These remain attempts: no private occupancy or future move-and-cast outcome is
+revealed. Selected and top-choice movement descriptors are included in traces.
+
+This input change requires a fresh run; the 2,500-episode `goblin-reward-v2`
+checkpoint uses encoder v5 and cannot resume/evaluate with v6. Its files are
+preserved; use commit `173265e` in a separate checkout for old-model playback.
+For a fresh movement-aware experiment:
+
+```bash
+uv run --extra training --extra observability srd-arena-train \
+  --config config/training/goblin_pressure.yaml \
+  --run-dir runs/goblin-movement-v6 --episodes 2500 --device cuda \
+  --progress-interval 1 --trace-every 10 --tensorboard
+```
+
+Remaining resource balances, turn budgets and conditions are still omitted from
+the numerical state. This change adds movement semantics only; reward weights
+and action availability are unchanged.
+
+Encoder v6 consumes `config/observations/training.yaml`. Each spell candidate
 includes the existing identity/cost/range/save descriptors and numerical summaries
 of its `spell-mechanics-v1` tree. Features distinguish outcome branches for damage,
 healing, temporary HP and conditions, plus concentration, duration, repeat saves,
@@ -273,13 +298,13 @@ The semantic descriptor preserves more detail than the numeric summary. Arbitrar
 requirements, choice interactions, custom-rule parameters and contextual feature
 modifiers are not fully interpreted numerically. The encoder also omits terrain
 channels, appearance/type/size, initiative order, event sequences, optional decision
-context and movement directions. Candidates can still collide when only omitted
+context. Candidates can still collide when only omitted
 features differ. Coverage predicts initial geometric membership only; future
 persistent-area occupancy and move-and-cast plans are not implemented. Aims remain
 integer coordinates. The manifest records feature order, scales and these limits.
 
 The new coverage semantics and observation/action schemas require fresh training.
-Existing v1–v4 encoder checkpoints are rejected by schema/manifest validation,
+Existing v1–v5 encoder checkpoints are rejected by schema/manifest validation,
 including for resume. The historical 150-episode results above belong to v1 and are not
 evidence for this encoder. The original experiment is saved in commit `ba20684`.
 No historical run files are rewritten by this change.
