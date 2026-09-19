@@ -2,8 +2,7 @@
 
 SRD Arena is a Python combat simulator for the 2024 rules represented by
 SRD 5.2.1. It provides an interactive PySide6 GUI and a typed, frontend-neutral
-application interface intended for simulations and future machine-learning
-integration.
+engine interface for simulations and experimental reinforcement learning.
 
 The project is under active development. Its implemented combat rules and
 authored content cover only partial functionality.
@@ -44,9 +43,12 @@ team perception; advanced modes fail validation until implemented. See the
 
 ## Experimental RL training
 
-The `training` extra provides a PyTorch learner and a numerical, in-process RL
-environment for overfitting one encounter. Start with the
-[training instructions](config/training/README.md). To watch a saved model play:
+The experimental training foundation includes a PyTorch learner with CPU/CUDA
+support, numerical observations, configurable terminal rewards, checkpoint
+resume, seeded evaluation, and model playback. It currently trains one Warlock
+in a fixed encounter, with other combatants driven by scripted controllers.
+Start with the [training instructions](config/training/README.md) to create a
+checkpoint. To watch a saved model play:
 
 ```sh
 uv run --extra training srd-arena-watch --run-dir runs/first-experiment
@@ -54,13 +56,31 @@ uv run --extra training srd-arena-watch --run-dir runs/first-experiment
 
 The spectator GUI has pause, single-step, restart, and playback delay controls.
 
+The optional `observability` extra adds TensorBoard learning metrics and a
+Streamlit inspector for learning curves, combat summaries, individual turns,
+and evaluation comparisons:
+
+```sh
+uv run --extra training --extra observability srd-arena-inspect --runs-dir runs
+```
+
+Policies remain experimental and can win while wasting spells and movement.
+Broader tactical competence and generalization remain future work. The
+[matched-budget evaluation](config/training/experiments/context-v7-results.md)
+records those limitations and the next proposed experiment. Resume preserves
+the original training settings; changing schemas or learning settings requires
+a fresh run. Checkpoints and detailed logs stay in the ignored `runs/` directory.
+
 ## Quality checks
 
-    uv sync --extra training --dev
-    uv run --extra training pytest -q
-    uv run --extra training mypy --strict .
-    uv run ruff check .
-    uv run ruff format --check .
+    uv sync --frozen --dev --extra training --extra observability
+    QT_QPA_PLATFORM=offscreen uv run --extra training --extra observability pytest -q
+    uv run --extra training --extra observability mypy --strict .
+    uv run --extra training --extra observability ruff check .
+    uv run --extra training --extra observability ruff format --check .
+    uv run --extra training --extra observability interrogate src/srd_arena
+
+Type checking excludes generated files under `runs/`.
 
 ## Architecture
 
@@ -99,4 +119,3 @@ potions used by authored encounters.
 
 Monster attacks remain self-contained stat-block actions. A monster's named
 weapon attack does not depend on the player-character item/loadout model.
-

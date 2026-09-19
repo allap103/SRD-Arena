@@ -49,6 +49,10 @@ dev = [
 addopts = ["--doctest-modules"]
 testpaths = ["tests", "src/srd_arena"]
 
+[tool.mypy]
+# Generated experiment artifacts and local orchestration scripts are not source.
+exclude = ['^runs/']
+
 [tool.ruff]
 target-version = "py314"
 
