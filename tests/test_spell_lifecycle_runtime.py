@@ -39,7 +39,7 @@ from srd_arena.domain.encounters.effect_lifecycle.concentration import (
     resolve_concentration_damage,
 )
 from srd_arena.domain.encounters.effect_lifecycle.lifecycle_events import (
-    resolve_spell_lifecycle_event,
+    resolve_effect_lifecycle_event,
 )
 from srd_arena.domain.encounters.effect_lifecycle.removal import (
     remove_ongoing_effects,
@@ -49,9 +49,6 @@ from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
 )
 from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
     expire_ongoing_effects_for_turn_start,
-)
-from srd_arena.domain.encounters.encounter import (
-    EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.rule_queries import has_condition_save_advantage
@@ -67,6 +64,7 @@ from tests.encounter_runtime_support import (
 )
 from tests.encounter_runtime_support import (
     TACTICAL_ENCOUNTER_DIR,
+    complete_spell_action,
     is_spell_action,
     player_first_initiative,
     spell_payload,
@@ -99,7 +97,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -155,7 +153,7 @@ def test_hold_person_applies_concentration_and_ends_after_repeated_save() -> Non
 
 def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     effects = [
@@ -205,7 +203,7 @@ def test_one_target_repeat_save_does_not_end_multi_target_spell() -> None:
 
 def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -248,7 +246,7 @@ def test_ongoing_damage_resistance_is_removed_with_its_source() -> None:
 
 def test_condition_modifier_applies_to_repeated_saves() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -304,7 +302,7 @@ def test_condition_modifier_applies_to_repeated_saves() -> None:
 
 def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     before = active_movement_remaining(state)
@@ -345,7 +343,7 @@ def test_speed_modifier_adjusts_current_movement_and_reverts() -> None:
 
 def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -415,7 +413,7 @@ def test_heroism_immunity_and_turn_start_temporary_hit_points() -> None:
 
 def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -457,40 +455,14 @@ def test_upcast_hold_person_stages_and_resolves_multiple_targets() -> None:
             slot_level=3,
         )
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.current_decision().kind == "spell_targets"
-    assert caster.spellcasting.spell_slots_remaining[3] == 1
-    assert not any(
-        action.kind == "toggle_spell_target" and action.value == "goblin_3"
-        for action in state.available_actions()
-    )
     rejected = _ORCHESTRATOR.submit(
-        state,
-        EncounterAction(
-            "Add invalid target",
-            "toggle_spell_target",
-            "goblin_3",
-            id="crafted-invalid-spell-target",
-            creature_ref="player",
-        ),
+        state, complete_spell_action(initial, ("goblin_1", "goblin_3"))
     )
-    assert rejected.events[-1].data["success"] is False
-    assert rejected.events[-1].data["reason_code"] == ("target_creature_type_required")
-    assert "creature types: humanoid" in rejected.messages[-1][1]
-    add_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    assert rejected.events[-1].data["reason_code"] == "target_creature_type_required"
+    assert caster.spellcasting.spell_slots_remaining[3] == 1
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_2"))
     )
-    _ORCHESTRATOR.submit(state, add_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     assert resolved.paused_for_decision is False
     assert state.current_decision().kind == "turn"
@@ -504,7 +476,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
     None
 ):
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -522,38 +494,9 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
         for action in state.available_actions()
         if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.selected_target_refs == ["goblin_1"]
-    assert not any(
-        action.kind == "confirm_spell_targets" for action in state.available_actions()
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_1", "goblin_2"))
     )
-
-    for target_ref in ("goblin_1", "goblin_2"):
-        add_ray = next(
-            action
-            for action in state.available_actions()
-            if action.kind == "toggle_spell_target"
-            and action.value == target_ref
-            and action.id.endswith("-add")
-        )
-        _ORCHESTRATOR.submit(state, add_ray)
-
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.selected_target_refs == [
-        "goblin_1",
-        "goblin_1",
-        "goblin_2",
-    ]
-
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -574,7 +517,7 @@ def test_scorching_ray_allocates_repeated_targets_without_enumerating_combinatio
 
 def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -590,16 +533,13 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
         for action in state.available_actions()
         if is_spell_action(action, "scorching_ray", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
+    from srd_arena.frontends.gui.presenter import GamePresenter
 
-    cancel = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "cancel_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, cancel)
-
-    assert state.interrupts.pending_spell_cast is None
+    presenter = GamePresenter(session)
+    before = session.observe_gameplay()
+    assert presenter.select_action(initial.id) is not None
+    assert presenter.cancel_targeting() is not None
+    assert session.observe_gameplay() == before
     assert state.current_decision().kind == "turn"
     assert caster.spellcasting.spell_slots_remaining[2] == 1
     assert state.active_actions_remaining == 1
@@ -607,7 +547,7 @@ def test_staged_spell_targeting_can_be_cancelled_without_spending_resources() ->
 
 def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -640,7 +580,7 @@ def test_ray_of_sickness_combines_scaled_damage_and_timed_condition() -> None:
 
 def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -658,25 +598,9 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "eldritch_blast", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
-
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.maximum_targets == 3
-    for target_ref in ("goblin_1", "goblin_2"):
-        add_beam = next(
-            action
-            for action in state.available_actions()
-            if action.kind == "toggle_spell_target"
-            and action.value == target_ref
-            and action.id.endswith("-add")
-        )
-        _ORCHESTRATOR.submit(state, add_beam)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
+    resolved = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_1", "goblin_2"))
     )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     spell_event = next(event for event in resolved.events if event.type == "spell_cast")
     assert spell_event.data["target_refs"] == [
@@ -690,7 +614,7 @@ def test_eldritch_blast_uses_caster_level_for_beam_allocation() -> None:
 
 def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -743,7 +667,7 @@ def test_ice_knife_explodes_on_a_miss_and_scales_only_cold_damage() -> None:
 
 def test_weird_deals_damage_on_a_failed_repeat_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -773,7 +697,7 @@ def test_weird_deals_damage_on_a_failed_repeat_save() -> None:
 
 def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -808,7 +732,7 @@ def test_sleep_progresses_from_incapacitated_to_unconscious() -> None:
 
 def test_sleep_stages_choice_when_area_contains_multiple_creatures() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -824,24 +748,20 @@ def test_sleep_stages_choice_when_area_contains_multiple_creatures() -> None:
     state.creatures["goblin_3"].creature.current_health = 0
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
-    _choose_directional_spell(
-        session,
-        "Cast Sleep",
-        (origin.x, origin.y),
+    from srd_arena.frontends.gui.presenter import GamePresenter
+
+    presenter = GamePresenter(session)
+    option = next(
+        a for a in presenter.observation.scene.action_details if a.label == "Cast Sleep"
     )
-    assert state.current_decision().kind == "spell_targets"
-    remove_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    before = session.observe_gameplay()
+    assert presenter.aim_action(option.id, origin.x, origin.y) is not None
+    assert (
+        presenter.change_target("goblin_2", remove=True, source_trigger_id="sleep")
+        is not None
     )
-    _ORCHESTRATOR.submit(state, remove_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, confirm)
+    assert session.observe_gameplay() == before
+    assert presenter.confirm_targeting() is not None
 
     assert state.has_condition("goblin_1", Condition.INCAPACITATED)
     assert state.has_condition("goblin_2", Condition.INCAPACITATED) is False
@@ -865,7 +785,7 @@ def test_sleep_automatically_spares_ineligible_creature(
     reason: str,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -921,7 +841,7 @@ def test_sleep_automatically_spares_ineligible_creature(
 
 def test_charm_person_save_has_advantage_against_opponent() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -960,9 +880,9 @@ def test_charm_person_save_has_advantage_against_opponent() -> None:
     assert save["die"] == 20
 
 
-def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
+def test_adjacent_creature_can_spend_action_to_rouse_sleep_target() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1005,13 +925,13 @@ def test_adjacent_creature_can_spend_action_to_wake_sleep_target() -> None:
     action = next(
         action
         for action in creature_action_candidates(state, "goblin_2")
-        if action.kind == "wake_spell_target" and action.value == "goblin_1"
+        if action.kind == "rouse_spell_target" and action.value == "goblin_1"
     )
     result = execute_creature_action(state, action, state.current_decision())
 
     assert state.has_condition("goblin_1", Condition.UNCONSCIOUS) is False
     assert state.creatures["goblin_2"].actions_remaining == 0
-    assert any("wakes" in text for _, text in result.progress.messages)
+    assert any("rouses" in text for _, text in result.progress.messages)
 
 
 @pytest.mark.parametrize(
@@ -1027,7 +947,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
     event: str,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     target_ref = "goblin_1"
@@ -1062,7 +982,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
         origin_id=f"{definition_id}-cast",
     )
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         event,
         actor_ref=target_ref if event != "target_damaged" else "player",
@@ -1075,7 +995,7 @@ def test_spell_lifecycle_event_ends_effect_for_affected_target(
 
 def test_charm_ends_only_when_source_side_damages_target() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1109,7 +1029,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
         origin_id="charm-cast",
     )
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="goblin_2",
@@ -1117,7 +1037,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
     )
     assert state.has_condition("goblin_1", Condition.CHARMED)
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="player",
@@ -1128,7 +1048,7 @@ def test_charm_ends_only_when_source_side_damages_target() -> None:
 
 def test_hideous_laughter_damage_save_has_advantage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(
@@ -1169,7 +1089,7 @@ def test_hideous_laughter_damage_save_has_advantage() -> None:
     rolls = iter((1, 20))
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_damaged",
         actor_ref="player",
@@ -1182,7 +1102,7 @@ def test_hideous_laughter_damage_save_has_advantage() -> None:
 
 def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1221,7 +1141,7 @@ def test_hideous_laughter_prevents_target_from_removing_its_own_prone() -> None:
 
 def test_hideous_laughter_success_is_reported_as_a_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1261,7 +1181,7 @@ def test_new_concentration_replaces_the_previous_effect_tree() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
 
@@ -1309,7 +1229,7 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1343,8 +1263,10 @@ def test_casting_a_new_concentration_spell_logs_the_dropped_spell() -> None:
         if is_spell_action(action, "hold_person", target_ref="goblin_1")
     )
     _ORCHESTRATOR.submit(state, hold)
-    state.creatures["player"].actions_remaining = 1
-    state.creatures["player"].magic_actions_remaining = 1
+    # Replacing concentration with another slot-based spell needs a new turn.
+    advance_turn(state)
+    while state.current_decision().creature_ref != "player":
+        advance_turn(state)
     protection = next(
         action
         for action in state.available_actions()
@@ -1368,7 +1290,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution() -> None
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster_ref = state.current_decision().creature_ref
@@ -1420,6 +1342,7 @@ def test_somatic_invocation_failure_spends_resources_before_resolution() -> None
 
     assert caster.get_health() == initial_health
     assert caster.spellcasting.spell_slots_remaining[1] == 0
+    assert caster_ref in state.turn.spell_slot_users
     assert state.active_actions_remaining == 0
     assert not any(event.type == "spell_cast" for event in result.events)
     check = next(
@@ -1457,7 +1380,7 @@ def test_failed_damage_save_ends_concentration_and_its_conditions() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     apply_encounter_effects(

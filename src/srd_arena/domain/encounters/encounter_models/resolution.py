@@ -26,6 +26,7 @@ class CombatEvent:
     frame_id: str | None = None
     action_id: str | None = None
     data: dict[str, object] = field(default_factory=dict)
+    visible_by_team: tuple[tuple[str, frozenset[str]], ...] | None = None
 
 
 @dataclass
@@ -83,6 +84,8 @@ class ActionExecutionContext:
     action_id: str
     progress: EncounterProgress = field(default_factory=EncounterProgress)
     rejection: ActionRejection | None = None
+    reckless_attack_decision_checked: bool = False
+    d20_decisions_checked: bool = False
 
 
 @dataclass
@@ -142,6 +145,9 @@ class AttackOutcome:
     weapon_id: str | None = None
     weapon_name: str | None = None
     weapon_properties: tuple[str, ...] = ()
+    weapon_mastery: str | None = None
+    ability_modifier: int = 0
+    proficiency_bonus: int = 0
     additional_damage: int = 0
     additional_damage_details: tuple[dict[str, object], ...] = ()
     hit_effects: tuple[CapabilityEffect, ...] = ()
@@ -160,6 +166,37 @@ class DamageRerollRequest(DecisionRequest):
     attack: AttackOutcome
     triggered_effect: TriggeredEffect
     reaction: bool = False
+    original_damage_roll: DicePoolResult | None = None
+    alternate_damage_roll: DicePoolResult | None = None
+
+
+@dataclass
+class ParryRequest(DecisionRequest):
+    """A resolved hit waiting for its target's optional Parry reaction."""
+
+    action_id: str
+    attacker_ref: CreatureRef
+    target_ref: CreatureRef
+    attacker_label: str
+    target_label: str
+    attack_name: str | None
+    attacks_remaining: int
+    attack: AttackOutcome
+    reaction_name: str
+    armor_class_bonus: int
+    base_target_armor_class: int
+    on_hit_feature_ids: tuple[str, ...] = ()
+    reaction_attack: bool = False
+
+    @property
+    def would_prevent_hit(self) -> bool:
+        """Return whether the AC increase changes this hit into a miss."""
+
+        return (
+            not self.attack.critical_hit
+            and self.attack.attack_roll
+            < self.base_target_armor_class + self.armor_class_bonus
+        )
 
 
 @dataclass(frozen=True)
@@ -184,3 +221,5 @@ class AttackSource:
     additional_damage: tuple[DamageEffect, ...] = ()
     hit_effects: tuple[CapabilityEffect, ...] = ()
     reach_feet: int | None = None
+    ability: str | None = None
+    weapon_mastery: str | None = None

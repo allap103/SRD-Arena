@@ -13,13 +13,17 @@ from srd_arena.domain.encounters.encounter_models.resolution import EncounterPro
 from srd_arena.engine.session import Session
 
 FULL_CONTROL_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 
 
 def _encounter_state() -> EncounterState:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     return session.encounter_state
 

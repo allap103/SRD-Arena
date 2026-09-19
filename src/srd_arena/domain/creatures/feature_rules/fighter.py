@@ -21,6 +21,7 @@ def resolve_fighter_feature(
     heal: Callable[[int], int],
     *,
     actor_ref: str,
+    round_number: int = 1,
 ) -> ActionResolutionResult | None:
     """Execute the supported fighter feature identified by an action grant.
 
@@ -40,6 +41,7 @@ def resolve_fighter_feature(
     (1, {'action_surge': 0})
     """
 
+    del round_number
     if feature_id == "second_wind":
         return _resolve_second_wind(
             creature,
@@ -69,9 +71,7 @@ def _resolve_second_wind(
     dice_total = roll.subtotal
     healing_total = roll.total
     applied_healing = heal(healing_total)
-    creature.feature_uses_remaining["second_wind"] = (
-        creature.feature_uses_remaining.get("second_wind", 0) - 1
-    )
+    uses_remaining = creature.spend_feature_use("second_wind")
     dice_expression = f"{dice_count}d{dice_sides}"
     roll_detail = {
         "dice": dice_expression,
@@ -104,16 +104,12 @@ def _resolve_second_wind(
                 },
             )
         ],
-        resource_updates={
-            "second_wind": creature.feature_uses_remaining["second_wind"]
-        },
+        resource_updates={"second_wind": uses_remaining},
     )
 
 
 def _resolve_action_surge(creature: Creature) -> ActionResolutionResult:
-    creature.feature_uses_remaining["action_surge"] = (
-        creature.feature_uses_remaining.get("action_surge", 0) - 1
-    )
+    uses_remaining = creature.spend_feature_use("action_surge")
     return ActionResolutionResult(
         definition_id="action_surge",
         definition_name="Action Surge",
@@ -122,9 +118,7 @@ def _resolve_action_surge(creature: Creature) -> ActionResolutionResult:
             ("system", "You steel yourself and gain an additional Action this turn."),
         ],
         effects=[],
-        resource_updates={
-            "action_surge": creature.feature_uses_remaining["action_surge"]
-        },
+        resource_updates={"action_surge": uses_remaining},
         details=FeatureResolutionDetails(granted_actions=1),
     )
 

@@ -2,6 +2,7 @@
 
 from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
+    CompelledTurnEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
     DamageImmunityEffect,
@@ -73,6 +74,7 @@ def persistent_spell_effect_polarity(
             (
                 ConditionImmunityEffect,
                 ConditionSaveAdvantageEffect,
+                CompelledTurnEffect,
                 DamageImmunityEffect,
                 DamageReductionEffect,
                 DamageResistanceEffect,
@@ -83,7 +85,11 @@ def persistent_spell_effect_polarity(
             beneficial = True
         elif isinstance(
             effect,
-            (ProhibitReactionsEffect, TurnEconomyRestrictionEffect),
+            (
+                CompelledTurnEffect,
+                ProhibitReactionsEffect,
+                TurnEconomyRestrictionEffect,
+            ),
         ):
             harmful = True
 

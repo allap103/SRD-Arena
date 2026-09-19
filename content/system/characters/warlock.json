@@ -1,0 +1,327 @@
+{
+  "id": "warlock",
+  "name": "Canonical Warlock",
+  "species": {"name": "Human", "source": "XPHB"},
+  "background": {"name": "Wayfarer", "source": "XPHB"},
+  "class_ref": {"name": "Warlock", "source": "XPHB"},
+  "snapshots": [
+    {
+      "level": 1,
+      "feats": [
+        {"name": "Lucky", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "creature": {
+        "id": "canonical_warlock",
+        "name": "Canonical Warlock",
+        "description": "The fixed Warlock build used by the RL curriculum.",
+        "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
+        "attributes": {
+          "base_health": 8,
+          "level": 1,
+          "strength": 8,
+          "dexterity": 16,
+          "constitution": 14,
+          "wisdom": 10,
+          "intelligence": 8,
+          "charisma": 17,
+          "base_armor_class": 10
+        },
+        "inventory": [
+          {"name": "Leather Armor", "source": "XPHB"},
+          {"name": "Sickle", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"}
+        ],
+        "equipment": {
+          "armor": {"name": "Leather Armor", "source": "XPHB"},
+          "right_hand": {"name": "Sickle", "source": "XPHB"},
+          "left_hand": {"name": "Dagger", "source": "XPHB"}
+        },
+        "spellcasting": {
+          "ability": "cha",
+          "caster_progression": "pact",
+          "cantrips_known": 2,
+          "spell_count": 2,
+          "spell_slots": {"1": 1}
+        },
+        "spells_known": [
+          {"name": "Eldritch Blast", "source": "XPHB"},
+          {"name": "Mind Sliver", "source": "XPHB"},
+          {"name": "Hex", "source": "XPHB"},
+          {"name": "Hideous Laughter", "source": "XPHB"}
+        ],
+        "optional_features": [
+          {"name": "Eldritch Mind", "source": "XPHB"}
+        ]
+      }
+    },
+    {
+      "level": 2,
+      "feats": [
+        {"name": "Lucky", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "creature": {
+        "id": "canonical_warlock",
+        "name": "Canonical Warlock",
+        "description": "The fixed Warlock build used by the RL curriculum.",
+        "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
+        "attributes": {
+          "base_health": 13,
+          "level": 2,
+          "strength": 8,
+          "dexterity": 16,
+          "constitution": 14,
+          "wisdom": 10,
+          "intelligence": 8,
+          "charisma": 17,
+          "base_armor_class": 10
+        },
+        "inventory": [
+          {"name": "Leather Armor", "source": "XPHB"},
+          {"name": "Sickle", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"}
+        ],
+        "equipment": {
+          "armor": {"name": "Leather Armor", "source": "XPHB"},
+          "right_hand": {"name": "Sickle", "source": "XPHB"},
+          "left_hand": {"name": "Dagger", "source": "XPHB"}
+        },
+        "spellcasting": {
+          "ability": "cha",
+          "caster_progression": "pact",
+          "cantrips_known": 2,
+          "spell_count": 3,
+          "spell_slots": {"1": 2}
+        },
+        "spells_known": [
+          {"name": "Eldritch Blast", "source": "XPHB"},
+          {"name": "Mind Sliver", "source": "XPHB"},
+          {"name": "Hex", "source": "XPHB"},
+          {"name": "Hideous Laughter", "source": "XPHB"},
+          {"name": "Armor of Agathys", "source": "XPHB"}
+        ],
+        "optional_features": [
+          {"name": "Eldritch Mind", "source": "XPHB"},
+          {"name": "Agonizing Blast", "source": "XPHB"},
+          {"name": "Repelling Blast", "source": "XPHB"}
+        ]
+      }
+    },
+    {
+      "level": 3,
+      "subclass_ref": {"name": "Fiend Patron", "source": "XPHB"},
+      "feats": [
+        {"name": "Lucky", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "deferred_options": ["spell:suggestion"],
+      "creature": {
+        "id": "canonical_warlock",
+        "name": "Canonical Warlock",
+        "description": "The fixed Warlock build used by the RL curriculum.",
+        "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
+        "attributes": {
+          "base_health": 18,
+          "level": 3,
+          "strength": 8,
+          "dexterity": 16,
+          "constitution": 14,
+          "wisdom": 10,
+          "intelligence": 8,
+          "charisma": 17,
+          "base_armor_class": 10
+        },
+        "inventory": [
+          {"name": "Studded Leather Armor", "source": "XPHB"},
+          {"name": "Sickle", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"}
+        ],
+        "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
+          "right_hand": {"name": "Sickle", "source": "XPHB"},
+          "left_hand": {"name": "Dagger", "source": "XPHB"}
+        },
+        "spellcasting": {
+          "ability": "cha",
+          "caster_progression": "pact",
+          "cantrips_known": 2,
+          "spell_count": 4,
+          "spell_slots": {"2": 2}
+        },
+        "spells_known": [
+          {"name": "Eldritch Blast", "source": "XPHB"},
+          {"name": "Mind Sliver", "source": "XPHB"},
+          {"name": "Hex", "source": "XPHB"},
+          {"name": "Hideous Laughter", "source": "XPHB"},
+          {"name": "Armor of Agathys", "source": "XPHB"},
+          {"name": "Hold Person", "source": "XPHB"},
+          {"name": "Burning Hands", "source": "XPHB"},
+          {"name": "Command", "source": "XPHB"},
+          {"name": "Scorching Ray", "source": "XPHB"}
+        ],
+        "optional_features": [
+          {"name": "Eldritch Mind", "source": "XPHB"},
+          {"name": "Agonizing Blast", "source": "XPHB"},
+          {"name": "Repelling Blast", "source": "XPHB"}
+        ]
+      }
+    },
+    {
+      "level": 4,
+      "subclass_ref": {"name": "Fiend Patron", "source": "XPHB"},
+      "feats": [
+        {"name": "Lucky", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"}
+      ],
+      "deferred_options": ["spell:suggestion", "spell:minor_illusion"],
+      "creature": {
+        "id": "canonical_warlock",
+        "name": "Canonical Warlock",
+        "description": "The fixed Warlock build used by the RL curriculum.",
+        "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
+        "attributes": {
+          "base_health": 23,
+          "level": 4,
+          "strength": 8,
+          "dexterity": 16,
+          "constitution": 14,
+          "wisdom": 10,
+          "intelligence": 8,
+          "charisma": 19,
+          "base_armor_class": 10
+        },
+        "inventory": [
+          {"name": "Studded Leather Armor", "source": "XPHB"},
+          {"name": "Sickle", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"}
+        ],
+        "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
+          "right_hand": {"name": "Sickle", "source": "XPHB"},
+          "left_hand": {"name": "Dagger", "source": "XPHB"}
+        },
+        "spellcasting": {
+          "ability": "cha",
+          "caster_progression": "pact",
+          "cantrips_known": 3,
+          "spell_count": 5,
+          "spell_slots": {"2": 2}
+        },
+        "spells_known": [
+          {"name": "Eldritch Blast", "source": "XPHB"},
+          {"name": "Mind Sliver", "source": "XPHB"},
+          {"name": "Hex", "source": "XPHB"},
+          {"name": "Hideous Laughter", "source": "XPHB"},
+          {"name": "Armor of Agathys", "source": "XPHB"},
+          {"name": "Hold Person", "source": "XPHB"},
+          {"name": "Misty Step", "source": "XPHB"},
+          {"name": "Burning Hands", "source": "XPHB"},
+          {"name": "Command", "source": "XPHB"},
+          {"name": "Scorching Ray", "source": "XPHB"}
+        ],
+        "optional_features": [
+          {"name": "Eldritch Mind", "source": "XPHB"},
+          {"name": "Agonizing Blast", "source": "XPHB"},
+          {"name": "Repelling Blast", "source": "XPHB"}
+        ]
+      }
+    },
+    {
+      "level": 5,
+      "subclass_ref": {"name": "Fiend Patron", "source": "XPHB"},
+      "feats": [
+        {"name": "Lucky", "source": "XPHB"},
+        {"name": "Alert", "source": "XPHB"},
+        {"name": "Tough", "source": "XPHB"}
+      ],
+      "deferred_options": ["spell:suggestion", "spell:minor_illusion"],
+      "creature": {
+        "id": "canonical_warlock",
+        "name": "Canonical Warlock",
+        "description": "The fixed Warlock build used by the RL curriculum.",
+        "token_image": "tokens/human_warlock.png",
+        "appearance": {
+          "spellcasting_focus_label": "Orb",
+          "spellcasting_focus_kind": "arcane",
+          "apparent_creature_type": "Humanoid"
+        },
+        "attributes": {
+          "base_health": 28,
+          "level": 5,
+          "strength": 8,
+          "dexterity": 16,
+          "constitution": 14,
+          "wisdom": 10,
+          "intelligence": 8,
+          "charisma": 19,
+          "base_armor_class": 10
+        },
+        "inventory": [
+          {"name": "Studded Leather Armor", "source": "XPHB"},
+          {"name": "Sickle", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"},
+          {"name": "Dagger", "source": "XPHB"}
+        ],
+        "equipment": {
+          "armor": {"name": "Studded Leather Armor", "source": "XPHB"},
+          "right_hand": {"name": "Sickle", "source": "XPHB"},
+          "left_hand": {"name": "Dagger", "source": "XPHB"}
+        },
+        "spellcasting": {
+          "ability": "cha",
+          "caster_progression": "pact",
+          "cantrips_known": 3,
+          "spell_count": 6,
+          "spell_slots": {"3": 2}
+        },
+        "spells_known": [
+          {"name": "Eldritch Blast", "source": "XPHB"},
+          {"name": "Mind Sliver", "source": "XPHB"},
+          {"name": "Hex", "source": "XPHB"},
+          {"name": "Hideous Laughter", "source": "XPHB"},
+          {"name": "Armor of Agathys", "source": "XPHB"},
+          {"name": "Hold Person", "source": "XPHB"},
+          {"name": "Misty Step", "source": "XPHB"},
+          {"name": "Hypnotic Pattern", "source": "XPHB"},
+          {"name": "Burning Hands", "source": "XPHB"},
+          {"name": "Command", "source": "XPHB"},
+          {"name": "Scorching Ray", "source": "XPHB"},
+          {"name": "Fireball", "source": "XPHB"},
+          {"name": "Stinking Cloud", "source": "XPHB"}
+        ],
+        "optional_features": [
+          {"name": "Eldritch Mind", "source": "XPHB"},
+          {"name": "Agonizing Blast", "source": "XPHB"},
+          {"name": "Repelling Blast", "source": "XPHB"},
+          {"name": "Fiendish Vigor", "source": "XPHB"},
+          {"name": "Lessons of the First Ones", "source": "XPHB"}
+        ]
+      }
+    }
+  ]
+}

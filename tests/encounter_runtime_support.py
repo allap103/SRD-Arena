@@ -27,13 +27,25 @@ ORCHESTRATOR = EncounterOrchestrator()
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 MULTIATTACK_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "multiattack_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "multiattack_showcase"
 )
 STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "stat_block_action_showcase"
 )
 CONDITIONS_SHOWCASE_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "conditions_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "conditions_showcase"
 )
 ROLL_INITIATIVE = EncounterState.roll_initiative
 
@@ -115,14 +127,33 @@ def action_id_by_label(session: Session, label: str) -> str:
     """Return the unique advertised action whose label matches exactly."""
 
     return next(
-        action.id for action in session.read().action_options if action.label == label
+        action.id for action in session._read().action_options if action.label == label
     )
+
+
+def keep_alert_initiative(session: Session) -> None:
+    """Resolve every initial Alert choice by retaining the rolled Initiative.
+
+    Tests focused on later combat mechanics can use this helper to cross the
+    real pre-turn decision boundary without deleting or mutating its frames.
+    """
+
+    session._read()
+    state = session.encounter_state
+    assert state is not None
+    while state.current_decision().kind == "initiative_swap":
+        keep = next(
+            option
+            for option in session._read().action_options
+            if option.kind == "keep_initiative"
+        )
+        session._choose(keep.id)
 
 
 def action_labels(session: Session) -> list[str]:
     """Return the labels of all actions in the session's current decision."""
 
-    return [action.label for action in session.read().action_options]
+    return [action.label for action in session._read().action_options]
 
 
 def action_id_by_prefix(session: Session, prefix: str) -> str:
@@ -130,7 +161,7 @@ def action_id_by_prefix(session: Session, prefix: str) -> str:
 
     return next(
         action.id
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.label.startswith(prefix)
     )
 
@@ -140,7 +171,7 @@ def action_id(session: Session, kind: str, value: object) -> str:
 
     return next(
         action.id
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.kind == kind
         and isinstance(action.details, DirectTargetOptionDetails)
         and action.details.target_ref == value
@@ -151,7 +182,7 @@ def active_creature(session: Session) -> Creature:
     """Return the active creature from a concrete integration-test session."""
 
     if session.encounter_state is None:
-        session.read()
+        session._read()
     state = session.encounter_state
     assert state is not None
     return state.active_creature_state.creature
@@ -163,9 +194,9 @@ def choose_advertised_action(
 ) -> EngineOutcome:
     """Submit a domain action through the engine's advertised-ID boundary."""
 
-    advertised_ids = {option.id for option in session.read().action_options}
+    advertised_ids = {option.id for option in session._read().action_options}
     assert action.id in advertised_ids
-    return session.choose(action.id)
+    return session._choose(action.id)
 
 
 def use_deterministic_dice(
@@ -192,11 +223,50 @@ def choose_directional_spell(
 ) -> EngineOutcome:
     """Configure a directional spell by aiming at a grid-cell center."""
 
-    scene_view = session.read()
+    scene_view = session._read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.configure_action(
+    return session._configure_action(
         action.id,
         ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
+    )
+
+
+def complete_spell_action(
+    action: EncounterAction,
+    targets: tuple[str, ...],
+    allocations: tuple[tuple[str, int], ...] = (),
+    aim: tuple[float, float] | None = None,
+) -> EncounterAction:
+    """Supply all choices to a domain spell action before submitting it."""
+    from dataclasses import replace
+
+    assert isinstance(action.value, SpellActionPayload)
+    return replace(
+        action,
+        aim_committed=True,
+        value=replace(
+            action.value,
+            target_refs=targets,
+            healing_allocations=allocations,
+            aim_point=aim if aim is not None else action.value.aim_point,
+            selection_complete=True,
+        ),
+    )
+
+
+def submit_complete_spell(
+    session: Session,
+    action_id: str,
+    targets: tuple[str, ...],
+    allocations: tuple[tuple[str, int], ...] = (),
+    aim: tuple[float, float] | None = None,
+) -> EngineOutcome:
+    """Submit one complete cast through the engine configuration boundary."""
+    from srd_arena.engine.queries import ActionSpellCast
+
+    session._read()
+    return session._configure_action(
+        action_id, ActionSpellCast(targets, allocations, aim)
     )

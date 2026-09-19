@@ -18,6 +18,7 @@ from ...encounter_models.actions import (
     ActionCost,
     EncounterAction,
 )
+from ...rule_queries import InvocationStartContext, invocation_prohibitions
 from ...rule_queries.permissions import action_compatibility, reaction_eligibility
 
 if TYPE_CHECKING:
@@ -50,10 +51,27 @@ def spell_cast_block_reason_for(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None = None,
+    consumes_spell_slot: bool = True,
 ) -> str | None:
     """Return the rule reason that prevents this creature from casting a spell."""
 
     creature_ref = state.current_decision().creature_ref
+    if (
+        consumes_spell_slot
+        and spell.level > 0
+        and creature_ref in state.turn.spell_slot_users
+    ):
+        return "You have already expended a spell slot to cast a spell this turn."
+    prohibitions = invocation_prohibitions(
+        state,
+        InvocationStartContext(
+            creature_ref,
+            "cast_spell",
+            spell.components.required,
+        ),
+    )
+    if prohibitions:
+        return prohibitions[0].message
     compatibility = action_compatibility(
         state,
         creature_ref,
@@ -78,6 +96,7 @@ def spell_cast_block_reason_for(
             "spell",
         ).allowed,
         cast_level=cast_level,
+        consumes_spell_slot=consumes_spell_slot,
     )
 
 
@@ -118,6 +137,7 @@ def spend_spell_resources(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None = None,
+    consumes_spell_slot: bool = True,
 ) -> None:
     """Commit turn economy and spell-slot cost for an accepted casting.
 
@@ -134,6 +154,8 @@ def spend_spell_resources(
     >>> state = SimpleNamespace(
     ...     active_actions_remaining=1, active_magic_actions_remaining=1,
     ...     active_creature_state=actor,
+    ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
+    ...     turn=SimpleNamespace(spell_slot_users=set()),
     ...     active_bonus_action_available=True, active_reaction_available=True,
     ... )
     >>> spend_spell_resources(state, casting, spell, ActionCost(action=1))
@@ -148,6 +170,7 @@ def spend_spell_resources(
         state.active_bonus_action_available = False
     if cost.reaction > 0:
         state.active_reaction_available = False
-    if spell.level > 0:
+    if consumes_spell_slot and spell.level > 0:
         slot_level = cast_level if cast_level is not None else spell.level
-        spellcasting.spell_slots_remaining[slot_level] -= 1
+        spellcasting.spend_slot(slot_level)
+        state.turn.spell_slot_users.add(state.current_decision().creature_ref)

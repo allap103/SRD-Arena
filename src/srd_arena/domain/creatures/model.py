@@ -1,20 +1,35 @@
 """Aggregate persistent creature statistics, possessions, features, and health."""
 
 import re
+from collections.abc import Mapping
 from dataclasses import dataclass, field
 from typing import assert_never
 
 from srd_arena.domain.capabilities import LimitedUsePool
 from srd_arena.domain.effects.triggered import TriggeredEffect
+from srd_arena.domain.equipment import ArmorCategory, Item
 from srd_arena.domain.rolls.saving_throws import Ability
 
+from .appearance import ObservableAppearance
 from .attributes import Attributes
+from .character_profiles import CharacterProfile
 from .class_features import ClassFeature
 from .classes import ClassRef
 from .combat_profile import CombatProfile
 from .equipment import Equipment
 from .inventory import Inventory
 from .multiattack import Multiattack
+from .resources import (
+    ResourceRecovery,
+    RestType,
+)
+from .resources import (
+    recover_resources as recover_creature_resources,
+)
+from .resources import refresh_daily_resources as refresh_creature_daily_resources
+from .resources import (
+    spend_feature_use as spend_creature_feature_use,
+)
 from .spellcasting import Spellcasting
 from .stat_block_actions import DeclaredStatBlockAction, StatBlockActionDefinition
 from .statistics import CreatureStatistics
@@ -39,6 +54,7 @@ class Creature:
     size: str = "M"
     current_health: int | None = None
     class_ref: ClassRef | None = None
+    character_profile: CharacterProfile | None = None
     class_features: list[ClassFeature] = field(default_factory=list)
     triggered_effects: list[TriggeredEffect] = field(default_factory=list)
     combat_profile: CombatProfile = field(default_factory=CombatProfile)
@@ -53,6 +69,9 @@ class Creature:
     statistics: CreatureStatistics = field(default_factory=CreatureStatistics)
     max_health_override: int | None = None
     temporary_hit_points: int = 0
+    observable_appearance: ObservableAppearance = field(
+        default_factory=ObservableAppearance
+    )
 
     def __post_init__(self) -> None:
         if self.current_health is None:
@@ -68,6 +87,39 @@ class Creature:
 
     def __str__(self) -> str:
         return f"Creature with attributes: {self.attributes} and inventory: {self.inventory.items}"
+
+    def spend_feature_use(self, feature_id: str) -> int:
+        """Spend one use of an addressed creature feature.
+
+        >>> creature = Creature(
+        ...     "hero", "Hero", "", Inventory(),
+        ...     Attributes(20, 1, 10, 10, 10, 10, 10, 10, 10), Equipment(),
+        ...     feature_uses_remaining={"rage": 2},
+        ... )
+        >>> creature.spend_feature_use("rage")
+        1
+        """
+
+        return spend_creature_feature_use(self, feature_id)
+
+    def recover_resources(self, rest: RestType) -> tuple[ResourceRecovery, ...]:
+        """Restore all creature resources affected by a completed rest.
+
+        Recovery is separate from turn orchestration: callers decide when a
+        valid Short or Long Rest has completed, while the creature owns the
+        counters and their recovery rules.
+        """
+
+        return recover_creature_resources(self, rest)
+
+    def refresh_daily_resources(self) -> tuple[ResourceRecovery, ...]:
+        """Restore the creature's resources that renew once per day.
+
+        Daily refreshes are explicit because an authored per-day limit is not
+        inherently tied to either a Short or Long Rest.
+        """
+
+        return refresh_creature_daily_resources(self)
 
     def get_modifier(self, attribute_value: int) -> int:
         """Calculate the modifier for an ability score.
@@ -134,6 +186,35 @@ class Creature:
 
         return self.statistics.saving_throw_bonuses.get(ability)
 
+    def skill_check_bonus(self, ability: Ability, skill: str) -> int:
+        """Return the intrinsic modifier for a named ability-based skill check.
+
+        Explicit stat-block totals take precedence. Player-style proficiency
+        adds the creature's proficiency bonus to the underlying ability.
+
+        >>> attributes = Attributes(20, 5, 14, 10, 10, 10, 10, 10, 10,
+        ...     proficiency_bonus=3, proficiencies={"skills": ["athletics"]})
+        >>> creature = Creature("hero", "Hero", "", Inventory(), attributes, Equipment())
+        >>> creature.skill_check_bonus("strength", "athletics")
+        5
+        """
+
+        normalized_skill = skill.casefold()
+        explicit = self.statistics.skill_bonuses.get(normalized_skill)
+        if explicit is not None:
+            return explicit
+        modifier = self.get_modifier(self.saving_throw_ability_score(ability))
+        skills = self.attributes.proficiencies.get("skills", ())
+        proficient = (
+            isinstance(skills, dict) and bool(skills.get(normalized_skill))
+        ) or (
+            isinstance(skills, (list, tuple, set, frozenset))
+            and normalized_skill in {str(authored).casefold() for authored in skills}
+        )
+        if bool(self.attributes.proficiencies.get(normalized_skill)):
+            proficient = True
+        return modifier + (self.attributes.proficiency_bonus if proficient else 0)
+
     def get_max_health(self) -> int:
         """Return the creature's intrinsic maximum health.
 
@@ -147,7 +228,9 @@ class Creature:
             else self.attributes.base_health
             + self.get_modifier(self.attributes.constitution) * self.attributes.level
         )
-        return base
+        from .feature_rules import feat_maximum_health_bonus
+
+        return base + feat_maximum_health_bonus(self)
 
     def get_health(self) -> int:
         """Return current health as a concrete integer.
@@ -243,13 +326,60 @@ class Creature:
         self.temporary_hit_points = max(previous, max(amount, 0))
         return self.temporary_hit_points - previous
 
-    def get_armor_class(self) -> int:
-        """Return the creature's intrinsic AC including Dexterity.
+    def get_armor_class(self, items_by_id: Mapping[str, Item] | None = None) -> int:
+        """Return the best available intrinsic Armor Class calculation.
 
         >>> creature = Creature("hero", "Hero", "", Inventory(), Attributes(20, 1, 14, 14, 10, 10, 10, 10, 10), Equipment())
         >>> creature.get_armor_class()
         12
         """
-        return self.attributes.base_armor_class + self.get_modifier(
-            self.attributes.dexterity
+        worn_armor = self.worn_armor(items_by_id or {})
+        dexterity_modifier = self.get_modifier(self.attributes.dexterity)
+        standard = (
+            worn_armor.armor_stat.resolve_armor_class(dexterity_modifier)
+            if worn_armor is not None and worn_armor.armor_stat is not None
+            else self.attributes.base_armor_class + dexterity_modifier
+        )
+        alternatives = tuple(
+            calculation.resolve(self.attributes)
+            for calculation in self.combat_profile.armor_class_calculations.values()
+            if not calculation.requires_unarmored or worn_armor is None
+        )
+        return max((standard, *alternatives))
+
+    def worn_armor(self, items_by_id: Mapping[str, Item]) -> Item | None:
+        """Return the equipped armor suit when its item template is available."""
+
+        armor_id = self.equipment.armor
+        if armor_id is None:
+            return None
+        item = items_by_id.get(armor_id)
+        if (
+            item is None
+            or item.armor_stat is None
+            or item.armor_stat.category == "shield"
+        ):
+            return None
+        return item
+
+    def worn_armor_category(
+        self,
+        items_by_id: Mapping[str, Item],
+    ) -> ArmorCategory | None:
+        """Return the category of the equipped armor suit, if resolved."""
+
+        armor = self.worn_armor(items_by_id)
+        return armor.armor_stat.category if armor and armor.armor_stat else None
+
+    def armor_speed_penalty(self, items_by_id: Mapping[str, Item]) -> int:
+        """Return the armor Strength penalty applied to Speed in feet."""
+
+        armor = self.worn_armor(items_by_id)
+        if armor is None or armor.armor_stat is None:
+            return 0
+        requirement = armor.armor_stat.strength_requirement
+        return (
+            -10
+            if requirement is not None and self.attributes.strength < requirement
+            else 0
         )

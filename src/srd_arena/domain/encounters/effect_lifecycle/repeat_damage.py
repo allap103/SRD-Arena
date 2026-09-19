@@ -6,10 +6,11 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.rolls.dice import resolve_dice
 
-from ..rule_queries.defenses import apply_damage
+from ..defeat import resolve_creature_defeat
 from ..rule_queries.rolls import roll_modifiers
+from ..state_combat import apply_combat_damage
 from .concentration import resolve_concentration_damage
-from .lifecycle_events import resolve_spell_lifecycle_event
+from .lifecycle_events import resolve_effect_lifecycle_event
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
@@ -35,11 +36,11 @@ def resolve_repeat_failure_damage(
         effect.label or effect.identity.source.definition_id.replace("_", " ").title()
     )
     details: list[dict[str, object]] = []
+    source_ref = effect.identity.source.applied_by_ref
     for damage in repeat_save.failure_damage:
         count_text, separator, sides_text = damage.dice.partition("d")
         if not separator or not count_text.isdigit() or not sides_text.isdigit():
             continue
-        source_ref = effect.identity.source.applied_by_ref
         damage_modifier = (
             roll_modifiers(
                 state,
@@ -55,7 +56,7 @@ def resolve_repeat_failure_damage(
             modifier=damage_modifier,
             roller=state.dice.roll_die,
         )
-        applied = apply_damage(
+        applied = apply_combat_damage(
             state,
             creature_ref,
             roll.total,
@@ -83,7 +84,7 @@ def resolve_repeat_failure_damage(
                     f"{applied} {damage.damage_type} damage to {target.name}.",
                 )
             )
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "target_damaged",
             actor_ref=source_ref or "system",
@@ -91,4 +92,11 @@ def resolve_repeat_failure_damage(
             progress=progress,
         )
         resolve_concentration_damage(state, creature_ref, applied, progress)
+    if progress is not None and not state.creatures[creature_ref].is_alive:
+        resolve_creature_defeat(
+            state,
+            creature_ref,
+            defeated_by_ref=(source_ref if source_ref in state.creatures else None),
+            progress=progress,
+        )
     return details

@@ -86,8 +86,15 @@ def paint_team_outlines(
     if not visible:
         return
     for creature in battlefield.creatures:
-        cell_x = geometry.origin_x + creature.position.x * geometry.cell_size
-        cell_y = geometry.origin_y + creature.position.y * geometry.cell_size
+        occupied_cells = creature.occupied_cells or (creature.position,)
+        minimum_x = min(cell.x for cell in occupied_cells)
+        maximum_x = max(cell.x for cell in occupied_cells)
+        minimum_y = min(cell.y for cell in occupied_cells)
+        maximum_y = max(cell.y for cell in occupied_cells)
+        cell_x = geometry.origin_x + minimum_x * geometry.cell_size
+        cell_y = geometry.origin_y + minimum_y * geometry.cell_size
+        footprint_width = (maximum_x - minimum_x + 1) * geometry.cell_size
+        footprint_height = (maximum_y - minimum_y + 1) * geometry.cell_size
         team_color = QColor(creature.team_color)
         team_color.setAlphaF(0.7)
         team_pen = QPen(team_color)
@@ -98,8 +105,8 @@ def paint_team_outlines(
         painter.drawRect(
             int(cell_x + inset),
             int(cell_y + inset),
-            max(1, int(geometry.cell_size - inset * 2)),
-            max(1, int(geometry.cell_size - inset * 2)),
+            max(1, int(footprint_width - inset * 2)),
+            max(1, int(footprint_height - inset * 2)),
         )
 
 

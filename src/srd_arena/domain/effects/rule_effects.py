@@ -9,7 +9,9 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import StrEnum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
+
+from srd_arena.domain.rolls.saving_throws import Ability
 
 if TYPE_CHECKING:
     from srd_arena.domain.rolls.dice import DieRoller
@@ -71,6 +73,32 @@ class DamageResistance:
         normalized = frozenset(value.casefold() for value in self.damage_types)
         if not normalized:
             raise ValueError("Damage resistance requires at least one damage type.")
+        object.__setattr__(self, "damage_types", normalized)
+
+
+@dataclass(frozen=True)
+class DamageImmunity:
+    """Grant immunity to one or more normalized damage types."""
+
+    damage_types: frozenset[str]
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(value.casefold() for value in self.damage_types)
+        if not normalized:
+            raise ValueError("Damage immunity requires at least one damage type.")
+        object.__setattr__(self, "damage_types", normalized)
+
+
+@dataclass(frozen=True)
+class DamageVulnerability:
+    """Grant vulnerability to one or more normalized damage types."""
+
+    damage_types: frozenset[str]
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(value.casefold() for value in self.damage_types)
+        if not normalized:
+            raise ValueError("Damage vulnerability requires at least one damage type.")
         object.__setattr__(self, "damage_types", normalized)
 
 
@@ -156,6 +184,97 @@ class RollAdjustment:
     """Contribute one existing roll modifier to a rule query."""
 
     modifier: RollModifier
+    blocked_by_conditions: frozenset[Condition] = frozenset()
+
+
+@dataclass(frozen=True)
+class EnvironmentalRollAdjustment:
+    """Apply a roll modifier while a named encounter environment is active."""
+
+    environment: Literal["sunlight"]
+    modifier: RollModifier
+
+
+@dataclass(frozen=True)
+class AdjacentAllyAttackAdvantage:
+    """Grant attack advantage while an eligible ally is near the target."""
+
+    range_feet: int = 5
+
+    def __post_init__(self) -> None:
+        if self.range_feet <= 0:
+            raise ValueError(
+                "Adjacent-ally attack advantage requires a positive range."
+            )
+
+
+@dataclass(frozen=True)
+class DamageTriggeredDefeatSave:
+    """Offer a saving throw when damage would otherwise defeat a creature."""
+
+    ability: Ability
+    base_dc: int
+    damage_multiplier: int = 1
+    hit_points_on_success: int = 1
+    bypass_damage_types: frozenset[str] = frozenset()
+    bypass_critical_hits: bool = False
+
+    def __post_init__(self) -> None:
+        if self.base_dc < 0:
+            raise ValueError("Defeat-save base DC cannot be negative.")
+        if self.damage_multiplier < 0:
+            raise ValueError("Defeat-save damage multiplier cannot be negative.")
+        if self.hit_points_on_success < 1:
+            raise ValueError("A successful defeat save must leave positive Hit Points.")
+        object.__setattr__(
+            self,
+            "bypass_damage_types",
+            frozenset(value.casefold() for value in self.bypass_damage_types),
+        )
+
+
+@dataclass(frozen=True)
+class AttackHitDamage:
+    """Add typed dice damage when the effect source hits its target."""
+
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
+class AttackHitRetaliation:
+    """Deal fixed typed damage after a qualifying attack hits a protected target."""
+
+    damage: int
+    damage_type: str
+    attack_types: frozenset[str]
+    requires_temporary_hit_points: bool = False
+
+    def __post_init__(self) -> None:
+        if self.damage <= 0:
+            raise ValueError("Attack-hit retaliation damage must be positive.")
+        normalized_damage_type = self.damage_type.casefold()
+        if not normalized_damage_type:
+            raise ValueError("Attack-hit retaliation requires a damage type.")
+        normalized_attack_types = frozenset(
+            attack_type.casefold() for attack_type in self.attack_types
+        )
+        if not normalized_attack_types or not normalized_attack_types <= {
+            "melee",
+            "ranged",
+        }:
+            raise ValueError(
+                "Attack-hit retaliation requires melee and/or ranged attack types."
+            )
+        object.__setattr__(self, "damage_type", normalized_damage_type)
+        object.__setattr__(self, "attack_types", normalized_attack_types)
+
+
+@dataclass(frozen=True)
+class CompelledTurn:
+    """Require one predefined instruction during a target's next turn."""
+
+    instruction: Literal["approach", "drop", "flee", "grovel", "halt"]
 
 
 @dataclass(frozen=True)
@@ -163,6 +282,13 @@ class ReactionProhibition:
     """Prohibit all reactions, or only the named reaction kinds."""
 
     reaction_kinds: frozenset[str] = frozenset()
+
+
+@dataclass(frozen=True)
+class OpportunityAttackPrevention:
+    """Prevent a creature's movement from provoking Opportunity Attacks."""
+
+    pass
 
 
 @dataclass(frozen=True)
@@ -176,6 +302,17 @@ class ActionEconomyRestriction:
             raise ValueError(
                 "Action economy restriction must contain at least two choices."
             )
+
+
+@dataclass(frozen=True)
+class ActionProhibition:
+    """Prevent actions that spend one or more named turn resources."""
+
+    resources: frozenset[ActionEconomyKind]
+
+    def __post_init__(self) -> None:
+        if not self.resources:
+            raise ValueError("Action prohibition requires at least one resource.")
 
 
 @dataclass(frozen=True)
@@ -215,22 +352,52 @@ class InvocationFailureChance:
             raise ValueError("Invocation failure chance requires a message.")
 
 
+@dataclass(frozen=True)
+class InvocationProhibition:
+    """Prevent invocations of the named kinds while an effect is active."""
+
+    invocation_kinds: frozenset[str]
+    code: str
+    message: str
+
+    def __post_init__(self) -> None:
+        normalized = frozenset(kind.casefold() for kind in self.invocation_kinds)
+        if not normalized:
+            raise ValueError("Invocation prohibition requires an invocation kind.")
+        if not self.code.strip():
+            raise ValueError("Invocation prohibition requires a code.")
+        if not self.message.strip():
+            raise ValueError("Invocation prohibition requires a message.")
+        object.__setattr__(self, "invocation_kinds", normalized)
+
+
 type RuntimeRuleEffect = (
     ArmorClassAdjustment
     | SpeedAdjustment
     | SpeedMultiplier
     | MaximumHitPointAdjustment
     | DamageResistance
+    | DamageImmunity
+    | DamageVulnerability
     | DamageReduction
     | ConditionImmunity
     | ConditionSuppression
     | ConditionSaveAdvantage
     | GrantedSense
     | RollAdjustment
+    | EnvironmentalRollAdjustment
+    | AdjacentAllyAttackAdvantage
+    | DamageTriggeredDefeatSave
+    | AttackHitDamage
+    | AttackHitRetaliation
     | ReactionProhibition
+    | OpportunityAttackPrevention
     | ActionEconomyRestriction
+    | ActionProhibition
+    | CompelledTurn
     | AttackLimit
     | InvocationFailureChance
+    | InvocationProhibition
 )
 
 
@@ -264,6 +431,16 @@ def serialize_runtime_rule_effect(
             "type": "damage_resistance",
             "damage_types": sorted(effect.damage_types),
         }
+    if isinstance(effect, DamageImmunity):
+        return {
+            "type": "damage_immunity",
+            "damage_types": sorted(effect.damage_types),
+        }
+    if isinstance(effect, DamageVulnerability):
+        return {
+            "type": "damage_vulnerability",
+            "damage_types": sorted(effect.damage_types),
+        }
     if isinstance(effect, DamageReduction):
         return {
             "type": "damage_reduction",
@@ -294,7 +471,7 @@ def serialize_runtime_rule_effect(
         }
     if isinstance(effect, RollAdjustment):
         modifier = effect.modifier
-        return {
+        serialized: dict[str, object] = {
             "type": "roll_adjustment",
             "roll": modifier.roll,
             "mode": modifier.mode,
@@ -303,16 +480,71 @@ def serialize_runtime_rule_effect(
             "subject": modifier.subject,
             "ignored_by_senses": list(modifier.ignored_by_senses),
             "ability": modifier.ability,
+            "consume_on_use": modifier.consume_on_use,
+        }
+        if effect.blocked_by_conditions:
+            serialized["blocked_by_conditions"] = sorted(
+                condition.value for condition in effect.blocked_by_conditions
+            )
+        return serialized
+    if isinstance(effect, EnvironmentalRollAdjustment):
+        return {
+            "type": "environmental_roll_adjustment",
+            "environment": effect.environment,
+            "roll": effect.modifier.roll,
+            "mode": effect.modifier.mode,
+            "ability": effect.modifier.ability,
+        }
+    if isinstance(effect, AdjacentAllyAttackAdvantage):
+        return {
+            "type": "adjacent_ally_attack_advantage",
+            "range_feet": effect.range_feet,
+        }
+    if isinstance(effect, DamageTriggeredDefeatSave):
+        return {
+            "type": "damage_triggered_defeat_save",
+            "ability": effect.ability,
+            "base_dc": effect.base_dc,
+            "damage_multiplier": effect.damage_multiplier,
+            "hit_points_on_success": effect.hit_points_on_success,
+            "bypass_damage_types": sorted(effect.bypass_damage_types),
+            "bypass_critical_hits": effect.bypass_critical_hits,
+        }
+    if isinstance(effect, AttackHitDamage):
+        return {
+            "type": "attack_hit_damage",
+            "dice": effect.dice,
+            "damage_type": effect.damage_type,
+        }
+    if isinstance(effect, AttackHitRetaliation):
+        return {
+            "type": "attack_hit_retaliation",
+            "damage": effect.damage,
+            "damage_type": effect.damage_type,
+            "attack_types": sorted(effect.attack_types),
+            "requires_temporary_hit_points": effect.requires_temporary_hit_points,
         }
     if isinstance(effect, ReactionProhibition):
         return {
             "type": "reaction_prohibition",
             "reaction_kinds": sorted(effect.reaction_kinds),
         }
+    if isinstance(effect, OpportunityAttackPrevention):
+        return {"type": "opportunity_attack_prevention"}
     if isinstance(effect, ActionEconomyRestriction):
         return {
             "type": "action_economy_restriction",
             "choose_between": sorted(kind.value for kind in effect.choose_between),
+        }
+    if isinstance(effect, ActionProhibition):
+        return {
+            "type": "action_prohibition",
+            "resources": sorted(resource.value for resource in effect.resources),
+        }
+    if isinstance(effect, CompelledTurn):
+        return {
+            "type": "compelled_turn",
+            "instruction": effect.instruction,
         }
     if isinstance(effect, AttackLimit):
         return {"type": "attack_limit", "maximum": effect.maximum}
@@ -323,6 +555,13 @@ def serialize_runtime_rule_effect(
             "required_components": sorted(effect.required_components),
             "numerator": effect.numerator,
             "denominator": effect.denominator,
+            "code": effect.code,
+            "message": effect.message,
+        }
+    if isinstance(effect, InvocationProhibition):
+        return {
+            "type": "invocation_prohibition",
+            "invocation_kinds": sorted(effect.invocation_kinds),
             "code": effect.code,
             "message": effect.message,
         }

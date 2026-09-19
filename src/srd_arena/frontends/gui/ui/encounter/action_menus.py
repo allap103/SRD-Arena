@@ -72,7 +72,13 @@ def action_bucket(action: ActionObservation) -> str:
     'utilize'
     """
 
-    if action.kind in {"attack", "multiattack", "opportunity_attack", "grapple"}:
+    if action.kind in {
+        "attack",
+        "attack_condition",
+        "multiattack",
+        "opportunity_attack",
+        "grapple",
+    }:
         return "attack"
     if action.kind in {"magic", "spell"}:
         return "magic"

@@ -10,6 +10,7 @@ from ...encounter_models.actions import (
 )
 from ..eligibility import action_eligibility
 from .attacks import attack_action_candidates
+from .compelled import compelled_turn_action_candidates
 from .movement_candidates import movement_action_candidates
 from .special import special_action_candidates
 from .stat_blocks import stat_block_action_candidates
@@ -80,13 +81,14 @@ def creature_action_candidates(
     ...     "srd_arena.domain.encounters.actions.creature_actions.discovery.special_action_candidates",
     ...     return_value=[wait],
     ... ):
-    ...     actions = creature_action_candidates(SimpleNamespace(), "hero")
+    ...     actions = creature_action_candidates(SimpleNamespace(ongoing_effects=[]), "hero")
     >>> [action.kind for action in actions]
     ['move', 'wait']
     """
 
     # This order is also the stable presentation order used by frontends.
     actions: list[EncounterAction] = []
+    actions.extend(compelled_turn_action_candidates(state, creature_ref))
     actions.extend(movement_action_candidates(state, creature_ref))
     actions.extend(
         attack_action_candidates(state, creature_ref, _stat_block_display_name)

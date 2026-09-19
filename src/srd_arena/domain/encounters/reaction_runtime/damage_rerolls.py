@@ -5,13 +5,17 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.triggered import TriggeredEffect, reroll_eligible_indices
-from srd_arena.domain.rolls.dice import reroll_dice
+from srd_arena.domain.rolls.dice import reroll_dice, reroll_dice_pool
 
 from ..actions.attack_resolution import apply_attack_damage, damage_roll_detail
+from ..actions.hit_effects import apply_attack_hit_effects
+from ..actions.weapon_mastery import mastery_request_for_attack
+from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     DecisionContinuation,
     DecisionFrame,
+    ResumeWeaponMastery,
 )
 from ..encounter_models.resolution import (
     AttackOutcome,
@@ -20,7 +24,8 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..refs import reroll_die_action_id as _reroll_die_action_id
-from ..rule_queries.defenses import apply_damage
+from ..rule_queries.retaliation import attack_hit_retaliations
+from ..state_combat import apply_combat_damage
 from ..state_runtime import create_event, next_frame_id
 from .attack_lifecycle import resolve_attack_lifecycle
 
@@ -114,11 +119,17 @@ def open_damage_reroll_decision(
     )
     progress.messages.extend(attack.messages)
     attack.messages = []
+    explanation = (
+        f"{triggered_effect.id.replace('_', ' ').title()} can roll the "
+        "weapon's damage dice a second time."
+        if triggered_effect.operation == "roll_damage_pool_twice"
+        else f"{triggered_effect.id.replace('_', ' ').title()} can reroll "
+        "qualifying damage dice."
+    )
     progress.messages.append(
         (
             "system",
-            f"{triggered_effect.id.replace('_', ' ').title()} can reroll "
-            "qualifying damage dice.",
+            explanation,
         )
     )
     progress.events.append(
@@ -165,6 +176,40 @@ def reroll_damage_actions(state: EncounterState) -> list[EncounterAction]:
     request = damage_reroll_request(state.current_decision())
     if request.attack.damage_roll is None:
         return []
+    if request.alternate_damage_roll is not None:
+        assert request.original_damage_roll is not None
+        candidates = sorted(
+            (
+                (0, "original", request.original_damage_roll),
+                (1, "second", request.alternate_damage_roll),
+            ),
+            key=lambda candidate: (-candidate[2].total, candidate[0]),
+        )
+        return [
+            EncounterAction(
+                f"Use {label} damage roll ({pool.total})",
+                "select_damage_roll",
+                index,
+                id=f"{request.action_id}-select-damage-{index}",
+                creature_ref=request.attacker_ref,
+            )
+            for index, label, pool in candidates
+        ]
+    if request.triggered_effect.operation == "roll_damage_pool_twice":
+        return [
+            EncounterAction(
+                "Roll weapon damage again",
+                "reroll_damage_pool",
+                id=f"{request.action_id}-reroll-damage-pool",
+                creature_ref=request.attacker_ref,
+            ),
+            EncounterAction(
+                "Use current damage",
+                "accept_roll",
+                id=f"{request.action_id}-accept-damage",
+                creature_ref=request.attacker_ref,
+            ),
+        ]
     actions = [
         EncounterAction(
             f"Reroll damage die {index + 1} "
@@ -239,7 +284,74 @@ def apply_damage_reroll_action(
         )
     )
 
-    if action.kind == "reroll_die":
+    if action.kind == "reroll_damage_pool":
+        if request.triggered_effect.operation != "roll_damage_pool_twice":
+            raise ValueError("This feature cannot reroll the complete damage pool.")
+        if request.alternate_damage_roll is not None:
+            raise ValueError("The second damage pool has already been rolled.")
+        request.original_damage_roll = request.attack.damage_roll
+        request.alternate_damage_roll = reroll_dice_pool(
+            request.attack.damage_roll,
+            roller=state.dice.roll_die,
+        )
+        request.attack.damage_roll = request.alternate_damage_roll
+        request.attack.damage_roll_detail = damage_roll_detail(request.attack)
+        state.creatures[request.attacker_ref].features_used_this_turn.add(
+            request.triggered_effect.id
+        )
+        progress.messages.append(
+            (
+                "system",
+                "Savage Attacker rolls the weapon damage a second time: "
+                f"{request.original_damage_roll.total} and "
+                f"{request.alternate_damage_roll.total}.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "damage_rerolled",
+                creature_ref=request.attacker_ref,
+                frame_id=decision.id,
+                action_id=request.action_id,
+                data=damage_reroll_event_data(request),
+            )
+        )
+        progress.paused_for_decision = True
+        return DecisionExecutionResult(
+            progress=progress,
+            action_id=request.action_id,
+            completed=False,
+        )
+    if action.kind == "select_damage_roll":
+        if action.value not in {0, 1}:
+            raise ValueError("Damage-roll selection requires choice 0 or 1.")
+        if (
+            request.original_damage_roll is None
+            or request.alternate_damage_roll is None
+        ):
+            raise ValueError("A second damage pool has not been rolled.")
+        request.attack.damage_roll = (
+            request.original_damage_roll
+            if action.value == 0
+            else request.alternate_damage_roll
+        )
+        request.attack.damage_roll_detail = damage_roll_detail(request.attack)
+        progress.events.append(
+            create_event(
+                state,
+                "damage_roll_selected",
+                creature_ref=request.attacker_ref,
+                frame_id=decision.id,
+                action_id=request.action_id,
+                data={
+                    "feature_id": request.triggered_effect.id,
+                    "selected_attempt": action.value,
+                    "selected_total": request.attack.damage_roll.total,
+                },
+            )
+        )
+    elif action.kind == "reroll_die":
         if not isinstance(action.value, int):
             raise ValueError("Reroll die action requires an integer die index.")
         eligible = reroll_eligible_indices(
@@ -284,6 +396,8 @@ def apply_damage_reroll_action(
             )
     elif action.kind != "accept_roll":
         raise ValueError(f"Unsupported damage reroll action: {action.kind}")
+    elif request.alternate_damage_roll is not None:
+        raise ValueError("Choose one of the two rolled damage pools.")
 
     finalize_damage_reroll(state, request, progress, decision)
     return DecisionExecutionResult(
@@ -315,7 +429,7 @@ def finalize_damage_reroll(
     ...     creatures={
     ...         "hero": SimpleNamespace(creature=SimpleNamespace(name="Hero")),
     ...         "goblin": SimpleNamespace(creature=object(), is_alive=True),
-    ...     }, event_sequence=1,
+    ...     }, ongoing_effects=[], event_sequence=1,
     ... )
     >>> progress = EncounterProgress()
     >>> frame = DecisionFrame("reroll", "hero", "reroll_dice", "gwm")
@@ -333,16 +447,22 @@ def finalize_damage_reroll(
 
     attacker = state.creatures[request.attacker_ref].creature
     target = state.creatures[request.target_ref]
+    retaliations = attack_hit_retaliations(
+        state,
+        request.target_ref,
+        request.attack.attack_type,
+    )
     apply_attack_damage(
         request.attack,
         target.creature,
         attacker_label=attacker.name,
         target_label=request.target_label,
-        damage_receiver=lambda amount, damage_type: apply_damage(
+        damage_receiver=lambda amount, damage_type: apply_combat_damage(
             state,
             request.target_ref,
             amount,
             damage_type,
+            critical_hit=request.attack.critical_hit,
         ),
     )
     resolve_attack_lifecycle(
@@ -351,7 +471,19 @@ def finalize_damage_reroll(
         target_ref=request.target_ref,
         damage=request.attack.damage,
         progress=progress,
+        retaliations=retaliations,
+        action_id=request.action_id,
+        frame_id=decision.id,
     )
+    if request.attack.hit and target.is_alive:
+        apply_attack_hit_effects(
+            state,
+            attacker_ref=request.attacker_ref,
+            target_ref=request.target_ref,
+            effects=request.attack.hit_effects,
+            progress=progress,
+            origin_id=request.action_id,
+        )
     progress.messages.extend(request.attack.messages)
     progress.events.append(
         create_event(
@@ -372,14 +504,25 @@ def finalize_damage_reroll(
         )
     )
     if not target.is_alive:
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=request.target_ref,
-                frame_id=decision.id,
-                action_id=request.action_id,
-            )
+        resolve_creature_defeat(
+            state,
+            request.target_ref,
+            defeated_by_ref=request.attacker_ref,
+            progress=progress,
+            frame_id=decision.id,
+            action_id=request.action_id,
+        )
+    mastery_request = mastery_request_for_attack(
+        state,
+        request.attack,
+        attacker_ref=request.attacker_ref,
+        target_ref=request.target_ref,
+        action_id=request.action_id,
+    )
+    if mastery_request is not None:
+        decision.continuation = ResumeWeaponMastery(
+            mastery_request,
+            next_continuation=decision.continuation,
         )
 
 
@@ -429,6 +572,16 @@ def damage_reroll_event_data(
         "damage_roll_detail": damage_roll_detail(request.attack),
         "roll_id": f"{request.action_id}:damage",
         "triggered_effect_id": request.triggered_effect.id,
+        "original_damage_total": (
+            request.original_damage_roll.total
+            if request.original_damage_roll is not None
+            else None
+        ),
+        "alternate_damage_total": (
+            request.alternate_damage_roll.total
+            if request.alternate_damage_roll is not None
+            else None
+        ),
         "eligible_die_indices": list(eligible),
         "reroll_action_ids": {
             str(index): _reroll_die_action_id(request.action_id, index)

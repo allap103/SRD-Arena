@@ -64,6 +64,7 @@ def build_spellcasting(
                 _build_referenced_spell(reference.name, reference.source, spells)
                 for reference in schema.spells_known
             ],
+            feature_spells=_build_feature_spells(schema, spells),
         )
 
     source_definition = _spellcasting_source_definition(class_record)
@@ -95,7 +96,25 @@ def build_spellcasting(
             _build_referenced_spell(reference.name, reference.source, spells)
             for reference in schema.spells_known
         ],
+        feature_spells=_build_feature_spells(schema, spells),
     )
+
+
+def _build_feature_spells(
+    schema: CreatureSchema,
+    catalog: SpellCatalog | None,
+) -> list[Spell]:
+    """Materialize spell definitions required by selected feature grants."""
+
+    profile = schema.character_profile
+    selected = (
+        {reference.name.casefold() for reference in profile.selected_features}
+        if profile is not None
+        else set()
+    )
+    if "fiendish vigor" not in selected:
+        return []
+    return [_build_referenced_spell("False Life", "XPHB", catalog)]
 
 
 def _build_referenced_spell(

@@ -4,10 +4,19 @@ from __future__ import annotations
 
 from collections.abc import Mapping
 from dataclasses import dataclass, field
+from enum import StrEnum
 from types import MappingProxyType
 from typing import Literal
 
+from .spell_cast_observation_models import SpellCastOptions
 from .values import EngineValue, freeze_mapping
+
+
+class EncounterTerminationReason(StrEnum):
+    """Rules-driven reason an encounter reached a terminal state."""
+
+    LAST_TEAM_STANDING = "last_team_standing"
+    ALL_TEAMS_DEFEATED = "all_teams_defeated"
 
 
 @dataclass(frozen=True)
@@ -20,7 +29,7 @@ class ActionReasonObservation:
 
 @dataclass(frozen=True)
 class ActionObservation:
-    """A stable selectable option advertised at one decision point."""
+    """A stable action option advertised at one decision point."""
 
     id: str
     label: str
@@ -37,11 +46,18 @@ class ActionObservation:
     source_label: str | None = None
     source_level: int | None = None
     resource_level: int | None = None
+    grant_id: str | None = None
     feature_id: str | None = None
+    effect_id: str | None = None
     movement_direction: str | None = None
+    movement_distance_feet: int | None = None
     target_ref: str | None = None
+    grapple_source_ref: str | None = None
+    grapple_choice: str | None = None
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
+    required_configuration: Literal["aim"] | None = None
+    spell_cast: SpellCastOptions | None = None
 
     def __post_init__(self) -> None:
         object.__setattr__(self, "cost", freeze_mapping(self.cost))
@@ -90,6 +106,15 @@ class GridObservation:
 
     width: int
     height: int
+
+
+@dataclass(frozen=True)
+class TerrainCellObservation:
+    """Expose one authored terrain cell to GUI and headless clients."""
+
+    position: PositionObservation
+    traversal: str
+    cover: str
 
 
 @dataclass(frozen=True)
@@ -158,6 +183,30 @@ class InventoryItemObservation:
 
 
 @dataclass(frozen=True)
+class ResourcePoolObservation:
+    """State and recovery metadata for one non-slot combat resource."""
+
+    id: str
+    source_id: str
+    kind: str
+    remaining: int
+    maximum: int
+    refresh: tuple[str, ...] = ()
+    recharge_die_sides: int | None = None
+    recharge_minimum: int | None = None
+
+
+@dataclass(frozen=True)
+class CreatureDefenseObservation:
+    """Effective typed defenses currently supported by combat resolution."""
+
+    condition_immunities: tuple[str, ...] = ()
+    damage_resistances: tuple[str, ...] = ()
+    damage_immunities: tuple[str, ...] = ()
+    damage_vulnerabilities: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class CreatureObservation:
     """Frontend-neutral snapshot of one encounter combatant."""
 
@@ -186,6 +235,13 @@ class CreatureObservation:
     armor_class: int
     attributes: AttributeObservation
     inventory: tuple[InventoryItemObservation, ...]
+    temporary_hit_points: int = 0
+    creature_type: str | None = None
+    type_tags: tuple[str, ...] = ()
+    size: str = "M"
+    occupied_cells: tuple[PositionObservation, ...] = ()
+    resource_pools: tuple[ResourcePoolObservation, ...] = ()
+    defenses: CreatureDefenseObservation = CreatureDefenseObservation()
 
 
 @dataclass(frozen=True)
@@ -198,6 +254,19 @@ class OngoingEffectObservation:
     definition_id: str
     target_refs: tuple[str, ...]
     label: str
+    area: Mapping[str, EngineValue] | None = None
+    obscures_vision: bool = False
+
+
+@dataclass(frozen=True)
+class CreatureRelationshipObservation:
+    """Source and target of one directional encounter relationship."""
+
+    id: str
+    kind: str
+    source_ref: str
+    target_ref: str
+    source_definition_id: str
 
 
 @dataclass(frozen=True)
@@ -233,7 +302,7 @@ class TargetingObservation:
 
 @dataclass(frozen=True)
 class EncounterObservation:
-    """Complete client-visible snapshot of the active encounter."""
+    """Legacy privileged encounter view within the shared gameplay snapshot."""
 
     encounter_id: str
     grid: GridObservation
@@ -244,6 +313,8 @@ class EncounterObservation:
     ongoing_effects: tuple[OngoingEffectObservation, ...]
     team_ids: tuple[str, ...]
     targeting: TargetingObservation | None
+    relationships: tuple[CreatureRelationshipObservation, ...] = ()
+    terrain: tuple[TerrainCellObservation, ...] = ()
 
     def creature(self, creature_ref: str) -> CreatureObservation:
         """Return a combatant by its stable encounter reference.
@@ -268,14 +339,16 @@ class EncounterObservation:
 
 @dataclass(frozen=True)
 class EncounterCompletionObservation:
-    """Message presented after the encounter has been completed."""
+    """Describe a rules-driven terminal encounter state to a client."""
 
     message: str
+    reason: EncounterTerminationReason
+    winning_team_id: str | None
 
 
 @dataclass(frozen=True)
 class GameObservation:
-    """Everything a client may inspect about the current decision point."""
+    """Legacy client view; unrestricted facts and history live in GameplayObservation."""
 
     scene: SceneObservation
     encounter: EncounterObservation | None

@@ -2,8 +2,7 @@
 
 SRD Arena is a Python combat simulator for the 2024 rules represented by
 SRD 5.2.1. It provides an interactive PySide6 GUI and a typed, frontend-neutral
-application interface intended for simulations and future machine-learning
-integration.
+engine interface for simulations and experimental reinforcement learning.
 
 The project is under active development. Its implemented combat rules and
 authored content cover only partial functionality.
@@ -22,35 +21,101 @@ or
 To run the application with seed 42. 
 Note that die rolls will only be the same between different executions of the same encounter if participants also perform the same steps between encounters.
 
+## Headless observations
+
+Run a YAML-filtered encounter without importing Qt:
+
+```sh
+uv run srd-arena --headless --encounter warlock_training --seed 42 \
+  --perspective-creature warlock \
+  --observation-config config/observations/player.yaml \
+  --controller stdin --max-steps 1000 --max-rounds 100
+```
+
+The process displays indented JSON in terminals and emits JSON Lines to pipes
+and files. Use `--output-format pretty` or `--output-format jsonl` to override
+automatic detection. It accepts decision-tagged commands on stdin.
+Closing stdin produces an explicit truncation result. Three supported presets
+select interval, exact, or hidden enemy health. The initial policy slice uses
+team perception; advanced modes fail validation until implemented. See the
+[policy settings and controller protocol](config/observations/README.md) and
+[replay examples](examples/headless/README.md).
+
+## Experimental RL training
+
+The experimental training foundation includes a PyTorch learner with CPU/CUDA
+support, numerical observations, configurable terminal rewards, checkpoint
+resume, seeded evaluation, and model playback. It currently trains one Warlock
+in a fixed encounter, with other combatants driven by scripted controllers.
+Start with the [training instructions](config/training/README.md) to create a
+checkpoint. To watch a saved model play:
+
+```sh
+uv run --extra training srd-arena-watch --run-dir runs/first-experiment
+```
+
+The spectator GUI has pause, single-step, restart, and playback delay controls.
+
+The optional `observability` extra adds TensorBoard learning metrics and a
+Streamlit inspector for learning curves, combat summaries, individual turns,
+and evaluation comparisons:
+
+```sh
+uv run --extra training --extra observability srd-arena-inspect --runs-dir runs
+```
+
+Policies remain experimental and can win while wasting spells and movement.
+Broader tactical competence and generalization remain future work. The
+[matched-budget evaluation](config/training/experiments/context-v7-results.md)
+records those limitations and the next proposed experiment. Resume preserves
+the original training settings; changing schemas or learning settings requires
+a fresh run. Checkpoints and detailed logs stay in the ignored `runs/` directory.
+
 ## Quality checks
 
-    uv run pytest -q
-    uv run mypy --strict .
-    uv run ruff check .
-    uv run ruff format --check .
+    uv sync --frozen --dev --extra training --extra observability
+    QT_QPA_PLATFORM=offscreen uv run --extra training --extra observability pytest -q
+    uv run --extra training --extra observability mypy --strict .
+    uv run --extra training --extra observability ruff check .
+    uv run --extra training --extra observability ruff format --check .
+    uv run --extra training --extra observability interrogate src/srd_arena
+
+Type checking excludes generated files under `runs/`.
 
 ## Architecture
 
 The high-level execution path is:
 
     main
-      -> application use cases
-      -> engine session
+      -> selected frontend
+      -> engine API and session
       -> encounter orchestration
       -> domain rules
 
 Authored JSON content is validated and translated into domain definitions by
-the content package. Infrastructure connects that content to the application,
-while GUI and headless clients drive the same public application API.
+the content package. GUI and headless clients discover encounters through the
+public content API and drive them through the public engine API.
+
+`Session.observe_gameplay()` returns the shared immutable gameplay snapshot,
+including unrestricted current facts and the complete recorded episode event
+history. `Session.observe()` returns its legacy GUI-facing view;
+`Session.observe_player(team_id)` applies team perception and remembered
+knowledge to that same source. The gameplay contract is still a draft with
+incomplete capability/effect descriptors; it is not a runtime checkpoint.
 
 ## Implemented player-character scope
 
-Player-character support is intentionally limited to the combat mechanics used
-by the bundled Fighter examples: weapon attacks from a fixed hand loadout,
-Extra Attack, Second Wind, Action Surge, and Great Weapon Fighting. Inventory
-supports healing potions. Changing equipment, armor-derived AC, subclasses,
-and general class-feature coverage are outside the current project scope.
+Player-character support includes fixed Fighter examples and validated,
+combat-ready Warlock and Barbarian snapshots for levels 1-5. The snapshots
+resolve their selected ability scores, combat equipment, armor class, class and
+subclass identity, feats, invocations or weapon masteries, known spells, and
+level-dependent resources through the normal encounter loader. A recorded
+selection does not imply that all of its rule effects are executable yet.
+
+General character creation, unrestricted equipment changes, and broad class,
+species, background, feat, and magic-item coverage remain outside the current
+milestone. Inventory supports the combat-relevant fixed equipment and healing
+potions used by authored encounters.
 
 Monster attacks remain self-contained stat-block actions. A monster's named
 weapon attack does not depend on the player-character item/loadout model.
-

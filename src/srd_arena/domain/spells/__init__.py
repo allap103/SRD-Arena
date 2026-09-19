@@ -4,6 +4,7 @@ from .definitions import (
     Spell,
     SpellDamage,
 )
+from .invocation_grants import SpellInvocationGrant
 from .metadata import (
     SpellCastingTime,
     SpellComponents,
@@ -19,6 +20,7 @@ __all__ = [
     "SpellComponents",
     "SpellDamage",
     "SpellDuration",
+    "SpellInvocationGrant",
     "SpellMaterialComponent",
     "SpellRange",
     "SpellRangeDistance",

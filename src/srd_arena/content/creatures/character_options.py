@@ -16,7 +16,7 @@ from srd_arena.content.character_options.classes.schema import (
     ClassFeatureSchema,
     ClassSchema,
 )
-from srd_arena.domain.creatures import ClassFeature
+from srd_arena.domain.creatures import CharacterProfile, ClassFeature
 from srd_arena.domain.effects.triggered import TriggeredEffect
 
 from .schema import CreatureSchema
@@ -121,6 +121,60 @@ def resolve_class_features(
     return resolved
 
 
+def resolve_subclass_features(
+    profile: CharacterProfile | None,
+    class_record: ClassRecord | None,
+    level: int,
+) -> list[ClassFeature]:
+    """Collect supported features granted by a selected subclass.
+
+    Subclass choices originate in authored character snapshots. Their combat
+    meaning is normalized here just like class features, keeping the domain
+    model independent of content file names and SRD prose.
+
+    >>> from srd_arena.domain.creatures import CharacterOptionRef
+    >>> definition = ClassSchema(
+    ...     name="Barbarian", source="XPHB",
+    ...     classTableGroups=[{
+    ...         "colLabels": ["Rage Damage"], "rows": [["2"], ["2"], ["2"]]
+    ...     }],
+    ... )
+    >>> profile = CharacterProfile(
+    ...     "hero", CharacterOptionRef("Human"), CharacterOptionRef("Soldier"),
+    ...     subclass=CharacterOptionRef("Path of the Berserker", "XPHB"),
+    ... )
+    >>> record = ClassRecord(definition, ())
+    >>> [feature.id for feature in resolve_subclass_features(profile, record, 3)]
+    ['frenzy']
+    """
+
+    if (
+        profile is None
+        or profile.subclass is None
+        or class_record is None
+        or class_record.definition.public_name.casefold() != "barbarian"
+        or profile.subclass.name.casefold() != "path of the berserker"
+        or level < 3
+    ):
+        return []
+    rage_damage = _class_table_value(
+        class_record.definition,
+        "Rage Damage",
+        level,
+    )
+    if rage_damage is None:
+        raise ValueError("Berserker Frenzy requires Rage Damage progression.")
+    return [
+        ClassFeature(
+            id="frenzy",
+            name="Frenzy",
+            source_class="Barbarian",
+            level=3,
+            data={"damage_dice": f"{int(rage_damage)}d6"},
+        )
+    ]
+
+
 def _parse_class_feature_reference(
     feature_ref: str | ClassFeatureReferenceSchema,
 ) -> tuple[str, int] | None:
@@ -177,6 +231,50 @@ def _normalize_class_feature(
             level=feature_level,
             data={"uses": _action_surge_uses(class_record, creature_level)},
         )
+    if feature_name == "Rage":
+        return ClassFeature(
+            id="rage",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+            data={"uses": _rage_uses(class_record, creature_level)},
+        )
+    if feature_name == "Unarmored Defense":
+        return ClassFeature(
+            id="unarmored_defense",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
+    if feature_name == "Danger Sense":
+        return ClassFeature(
+            id="danger_sense",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
+    if feature_name == "Reckless Attack":
+        return ClassFeature(
+            id="reckless_attack",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
+    if feature_name == "Weapon Mastery":
+        return ClassFeature(
+            id="weapon_mastery",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+        )
+    if feature_name == "Fast Movement":
+        return ClassFeature(
+            id="fast_movement",
+            name=feature_name,
+            source_class=class_name,
+            level=feature_level,
+            data={"speed_bonus_feet": 10},
+        )
     return None
 
 
@@ -216,6 +314,25 @@ def _action_surge_uses(
         return int(table_value)
     except ValueError:
         return 1
+
+
+def _rage_uses(
+    class_record: ClassRecord | None,
+    creature_level: int,
+) -> int:
+    if class_record is None:
+        return 2 if creature_level < 3 else 3
+    table_value = _class_table_value(
+        class_record.definition,
+        "Rage",
+        creature_level,
+    )
+    if table_value is None:
+        return 2 if creature_level < 3 else 3
+    try:
+        return int(table_value)
+    except ValueError:
+        return 2 if creature_level < 3 else 3
 
 
 def _second_wind_healing_dice(

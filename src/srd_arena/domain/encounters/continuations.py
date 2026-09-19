@@ -4,10 +4,18 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .actions.spell_runtime.projectiles import resume_spell_projectiles
+from .actions.spellcasting import resolve_spell_action
+from .actions.weapon_mastery import open_weapon_mastery_decision
+from .creature_control import continue_creature_action
 from .encounter_models.decisions import (
     CloseParentDecision,
     DecisionFrame,
+    ResumeActionExecution,
     ResumeMovement,
+    ResumeSpellInvocation,
+    ResumeSpellProjectiles,
+    ResumeWeaponMastery,
 )
 from .encounter_models.resolution import EncounterProgress
 from .reaction_runtime.movement_continuation import resume_movement
@@ -67,7 +75,13 @@ class ContinuationRunner:
                     )
             elif continuation is not None and not isinstance(
                 continuation,
-                ResumeMovement,
+                (
+                    ResumeActionExecution,
+                    ResumeMovement,
+                    ResumeSpellInvocation,
+                    ResumeSpellProjectiles,
+                    ResumeWeaponMastery,
+                ),
             ):
                 raise TypeError(
                     "ContinuationRunner has no handler for continuation "
@@ -89,6 +103,30 @@ class ContinuationRunner:
                     state,
                     continuation.movement,
                     progress,
+                )
+            elif isinstance(continuation, ResumeSpellProjectiles):
+                resume_spell_projectiles(
+                    state,
+                    continuation.invocation,
+                    progress,
+                )
+            elif isinstance(continuation, ResumeActionExecution):
+                continuation.context.progress = progress
+                continue_creature_action(state, continuation.context)
+            elif isinstance(continuation, ResumeSpellInvocation):
+                resolve_spell_action(
+                    state,
+                    state.creatures[continuation.caster_ref].creature,
+                    continuation.payload,
+                    progress,
+                    continuation.action_id,
+                )
+            elif isinstance(continuation, ResumeWeaponMastery):
+                open_weapon_mastery_decision(
+                    state,
+                    continuation.request,
+                    progress,
+                    continuation=continuation.next_continuation,
                 )
             return
 

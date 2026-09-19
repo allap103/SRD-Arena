@@ -29,9 +29,8 @@ from .stat_block_runtime.resources import (
     recharge_stat_block_actions,
     stat_block_action_resource_available,
 )
-from .stat_block_runtime.saving_throws import (
-    resolve_saving_throw_stat_block_action,
-)
+from .stat_block_runtime.saving_throws import resolve_saving_throw_stat_block_action
+from .stat_block_runtime.targets import stat_block_target_refs
 from .stat_block_runtime.validation import stat_block_action_runtime_issue
 
 if TYPE_CHECKING:
@@ -47,6 +46,7 @@ __all__ = [
     "resolve_stat_block_action",
     "stat_block_action_resource_available",
     "stat_block_action_runtime_issue",
+    "stat_block_target_refs",
 ]
 
 

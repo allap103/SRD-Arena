@@ -6,6 +6,7 @@ from dataclasses import dataclass, field
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.creatures.multiattack import MultiattackStep
 from srd_arena.domain.effects.conditions import AppliedCondition
 from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
@@ -16,6 +17,7 @@ from srd_arena.domain.geometry import (
     MovementCost,
     Position,
 )
+from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from ..definitions import EncounterBehavior, EncounterDefinition
@@ -55,9 +57,13 @@ class RoundState:
 
 @dataclass
 class TurnState:
-    """Track the current position within initiative order."""
+    """Track initiative and which casters spent a slot during this turn.
+
+    The slot limit is per caster on any creature's turn, including reactions.
+    """
 
     index: int = 0
+    spell_slot_users: set[CreatureRef] = field(default_factory=set)
 
 
 @dataclass
@@ -87,15 +93,18 @@ class EncounterCreatureState:
     movement_spent_this_turn: MovementCost = field(
         default_factory=lambda: MovementCost(0)
     )
+    movement_mode: MovementMode = "walk"
     actions_remaining: int = 1
     action_used_this_turn: bool = False
     magic_actions_remaining: int = 1
     attacks_remaining: int = 0
     attack_action_base_attacks: int = 0
     attack_action_attacks_used: int = 0
+    attack_rolls_made_this_turn: int = 0
     pending_multiattack: list[MultiattackStep] = field(default_factory=list)
     bonus_action_available: bool = True
     bonus_action_used_this_turn: bool = False
+    features_used_this_turn: set[str] = field(default_factory=set)
 
     @property
     def is_alive(self) -> bool:
@@ -125,6 +134,24 @@ class InitiativeEntry:
     total: int
 
 
+@dataclass(frozen=True)
+class LethalDamage:
+    """Retain the complete damage occurrence that reduced a creature to 0 HP."""
+
+    amount: int
+    damage_types: frozenset[str]
+    critical_hit: bool = False
+
+    def __post_init__(self) -> None:
+        if self.amount < 0:
+            raise ValueError("Lethal damage cannot be negative.")
+        object.__setattr__(
+            self,
+            "damage_types",
+            frozenset(value.casefold() for value in self.damage_types),
+        )
+
+
 @dataclass
 class EncounterStateData:
     """Store all mutable aggregate state for one encounter instance.
@@ -143,12 +170,19 @@ class EncounterStateData:
     action_sequence: int = 1
     frame_sequence: int = 1
     event_sequence: int = 1
+    # Sessions enable perception snapshots; isolated rules callers can emit
+    # lightweight events when they do not maintain player knowledge.
+    capture_event_visibility: bool = field(default=False, repr=False)
+    active_d20_action_id: str | None = None
+    active_d20_roll_modes: dict[str, D20RollMode] = field(default_factory=dict)
     runtime_state_sequence: int = 1
     initiative_order: list[CreatureRef] = field(default_factory=list)
     initiative_entries: list[InitiativeEntry] = field(default_factory=list)
     conditions: list[AppliedCondition] = field(default_factory=list)
     ongoing_effects: list[OngoingEffect] = field(default_factory=list)
     relationships: list[CreatureRelationship] = field(default_factory=list)
+    defeated_creature_refs: set[CreatureRef] = field(default_factory=set)
+    pending_lethal_damage: dict[CreatureRef, LethalDamage] = field(default_factory=dict)
     item_templates: dict[str, Item] = field(default_factory=dict)
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
     dice: DiceRoller = field(default_factory=DiceRoller, repr=False)

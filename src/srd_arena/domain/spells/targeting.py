@@ -1,8 +1,67 @@
 """Derive runtime targeting behavior from spell metadata and capabilities."""
 
+from srd_arena.domain.capabilities import (
+    AttackResolution,
+    capability_can_damage,
+)
 from srd_arena.domain.geometry import Grid
 
 from .definitions import Spell
+
+
+def spell_uses_attack_roll(spell: Spell) -> bool:
+    """Return whether resolving the spell makes an attack roll.
+
+    >>> from srd_arena.domain.capabilities import (
+    ...     AttackResolution, CapabilityDefinition, CapabilityTarget,
+    ...     FixedAttackBonus, Outcome,
+    ... )
+    >>> spell = Spell(
+    ...     "ray", "Ray", "TEST", 0,
+    ...     definition=CapabilityDefinition(
+    ...         CapabilityTarget("creature"),
+    ...         AttackResolution(("ranged",), FixedAttackBonus(5), Outcome()),
+    ...     ),
+    ... )
+    >>> spell_uses_attack_roll(spell)
+    True
+    """
+
+    return bool(
+        spell.definition is not None
+        and isinstance(spell.definition.resolution, AttackResolution)
+    )
+
+
+def spell_can_damage_targets(spell: Spell) -> bool:
+    """Return whether the spell can deal damage to one of its targets.
+
+    Only executable capability effects are considered. Descriptive metadata
+    may mention conditional or incidental damage that the current invocation
+    does not apply to its selected targets.
+
+    >>> from srd_arena.domain.capabilities import (
+    ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
+    ...     DamageEffect, Outcome,
+    ... )
+    >>> spell = Spell(
+    ...     "burst", "Burst", "TEST", 1,
+    ...     definition=CapabilityDefinition(
+    ...         CapabilityTarget("area"),
+    ...         AutomaticResolution(Outcome((DamageEffect("1d6", 0, "fire"),))),
+    ...     ),
+    ... )
+    >>> spell_can_damage_targets(spell)
+    True
+    >>> spell_can_damage_targets(
+    ...     Spell("door", "Door", "TEST", 4, damage_dice="4d6")
+    ... )
+    False
+    >>> spell_can_damage_targets(Spell("mend", "Mend", "TEST", 1))
+    False
+    """
+
+    return capability_can_damage(spell.definition)
 
 
 def spell_targets_self_only(spell: Spell) -> bool:

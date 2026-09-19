@@ -1,6 +1,11 @@
 {
   "name": "Constrictor Snake",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "natural",
+    "apparent_creature_type": "Beast",
+    "obvious_features": ["Long scaled body"]
+  },
   "page": 351,
   "srd52": true,
   "basicRules2024": true,
@@ -84,7 +89,14 @@
         "type": "capability",
         "target": {
           "type": "creature",
-          "range_feet": 5
+          "range_feet": 5,
+          "line_of_sight": true,
+          "requirements": [
+            {
+              "type": "size",
+              "maximum": "M"
+            }
+          ]
         },
         "resolution": {
           "type": "saving_throw",

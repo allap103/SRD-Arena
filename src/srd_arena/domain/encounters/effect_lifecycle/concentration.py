@@ -5,10 +5,14 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.runtime import OngoingEffectKind
+from srd_arena.domain.effects.triggered import roll_mode_contributions
+from srd_arena.domain.rolls.dice import combine_roll_modes
 from srd_arena.domain.rolls.saving_throws import resolve_saving_throw
 
+from ..event_stream import create_event
 from ..rule_queries.rolls import roll_modifiers
 from .removal import _remove_effect_tree
+from .roll_usage import resolve_saving_throw_modifier
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -100,12 +104,27 @@ def resolve_concentration_damage(
         "saving_throw",
         ability="constitution",
     )
+    intrinsic_modes = roll_mode_contributions(
+        creature.triggered_effects,
+        "saving_throw",
+        {
+            "ability": "constitution",
+            "purpose": "maintain_concentration",
+        },
+    )
     save = resolve_saving_throw(
         creature,
         "constitution",
         dc,
-        sourced_modifier_override=roll_rules.resolve_modifier(state.dice.roll_die),
-        sourced_mode_override=roll_rules.mode,
+        sourced_modifier_override=resolve_saving_throw_modifier(
+            state,
+            creature_ref,
+            roll_rules,
+        ),
+        sourced_mode_override=combine_roll_modes(
+            roll_rules.mode,
+            *(contribution.mode for contribution in intrinsic_modes),
+        ),
         roller=state.dice.roll_die,
     )
     if progress is not None:
@@ -119,6 +138,28 @@ def resolve_concentration_damage(
                 "system",
                 f"{creature.name} {outcome} concentration on {effect_label} "
                 f"(Constitution {save.check.roll.total} vs DC {dc}).",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "concentration_save_resolved",
+                creature_ref=creature_ref,
+                data={
+                    "effect_id": concentrating.identity.id,
+                    "spell_id": concentrating.identity.source.definition_id,
+                    "ability": "constitution",
+                    "dice": list(save.check.roll.dice),
+                    "selected_index": save.check.roll.selected_index,
+                    "modifier": save.modifiers.total,
+                    "total": save.check.roll.total,
+                    "target_dc": dc,
+                    "success": save.check.success,
+                    "mode": save.check.roll.mode,
+                    "mode_source_ids": [
+                        contribution.source_id for contribution in intrinsic_modes
+                    ],
+                },
             )
         )
     if not save.check.success:

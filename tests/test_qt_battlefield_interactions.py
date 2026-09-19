@@ -44,6 +44,21 @@ def test_movement_preview_uses_shortest_paths_around_occupied_cells() -> None:
     assert (3, 3) not in movement_paths
 
 
+def test_movement_preview_checks_every_cell_of_a_large_footprint() -> None:
+    paths = shortest_movement_paths(
+        width=4,
+        height=4,
+        origin=(0, 0),
+        blocked={(2, 1)},
+        max_steps=3,
+        footprint_offsets={(0, 0), (1, 0), (0, 1), (1, 1)},
+    )
+
+    assert (1, 0) not in paths
+    assert (0, 1) in paths
+    assert (3, 0) not in paths
+
+
 def test_movement_plan_uses_active_creature_and_advertised_movement() -> None:
     encounter = _encounter_view()
 

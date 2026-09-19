@@ -4,13 +4,20 @@ version = "0.1.0"
 requires-python = ">=3.14"
 dependencies = [
     "pydantic>=2.8,<3",
+    "PyYAML>=6.0.3,<7",
     "PySide6>=6.8,<7"
 ]
 
+[project.optional-dependencies]
+training = ["numpy>=2.3,<3", "torch>=2.10,<3"]
+observability = ["tensorboard>=2.20,<3", "streamlit>=1.50,<2"]
+
 [project.scripts]
 srd-arena = "srd_arena.main:main"
-content-schema-docs = "srd_arena.tools.content_schema_docs:main"
-doctest-audit = "srd_arena.tools.doctest_audit:main"
+srd-arena-train = "srd_arena.training.train:main"
+srd-arena-evaluate = "srd_arena.training.evaluate:main"
+srd-arena-inspect = "srd_arena.training.inspect:main"
+srd-arena-watch = "srd_arena.training.watch:main"
 
 [build-system]
 requires = ["setuptools>=61"]
@@ -28,22 +35,23 @@ package = true
 
 [dependency-groups]
 dev = [
-    "erdantic>=1.2.1",
-    "furo>=2025.12.19",
+    "numpy>=2.3,<3",
     "hypothesis>=6.0,<7",
     "interrogate>=1.7.0",
-    "json-schema-for-humans>=1.5.1",
     "mypy>=2.1.0",
-    "myst-parser>=5.1.0",
+    "types-PyYAML>=6.0.12",
     "pytest>=7.4,<9",
     "pytest-cov>=7.1.0",
     "ruff>=0.15.17",
-    "sphinx>=9.1.0",
 ]
 
 [tool.pytest.ini_options]
 addopts = ["--doctest-modules"]
 testpaths = ["tests", "src/srd_arena"]
+
+[tool.mypy]
+# Generated experiment artifacts and local orchestration scripts are not source.
+exclude = ['^runs/']
 
 [tool.ruff]
 target-version = "py314"

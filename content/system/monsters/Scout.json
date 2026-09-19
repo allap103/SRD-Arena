@@ -1,6 +1,9 @@
 {
   "name": "Scout",
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Humanoid"
+  },
   "page": 270,
   "srd52": true,
   "basicRules2024": true,
@@ -57,19 +60,83 @@
       "name": "Multiattack",
       "entries": [
         "The scout makes two attacks, using Shortsword and Longbow in any combination."
-      ]
+      ],
+      "capability": {
+        "type": "multiattack",
+        "plans": [
+          {
+            "steps": [
+              {
+                "type": "choose",
+                "options": [
+                  {
+                    "type": "stat_block_action",
+                    "name": "Shortsword"
+                  },
+                  {
+                    "type": "stat_block_action",
+                    "name": "Longbow"
+                  }
+                ],
+                "times": 2
+              }
+            ]
+          }
+        ]
+      }
     },
     {
       "name": "Shortsword",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "damage_type": "piercing",
+            "bonus": 2
+          }
+        ],
+        "reach_feet": 5
+      }
     },
     {
       "name": "Longbow",
       "entries": [
         "{@atkr r} {@hit 4}, range 150/600 ft. {@h}6 ({@damage 1d8 + 2}) Piercing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 150
+        },
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d8",
+            "damage_type": "piercing",
+            "bonus": 2
+          }
+        ],
+        "range_normal_feet": 150,
+        "range_long_feet": 600
+      }
     }
   ],
   "environment": [

@@ -33,14 +33,16 @@ from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
+from srd_arena.domain.encounters.turn_lifecycle import advance_turn
 from srd_arena.domain.geometry import Position
 from srd_arena.domain.rolls.randomness import DiceRoller
 from srd_arena.domain.spells import Spell
 from srd_arena.engine.models import EngineOutcome
 from srd_arena.engine.queries import ActionAim
 from srd_arena.engine.session import Session
+from srd_arena.frontends.gui.presenter import GamePresenter
 from tests.encounter_runtime_support import active_creature as _active_creature
-from tests.encounter_runtime_support import is_spell_action
+from tests.encounter_runtime_support import is_spell_action, submit_complete_spell
 from tests.encounter_runtime_support import (
     use_deterministic_dice as _use_deterministic_dice,
 )
@@ -49,7 +51,11 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 STAT_BLOCK_ACTION_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "stat_block_action_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "stat_block_action_showcase"
 )
 
 
@@ -89,11 +95,11 @@ def _choose_directional_spell(
     label: str,
     aim_cell: tuple[int, int],
 ) -> EngineOutcome:
-    scene_view = session.read()
+    scene_view = session._read()
     action = next(
         detail for detail in scene_view.action_options if detail.label == label
     )
-    return session.configure_action(
+    return session._configure_action(
         action.id,
         ActionAim(x=aim_cell[0] + 0.5, y=aim_cell[1] + 0.5),
     )
@@ -105,7 +111,7 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -136,17 +142,10 @@ def test_slow_cast_groups_failed_targets_under_one_typed_effect() -> None:
     rolls = iter((1, 20, 1))
     _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
 
-    _choose_directional_spell(session, "Cast Slow", (7, 5))
-
-    assert state.current_decision().kind == "spell_targets"
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.maximum_targets == 3
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
+    action = next(a for a in session._read().action_options if a.label == "Cast Slow")
+    resolved = submit_complete_spell(
+        session, action.id, ("goblin_1", "goblin_2", "goblin_3"), aim=(7.5, 5.5)
     )
-    resolved = _ORCHESTRATOR.submit(state, confirm)
 
     assert len(state.ongoing_effects) == 1
     slow = state.ongoing_effects[0]
@@ -276,7 +275,7 @@ def test_slow_chosen_area_never_exceeds_six_targets() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -297,31 +296,31 @@ def test_slow_chosen_area_never_exceeds_six_targets() -> None:
         state.creatures[target_ref].position = Position(index, 6)
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
-    _choose_directional_spell(session, "Cast Slow", (8, 6))
-
-    assert state.current_decision().kind == "spell_targets"
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.maximum_targets == 6
-    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
-    selected = set(state.interrupts.pending_spell_cast.selected_target_refs)
-    unselected = next(
-        target_ref for target_ref in target_refs if target_ref not in selected
+    presenter = GamePresenter(session)
+    option = next(
+        a for a in presenter.observation.scene.action_details if a.label == "Cast Slow"
     )
-    remove = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value in selected
+    before = session.observe_gameplay()
+    assert presenter.aim_action(option.id, 8.5, 6.5) is not None
+    view = presenter.observation.encounter
+    assert view is not None and view.targeting is not None
+    assert view.targeting.maximum_targets == 6
+    selected = set(view.targeting.selected_target_refs)
+    unselected = next(ref for ref in target_refs if ref not in selected)
+    assert (
+        presenter.change_target(
+            next(iter(selected)), remove=True, source_trigger_id="slow"
+        )
+        is not None
     )
-    _ORCHESTRATOR.submit(state, remove)
-    add = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == unselected
+    assert (
+        presenter.change_target(unselected, remove=False, source_trigger_id="slow")
+        is not None
     )
-    _ORCHESTRATOR.submit(state, add)
-
-    assert state.interrupts.pending_spell_cast is not None
-    assert len(state.interrupts.pending_spell_cast.selected_target_refs) == 6
+    view = presenter.observation.encounter
+    assert view is not None and view.targeting is not None
+    assert len(view.targeting.selected_target_refs) == 6
+    assert session.observe_gameplay() == before
 
 
 def _assassin_showcase_state() -> EncounterState:
@@ -330,7 +329,7 @@ def _assassin_showcase_state() -> EncounterState:
             str(STAT_BLOCK_ACTION_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -455,7 +454,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -471,8 +470,7 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     caster.spellcasting.spell_slots_remaining[3] = 1
     caster.spellcasting.spell_slots_remaining[1] = 1
     caster.current_health = caster.get_max_health() - 5
-    rolls = iter((1, 1))
-    _use_deterministic_dice(session, die_roller=lambda _sides: next(rolls))
+    _use_deterministic_dice(session, die_roller=lambda _sides: 1)
 
     _choose_directional_spell(
         session,
@@ -481,9 +479,10 @@ def test_slow_from_a_real_cast_can_fail_a_somatic_spell() -> None:
     )
 
     assert state.ongoing_effects[0].target_refs == ("player",)
-    state.active_creature_state.actions_remaining = 1
-    state.active_creature_state.action_used_this_turn = False
-    state.active_creature_state.magic_actions_remaining = 1
+    # Slow remains after the failed repeat save; a new turn permits another slot.
+    advance_turn(state)
+    while state.current_decision().creature_ref != "player":
+        advance_turn(state)
     initial_health = caster.get_health()
     cure = next(
         action
@@ -525,7 +524,7 @@ def test_ending_slow_mid_attack_restores_unused_extra_attack() -> None:
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

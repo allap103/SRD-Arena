@@ -2,7 +2,10 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.effects.rule_effects import InvocationFailureChance
+from srd_arena.domain.effects.rule_effects import (
+    InvocationFailureChance,
+    InvocationProhibition,
+)
 from srd_arena.domain.rolls.dice import DieRoller
 
 from .context import EffectQueryContext
@@ -12,8 +15,31 @@ from .models import (
     InvocationStartQueryResult,
     InvocationStartResult,
     InvocationStartRoll,
+    SourcedEligibilityFailure,
 )
 from .providers import ongoing_rule_effects
+
+
+def invocation_prohibitions(
+    state: EffectQueryContext,
+    context: InvocationStartContext,
+) -> tuple[SourcedEligibilityFailure, ...]:
+    """Return sourced categorical blockers for one invocation kind."""
+
+    invocation_kind = context.kind.casefold()
+    return tuple(
+        SourcedEligibilityFailure(
+            code=rule_effect.code,
+            message=rule_effect.message,
+            state_ids=(provider_state_id,),
+            sources=(source,),
+        )
+        for provider_state_id, source, rule_effect in ongoing_rule_effects(
+            state, context.actor_ref
+        )
+        if isinstance(rule_effect, InvocationProhibition)
+        and invocation_kind in rule_effect.invocation_kinds
+    )
 
 
 def invocation_start_checks(

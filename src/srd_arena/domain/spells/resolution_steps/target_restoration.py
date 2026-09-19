@@ -105,9 +105,14 @@ def restore_target(
     for temporary in prepared.temporary_hit_point_effects:
         if temporary.trigger != "application":
             continue
+        die_roller = (
+            (lambda sides: sides)
+            if context.maximize_temporary_hit_point_dice
+            else context.environment.roll_die
+        )
         temporary_roll = roll_optional_dice(
             temporary.dice,
-            context.environment.roll_die,
+            die_roller,
         )
         modifier = temporary.value + (
             context.creature.spellcasting.ability_modifier

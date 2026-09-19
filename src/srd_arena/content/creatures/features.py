@@ -1,7 +1,15 @@
 """Translate authored creature features into executable domain rules."""
 
-from srd_arena.domain.creatures import ClassFeature, CombatProfile
+from srd_arena.domain.creatures import (
+    ArmorClassCalculation,
+    ClassFeature,
+    CombatProfile,
+    IntrinsicRuleProvider,
+)
 from srd_arena.domain.creatures.feature_actions import FeatureActionDefinition
+from srd_arena.domain.effects.conditions import Condition
+from srd_arena.domain.effects.modifiers import RollModifier
+from srd_arena.domain.effects.rule_effects import RollAdjustment, SpeedAdjustment
 
 
 def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
@@ -56,6 +64,64 @@ def build_combat_profile(class_features: list[ClassFeature]) -> CombatProfile:
                 "short_rest": "all",
                 "long_rest": "all",
             }
+        elif class_feature.id == "rage":
+            profile.feature_actions["rage"] = FeatureActionDefinition(
+                feature_id="rage",
+                label="Rage",
+                economy="bonus_action",
+                blocked_while_effect_active=True,
+                blocked_by_armor_categories=frozenset({"heavy"}),
+            )
+            profile.feature_actions["extend_rage"] = FeatureActionDefinition(
+                feature_id="extend_rage",
+                label="Extend Rage",
+                economy="bonus_action",
+                requires_active_effect_id="rage",
+                requires_use=False,
+            )
+            uses = class_feature.data.get("uses")
+            if isinstance(uses, int):
+                profile.feature_uses_max["rage"] = uses
+            profile.feature_recharge["rage"] = {
+                "short_rest": 1,
+                "long_rest": "all",
+            }
+        elif class_feature.id == "unarmored_defense":
+            profile.armor_class_calculations["unarmored_defense"] = (
+                ArmorClassCalculation(
+                    id="unarmored_defense",
+                    label="Unarmored Defense",
+                    base=10,
+                    ability_modifiers=("dexterity", "constitution"),
+                    requires_unarmored=True,
+                )
+            )
+        elif class_feature.id == "danger_sense":
+            profile.intrinsic_rule_providers["danger_sense"] = IntrinsicRuleProvider(
+                id="danger_sense",
+                label="Danger Sense",
+                rule_effects=(
+                    RollAdjustment(
+                        RollModifier(
+                            "saving_throw",
+                            "advantage",
+                            ability="dexterity",
+                        ),
+                        blocked_by_conditions=frozenset({Condition.INCAPACITATED}),
+                    ),
+                ),
+            )
+        elif class_feature.id == "fast_movement":
+            speed_bonus = class_feature.data.get("speed_bonus_feet")
+            if isinstance(speed_bonus, int):
+                profile.intrinsic_rule_providers["fast_movement"] = (
+                    IntrinsicRuleProvider(
+                        id="fast_movement",
+                        label="Fast Movement",
+                        rule_effects=(SpeedAdjustment(speed_bonus),),
+                        blocked_by_armor_categories=frozenset({"heavy"}),
+                    )
+                )
     return profile
 
 

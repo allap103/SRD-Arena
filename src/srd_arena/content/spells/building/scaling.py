@@ -37,8 +37,24 @@ def build_scaling(raw: SpellSchema) -> tuple[domain.CapabilityScaling, ...]:
                             increment.type,
                             increment.amount,
                             increment.damage_type,
+                            increment.unit,
                         )
                         for increment in scaling.per_level
+                    ),
+                    thresholds=tuple(
+                        domain.ScalingThreshold(
+                            threshold.minimum_level,
+                            tuple(
+                                domain.ScalingIncrement(
+                                    increment.type,
+                                    increment.amount,
+                                    increment.damage_type,
+                                    increment.unit,
+                                )
+                                for increment in threshold.increments
+                            ),
+                        )
+                        for threshold in scaling.thresholds
                     ),
                 )
             )

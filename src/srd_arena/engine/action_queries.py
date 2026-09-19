@@ -2,12 +2,24 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.encounters.encounter_models.actions import EncounterAction
+from typing import Literal, cast
+
+from srd_arena.domain.encounters.encounter_models.actions import (
+    EffectRetargetSelection,
+    EncounterAction,
+    ForcedMovementSelection,
+    GrappleEscapeSelection,
+)
 from srd_arena.domain.spells.rules import SpellActionPayload
 from srd_arena.engine.queries import (
     ActionOptionDetails,
     DirectTargetOptionDetails,
+    EffectRetargetOptionDetails,
     FeatureOptionDetails,
+    ForcedMovementOptionDetails,
+    GrappleEscapeOptionDetails,
+    GrappleSaveOptionDetails,
+    InitiativeSwapOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SpellOptionDetails,
@@ -29,6 +41,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         payload = action.value
         return SpellOptionDetails(
             source_id=payload.spell_id,
+            grant_id=payload.grant_id,
             target_ref=payload.target_ref,
             target_refs=payload.target_refs,
             aim_point=payload.aim_point,
@@ -36,11 +49,13 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
             selected_condition=payload.selected_condition,
             selected_damage_type=payload.selected_damage_type,
             selected_ability=payload.selected_ability,
+            selected_option=payload.selected_option,
             healing_allocations=payload.healing_allocations,
         )
     if action.kind == "toggle_spell_target":
         return SpellOptionDetails(
             source_id=action.source_trigger_id,
+            grant_id=None,
             target_ref=action.value if isinstance(action.value, str) else None,
             target_refs=((action.value,) if isinstance(action.value, str) else ()),
             aim_point=None,
@@ -48,6 +63,7 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
             selected_condition=None,
             selected_damage_type=None,
             selected_ability=None,
+            selected_option=None,
             healing_allocations=(),
         )
     if action.kind == "stat_block":
@@ -59,6 +75,34 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         return FeatureOptionDetails(feature_id=action.value)
     if action.kind == "move" and isinstance(action.value, str):
         return MovementOptionDetails(direction=action.value)
+    if action.kind == "forced_movement_choice" and isinstance(
+        action.value, ForcedMovementSelection
+    ):
+        return ForcedMovementOptionDetails(
+            target_ref=action.value.target_ref,
+            direction=action.value.direction,
+            distance_feet=action.value.distance_feet,
+            source_id=action.source_trigger_id,
+        )
+    if action.kind == "escape_grapple" and isinstance(
+        action.value, GrappleEscapeSelection
+    ):
+        return GrappleEscapeOptionDetails(
+            source_ref=action.value.source_ref,
+            ability=action.value.ability,
+        )
+    if action.kind == "grapple_save" and action.value in {
+        "strength",
+        "dexterity",
+        "fail",
+    }:
+        return GrappleSaveOptionDetails(
+            cast(Literal["strength", "dexterity", "fail"], action.value)
+        )
+    if action.kind in {"keep_initiative", "swap_initiative"}:
+        return InitiativeSwapOptionDetails(
+            target_ref=action.value if isinstance(action.value, str) else None
+        )
     if action.kind == "set_spell_resource_allocation" and isinstance(
         action.value,
         str,
@@ -69,16 +113,34 @@ def option_details(action: EncounterAction) -> ActionOptionDetails | None:
         )
     if action.kind in {
         "attack",
+        "attack_condition",
         "grapple",
         "opportunity_attack",
-        "wake_spell_target",
+        "rouse_spell_target",
+        "search_hidden",
     }:
         return DirectTargetOptionDetails(target_ref=_direct_target_ref(action.value))
+    if action.kind == "retarget_effect" and isinstance(
+        action.value, EffectRetargetSelection
+    ):
+        return EffectRetargetOptionDetails(
+            effect_id=action.value.effect_id,
+            target_ref=action.value.target_ref,
+        )
     return None
 
 
 def _direct_target_ref(
-    value: str | int | tuple[float, float] | SpellActionPayload | None,
+    value: (
+        str
+        | int
+        | tuple[float, float]
+        | SpellActionPayload
+        | GrappleEscapeSelection
+        | ForcedMovementSelection
+        | EffectRetargetSelection
+        | None
+    ),
 ) -> str | None:
     if isinstance(value, str):
         return value

@@ -1,0 +1,77 @@
+{
+  "name": "Armor of Agathys",
+  "source": "XPHB",
+  "level": 1,
+  "school": "A",
+  "time": [
+    {
+      "number": 1,
+      "unit": "bonus"
+    }
+  ],
+  "range": {
+    "type": "point",
+    "distance": {
+      "type": "self"
+    }
+  },
+  "components": {
+    "v": true,
+    "s": true,
+    "m": "a cup of water"
+  },
+  "duration": [
+    {
+      "type": "timed",
+      "duration": {
+        "type": "hour",
+        "amount": 1
+      }
+    }
+  ],
+  "damageInflict": ["cold"],
+  "capability": {
+    "target": {
+      "type": "self"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": [
+          {
+            "type": "temporary_hit_points",
+            "value": 5
+          },
+          {
+            "type": "attack_hit_retaliation",
+            "value": 5,
+            "damage_type": "cold",
+            "attack_types": ["melee"],
+            "requires_temporary_hit_points": true,
+            "end_effect_when_depleted": true
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": "spell_level",
+        "per_level": [
+          {
+            "type": "temporary_hit_points",
+            "amount": 5
+          },
+          {
+            "type": "attack_hit_retaliation",
+            "amount": 5
+          }
+        ]
+      }
+    ],
+    "recast_ends_previous": true
+  },
+  "implementation": {
+    "status": "complete"
+  }
+}

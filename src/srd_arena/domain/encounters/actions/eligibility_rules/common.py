@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.capabilities import ConditionRequirement, CreatureTypeRequirement
+from srd_arena.domain.capabilities import (
+    ConditionRequirement,
+    CreatureTypeRequirement,
+    SizeRequirement,
+)
+from srd_arena.domain.creatures import size_rank
 from srd_arena.domain.effects.conditions import CombatTrait, Condition
 from srd_arena.domain.geometry import Position
 
@@ -13,9 +18,19 @@ from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
-from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...grappling_state import grappling_targets_for
 from ...participants import creatures_are_opponents
-from ...state_runtime import creature_position, position_is_free
+from ...rule_queries.movement import (
+    movement_mode_for_step,
+    movement_step_cost,
+    remaining_movement_for_mode,
+)
+from ...rule_queries.numeric import effective_speed
+from ...spatial import (
+    creature_position,
+    diagonal_terrain_step_is_clear,
+    placement_is_free,
+)
 from .models import EligibilityFailure
 
 if TYPE_CHECKING:
@@ -94,12 +109,14 @@ class ResourceRule:
         >>> from unittest.mock import Mock
         >>> from ...encounter_models.actions import ActionCost
         >>> from srd_arena.domain.geometry import MovementCost
-        >>> action = EncounterAction("Move", "move", cost=ActionCost(movement=MovementCost(2)))
+        >>> action = EncounterAction("Stand", "stand_up", cost=ActionCost(movement=MovementCost(2)))
         >>> ResourceRule().check(Mock(creatures={"hero": Mock(movement_remaining=1)}),
         ...     "hero", action).code
         'insufficient_movement'
         """
         actor = state.creatures[actor_ref]
+        if action.kind == "move":
+            return None
         if action.cost.movement > (actor.movement_remaining or 0):
             return EligibilityFailure(
                 "insufficient_movement",
@@ -116,8 +133,13 @@ class MovementRule:
         state: EncounterState,
         actor_ref: CreatureRef,
         action: EncounterAction,
+        *,
+        ignored_occupants: frozenset[CreatureRef] = frozenset(),
     ) -> EligibilityFailure | None:
         """Validate movement direction, budget, and destination occupancy.
+
+        ``ignored_occupants`` supports knowledge-relative previews. Execution
+        leaves it empty so unseen creatures still block actual placement.
 
         >>> from unittest.mock import Mock
         >>> action = EncounterAction("Move", "move", value="sideways")
@@ -131,30 +153,58 @@ class MovementRule:
                 "invalid_direction",
                 "Movement requires a valid direction.",
             )
-        movement_cost = movement_cost_for(state, actor_ref)
-        actor = state.creatures[actor_ref]
-        if movement_cost is None or (actor.movement_remaining or 0) < movement_cost:
-            return EligibilityFailure(
-                "insufficient_movement",
-                "Not enough movement remains.",
-            )
         dx, dy = DIRECTION_DELTAS[action.value]
         moving_refs = {actor_ref, *grappling_targets_for(state, actor_ref)}
-        destinations = [
-            Position(
+        destinations = {
+            moving_ref: Position(
                 creature_position(state, moving_ref).x + dx,
                 creature_position(state, moving_ref).y + dy,
             )
             for moving_ref in moving_refs
-        ]
-        if any(
-            not position_is_free(
-                state,
-                destination.x,
-                destination.y,
-                ignored_refs=moving_refs,
+        }
+        movement_cost = movement_step_cost(state, actor_ref, destinations[actor_ref])
+        movement_mode = movement_mode_for_step(
+            state,
+            actor_ref,
+            destinations[actor_ref],
+        )
+        remaining_movement = remaining_movement_for_mode(
+            state,
+            actor_ref,
+            movement_mode,
+        )
+        effective = state.effective_conditions_for(actor_ref)
+        if effective_speed(
+            state,
+            actor_ref,
+            mode=movement_mode,
+        ).value == 0 and not effective.has_trait(CombatTrait.CANNOT_TAKE_ACTIONS):
+            return EligibilityFailure(
+                "movement.speed_zero",
+                "A creature whose Speed is 0 cannot move.",
+                effective.providers_for_trait(CombatTrait.SPEED_ZERO),
             )
-            for destination in destinations
+        if remaining_movement < movement_cost:
+            return EligibilityFailure(
+                "insufficient_movement",
+                "Not enough movement remains.",
+            )
+        if any(
+            not placement_is_free(
+                state,
+                moving_ref,
+                destination,
+                ignored_refs=moving_refs | ignored_occupants,
+            )
+            for moving_ref, destination in destinations.items()
+        ) or any(
+            not diagonal_terrain_step_is_clear(
+                state,
+                moving_ref,
+                creature_position(state, moving_ref),
+                destination,
+            )
+            for moving_ref, destination in destinations.items()
         ):
             return EligibilityFailure(
                 "destination_blocked",
@@ -221,6 +271,23 @@ def target_requirement_failure(
     """
 
     for requirement in requirements:
+        if isinstance(requirement, SizeRequirement):
+            target_size = state.creatures[target_ref].creature.size
+            if requirement.maximum is not None and size_rank(target_size) > size_rank(
+                requirement.maximum
+            ):
+                return EligibilityFailure(
+                    "target_size_required",
+                    f"The target must be {requirement.maximum} size or smaller.",
+                )
+            if requirement.minimum is not None and size_rank(target_size) < size_rank(
+                requirement.minimum
+            ):
+                return EligibilityFailure(
+                    "target_size_required",
+                    f"The target must be {requirement.minimum} size or larger.",
+                )
+            continue
         if isinstance(requirement, CreatureTypeRequirement):
             creature_type = state.creatures[
                 target_ref

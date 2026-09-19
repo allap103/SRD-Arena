@@ -17,7 +17,9 @@ from .encounter_models.state import (
     EncounterCreatureState,
 )
 from .participants import creatures_are_opponents
-from .state_runtime import creature_position, living_creature_refs
+from .scripted_policies import BarbarianAllyActionSelector
+from .spatial import creature_distance
+from .state_runtime import living_creature_refs
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -75,9 +77,6 @@ class ScriptedActionSelector:
         >>> selector = ScriptedActionSelector(participant)
         >>> state = Mock()
         >>> with patch(
-        ...     "srd_arena.domain.encounters.action_selection.creature_position",
-        ...     return_value=Position(0, 0),
-        ... ), patch(
         ...     "srd_arena.domain.encounters.action_selection.living_creature_refs",
         ...     return_value=[],
         ... ):
@@ -87,7 +86,27 @@ class ScriptedActionSelector:
         >>> result.kind
         'wait'
         """
-        wait = next(action for action in actions if action.kind == "wait")
+        forced = next(
+            (action for action in actions if action.kind == "obey_compelled_turn"),
+            None,
+        )
+        if forced is not None:
+            return forced
+        self_attachment_attack = next(
+            (
+                action
+                for action in actions
+                if action.kind == "attack_condition" and action.value == creature_ref
+            ),
+            None,
+        )
+        if self_attachment_attack is not None:
+            return self_attachment_attack
+        wait = next((action for action in actions if action.kind == "wait"), None)
+        if wait is None:
+            if not actions:
+                raise RuntimeError("A scripted creature has no legal action.")
+            return actions[0]
         target_ref = self._nearest_opponent(state, creature_ref)
         if target_ref is None:
             return wait
@@ -132,7 +151,6 @@ class ScriptedActionSelector:
         state: EncounterState,
         creature_ref: CreatureRef,
     ) -> CreatureRef | None:
-        actor_position = creature_position(state, creature_ref)
         opponents = [
             target_ref
             for target_ref in living_creature_refs(state)
@@ -142,10 +160,7 @@ class ScriptedActionSelector:
             return None
         return min(
             opponents,
-            key=lambda target_ref: (
-                abs(creature_position(state, target_ref).x - actor_position.x)
-                + abs(creature_position(state, target_ref).y - actor_position.y)
-            ),
+            key=lambda target_ref: creature_distance(state, creature_ref, target_ref),
         )
 
 
@@ -162,8 +177,16 @@ def build_action_selector(
     >>> participant.behavior.type = "wait"
     >>> isinstance(build_action_selector("scripted", participant), ScriptedActionSelector)
     True
+    >>> participant.behavior.type = "barbarian_ally"
+    >>> isinstance(
+    ...     build_action_selector("scripted", participant),
+    ...     BarbarianAllyActionSelector,
+    ... )
+    True
     """
 
     if controller == "external":
         return ExternalActionSelector()
+    if participant.behavior.type == "barbarian_ally":
+        return BarbarianAllyActionSelector()
     return ScriptedActionSelector(participant)

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.effects.runtime import OngoingEffect, Rounds
+from srd_arena.domain.effects.runtime import OngoingEffect, Rounds, UntilTurnStart
 
 from .removal import _remove_effect_tree
 
@@ -40,8 +40,7 @@ def expire_ongoing_effects_for_turn_start(
     expired = tuple(
         effect
         for effect in state.ongoing_effects
-        if effect.identity.source.applied_by_ref == creature_ref
-        and _round_duration_expired(state, effect)
+        if _expires_at_turn_start(state, effect, creature_ref)
     )
     for effect in expired:
         _remove_effect_tree(state, effect)
@@ -64,4 +63,20 @@ def _round_duration_expired(
         isinstance(effect.duration, Rounds)
         and isinstance(started_round, int)
         and state.round.number >= started_round + effect.duration.count
+    )
+
+
+def _expires_at_turn_start(
+    state: EncounterState,
+    effect: OngoingEffect,
+    creature_ref: str,
+) -> bool:
+    duration = effect.duration
+    if isinstance(duration, UntilTurnStart):
+        return duration.creature_ref == creature_ref and (
+            duration.round_number is None or state.round.matches(duration.round_number)
+        )
+    return (
+        effect.identity.source.applied_by_ref == creature_ref
+        and _round_duration_expired(state, effect)
     )

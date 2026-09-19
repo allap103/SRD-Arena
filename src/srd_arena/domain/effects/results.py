@@ -2,8 +2,10 @@
 
 from dataclasses import dataclass, field
 
+from srd_arena.domain.geometry import AreaOfEffect
+
 from .rule_effects import RuntimeRuleEffect
-from .runtime import OngoingEffectLifecycle
+from .runtime import EffectDuration, EffectTag, OngoingEffectLifecycle
 
 
 @dataclass(frozen=True)
@@ -17,6 +19,9 @@ class EffectResult:
     rule_effects: tuple[RuntimeRuleEffect, ...] = ()
     effect_label: str | None = None
     lifecycle: OngoingEffectLifecycle | None = None
+    duration: EffectDuration | None = None
+    tags: frozenset[EffectTag] = frozenset()
+    area: AreaOfEffect | None = None
 
 
 @dataclass(frozen=True)
@@ -40,11 +45,23 @@ class DamageApplication:
 
 
 @dataclass(frozen=True)
+class AttackHitRetaliationApplication:
+    """Capture sourced retaliation before its triggering hit mutates state."""
+
+    protected_target_ref: str
+    provider_state_id: str
+    source_definition_id: str
+    source_ref: str | None
+    damage: int
+    damage_type: str
+
+
+@dataclass(frozen=True)
 class SpellResolutionDetails:
     """Describe one spell result before it is serialized as a combat event."""
 
-    target_ref: str
-    target_label: str
+    target_ref: str | None
+    target_label: str | None
     targets: tuple[tuple[str, str], ...]
     affected_target_refs: tuple[str, ...]
     area: dict[str, object] | None
@@ -56,6 +73,7 @@ class SpellResolutionDetails:
     healing_roll_details: tuple[dict[str, object], ...] = ()
     temporary_hit_point_details: tuple[dict[str, object], ...] = ()
     damage_applications: tuple[DamageApplication, ...] = ()
+    attack_hit_retaliations: tuple[AttackHitRetaliationApplication, ...] = ()
     success: bool = False
 
 

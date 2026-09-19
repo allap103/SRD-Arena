@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
@@ -18,7 +19,8 @@ from srd_arena.domain.spells.definitions import Spell
 from srd_arena.domain.spells.resolution import SpellTargetContext
 from srd_arena.domain.spells.rules import spell_area_shape
 
-from ...state_runtime import creature_position
+from ...rule_queries.obstructions import cells_with_line_of_effect
+from ...spatial import creature_intersects_cells, creature_position
 from .spell_targets import spell_target_context
 from .spellcasting import spell_range_squares_for
 
@@ -79,7 +81,7 @@ def spell_area(
     >>> state = SimpleNamespace(
     ...     current_decision=lambda: SimpleNamespace(creature_ref="mage"),
     ...     creatures={"mage": SimpleNamespace(position=Position(0, 0))},
-    ...     definition=SimpleNamespace(grid=Grid(10, 10)),
+    ...     definition=SimpleNamespace(grid=Grid(10, 10), terrain=()),
     ... )
     >>> spell = Spell(
     ...     "fireball", "Fireball", None, 3,
@@ -103,8 +105,14 @@ def spell_area(
         )
         origin = Position(int(aim_point[0]), int(aim_point[1]))
         if spell_area_shape(spell) == "cube":
-            return build_point_cube_area(origin, radius_squares, state.definition.grid)
-        return build_radius_area(origin, radius_squares, state.definition.grid)
+            area = build_point_cube_area(
+                origin,
+                radius_squares,
+                state.definition.grid,
+            )
+        else:
+            area = build_radius_area(origin, radius_squares, state.definition.grid)
+        return _filter_area_line_of_effect(state, area)
     if spell.geometry_mode != "directional_area":
         return None
     if aim_point is not None:
@@ -131,13 +139,30 @@ def spell_area(
     if length is None:
         return None
     coverage_threshold = state.geometry_config.directional_area_cell_coverage_threshold
-    return build_directional_area(
+    directional_area = build_directional_area(
         spell.range.kind if spell.range is not None else None,
         actor_position,
         direction,
         length,
         state.definition.grid,
         coverage_threshold=coverage_threshold,
+    )
+    return (
+        _filter_area_line_of_effect(state, directional_area)
+        if directional_area is not None
+        else None
+    )
+
+
+def _filter_area_line_of_effect(
+    state: EncounterState,
+    area: AreaOfEffect,
+) -> AreaOfEffect:
+    """Remove area cells blocked from the effect's point of origin."""
+
+    return replace(
+        area,
+        cells=cells_with_line_of_effect(state, area.origin, area.cells),
     )
 
 
@@ -153,8 +178,14 @@ def targets_in_area(
     >>> target = SimpleNamespace(target_ref="goblin")
     >>> state = SimpleNamespace(
     ...     creatures={
-    ...         "goblin": SimpleNamespace(is_alive=True, position=Position(1, 1)),
-    ...         "fallen": SimpleNamespace(is_alive=False, position=Position(1, 1)),
+    ...         "goblin": SimpleNamespace(
+    ...             is_alive=True, position=Position(1, 1),
+    ...             creature=SimpleNamespace(size="M"),
+    ...         ),
+    ...         "fallen": SimpleNamespace(
+    ...             is_alive=False, position=Position(1, 1),
+    ...             creature=SimpleNamespace(size="M"),
+    ...         ),
     ...     },
     ... )
     >>> from unittest.mock import patch
@@ -172,7 +203,7 @@ def targets_in_area(
     for target_ref, target_state in state.creatures.items():
         if not target_state.is_alive:
             continue
-        if (target_state.position.x, target_state.position.y) not in occupied_cells:
+        if not creature_intersects_cells(state, target_ref, occupied_cells):
             continue
         target = spell_target_context(state, actor, target_ref)
         if target is not None:

@@ -1,0 +1,120 @@
+{
+  "id": "warlock_training",
+  "grid": {
+    "width": 12,
+    "height": 9
+  },
+  "creatures": [
+    {
+      "id": "warlock",
+      "name": "Warlock",
+      "character_snapshot": {
+        "build": "warlock",
+        "level": 5
+      },
+      "start": {
+        "x": 2,
+        "y": 3
+      },
+      "team_id": "heroes",
+      "controller": "external"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "character_snapshot": {
+        "build": "barbarian",
+        "level": 5
+      },
+      "start": {
+        "x": 2,
+        "y": 5
+      },
+      "team_id": "heroes",
+      "controller": "scripted",
+      "behavior": {
+        "type": "barbarian_ally"
+      }
+    },
+    {
+      "id": "goblin_1",
+      "name": "Goblin One",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 8,
+        "y": 2
+      },
+      "team_id": "goblins",
+      "behavior": {
+        "type": "chase"
+      }
+    },
+    {
+      "id": "goblin_2",
+      "name": "Goblin Two",
+      "token_image": "tokens/goblin_archer.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 9,
+        "y": 4
+      },
+      "team_id": "goblins",
+      "behavior": {
+        "type": "chase"
+      }
+    },
+    {
+      "id": "goblin_3",
+      "name": "Goblin Three",
+      "token_image": "tokens/goblin_warrior.png",
+      "stat_block": {
+        "name": "Goblin Warrior",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 8,
+        "y": 6
+      },
+      "team_id": "goblins",
+      "behavior": {
+        "type": "chase"
+      }
+    },
+    {
+      "id": "ogre_target",
+      "name": "Training Ogre",
+      "stat_block": {
+        "name": "Ogre",
+        "source": "XMM"
+      },
+      "start": {
+        "x": 9,
+        "y": 6
+      },
+      "team_id": "goblins",
+      "behavior": {
+        "type": "wait"
+      },
+      "takes_turns": false
+    }
+  ],
+  "teams": [
+    {
+      "id": "heroes",
+      "name": "Warlock and Barbarian",
+      "controller": "external"
+    },
+    {
+      "id": "goblins",
+      "name": "Training Enemies",
+      "controller": "scripted"
+    }
+  ]
+}

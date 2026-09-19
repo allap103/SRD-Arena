@@ -9,7 +9,11 @@ from ..encounter_models.actions import (
     EncounterAction,
 )
 from ..rule_queries.permissions import action_compatibility
-from .eligibility_rules.attacks import AttackRule, GrappleRule
+from .eligibility_rules.attacks import (
+    AttackRule,
+    DestructibleConditionAttackRule,
+    GrappleRule,
+)
 from .eligibility_rules.capabilities import FeatureActionRule, StatBlockActionRule
 from .eligibility_rules.common import (
     ActorOwnershipRule,
@@ -17,25 +21,31 @@ from .eligibility_rules.common import (
     MovementRule,
     ResourceRule,
 )
+from .eligibility_rules.compulsions import CompelledTurnRule
+from .eligibility_rules.conditions import ProneActionRule
 from .eligibility_rules.models import (
     ActionEligibility,
     EligibilityFailure,
     EligibilityRule,
 )
-from .eligibility_rules.spells import SpellActionRule, SpellTargetSelectionRule
+from .eligibility_rules.spells import SpellActionRule
+from .eligibility_rules.standard_actions import StandardActionRule
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
 
 
 ACTION_ELIGIBILITY_RULES: tuple[EligibilityRule, ...] = (
+    CompelledTurnRule(),
     ResourceRule(),
     MovementRule(),
+    ProneActionRule(),
+    StandardActionRule(),
     AttackRule(),
+    DestructibleConditionAttackRule(),
     GrappleRule(),
     StatBlockActionRule(),
     FeatureActionRule(),
-    SpellTargetSelectionRule(),
     SpellActionRule(),
 )
 
@@ -66,14 +76,16 @@ __all__ = [
     "ActorOwnershipRule",
     "ActorReadyRule",
     "AttackRule",
+    "DestructibleConditionAttackRule",
     "EligibilityFailure",
     "EligibilityRule",
     "FeatureActionRule",
     "GrappleRule",
     "MovementRule",
+    "ProneActionRule",
     "ResourceRule",
     "SpellActionRule",
-    "SpellTargetSelectionRule",
+    "StandardActionRule",
     "StatBlockActionRule",
     "action_eligibility",
 ]

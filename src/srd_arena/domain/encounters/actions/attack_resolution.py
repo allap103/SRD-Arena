@@ -9,6 +9,7 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import Position
@@ -18,17 +19,19 @@ from ..encounter_models.resolution import AttackOutcome
 from .attack_runtime.damage import (
     apply_attack_damage,
     damage_roll_detail,
-    parse_damage_dice,
     roll_attack_damage,
 )
 from .attack_runtime.rolls import resolve_attack_roll
 from .attack_runtime.sources import (
-    attack_range_squares,
+    AttackRangeBand,
+    attack_range_band_squares,
     attack_sources,
     can_make_opportunity_attack,
-    equipped_weapon,
+    equipped_weapons,
     has_free_hand,
     select_attack_source,
+    selected_attack_ability,
+    selected_attack_damage_type,
     selected_attack_type,
     source_for_mode,
     stat_block_attack_source,
@@ -39,17 +42,19 @@ from .attack_runtime.sources import (
 from .attack_runtime.triggers import matching_damage_reroll_rule
 
 __all__ = [
+    "AttackRangeBand",
     "apply_attack_damage",
-    "attack_range_squares",
+    "attack_range_band_squares",
     "attack_sources",
     "can_make_opportunity_attack",
     "damage_roll_detail",
-    "equipped_weapon",
+    "equipped_weapons",
     "has_free_hand",
     "matching_damage_reroll_rule",
-    "parse_damage_dice",
     "resolve_attack",
     "select_attack_source",
+    "selected_attack_ability",
+    "selected_attack_damage_type",
     "selected_attack_type",
     "source_for_mode",
     "stat_block_attack_source",
@@ -74,10 +79,10 @@ def resolve_attack(
     preferred_attack_name: str | None = None,
     attack_roll_mode_override: D20RollMode | None = None,
     sourced_attack_modifier: int | None = None,
-    sourced_attack_roll_mode: D20RollMode | None = None,
     target_armor_class: int | None = None,
-    sourced_damage_modifier_for: Callable[[], int] | None = None,
+    sourced_damage_modifier_for: Callable[[str | None], int] | None = None,
     automatic_critical_provider_ids: tuple[str, ...] = (),
+    sourced_additional_damage: tuple[tuple[str, DamageEffect], ...] = (),
 ) -> AttackOutcome:
     """Resolve attack selection, hit determination, and rolled damage.
 
@@ -120,7 +125,6 @@ def resolve_attack(
         nearby_opponent_positions=nearby_opponent_positions,
         attack_roll_mode_override=attack_roll_mode_override,
         sourced_modifier_override=sourced_attack_modifier,
-        sourced_roll_mode_override=sourced_attack_roll_mode,
         target_armor_class=target_armor_class,
         roller=d20_roller,
         automatic_critical_provider_ids=automatic_critical_provider_ids,
@@ -146,15 +150,22 @@ def resolve_attack(
             attack_check=attack_roll.check,
             attack_type=attack_roll.attack_type,
             critical_hit=attack_roll.critical_hit,
+            weapon_id=attack_source.weapon_id,
+            weapon_name=attack_source.weapon_name,
+            weapon_properties=attack_source.weapon_properties,
+            weapon_mastery=attack_source.weapon_mastery,
+            ability_modifier=attack_source.ability_modifier,
+            proficiency_bonus=attack_source.proficiency_bonus,
         )
 
-    damage_modifier_for = sourced_damage_modifier_for or (lambda: 0)
+    damage_modifier_for = sourced_damage_modifier_for or (lambda _ability: 0)
     damage = roll_attack_damage(
         attack_source,
         critical_hit=attack_roll.critical_hit,
         attack_roll_mode=attack_roll.result.mode,
         roller=die_roller,
-        sourced_modifier_for=damage_modifier_for,
+        sourced_modifier_for=lambda: damage_modifier_for(attack_source.ability),
+        sourced_additional_damage=sourced_additional_damage,
     )
     messages = [("system", attack_detail_message)]
     if attack_roll.critical_hit:
@@ -179,6 +190,9 @@ def resolve_attack(
         weapon_id=attack_source.weapon_id,
         weapon_name=attack_source.weapon_name,
         weapon_properties=attack_source.weapon_properties,
+        weapon_mastery=attack_source.weapon_mastery,
+        ability_modifier=attack_source.ability_modifier,
+        proficiency_bonus=attack_source.proficiency_bonus,
         additional_damage=damage.additional_damage,
         additional_damage_details=damage.additional_damage_details,
         hit_effects=attack_source.hit_effects,

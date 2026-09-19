@@ -7,6 +7,7 @@ from srd_arena.domain.capabilities import (
     DamageEffect,
     SavingThrowResolution,
 )
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import resolve_dice
 from srd_arena.domain.rolls.saving_throws import (
     Ability,
@@ -16,7 +17,6 @@ from srd_arena.domain.rolls.saving_throws import (
 from ..definitions import SpellDamage
 from .context import SpellActionContext
 from .scaling import (
-    parse_damage_dice,
     resource_dice_increment,
     scaled_damage_dice,
 )
@@ -47,6 +47,7 @@ def resolve_follow_up(
         or follow_up.target.origin != "target"
         or follow_up.target.size_feet is None
         or not isinstance(follow_up.resolution, SavingThrowResolution)
+        or context.target is None
     ):
         return [], []
     assert context.creature.spellcasting is not None
@@ -73,7 +74,7 @@ def resolve_follow_up(
             if increment is None:
                 scaled.append(damage)
                 continue
-            increment_count, increment_sides = parse_damage_dice(increment)
+            increment_count, increment_sides = parse_dice_expression(increment)
             scaled.append(
                 SpellDamage(
                     scaled_damage_dice(
@@ -86,29 +87,37 @@ def resolve_follow_up(
                 )
             )
         damage_definitions = tuple(scaled)
-    shared_rolls = [
-        (
-            damage,
-            resolve_dice(
-                *parse_damage_dice(damage.dice),
-                modifier=context.environment.damage_roll_modifier(),
-                roller=context.environment.roll_die,
-            ),
+    shared_rolls = []
+    for damage in damage_definitions:
+        modifier = context.environment.damage_roll_modifier()
+        shared_rolls.append(
+            (
+                damage,
+                resolve_dice(
+                    *parse_dice_expression(damage.dice),
+                    modifier=modifier.value,
+                    modifier_source_ids=modifier.source_ids,
+                    roller=context.environment.roll_die,
+                ),
+            )
         )
-        for damage in damage_definitions
-    ]
     save_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
     ability = follow_up.resolution.ability
     for target in targets:
+        cover_bonus = (
+            context.saving_throw_cover_bonuses.get(target.target_ref, 0)
+            if ability == "dexterity"
+            else 0
+        )
         save = resolve_saving_throw(
             target.creature,
             cast(Ability, ability),
             context.creature.spellcasting.save_dc,
             mode=context.save_roll_modes.get(target.target_ref, "normal"),
-            sourced_modifier_override=context.environment.saving_throw_modifier(
-                target.target_ref,
-                ability,
+            sourced_modifier_override=(
+                context.environment.saving_throw_modifier(target.target_ref, ability)
+                + cover_bonus
             ),
             sourced_mode_override=context.environment.saving_throw_mode(
                 target.target_ref,
@@ -125,6 +134,7 @@ def resolve_follow_up(
                 "ability": ability,
                 "die": save.check.roll.selected,
                 "modifier": save.modifiers.total,
+                "cover_bonus": cover_bonus,
                 "total": save.check.roll.total,
                 "target_dc": save.check.target,
                 "success": save.check.success,
@@ -153,6 +163,7 @@ def resolve_follow_up(
                     "dice_values": [die.result for die in roll.dice],
                     "dice_total": roll.subtotal,
                     "modifier": roll.modifier,
+                    "modifier_source_ids": list(roll.modifier_source_ids),
                     "total": roll.total,
                     "damage_type": damage.damage_type,
                     "saved": save.check.success,

@@ -10,9 +10,13 @@ from srd_arena.domain.effects.results import (
     SpellResolutionDetails,
 )
 
+from ...defeat import resolve_creature_defeat
 from ...effect_lifecycle.concentration import resolve_concentration_damage
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...encounter_models.resolution import EncounterProgress
+from ...reaction_runtime.attack_lifecycle import (
+    resolve_attack_hit_retaliations,
+)
 from ...state_runtime import apply_encounter_effects, create_event
 
 if TYPE_CHECKING:
@@ -32,6 +36,8 @@ def apply_spell_result(
     action_id: str,
     result: ActionResolutionResult,
     progress: EncounterProgress,
+    grant_id: str | None = None,
+    consumes_spell_slot: bool = True,
 ) -> None:
     """Publish resolved effects and record the completed cast.
 
@@ -74,41 +80,111 @@ def apply_spell_result(
     details = result.details
     if not isinstance(details, SpellResolutionDetails):
         raise TypeError("Spell resolution returned non-spell details.")
+    apply_spell_result_consequences(
+        state,
+        result=result,
+        creature_ref=creature_ref,
+        action_id=action_id,
+        progress=progress,
+    )
+    publish_spell_result(
+        state,
+        spellcasting=spellcasting,
+        spell=spell,
+        cast_level=cast_level,
+        creature_ref=creature_ref,
+        action_id=action_id,
+        result=result,
+        progress=progress,
+        grant_id=grant_id,
+        consumes_spell_slot=consumes_spell_slot,
+    )
+
+
+def apply_spell_result_consequences(
+    state: EncounterState,
+    *,
+    result: ActionResolutionResult,
+    creature_ref: str,
+    action_id: str,
+    progress: EncounterProgress,
+) -> None:
+    """Apply one complete or partial spell result without publishing its cast."""
+
     progress.messages.extend(result.messages)
+    details = result.details
+    if isinstance(details, SpellResolutionDetails):
+        forced_save_targets = {
+            target_ref
+            for detail in details.save_details
+            if isinstance((target_ref := detail.get("target_ref")), str)
+        }
+        for target_ref in forced_save_targets:
+            resolve_effect_lifecycle_event(
+                state,
+                "target_forces_saving_throw",
+                actor_ref=creature_ref,
+                target_ref=target_ref,
+                progress=progress,
+            )
     _apply_damage_lifecycle(
         state,
         result,
         creature_ref=creature_ref,
+        action_id=action_id,
         progress=progress,
     )
     progress.messages.extend(
         apply_encounter_effects(state, result.effects, origin_id=action_id)
     )
-    progress.events.append(
-        create_event(
-            state,
-            "spell_cast",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "kind": "spell",
-                "spell_id": result.definition_id,
-                "spell_name": result.definition_name,
-                "spell_level": details.spell_level,
-                "target_ref": details.target_ref,
-                "target_label": details.target_label,
-                "target_refs": [ref for ref, _label in details.targets],
-                "target_labels": [label for _ref, label in details.targets],
-                "area": details.area,
-                "slot_level": details.slot_level,
-                "spell_slots_remaining": (
-                    spellcasting.spell_slots_remaining.get(
-                        cast_level if cast_level is not None else spell.level,
-                        0,
-                    )
-                    if spell.level > 0
-                    else None
-                ),
+
+
+def publish_spell_result(
+    state: EncounterState,
+    *,
+    spellcasting: Spellcasting,
+    spell: Spell,
+    cast_level: int | None,
+    creature_ref: str,
+    action_id: str,
+    result: ActionResolutionResult,
+    progress: EncounterProgress,
+    event_type: str = "spell_cast",
+    include_resolution_details: bool = True,
+    additional_data: dict[str, object] | None = None,
+    grant_id: str | None = None,
+    consumes_spell_slot: bool = True,
+) -> None:
+    """Publish a spell result as one typed encounter event."""
+
+    details = result.details
+    if not isinstance(details, SpellResolutionDetails):
+        raise TypeError("Spell resolution returned non-spell details.")
+    data: dict[str, object] = {
+        "kind": "spell",
+        "spell_id": result.definition_id,
+        "spell_name": result.definition_name,
+        "spell_level": details.spell_level,
+        "target_ref": details.target_ref,
+        "target_label": details.target_label,
+        "target_refs": [ref for ref, _label in details.targets],
+        "target_labels": [label for _ref, label in details.targets],
+        "area": details.area,
+        "slot_level": details.slot_level,
+        "spell_slots_remaining": (
+            spellcasting.spell_slots_remaining.get(
+                cast_level if cast_level is not None else spell.level,
+                0,
+            )
+            if consumes_spell_slot and spell.level > 0
+            else None
+        ),
+        "grant_id": grant_id,
+        "success": details.success,
+    }
+    if include_resolution_details:
+        data.update(
+            {
                 "save_detail": _first(details.save_details),
                 "save_details": list(details.save_details),
                 "attack_roll_detail": _first(details.attack_roll_details),
@@ -124,8 +200,17 @@ def apply_spell_result(
                     details.temporary_hit_point_details
                 ),
                 "effects": serialize_effects(result.effects),
-                "success": details.success,
-            },
+            }
+        )
+    if additional_data is not None:
+        data.update(additional_data)
+    progress.events.append(
+        create_event(
+            state,
+            event_type,
+            creature_ref=creature_ref,
+            action_id=action_id,
+            data=data,
         )
     )
 
@@ -135,6 +220,7 @@ def _apply_damage_lifecycle(
     result: ActionResolutionResult,
     *,
     creature_ref: str,
+    action_id: str,
     progress: EncounterProgress,
 ) -> None:
     details = result.details
@@ -142,14 +228,14 @@ def _apply_damage_lifecycle(
         return
     for damage in details.damage_applications:
         if damage.amount > 0:
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_damaged",
                 actor_ref=creature_ref,
                 target_ref=damage.target_ref,
                 progress=progress,
             )
-            resolve_spell_lifecycle_event(
+            resolve_effect_lifecycle_event(
                 state,
                 "target_deals_damage",
                 actor_ref=creature_ref,
@@ -162,6 +248,22 @@ def _apply_damage_lifecycle(
             damage.amount,
             progress,
         )
+        if not state.creatures[damage.target_ref].is_alive:
+            resolve_creature_defeat(
+                state,
+                damage.target_ref,
+                defeated_by_ref=creature_ref,
+                progress=progress,
+                action_id=action_id,
+            )
+    resolve_attack_hit_retaliations(
+        state,
+        attacker_ref=creature_ref,
+        applications=details.attack_hit_retaliations,
+        progress=progress,
+        action_id=action_id,
+        frame_id=None,
+    )
 
 
 def _first(

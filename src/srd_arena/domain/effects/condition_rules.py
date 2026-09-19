@@ -70,6 +70,33 @@ CONDITION_DEFINITIONS: dict[Condition, ConditionDefinition] = {
     Condition.GRAPPLED: ConditionDefinition(
         traits=frozenset({CombatTrait.SPEED_ZERO}),
     ),
+    Condition.PRONE: ConditionDefinition(
+        traits=frozenset(
+            {
+                CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+                CombatTrait.NEARBY_ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.DISTANT_ATTACKERS_HAVE_DISADVANTAGE,
+            }
+        ),
+    ),
+    Condition.POISONED: ConditionDefinition(
+        traits=frozenset(
+            {
+                CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+                CombatTrait.ABILITY_CHECKS_HAVE_DISADVANTAGE,
+            }
+        ),
+    ),
+    Condition.RESTRAINED: ConditionDefinition(
+        traits=frozenset(
+            {
+                CombatTrait.SPEED_ZERO,
+                CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+                CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+                CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE,
+            }
+        ),
+    ),
 }
 
 

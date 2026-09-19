@@ -13,7 +13,7 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 def test_orchestrator_delegates_scripted_choice_to_actor_selector() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     creature_ref = "goblin_1"

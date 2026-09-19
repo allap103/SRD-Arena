@@ -7,6 +7,7 @@ from dataclasses import dataclass, field
 from types import MappingProxyType
 
 from .observations import GameObservation
+from .player_observation_models import PlayerObservation
 from .values import EngineValue, freeze_mapping
 
 
@@ -20,7 +21,7 @@ class SelectAction:
 
 @dataclass(frozen=True)
 class AimAction:
-    """Choose an advertised area action and place its origin on the grid."""
+    """Choose a destination or origin for an advertised point-aimed action."""
 
     action_id: str
     x: float
@@ -29,46 +30,17 @@ class AimAction:
 
 
 @dataclass(frozen=True)
-class ChangeTarget:
-    """Add or remove a creature from an active staged target selection."""
+class CastSpell:
+    """Submit one complete cast, with ordered targets, allocations and optional aim."""
 
-    target_ref: str
-    remove: bool
+    action_id: str
     expected_decision_id: str
-    source_trigger_id: str | None = None
+    target_refs: tuple[str, ...] = ()
+    allocations: tuple[tuple[str, int], ...] = ()
+    aim: tuple[float, float] | None = None
 
 
-@dataclass(frozen=True)
-class SetResourceAllocation:
-    """Assign an amount from a shared action resource to one target."""
-
-    target_ref: str
-    amount: int
-    expected_decision_id: str
-
-
-@dataclass(frozen=True)
-class ConfirmTargeting:
-    """Confirm the targets and allocations staged for the current decision."""
-
-    expected_decision_id: str
-
-
-@dataclass(frozen=True)
-class CancelTargeting:
-    """Cancel the target selection staged for the current decision."""
-
-    expected_decision_id: str
-
-
-GameCommand = (
-    SelectAction
-    | AimAction
-    | ChangeTarget
-    | SetResourceAllocation
-    | ConfirmTargeting
-    | CancelTargeting
-)
+GameCommand = SelectAction | AimAction | CastSpell
 
 
 @dataclass(frozen=True)
@@ -101,6 +73,18 @@ class GameUpdate:
 
 
 @dataclass(frozen=True)
+class PlayerGameUpdate:
+    """Result of one accepted command without a privileged state snapshot."""
+
+    observation: PlayerObservation
+    messages: tuple[tuple[str, str], ...]
+    events: tuple[GameEvent, ...]
+    selected_action_id: str | None
+    selected_choice_text: str | None
+    should_exit: bool
+
+
+@dataclass(frozen=True)
 class CommandFailure:
     """Structured explanation for a command rejected by the engine."""
 
@@ -115,6 +99,12 @@ class CommandResult:
     update: GameUpdate | None = None
     failure: CommandFailure | None = None
 
+    def __post_init__(self) -> None:
+        """Require exactly one accepted update or rejection failure."""
+
+        if (self.update is None) == (self.failure is None):
+            raise ValueError("A command result requires exactly one update or failure.")
+
     @property
     def accepted(self) -> bool:
         """Return whether the command produced an engine update.
@@ -125,4 +115,22 @@ class CommandResult:
         >>> CommandResult(failure=CommandFailure("stale", "Decision changed")).accepted
         False
         """
+        return self.update is not None
+
+
+@dataclass(frozen=True)
+class PlayerCommandResult:
+    """Exactly one player-safe update or rejected-command failure."""
+
+    update: PlayerGameUpdate | None = None
+    failure: CommandFailure | None = None
+
+    def __post_init__(self) -> None:
+        if (self.update is None) == (self.failure is None):
+            raise ValueError("A command result requires exactly one update or failure.")
+
+    @property
+    def accepted(self) -> bool:
+        """Return whether the player command produced an engine update."""
+
         return self.update is not None

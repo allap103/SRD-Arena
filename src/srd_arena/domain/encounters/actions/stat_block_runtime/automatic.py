@@ -10,12 +10,13 @@ from srd_arena.domain.creatures.stat_block_actions import AutomaticActionDefinit
 from srd_arena.domain.rolls.dice import resolve_dice
 
 from ...attack_economy import consume_action
+from ...defeat import resolve_creature_defeat
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ...grappling_state import remove_relationships_for_creature
-from ...rule_queries.defenses import apply_damage
 from ...rule_queries.rolls import roll_modifiers
+from ...state_combat import apply_combat_damage
 from ...state_runtime import create_event
+from .multiattack import consume_pending_multiattack_invocation
 from .resources import consume_stat_block_action_resource
 
 if TYPE_CHECKING:
@@ -53,7 +54,12 @@ def resolve_automatic_stat_block_action(
         raise ValueError("Automatic stat-block action requires a target.")
     target_ref = action.value
     target = state.creatures[target_ref].creature
-    consume_action(state, allow_magic=False)
+    if not consume_pending_multiattack_invocation(
+        state,
+        creature_ref,
+        definition.name,
+    ):
+        consume_action(state, allow_magic=False)
     consume_stat_block_action_resource(creature, definition.name)
     damage = 0
     damage_details: list[dict[str, object]] = []
@@ -81,7 +87,7 @@ def resolve_automatic_stat_block_action(
             effect.minimum or 0,
             resolved_total,
         )
-        applied = apply_damage(
+        applied = apply_combat_damage(
             state,
             target_ref,
             amount,
@@ -124,12 +130,10 @@ def resolve_automatic_stat_block_action(
         )
     )
     if target.get_health() <= 0:
-        remove_relationships_for_creature(state, target_ref)
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=target_ref,
-                action_id=action_id,
-            )
+        resolve_creature_defeat(
+            state,
+            target_ref,
+            defeated_by_ref=creature_ref,
+            progress=progress,
+            action_id=action_id,
         )

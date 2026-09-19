@@ -1,0 +1,258 @@
+{
+  "action_details": [],
+  "active_turn_ref": "goblin_1",
+  "completion": null,
+  "creatures": [
+    {
+      "allegiance": "own",
+      "appearance": {
+        "apparent_creature_type": "Humanoid",
+        "armor_category": "light",
+        "armor_label": "Studded Leather Armor",
+        "has_shield": false,
+        "obvious_features": [],
+        "spellcasting_focus_kind": "arcane",
+        "spellcasting_focus_label": "Orb",
+        "visible_weapons": [
+          "Sickle",
+          "Dagger"
+        ]
+      },
+      "armor_class": 15,
+      "creature_ref": "warlock",
+      "creature_type": "Humanoid",
+      "currently_visible": true,
+      "defeated": false,
+      "health": {
+        "current": 48,
+        "interval": null,
+        "maximum": 48
+      },
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 2,
+        "y": 3
+      },
+      "size": "M",
+      "temporary_health": 0
+    },
+    {
+      "allegiance": "ally",
+      "appearance": {
+        "apparent_creature_type": "Humanoid",
+        "armor_category": "none",
+        "armor_label": null,
+        "has_shield": false,
+        "obvious_features": [],
+        "spellcasting_focus_kind": "none",
+        "spellcasting_focus_label": null,
+        "visible_weapons": [
+          "Maul",
+          "Javelin"
+        ]
+      },
+      "armor_class": 16,
+      "creature_ref": "barbarian",
+      "creature_type": "Humanoid",
+      "currently_visible": true,
+      "defeated": false,
+      "health": {
+        "current": 55,
+        "interval": null,
+        "maximum": 55
+      },
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 2,
+        "y": 5
+      },
+      "size": "M",
+      "temporary_health": 0
+    },
+    {
+      "allegiance": "enemy",
+      "appearance": {
+        "apparent_creature_type": "Goblinoid",
+        "armor_category": "light",
+        "armor_label": "Leather Armor",
+        "has_shield": true,
+        "obvious_features": [
+          "Small goblinoid stature"
+        ],
+        "spellcasting_focus_kind": "none",
+        "spellcasting_focus_label": null,
+        "visible_weapons": [
+          "Scimitar",
+          "Shortbow"
+        ]
+      },
+      "armor_class": null,
+      "creature_ref": "goblin_1",
+      "creature_type": "Goblinoid",
+      "currently_visible": true,
+      "defeated": false,
+      "health": null,
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 5,
+        "y": 3
+      },
+      "size": "S",
+      "temporary_health": null
+    },
+    {
+      "allegiance": "enemy",
+      "appearance": {
+        "apparent_creature_type": "Goblinoid",
+        "armor_category": "light",
+        "armor_label": "Leather Armor",
+        "has_shield": true,
+        "obvious_features": [
+          "Small goblinoid stature"
+        ],
+        "spellcasting_focus_kind": "none",
+        "spellcasting_focus_label": null,
+        "visible_weapons": [
+          "Scimitar",
+          "Shortbow"
+        ]
+      },
+      "armor_class": null,
+      "creature_ref": "goblin_2",
+      "creature_type": "Goblinoid",
+      "currently_visible": true,
+      "defeated": false,
+      "health": null,
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 9,
+        "y": 4
+      },
+      "size": "S",
+      "temporary_health": null
+    },
+    {
+      "allegiance": "enemy",
+      "appearance": {
+        "apparent_creature_type": "Goblinoid",
+        "armor_category": "light",
+        "armor_label": "Leather Armor",
+        "has_shield": true,
+        "obvious_features": [
+          "Small goblinoid stature"
+        ],
+        "spellcasting_focus_kind": "none",
+        "spellcasting_focus_label": null,
+        "visible_weapons": [
+          "Scimitar",
+          "Shortbow"
+        ]
+      },
+      "armor_class": null,
+      "creature_ref": "goblin_3",
+      "creature_type": "Goblinoid",
+      "currently_visible": true,
+      "defeated": false,
+      "health": null,
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 8,
+        "y": 6
+      },
+      "size": "S",
+      "temporary_health": null
+    },
+    {
+      "allegiance": "enemy",
+      "appearance": {
+        "apparent_creature_type": "Giant",
+        "armor_category": "none",
+        "armor_label": null,
+        "has_shield": false,
+        "obvious_features": [
+          "Large giant stature"
+        ],
+        "spellcasting_focus_kind": "none",
+        "spellcasting_focus_label": null,
+        "visible_weapons": [
+          "Greatclub",
+          "Javelin"
+        ]
+      },
+      "armor_class": null,
+      "creature_ref": "ogre_target",
+      "creature_type": "Giant",
+      "currently_visible": true,
+      "defeated": false,
+      "health": null,
+      "knowledge": "current",
+      "observed_damage_total": 0,
+      "position": {
+        "x": 9,
+        "y": 6
+      },
+      "size": "L",
+      "temporary_health": null
+    }
+  ],
+  "decision": {
+    "creature_ref": "goblin_1",
+    "id": "turn-goblin_1@1:4",
+    "kind": "turn"
+  },
+  "decision_context": null,
+  "encounter_id": "warlock_training",
+  "grid": {
+    "height": 9,
+    "width": 12
+  },
+  "initiative_order": [
+    "goblin_1",
+    "warlock",
+    "goblin_2",
+    "goblin_3",
+    "barbarian"
+  ],
+  "perspective_creature_ref": "warlock",
+  "perspective_team_id": "heroes",
+  "recent_events": [
+    {
+      "actor_ref": "goblin_1",
+      "amount": null,
+      "kind": "movement",
+      "outcome": "moved",
+      "seq": 1,
+      "source_id": null,
+      "target_ref": null
+    },
+    {
+      "actor_ref": "goblin_1",
+      "amount": null,
+      "kind": "movement",
+      "outcome": "moved",
+      "seq": 2,
+      "source_id": null,
+      "target_ref": null
+    },
+    {
+      "actor_ref": "goblin_1",
+      "amount": null,
+      "kind": "movement",
+      "outcome": "moved",
+      "seq": 3,
+      "source_id": null,
+      "target_ref": null
+    }
+  ],
+  "requires_automatic_advance": true,
+  "round_number": 1,
+  "schema_id": "filtered-observation-v1",
+  "sunlight": false,
+  "targeting": null,
+  "terrain": []
+}

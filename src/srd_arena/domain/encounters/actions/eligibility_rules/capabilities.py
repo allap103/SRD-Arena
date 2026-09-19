@@ -4,19 +4,24 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     SavingThrowActionDefinition,
 )
-from srd_arena.domain.geometry import grid_distance_between
 
 from ...encounter_models.actions import (
     CreatureRef,
     EncounterAction,
 )
+from ...rule_queries.obstructions import cover_between
+from ...rule_queries.permissions import TargetingKind, target_eligibility
+from ...rule_queries.visibility import creature_can_see_creature
+from ...spatial import creature_distance
 from ..stat_block import (
     stat_block_action_resource_available,
     stat_block_action_runtime_issue,
+    stat_block_target_refs,
 )
 from .common import opposing_target_failure, target_requirement_failure
 from .models import EligibilityFailure
@@ -57,6 +62,13 @@ class StatBlockActionRule:
                 "stat_block_action_unavailable",
                 "The stat-block action is not executable.",
             )
+        if actor.pending_multiattack and definition.name not in {
+            invocation.name for invocation in actor.pending_multiattack[0].options
+        }:
+            return EligibilityFailure(
+                "multiattack_choice_unavailable",
+                "That action is not available for this Multiattack slot.",
+            )
         runtime_issue = stat_block_action_runtime_issue(definition)
         if runtime_issue is not None:
             return EligibilityFailure(
@@ -72,20 +84,51 @@ class StatBlockActionRule:
                 f"{definition.name} is not available.",
             )
         if definition.target.kind == "area" and definition.target.origin == "self":
-            if isinstance(action.value, tuple):
-                aim_x, aim_y = action.value
-                actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
-                if (
-                    abs(aim_x - actor_center[0]) < 1e-9
-                    and abs(aim_y - actor_center[1]) < 1e-9
-                ):
-                    return EligibilityFailure(
-                        "aim_required",
-                        "The area must be aimed away from its user.",
-                    )
+            if not action.aim_committed:
                 return None
-            if isinstance(action.value, str):
-                return opposing_target_failure(state, actor_ref, action)
+            if isinstance(action.value, (str, tuple)):
+                if isinstance(action.value, str):
+                    target_failure = opposing_target_failure(
+                        state,
+                        actor_ref,
+                        action,
+                    )
+                    if target_failure is not None:
+                        return target_failure
+                if isinstance(action.value, tuple):
+                    aim_x, aim_y = action.value
+                    actor_center = (actor.position.x + 0.5, actor.position.y + 0.5)
+                    if (
+                        abs(aim_x - actor_center[0]) < 1e-9
+                        and abs(aim_y - actor_center[1]) < 1e-9
+                    ):
+                        return EligibilityFailure(
+                            "aim_required",
+                            "The area must be aimed away from its user.",
+                        )
+                if isinstance(definition, SavingThrowActionDefinition):
+                    target_refs = stat_block_target_refs(
+                        state,
+                        actor_ref,
+                        action.value,
+                        definition,
+                    )
+                    if not target_refs:
+                        return EligibilityFailure(
+                            "target_unavailable",
+                            "The aimed area contains no valid targets.",
+                        )
+                    if _stat_block_action_can_damage(definition):
+                        for target_ref in target_refs:
+                            targeting = target_eligibility(
+                                state,
+                                actor_ref,
+                                target_ref,
+                                TargetingKind.DAMAGING_ABILITY,
+                            )
+                            if not targeting.allowed:
+                                return targeting.failures[0]
+                return None
             return EligibilityFailure(
                 "target_required",
                 "An aim point is required.",
@@ -105,7 +148,15 @@ class StatBlockActionRule:
         target_failure = opposing_target_failure(state, actor_ref, action)
         if target_failure is not None:
             return target_failure
-        target = state.creatures[action.value]
+        if _stat_block_action_can_damage(definition):
+            targeting = target_eligibility(
+                state,
+                actor_ref,
+                action.value,
+                TargetingKind.DAMAGING_ABILITY,
+            )
+            if not targeting.allowed:
+                return targeting.failures[0]
         requirement_failure = target_requirement_failure(
             state,
             actor_ref,
@@ -114,14 +165,50 @@ class StatBlockActionRule:
         )
         if requirement_failure is not None:
             return requirement_failure
+        if not cover_between(state, actor_ref, action.value).has_line_of_effect:
+            return EligibilityFailure(
+                "target_has_total_cover",
+                "The target has Total Cover.",
+            )
+        if definition.target.line_of_sight and not creature_can_see_creature(
+            state,
+            actor_ref,
+            action.value,
+        ):
+            return EligibilityFailure(
+                "target_not_visible",
+                "The target is not visible.",
+            )
         range_feet = definition.target.range_feet or 0
         range_squares = state.definition.grid.covering_distance_from_feet(range_feet)
-        if grid_distance_between(actor.position, target.position) > range_squares:
+        if creature_distance(state, actor_ref, action.value) > range_squares:
             return EligibilityFailure(
                 "target_out_of_range",
                 "The target is out of range.",
             )
         return None
+
+
+def _stat_block_action_can_damage(
+    definition: AutomaticActionDefinition | SavingThrowActionDefinition,
+) -> bool:
+    """Return whether an automatic or save-based action can deal damage."""
+
+    if isinstance(definition, AutomaticActionDefinition):
+        effects = definition.effects
+    else:
+        effects = (
+            *(effect for stage in definition.failure for effect in stage.effects),
+            *(
+                effect
+                for stage in definition.failure
+                for repeat in stage.repeat_saves
+                for effect in repeat.failure_effects
+            ),
+            *definition.success,
+            *definition.always,
+        )
+    return any(isinstance(effect, DamageEffect) for effect in effects)
 
 
 class FeatureActionRule:
@@ -152,9 +239,39 @@ class FeatureActionRule:
                 "feature_unavailable",
                 "This feature action is not executable.",
             )
-        if actor.feature_uses_remaining.get(action.value, 0) <= 0:
+        if (
+            definition.requires_use
+            and actor.feature_uses_remaining.get(action.value, 0) <= 0
+        ):
             return EligibilityFailure(
                 "resource_spent",
                 f"No uses of {definition.label} remain.",
+            )
+        if definition.blocked_by_armor_categories:
+            worn_armor_category = actor.worn_armor_category(state.item_templates)
+            if worn_armor_category in definition.blocked_by_armor_categories:
+                return EligibilityFailure(
+                    "armor_restriction",
+                    f"{definition.label} is unavailable while wearing "
+                    f"{worn_armor_category.title()} armor.",
+                )
+        if definition.requires_active_effect_id is not None and not any(
+            definition.requires_active_effect_id == effect.identity.source.definition_id
+            and actor_ref in effect.target_refs
+            for effect in state.ongoing_effects
+        ):
+            return EligibilityFailure(
+                "required_effect_inactive",
+                f"{definition.label} requires an active "
+                f"{definition.requires_active_effect_id.replace('_', ' ').title()}.",
+            )
+        if definition.blocked_while_effect_active and any(
+            action.value == effect.identity.source.definition_id
+            and actor_ref in effect.target_refs
+            for effect in state.ongoing_effects
+        ):
+            return EligibilityFailure(
+                "feature_already_active",
+                f"{definition.label} is already active.",
             )
         return None

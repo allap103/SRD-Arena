@@ -2,7 +2,7 @@
 
 from typing import Annotated, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from .base import Ability, CapabilitySchemaModel, NonNegativeInt, PositiveInt
 from .durations import EffectDurationSchema
@@ -25,6 +25,54 @@ class DamageEffectSchema(CapabilitySchemaModel):
     requirements: list[AttackHitRequirementSchema] = Field(default_factory=list)
 
 
+class HitPointMaximumReductionEffectSchema(CapabilitySchemaModel):
+    """Reduce maximum HP by damage actually applied during this outcome."""
+
+    type: Literal["hit_point_maximum_reduction"]
+    amount: Literal["damage_taken"]
+
+
+class AttackHitDamageEffectSchema(CapabilitySchemaModel):
+    """Encode damage added when the effect source hits its marked target."""
+
+    type: Literal["attack_hit_damage"]
+    dice: str = Field(pattern=r"^\d+d\d+$")
+    damage_type: str = Field(min_length=1)
+
+
+class AttackHitRetaliationEffectSchema(CapabilitySchemaModel):
+    """Deal fixed damage to a creature that hits the protected target."""
+
+    type: Literal["attack_hit_retaliation"]
+    value: PositiveInt
+    damage_type: str = Field(min_length=1)
+    attack_types: list[Literal["melee", "ranged"]] = Field(min_length=1)
+    requires_temporary_hit_points: bool = False
+    end_effect_when_depleted: bool = False
+
+    @model_validator(mode="after")
+    def validate_temporary_hit_point_lifecycle(
+        self,
+    ) -> AttackHitRetaliationEffectSchema:
+        """Only end on depletion when temporary Hit Points gate the effect."""
+
+        if self.end_effect_when_depleted and not self.requires_temporary_hit_points:
+            raise ValueError(
+                "Depletion ending requires requires_temporary_hit_points=true."
+            )
+        return self
+
+
+class DestructibleConditionSchema(CapabilitySchemaModel):
+    """Describe a condition attachment that attacks can destroy."""
+
+    label: str = Field(min_length=1)
+    armor_class: PositiveInt
+    hit_points: PositiveInt
+    damage_vulnerabilities: list[str] = Field(default_factory=list)
+    damage_immunities: list[str] = Field(default_factory=list)
+
+
 class ConditionEffectSchema(CapabilitySchemaModel):
     """Encode the ``condition`` capability-effect variant with condition and duration."""
 
@@ -34,6 +82,7 @@ class ConditionEffectSchema(CapabilitySchemaModel):
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
     escape_dc: PositiveInt | None = None
     source_capacity: PositiveInt | None = None
+    destructible: DestructibleConditionSchema | None = None
     ends_on: list[
         Literal[
             "source_dies",
@@ -51,6 +100,14 @@ class ForcedMovementEffectSchema(CapabilitySchemaModel):
     direction: Literal["away", "toward", "chosen"]
     distance_feet: PositiveInt
     up_to: bool = True
+
+
+class TeleportEffectSchema(CapabilitySchemaModel):
+    """Encode teleportation to a selected destination space."""
+
+    type: Literal["teleport"]
+    distance_feet: PositiveInt
+    line_of_sight: bool = False
 
 
 class SpeedMultiplierEffectSchema(CapabilitySchemaModel):
@@ -80,6 +137,16 @@ class TurnEconomyRestrictionEffectSchema(CapabilitySchemaModel):
     duration: EffectDurationSchema
 
 
+class CompelledTurnEffectSchema(CapabilitySchemaModel):
+    """Encode a closed choice of instructions imposed on a target's next turn."""
+
+    type: Literal["compelled_turn"]
+    options: list[Literal["approach", "drop", "flee", "grovel", "halt"]] = Field(
+        min_length=1
+    )
+    duration: EffectDurationSchema
+
+
 class RollModifierEffectSchema(CapabilitySchemaModel):
     """Encode the ``roll_modifier`` capability-effect variant with roll and mode."""
 
@@ -102,6 +169,15 @@ class RollModifierEffectSchema(CapabilitySchemaModel):
     value: int | None = None
     duration: EffectDurationSchema | None = None
     requirements: list[ActionRequirementSchema] = Field(default_factory=list)
+    consume_on_use: bool = False
+
+    @model_validator(mode="after")
+    def validate_consumption_trigger(self) -> RollModifierEffectSchema:
+        """Limit one-use modifiers to the saving-throw pipeline that consumes them."""
+
+        if self.consume_on_use and self.roll != "saving_throw":
+            raise ValueError("consume_on_use currently requires roll='saving_throw'.")
+        return self
 
 
 class ControlEffectSchema(CapabilitySchemaModel):
@@ -125,11 +201,16 @@ class GainMemoriesEffectSchema(CapabilitySchemaModel):
 
 ActionEffectSchema = Annotated[
     DamageEffectSchema
+    | HitPointMaximumReductionEffectSchema
+    | AttackHitDamageEffectSchema
+    | AttackHitRetaliationEffectSchema
     | ConditionEffectSchema
     | ForcedMovementEffectSchema
+    | TeleportEffectSchema
     | SpeedMultiplierEffectSchema
     | ProhibitReactionEffectSchema
     | TurnEconomyRestrictionEffectSchema
+    | CompelledTurnEffectSchema
     | RollModifierEffectSchema
     | ControlEffectSchema
     | GainMemoriesEffectSchema,

@@ -5,9 +5,7 @@ from __future__ import annotations
 from collections.abc import Iterable
 from typing import TYPE_CHECKING
 
-from srd_arena.domain.geometry import MovementBudget
-
-from ..rule_queries.numeric import movement_budget
+from ..rule_queries.movement import remaining_movement_for_mode
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -27,13 +25,9 @@ def reconcile_remaining_movement(
         creature_state = state.creatures[creature_ref]
         if creature_state.movement_remaining is None:
             continue
-        current_budget = movement_budget(
+        creature_state.movement_remaining = remaining_movement_for_mode(
             state,
             creature_ref,
-        ).budget
-        creature_state.movement_remaining = MovementBudget(
-            max(
-                0,
-                int(current_budget) - int(creature_state.movement_spent_this_turn),
-            )
+            creature_state.movement_mode,
+            recompute=True,
         )

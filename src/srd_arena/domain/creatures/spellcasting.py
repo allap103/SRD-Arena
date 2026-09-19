@@ -7,8 +7,11 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.capabilities import CapabilityGrant, SpellSlotCost, SpellSlotPool
 
+from .resources import ResourceRecovery, RestType
+
 if TYPE_CHECKING:
     from srd_arena.domain.spells.definitions import Spell
+    from srd_arena.domain.spells.invocation_grants import SpellInvocationGrant
 
 
 @dataclass
@@ -31,6 +34,27 @@ class Spellcasting:
     spell_slots_max: dict[int, int] = field(default_factory=dict)
     spell_slots_remaining: dict[int, int] = field(default_factory=dict)
     learned_spells: list[Spell] = field(default_factory=list)
+    feature_spells: list[Spell] = field(default_factory=list)
+
+    def spell_for_grant(
+        self,
+        spell_id: str,
+        grant: SpellInvocationGrant | None = None,
+    ) -> Spell | None:
+        """Resolve a spell through its ordinary or feature-granted source.
+
+        A feature spell is deliberately not included in ``learned_spells``:
+        owning Fiendish Vigor, for example, does not also teach False Life for
+        ordinary spell-slot casting.
+        """
+
+        if grant is not None and grant.spell_id != spell_id:
+            return None
+        candidates = self.feature_spells if grant is not None else self.learned_spells
+        return next(
+            (spell for spell in candidates if spell.id == spell_id),
+            None,
+        )
 
     @property
     def spell_slot_pool(self) -> SpellSlotPool:
@@ -43,7 +67,58 @@ class Spellcasting:
         return SpellSlotPool(
             id="spell_slots",
             maximum_by_level=tuple(sorted(self.spell_slots_max.items())),
+            refresh=(
+                "short_rest" if self.caster_progression == "pact" else "long_rest"
+            ),
         )
+
+    def spend_slot(self, level: int) -> int:
+        """Spend one slot of the requested level and return the new remainder.
+
+        >>> casting = Spellcasting(
+        ...     "cha", 3, 13, 5, "pact", spell_slots_remaining={2: 2}
+        ... )
+        >>> casting.spend_slot(2)
+        1
+        """
+
+        remaining = self.spell_slots_remaining.get(level, 0)
+        if remaining <= 0:
+            raise RuntimeError(f"No level {level} spell slots remain.")
+        self.spell_slots_remaining[level] = remaining - 1
+        return self.spell_slots_remaining[level]
+
+    def recover_slots(self, rest: RestType) -> tuple[ResourceRecovery, ...]:
+        """Restore spell slots whose pool refreshes at the completed rest.
+
+        Pact Magic refreshes on either rest. Other spellcasting represented by
+        this component refreshes only on a Long Rest.
+
+        >>> casting = Spellcasting(
+        ...     "cha", 3, 13, 5, "pact",
+        ...     spell_slots_max={2: 2}, spell_slots_remaining={2: 0},
+        ... )
+        >>> casting.recover_slots(RestType.SHORT)[0].current
+        2
+        """
+
+        refresh = self.spell_slot_pool.refresh
+        if rest is RestType.SHORT and refresh != "short_rest":
+            return ()
+        recoveries: list[ResourceRecovery] = []
+        for level, maximum in sorted(self.spell_slots_max.items()):
+            previous = self.spell_slots_remaining.get(level, maximum)
+            if previous >= maximum:
+                continue
+            self.spell_slots_remaining[level] = maximum
+            recoveries.append(
+                ResourceRecovery(
+                    resource_id=f"{self.spell_slot_pool.id}:{level}",
+                    previous=previous,
+                    current=maximum,
+                )
+            )
+        return tuple(recoveries)
 
     def grant_for(self, spell: Spell) -> CapabilityGrant | None:
         """Create a castable grant when the spell has executable mechanics.

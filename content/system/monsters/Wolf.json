@@ -1,6 +1,11 @@
 {
   "name": "Wolf",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Beast",
+    "obvious_features": ["Fur", "Fangs"]
+  },
   "page": 373,
   "srd52": true,
   "basicRules2024": true,
@@ -60,7 +65,37 @@
       "name": "Bite",
       "entries": [
         "{@atkr m} {@hit 4}, reach 5 ft. {@h}5 ({@damage 1d6 + 2}) Piercing damage. If the target is a Medium or smaller creature, it has the {@condition Prone|XPHB} condition."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 4,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "reach_feet": 5,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "bonus": 2,
+            "damage_type": "piercing"
+          },
+          {
+            "type": "condition",
+            "condition": "prone",
+            "requirements": [
+              {
+                "type": "size",
+                "maximum": "M"
+              }
+            ]
+          }
+        ]
+      }
     }
   ],
   "environment": [

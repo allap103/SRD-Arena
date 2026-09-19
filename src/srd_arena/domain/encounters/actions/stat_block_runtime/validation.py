@@ -2,7 +2,12 @@
 
 from __future__ import annotations
 
-from srd_arena.domain.capabilities import ConditionEffect, DamageEffect
+from srd_arena.domain.capabilities import (
+    ConditionEffect,
+    DamageEffect,
+    HitPointMaximumReductionEffect,
+    SizeRequirement,
+)
 from srd_arena.domain.creatures.stat_block_actions import (
     AttackActionDefinition,
     AutomaticActionDefinition,
@@ -32,34 +37,9 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
             if isinstance(effect, DamageEffect):
                 continue
             if isinstance(effect, ConditionEffect):
-                try:
-                    Condition(effect.condition)
-                except ValueError:
-                    return (
-                        f"Condition '{effect.condition}' is not supported by "
-                        "the condition runtime yet."
-                    )
-                if effect.condition == "grappled" and effect.duration is not None:
-                    return (
-                        "Authored durations for grappled are not executable yet; "
-                        "the creature relationship owns its ending rules."
-                    )
-                if effect.condition != "grappled" and effect.requirements:
-                    return (
-                        "Conditional attack-applied conditions are not executable yet."
-                    )
-                if effect.condition != "grappled" and effect.ends_on:
-                    return (
-                        "Event-ended attack-applied conditions are not executable yet."
-                    )
-                if effect.duration is not None and effect.duration.kind not in {
-                    "start_of_turn",
-                    "end_of_turn",
-                }:
-                    return (
-                        f"Condition duration '{effect.duration.kind}' is not "
-                        "executable for attack actions yet."
-                    )
+                issue = _condition_effect_runtime_issue(effect)
+                if issue is not None:
+                    return issue
                 continue
             return f"{type(effect).__name__} is not executable for attack actions yet."
         return _grant_runtime_issue(definition)
@@ -77,6 +57,20 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
             *definition.success,
             *definition.always,
         )
+        for effect in effects:
+            if isinstance(effect, DamageEffect):
+                continue
+            if isinstance(effect, HitPointMaximumReductionEffect):
+                continue
+            if isinstance(effect, ConditionEffect):
+                issue = _condition_effect_runtime_issue(effect)
+                if issue is not None:
+                    return issue
+                continue
+            return (
+                f"{type(effect).__name__} is not executable for stat-block actions yet."
+            )
+        return _grant_runtime_issue(definition)
     else:
         return "This stat-block action type is not executable yet."
     unsupported = next(
@@ -89,6 +83,39 @@ def stat_block_action_runtime_issue(definition: object) -> str | None:
             "stat-block actions yet."
         )
     return _grant_runtime_issue(definition)
+
+
+def _condition_effect_runtime_issue(effect: ConditionEffect) -> str | None:
+    """Return why a sourced condition effect cannot use the shared runtime."""
+
+    try:
+        Condition(effect.condition)
+    except ValueError:
+        return (
+            f"Condition '{effect.condition}' is not supported by "
+            "the condition runtime yet."
+        )
+    if effect.condition == "grappled" and effect.duration is not None:
+        return (
+            "Authored durations for grappled are not executable yet; "
+            "the creature relationship owns its ending rules."
+        )
+    if any(
+        not isinstance(requirement, SizeRequirement)
+        for requirement in effect.requirements
+    ):
+        return "Conditional condition effects support only size requirements."
+    if effect.condition != "grappled" and effect.ends_on:
+        return "Event-ended action conditions are not executable yet."
+    if effect.duration is not None and effect.duration.kind not in {
+        "start_of_turn",
+        "end_of_turn",
+    }:
+        return (
+            f"Condition duration '{effect.duration.kind}' is not executable "
+            "for actions yet."
+        )
+    return None
 
 
 def _grant_runtime_issue(

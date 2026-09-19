@@ -7,9 +7,10 @@ from collections.abc import Callable, Sequence
 from dataclasses import asdict, dataclass
 from datetime import UTC, datetime
 
-from PySide6.QtCore import Qt
+from PySide6.QtCore import Qt, QTimer
 from PySide6.QtWidgets import (
     QCheckBox,
+    QDialog,
     QFileDialog,
     QFrame,
     QHBoxLayout,
@@ -69,6 +70,7 @@ class GameSidebar(QFrame):
         self._show_team_outlines = show_team_outlines
         self._show_creature_names = show_creature_names
         self._json_payload: dict[str, object] = {}
+        self._log_window: QDialog | None = None
 
         self.setObjectName("sidebarPanel")
         self.setFrameShape(QFrame.Shape.StyledPanel)
@@ -180,8 +182,68 @@ class GameSidebar(QFrame):
         self._dice_roll_panel.start_turn(label)
 
     def scroll_combat_log_to_bottom(self) -> None:
+        """Follow new records unless the user has paused scrolling to inspect history."""
+        if not self._follow_log.isChecked():
+            return
         scrollbar = self._roll_scroll.verticalScrollBar()
         scrollbar.setValue(scrollbar.maximum())
+
+    def pop_out_combat_log(self) -> None:
+        """Move the existing live log into one resizable, non-modal window."""
+        if self._log_window is not None and self._log_window.isVisible():
+            self._log_window.raise_()
+            self._log_window.activateWindow()
+            return
+        if self._log_window is None:
+            self._log_window = QDialog(self.window())
+            self._log_window.setObjectName("combatLogWindow")
+            self._log_window.setWindowTitle("Combat Log - SRD Arena")
+            self._log_window.resize(760, 620)
+            self._log_window.setSizeGripEnabled(True)
+            dialog_layout = QVBoxLayout(self._log_window)
+            dock = QPushButton("Return to sidebar")
+            dock.clicked.connect(self._log_window.close)
+            dialog_layout.addWidget(dock)
+            self._log_window.finished.connect(self._dock_combat_log)
+        position = self._roll_scroll.verticalScrollBar().value()
+        self._log_layout.removeWidget(self._log_body)
+        window_layout = self._log_window.layout()
+        assert window_layout is not None
+        window_layout.addWidget(self._log_body)
+        self._log_body.show()
+        self._log_placeholder.show()
+        self._pop_out_log_button.setText("Show log")
+        self._log_window.show()
+        self._log_window.raise_()
+        self._restore_log_scroll(position)
+
+    def close_combat_log_window(self) -> None:
+        """Close the owned log window when its game window closes."""
+        if self._log_window is not None:
+            self._log_window.close()
+
+    def _dock_combat_log(self) -> None:
+        if self._log_body.parentWidget() is not self._log_window:
+            return
+        position = self._roll_scroll.verticalScrollBar().value()
+        assert self._log_window is not None
+        layout = self._log_window.layout()
+        assert layout is not None
+        layout.removeWidget(self._log_body)
+        self._log_layout.addWidget(self._log_body)
+        self._log_body.show()
+        self._log_placeholder.hide()
+        self._pop_out_log_button.setText("Pop out")
+        self._restore_log_scroll(position)
+
+    def _restore_log_scroll(self, position: int) -> None:
+        def restore() -> None:
+            if self._follow_log.isChecked():
+                self.scroll_combat_log_to_bottom()
+            else:
+                self._roll_scroll.verticalScrollBar().setValue(position)
+
+        QTimer.singleShot(0, self._roll_scroll, restore)
 
     def _build_root_page(self) -> QWidget:
         page = QWidget()
@@ -314,15 +376,36 @@ class GameSidebar(QFrame):
         log_layout = QVBoxLayout(log_section)
         log_layout.setContentsMargins(8, 8, 8, 8)
         log_layout.setSpacing(6)
+        self._log_layout = log_layout
+        header = QHBoxLayout()
         log_title = QLabel("Combat Log")
         log_title.setObjectName("sectionSubtitle")
-        log_layout.addWidget(log_title)
+        header.addWidget(log_title, stretch=1)
+        self._pop_out_log_button = QPushButton("Pop out")
+        self._pop_out_log_button.setObjectName("popOutCombatLog")
+        self._pop_out_log_button.clicked.connect(self.pop_out_combat_log)
+        header.addWidget(self._pop_out_log_button)
+        log_layout.addLayout(header)
+        self._log_placeholder = QLabel("Log is open in a separate window.")
+        self._log_placeholder.setWordWrap(True)
+        self._log_placeholder.hide()
+        log_layout.addWidget(self._log_placeholder)
+        self._log_body = QWidget()
+        body_layout = QVBoxLayout(self._log_body)
+        body_layout.setContentsMargins(0, 0, 0, 0)
+        self._follow_log = QCheckBox("Follow new entries")
+        self._follow_log.setChecked(True)
+        self._follow_log.toggled.connect(
+            lambda checked: self.scroll_combat_log_to_bottom() if checked else None
+        )
+        body_layout.addWidget(self._follow_log)
         self._dice_roll_panel = DiceRollPanel(self._callbacks.select_log_action)
         self._roll_scroll = QScrollArea()
         self._roll_scroll.setWidgetResizable(True)
         self._roll_scroll.setMinimumHeight(COMBAT_LOG_MINIMUM_HEIGHT)
         self._roll_scroll.setWidget(self._dice_roll_panel)
-        log_layout.addWidget(self._roll_scroll)
+        body_layout.addWidget(self._roll_scroll)
+        log_layout.addWidget(self._log_body)
         page_layout.addWidget(log_section)
 
         self._end_turn_button = QPushButton("End Turn")

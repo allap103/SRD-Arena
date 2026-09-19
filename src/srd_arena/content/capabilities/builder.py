@@ -10,8 +10,13 @@ from .durations import EffectDurationSchema
 
 _SHARED_EFFECT_TYPES = (
     effects.DamageEffectSchema,
+    effects.HitPointMaximumReductionEffectSchema,
+    effects.AttackHitDamageEffectSchema,
+    effects.AttackHitRetaliationEffectSchema,
     effects.ConditionEffectSchema,
+    effects.CompelledTurnEffectSchema,
     effects.ForcedMovementEffectSchema,
+    effects.TeleportEffectSchema,
     effects.SpeedMultiplierEffectSchema,
     effects.ProhibitReactionEffectSchema,
     effects.TurnEconomyRestrictionEffectSchema,
@@ -143,6 +148,11 @@ def build_duration(
             creature=value.creature,
             turn_offset=value.turn_offset,
         )
+    if isinstance(value, durations.NextTurnEndDurationSchema):
+        return domain.EffectDuration(
+            kind="next_turn_end",
+            creature=value.creature,
+        )
     if isinstance(value, durations.TimedDurationSchema):
         return domain.EffectDuration(
             kind="timed",
@@ -181,6 +191,18 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
                 for requirement in value.requirements
             ),
         )
+    if isinstance(value, effects.HitPointMaximumReductionEffectSchema):
+        return domain.HitPointMaximumReductionEffect(value.amount)
+    if isinstance(value, effects.AttackHitDamageEffectSchema):
+        return domain.AttackHitDamageEffect(value.dice, value.damage_type)
+    if isinstance(value, effects.AttackHitRetaliationEffectSchema):
+        return domain.AttackHitRetaliationEffect(
+            value.value,
+            value.damage_type,
+            tuple(value.attack_types),
+            value.requires_temporary_hit_points,
+            value.end_effect_when_depleted,
+        )
     if isinstance(value, effects.ConditionEffectSchema):
         return domain.ConditionEffect(
             condition=value.condition,
@@ -190,6 +212,19 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             ),
             escape_dc=value.escape_dc,
             source_capacity=value.source_capacity,
+            destructible=(
+                domain.DestructibleCondition(
+                    label=value.destructible.label,
+                    armor_class=value.destructible.armor_class,
+                    hit_points=value.destructible.hit_points,
+                    damage_vulnerabilities=tuple(
+                        value.destructible.damage_vulnerabilities
+                    ),
+                    damage_immunities=tuple(value.destructible.damage_immunities),
+                )
+                if value.destructible is not None
+                else None
+            ),
             ends_on=tuple(value.ends_on),
         )
     if isinstance(value, effects.ForcedMovementEffectSchema):
@@ -197,6 +232,11 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             value.direction,
             value.distance_feet,
             value.up_to,
+        )
+    if isinstance(value, effects.TeleportEffectSchema):
+        return domain.TeleportEffect(
+            value.distance_feet,
+            value.line_of_sight,
         )
     if isinstance(value, effects.SpeedMultiplierEffectSchema):
         return domain.SpeedMultiplierEffect(
@@ -209,6 +249,11 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
     if isinstance(value, effects.TurnEconomyRestrictionEffectSchema):
         return domain.TurnEconomyRestrictionEffect(
             tuple(value.choose_between),
+            _required_duration(value.duration),
+        )
+    if isinstance(value, effects.CompelledTurnEffectSchema):
+        return domain.CompelledTurnEffect(
+            tuple(value.options),
             _required_duration(value.duration),
         )
     if isinstance(value, effects.RollModifierEffectSchema):
@@ -228,6 +273,7 @@ def build_effect(value: effects.ActionEffectSchema) -> domain.CapabilityEffect:
             requirements=tuple(
                 build_requirement(requirement) for requirement in value.requirements
             ),
+            consume_on_use=value.consume_on_use,
         )
     if isinstance(value, effects.ControlEffectSchema):
         return domain.ControlEffect(

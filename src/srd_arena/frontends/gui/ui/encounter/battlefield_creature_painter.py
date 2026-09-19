@@ -86,9 +86,21 @@ class CreaturePainter:
         """Paint one creature's emphasis, token, labels, and status markers."""
 
         geometry = self._input.geometry
-        center_x = geometry.origin_x + (creature.position.x + 0.5) * geometry.cell_size
-        center_y = geometry.origin_y + (creature.position.y + 0.5) * geometry.cell_size
-        radius = max(14, int(geometry.cell_size * 0.38))
+        occupied_cells = creature.occupied_cells or (creature.position,)
+        minimum_x = min(cell.x for cell in occupied_cells)
+        maximum_x = max(cell.x for cell in occupied_cells)
+        minimum_y = min(cell.y for cell in occupied_cells)
+        maximum_y = max(cell.y for cell in occupied_cells)
+        footprint_width = maximum_x - minimum_x + 1
+        footprint_height = maximum_y - minimum_y + 1
+        footprint_size = max(footprint_width, footprint_height) * geometry.cell_size
+        center_x = (
+            geometry.origin_x + (minimum_x + footprint_width / 2) * geometry.cell_size
+        )
+        center_y = (
+            geometry.origin_y + (minimum_y + footprint_height / 2) * geometry.cell_size
+        )
+        radius = max(14, int(footprint_size * 0.38))
         self._positions.append((creature.creature_ref, center_x, center_y, radius))
         self._paint_creature_emphasis(
             painter,
@@ -103,7 +115,7 @@ class CreaturePainter:
             center_x=center_x,
             center_y=center_y,
             radius=radius,
-            cell_size=geometry.cell_size,
+            cell_size=footprint_size,
         )
         self._paint_target_allocation_badge(
             painter,
@@ -111,7 +123,7 @@ class CreaturePainter:
             center_x=center_x,
             center_y=center_y,
             radius=radius,
-            cell_size=geometry.cell_size,
+            cell_size=footprint_size,
         )
         self._paint_creature_name(
             painter,
@@ -119,17 +131,17 @@ class CreaturePainter:
             center_x=center_x,
             center_y=center_y,
             radius=radius,
-            cell_size=geometry.cell_size,
+            cell_size=footprint_size,
         )
         self._paint_status_markers(
             painter,
             creature,
-            cell_x=geometry.origin_x + creature.position.x * geometry.cell_size,
-            cell_y=geometry.origin_y + creature.position.y * geometry.cell_size,
+            cell_x=geometry.origin_x + minimum_x * geometry.cell_size,
+            cell_y=geometry.origin_y + minimum_y * geometry.cell_size,
             center_x=center_x,
             center_y=center_y,
             token_radius=radius,
-            cell_size=geometry.cell_size,
+            cell_size=footprint_size,
         )
 
     def _paint_creature_emphasis(
@@ -284,7 +296,11 @@ class CreaturePainter:
 
         if not (
             self._input.always_show_creature_names
-            or self._input.hover_cell == (creature.position.x, creature.position.y)
+            or self._input.hover_cell
+            in {
+                (cell.x, cell.y)
+                for cell in creature.occupied_cells or (creature.position,)
+            }
         ):
             return
         label_style = BATTLEFIELD_FLOATING_LABEL_STYLE

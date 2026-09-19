@@ -18,7 +18,11 @@ from tests.encounter_runtime_support import (
 
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 FULL_CONTROL_ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 _ORCHESTRATOR = EncounterOrchestrator()
 
@@ -39,7 +43,7 @@ def _all_external_session() -> Session:
     for team in encounter.teams:
         team.controller = "external"
     session = Session(encounter)
-    session.read()
+    session._read()
     return session
 
 
@@ -72,7 +76,7 @@ def test_scripted_turns_advance_until_the_next_external_decision() -> None:
         )
     )
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     wait = next(action for action in state.available_actions() if action.kind == "wait")
@@ -103,7 +107,7 @@ def test_pacing_pause_skips_defeated_initiative_slots_first() -> None:
     assert goblin.behavior is not None
     goblin.behavior.type = "wait"
     session = Session(encounter)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("goblin_1")
@@ -140,7 +144,7 @@ def test_querying_a_defeated_actors_decision_does_not_advance_the_turn() -> None
 def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("champion_2")
@@ -190,7 +194,7 @@ def test_reaction_interrupts_movement_then_resumes_the_parent_turn() -> None:
 def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda sides: sides)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("champion_2")
@@ -218,6 +222,11 @@ def test_lethal_reaction_closes_the_frame_without_resuming_movement() -> None:
     assert state.interrupts.decision_stack == []
     assert state.pending_movement is None
     assert not any(event.type == "movement_resolved" for event in resolved.events)
+    assert session.observe().requires_automatic_advance
+    advanced = session.advance_one_automatic_action()
+    assert advanced.observation.encounter is not None
+    assert advanced.observation.encounter.decision.creature_ref != "champion_2"
+    assert not advanced.observation.requires_automatic_advance
 
 
 def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> None:
@@ -226,7 +235,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> 
         session,
         die_roller=lambda sides: 15 if sides == 20 else 1,
     )
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("champion_2")
@@ -311,7 +320,7 @@ def test_nested_damage_reroll_closes_in_lifo_order_before_movement_resumes() -> 
 def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("champion_2")
@@ -354,7 +363,7 @@ def test_passing_reaction_closes_it_before_parent_movement_resumes() -> None:
 
 def test_resumed_movement_carries_a_grappled_creature() -> None:
     session = Session(load_encounter_directory(FULL_CONTROL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("champion_2")
@@ -410,7 +419,7 @@ def test_reaction_to_scripted_movement_resumes_automatic_advancement() -> None:
     goblin.behavior.type = "guard"
     session = Session(encounter)
     _use_deterministic_dice(session, die_roller=lambda _sides: 1)
-    session.read()
+    session._read()
     state = session.encounter_state
     assert state is not None
     state.turn.index = state.initiative_order.index("goblin_2")

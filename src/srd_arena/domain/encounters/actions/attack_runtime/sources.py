@@ -2,17 +2,61 @@
 
 from __future__ import annotations
 
+from dataclasses import dataclass
+
 from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_rules.weapon_mastery import (
+    selected_weapon_mastery,
+)
 from srd_arena.domain.creatures.stat_block_actions import AttackActionDefinition
 from srd_arena.domain.equipment import Item
-from srd_arena.domain.geometry import Grid
+from srd_arena.domain.geometry import Grid, GridDistance
+from srd_arena.domain.rolls.dice import D20RollMode
 
 from ...encounter_models.resolution import AttackSource
 
 
-def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | None:
-    """Return the first equipped item that defines a weapon attack.
+@dataclass(frozen=True)
+class AttackRangeBand:
+    """Describe the normal and maximum distance of one selected attack mode.
+
+    Attacks beyond ``normal`` but within ``maximum`` remain legal and are made
+    with disadvantage. Melee attacks and ranged attacks without a distinct long
+    range use the same value for both boundaries.
+
+    >>> band = AttackRangeBand(GridDistance(6), GridDistance(24))
+    >>> (band.contains(GridDistance(24)), band.roll_mode(GridDistance(7)))
+    (True, 'disadvantage')
+    """
+
+    normal: GridDistance
+    maximum: GridDistance
+
+    def __post_init__(self) -> None:
+        """Reject a maximum distance shorter than the normal distance."""
+
+        if self.maximum < self.normal:
+            raise ValueError(
+                "Maximum attack range cannot be shorter than normal range."
+            )
+
+    def contains(self, distance: GridDistance) -> bool:
+        """Return whether ``distance`` lies within the attack's maximum range."""
+
+        return distance <= self.maximum
+
+    def roll_mode(self, distance: GridDistance) -> D20RollMode:
+        """Return disadvantage only when attacking in the long-range band."""
+
+        return "disadvantage" if distance > self.normal else "normal"
+
+
+def equipped_weapons(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+) -> tuple[Item, ...]:
+    """Return distinct equipped items that define weapon attacks.
 
     >>> from types import SimpleNamespace
     >>> from srd_arena.domain.equipment import WeaponStat
@@ -23,17 +67,20 @@ def equipped_weapon(attacker: Creature, items_by_id: dict[str, Item]) -> Item | 
     >>> attacker = SimpleNamespace(
     ...     equipment=SimpleNamespace(right_hand="sword", left_hand=None)
     ... )
-    >>> equipped_weapon(attacker, {"sword": sword}) is sword
+    >>> equipped_weapons(attacker, {"sword": sword}) == (sword,)
     True
     """
+    weapons: list[Item] = []
+    seen_item_ids: set[str] = set()
     for slot in ("right_hand", "left_hand"):
         item_id = getattr(attacker.equipment, slot)
-        if item_id is None:
+        if item_id is None or item_id in seen_item_ids:
             continue
         item = items_by_id.get(item_id)
         if item is not None and item.weapon_stat is not None:
-            return item
-    return None
+            weapons.append(item)
+            seen_item_ids.add(item_id)
+    return tuple(weapons)
 
 
 def has_free_hand(creature: Creature) -> bool:
@@ -75,6 +122,7 @@ def unarmed_attack_source(attacker: Creature) -> AttackSource:
         attack_bonus_label="STR mod",
         ability_modifier=strength_modifier,
         attack_modes=("melee",),
+        ability="strength",
     )
 
 
@@ -102,6 +150,13 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
     """
     assert weapon.weapon_stat is not None
     attack_type = weapon.weapon_stat.attack_type or "melee"
+    attack_modes = (
+        ("melee", "ranged")
+        if attack_type == "melee"
+        and "thrown" in weapon.weapon_stat.properties
+        and weapon.weapon_stat.range_normal is not None
+        else (attack_type,)
+    )
     ability_modifier = (
         attacker.get_modifier(attacker.attributes.dexterity)
         if attack_type == "ranged"
@@ -123,12 +178,14 @@ def weapon_attack_source(attacker: Creature, weapon: Item) -> AttackSource:
         ),
         ability_modifier=ability_modifier,
         proficiency_bonus=proficiency_bonus,
-        attack_modes=(attack_type,),
+        attack_modes=attack_modes,
         range_normal=weapon.weapon_stat.range_normal,
         range_long=weapon.weapon_stat.range_long,
         weapon_id=weapon.id,
         weapon_name=weapon.name,
         weapon_properties=tuple(weapon.weapon_stat.properties),
+        weapon_mastery=selected_weapon_mastery(attacker, weapon),
+        ability="dexterity" if attack_type == "ranged" else "strength",
     )
 
 
@@ -231,9 +288,9 @@ def attack_sources(
     >>> attack_sources(attacker, {})
     []
     """
-    weapon = equipped_weapon(attacker, items_by_id)
-    if weapon is not None:
-        return [weapon_attack_source(attacker, weapon)]
+    weapons = equipped_weapons(attacker, items_by_id)
+    if weapons:
+        return [weapon_attack_source(attacker, weapon) for weapon in weapons]
     return [
         stat_block_attack_source(action)
         for action in attacker.stat_block_actions.values()
@@ -241,24 +298,25 @@ def attack_sources(
     ]
 
 
-def attack_range_squares(
+def attack_range_band_squares(
     attacker: Creature,
     items_by_id: dict[str, Item],
     grid: Grid,
     *,
     preferred_attack_type: str | None = None,
     preferred_attack_name: str | None = None,
-) -> int:
-    """Return the selected attack's normal reach or range in grid squares.
+) -> AttackRangeBand:
+    """Return normal and maximum ranges for the exact selected attack mode.
 
     >>> from types import SimpleNamespace
     >>> attacker = SimpleNamespace(
     ...     equipment=SimpleNamespace(right_hand=None, left_hand=None),
     ...     stat_block_actions={},
     ... )
-    >>> attack_range_squares(attacker, {}, Grid(10, 10))
-    1
+    >>> attack_range_band_squares(attacker, {}, Grid(10, 10))
+    AttackRangeBand(normal=1, maximum=1)
     """
+
     source = select_attack_source(
         attacker,
         items_by_id,
@@ -266,12 +324,18 @@ def attack_range_squares(
         preferred_attack_name=preferred_attack_name,
     )
     if source is None:
-        return 1
+        return AttackRangeBand(GridDistance(1), GridDistance(1))
     attack_type = source.attack_modes[0]
-    range_feet = (
+    normal_feet = (
         source.range_normal or 5 if attack_type == "ranged" else source.reach_feet or 5
     )
-    return int(grid.distance_from_feet(range_feet, minimum=1))
+    maximum_feet = (
+        source.range_long or normal_feet if attack_type == "ranged" else normal_feet
+    )
+    return AttackRangeBand(
+        grid.distance_from_feet(normal_feet, minimum=1),
+        grid.distance_from_feet(maximum_feet, minimum=1),
+    )
 
 
 def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
@@ -303,6 +367,8 @@ def source_for_mode(source: AttackSource, attack_type: str) -> AttackSource:
         additional_damage=source.additional_damage,
         hit_effects=source.hit_effects,
         reach_feet=source.reach_feet,
+        ability=source.ability,
+        weapon_mastery=source.weapon_mastery,
     )
 
 
@@ -311,6 +377,7 @@ def selected_attack_type(
     items_by_id: dict[str, Item],
     *,
     preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
 ) -> str:
     """Return the selected source's attack mode, with a melee fallback.
 
@@ -326,10 +393,47 @@ def selected_attack_type(
         attacker,
         items_by_id,
         preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
     )
     if attack_source is None:
         return preferred_attack_type or "melee"
     return attack_source.attack_modes[0]
+
+
+def selected_attack_ability(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
+) -> str | None:
+    """Return the ability used by the exact selected attack source."""
+
+    attack_source = select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    return "strength" if attack_source is None else attack_source.ability
+
+
+def selected_attack_damage_type(
+    attacker: Creature,
+    items_by_id: dict[str, Item],
+    *,
+    preferred_attack_type: str | None = None,
+    preferred_attack_name: str | None = None,
+) -> str:
+    """Return the damage type inherited from the selected attack source."""
+
+    attack_source = select_attack_source(
+        attacker,
+        items_by_id,
+        preferred_attack_type=preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    return "bludgeoning" if attack_source is None else attack_source.damage_type
 
 
 def can_make_opportunity_attack(

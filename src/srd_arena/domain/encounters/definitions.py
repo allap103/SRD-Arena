@@ -6,6 +6,8 @@ from srd_arena.domain.creatures import Creature
 from srd_arena.domain.equipment import Item
 from srd_arena.domain.geometry import GeometryConfig, Grid, Position
 
+from .terrain import TerrainCell
+
 
 @dataclass
 class EncounterBehavior:
@@ -38,6 +40,17 @@ class EncounterTeam:
     controller: str
 
 
+@dataclass(frozen=True)
+class EncounterEnvironment:
+    """Describe global combat-relevant environmental facts for an encounter.
+
+    Localized terrain remains on individual cells. This value holds facts such
+    as direct sunlight that currently apply across the whole battlefield.
+    """
+
+    sunlight: bool = False
+
+
 @dataclass
 class EncounterDefinition:
     """Describe one complete encounter and the templates needed to run it.
@@ -55,6 +68,8 @@ class EncounterDefinition:
     creatures: tuple[Creature, ...] = ()
     items: tuple[Item, ...] = ()
     geometry_config: GeometryConfig = field(default_factory=GeometryConfig)
+    terrain: tuple[TerrainCell, ...] = ()
+    environment: EncounterEnvironment = field(default_factory=EncounterEnvironment)
 
     def get_creature(self, creature_id: str) -> Creature:
         """Return a creature template by its authored identifier."""

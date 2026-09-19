@@ -2,7 +2,7 @@
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Literal
 
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.effects.conditions import Condition
@@ -13,6 +13,7 @@ from ..condition_state import remove_condition_from_source
 from ..encounter_models.actions import (
     ActionCost,
     EncounterAction,
+    GrappleEscapeSelection,
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..rule_queries.rolls import roll_modifiers
@@ -41,8 +42,8 @@ def available_escape_actions(
     ...     conditions_for=lambda ref: (applied,),
     ... )
     >>> action = available_escape_actions(state, "hero")[0]
-    >>> (action.kind, action.value, action.cost.action)
-    ('escape_grapple', 'ogre', 1)
+    >>> (action.kind, action.value.ability, action.cost.action)
+    ('escape_grapple', 'strength', 1)
     """
 
     creature_state = state.creatures[creature_ref]
@@ -58,16 +59,24 @@ def available_escape_actions(
             or source_ref is None
         ):
             continue
-        actions.append(
-            EncounterAction(
-                f"Escape {applied.source_label} (DC {escape_dc})",
-                "escape_grapple",
-                source_ref,
-                id=(f"{creature_ref}-escape-grapple-{source_ref.replace(':', '-')}"),
-                creature_ref=creature_ref,
-                cost=ActionCost(action=1),
-            )
+        choices: tuple[tuple[Literal["strength", "dexterity"], str], ...] = (
+            ("strength", "Athletics"),
+            ("dexterity", "Acrobatics"),
         )
+        for ability, skill in choices:
+            actions.append(
+                EncounterAction(
+                    f"Escape {applied.source_label} with {skill} (DC {escape_dc})",
+                    "escape_grapple",
+                    GrappleEscapeSelection(source_ref, ability),
+                    id=(
+                        f"{creature_ref}-escape-grapple-"
+                        f"{source_ref.replace(':', '-')}-{ability}"
+                    ),
+                    creature_ref=creature_ref,
+                    cost=ActionCost(action=1),
+                )
+            )
     return actions
 
 
@@ -108,7 +117,7 @@ def resolve_escape_action(
             reason_code="action_spent",
         )
         return
-    if not isinstance(action.value, str):
+    if not isinstance(action.value, GrappleEscapeSelection):
         reject_action(
             state,
             progress,
@@ -124,7 +133,7 @@ def resolve_escape_action(
             applied
             for applied in state.conditions_for(creature_ref)
             if applied.condition is Condition.GRAPPLED
-            and applied.source_ref == action.value
+            and applied.source_ref == action.value.source_ref
             and isinstance(applied.metadata.get("escape_dc"), int)
         ),
         None,
@@ -138,17 +147,16 @@ def resolve_escape_action(
             action_kind="escape_grapple",
             message="That grapple is no longer active.",
             reason_code="grapple_unavailable",
-            details={"source_ref": action.value},
+            details={"source_ref": action.value.source_ref},
         )
         return
     consume_action(state, allow_magic=False)
     escape_dc = grapple.metadata["escape_dc"]
     if not isinstance(escape_dc, int):
         raise RuntimeError("Grapple escape DC must be an integer.")
-    strength_modifier = creature.get_modifier(creature.attributes.strength)
-    dexterity_modifier = creature.get_modifier(creature.attributes.dexterity)
-    ability = "strength" if strength_modifier >= dexterity_modifier else "dexterity"
-    modifier = max(strength_modifier, dexterity_modifier)
+    ability = action.value.ability
+    skill = "athletics" if ability == "strength" else "acrobatics"
+    modifier = creature.skill_check_bonus(ability, skill)
     roll_rules = roll_modifiers(
         state,
         creature_ref,
@@ -167,7 +175,7 @@ def resolve_escape_action(
             state,
             creature_ref,
             Condition.GRAPPLED,
-            action.value,
+            action.value.source_ref,
         )
     progress.messages.append(
         (
@@ -185,9 +193,17 @@ def resolve_escape_action(
             action_id=action_id,
             data={
                 "kind": "escape_grapple",
-                "source_ref": action.value,
+                "source_ref": action.value.source_ref,
+                "ability": ability,
+                "skill": skill,
                 "dc": escape_dc,
                 "roll": check.total,
+                "roll_detail": {
+                    "dice": list(check.dice),
+                    "mode": check.mode,
+                    "modifier": check.modifier,
+                    "total": check.total,
+                },
                 "success": success,
             },
         )

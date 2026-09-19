@@ -13,6 +13,7 @@ class ScalingIncrement:
         "healing_dice",
         "healing_bonus",
         "temporary_hit_points",
+        "attack_hit_retaliation",
         "hit_point_maximum",
         "target_count",
         "projectile_count",
@@ -21,6 +22,7 @@ class ScalingIncrement:
     ]
     amount: int | str
     damage_type: str | None = None
+    unit: Literal["round", "minute", "hour", "day"] | None = None
 
 
 @dataclass(frozen=True)

@@ -54,7 +54,7 @@ class Spell:
     target_requirements: tuple[CapabilityRequirement, ...] = ()
     definition: CapabilityDefinition | None = None
     activation: CapabilityActivation | None = None
-    resolver_id: Literal["slow"] | None = None
+    resolver_id: Literal["slow", "stinking_cloud"] | None = None
 
     @property
     def concentration(self) -> bool:

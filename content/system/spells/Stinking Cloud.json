@@ -54,5 +54,32 @@
   ],
   "areaTags": [
     "S"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "resolver": "stinking_cloud",
+    "omissions": [
+      {
+        "mechanic": "strong-wind dispersal",
+        "reason": "Persistent area state and heavy-obscuration sight rules are executable; environmental wind hooks remain deferred within this slice."
+      }
+    ]
+  },
+  "capability": {
+    "target": {
+      "type": "area",
+      "origin": "point_in_range",
+      "geometry": {
+        "shape": "sphere",
+        "radius_feet": 20
+      },
+      "occupants": "all"
+    },
+    "resolution": {
+      "type": "automatic",
+      "outcome": {
+        "effects": []
+      }
+    }
+  }
 }

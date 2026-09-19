@@ -9,7 +9,12 @@ from srd_arena.domain.spells.action_payloads import (
     serialize_spell_action_payload,
 )
 
-from ...encounter_models.actions import EncounterAction
+from ...encounter_models.actions import (
+    EffectRetargetSelection,
+    EncounterAction,
+    ForcedMovementSelection,
+    GrappleEscapeSelection,
+)
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import (
     ActionExecutionContext,
@@ -44,11 +49,7 @@ def begin_action_execution(
         action=action,
         action_id=next_action_id(state),
     )
-    event_value = (
-        serialize_spell_action_payload(action.value)
-        if isinstance(action.value, SpellActionPayload)
-        else action.value
-    )
+    event_value = _event_action_value(action)
     context.progress.events.append(
         create_event(
             state,
@@ -109,3 +110,22 @@ def finish_action_execution(
     else:
         outcome = ActionExecutionOutcome.CONTINUE_TURN
     return ActionExecutionResult(context, outcome)
+
+
+def _event_action_value(action: EncounterAction) -> object:
+    """Record typed selections as detached, serializable gameplay facts."""
+
+    value = action.value
+    if isinstance(value, SpellActionPayload):
+        return serialize_spell_action_payload(value)
+    if isinstance(value, EffectRetargetSelection):
+        return {"effect_id": value.effect_id, "target_ref": value.target_ref}
+    if isinstance(value, GrappleEscapeSelection):
+        return {"source_ref": value.source_ref, "ability": value.ability}
+    if isinstance(value, ForcedMovementSelection):
+        return {
+            "target_ref": value.target_ref,
+            "direction": value.direction,
+            "distance_feet": value.distance_feet,
+        }
+    return value

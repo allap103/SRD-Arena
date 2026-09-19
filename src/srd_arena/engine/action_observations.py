@@ -3,11 +3,14 @@
 from __future__ import annotations
 
 from collections.abc import Mapping
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from types import MappingProxyType
 from typing import cast
 
 from srd_arena.domain.creatures import Creature, StatBlockActionDefinition
+from srd_arena.domain.encounters.actions.option_discovery.spellcasting import (
+    spell_range_squares_for,
+)
 from srd_arena.domain.encounters.encounter import EncounterState
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
 from srd_arena.domain.geometry import (
@@ -21,12 +24,16 @@ from srd_arena.domain.geometry import (
 from srd_arena.domain.spells import Spell
 from srd_arena.domain.spells.rules import (
     spell_area_shape,
-    spell_range_squares,
 )
 from srd_arena.engine.queries import (
     ActionOption,
     DirectTargetOptionDetails,
+    EffectRetargetOptionDetails,
     FeatureOptionDetails,
+    ForcedMovementOptionDetails,
+    GrappleEscapeOptionDetails,
+    GrappleSaveOptionDetails,
+    InitiativeSwapOptionDetails,
     MovementOptionDetails,
     ResourceAllocationOptionDetails,
     SessionRead,
@@ -39,6 +46,8 @@ from .observation_models import (
     ActionReasonObservation,
     SceneObservation,
 )
+from .spell_cast_observation_models import SpellCastOptions
+from .spell_cast_observations import observe_spell_cast_options
 from .values import EngineValue
 
 
@@ -48,9 +57,14 @@ class _ActionSemantics:
     source_label: str | None = None
     source_level: int | None = None
     resource_level: int | None = None
+    grant_id: str | None = None
     feature_id: str | None = None
+    effect_id: str | None = None
     movement_direction: str | None = None
+    movement_distance_feet: int | None = None
     target_ref: str | None = None
+    grapple_source_ref: str | None = None
+    grapple_choice: str | None = None
     aim_point: tuple[float, float] | None = None
     area_preview: Mapping[str, EngineValue] | None = None
 
@@ -69,10 +83,11 @@ def observe_scene(read: SessionRead) -> SceneObservation:
     ('demo', 'Exit')
     """
 
+    cast_cache: dict[tuple[str, SpellOptionDetails], SpellCastOptions | None] = {}
     return SceneObservation(
         scene_id=read.scene_id,
         action_details=tuple(
-            _observe_action(option, read.encounter_state)
+            _observe_action(option, read.encounter_state, cast_cache)
             for option in read.action_options
         ),
     )
@@ -81,6 +96,7 @@ def observe_scene(read: SessionRead) -> SceneObservation:
 def _observe_action(
     option: ActionOption,
     state: EncounterState | None,
+    cast_cache: dict[tuple[str, SpellOptionDetails], SpellCastOptions | None],
 ) -> ActionObservation:
     reason_entries = tuple(
         dict.fromkeys(
@@ -88,6 +104,17 @@ def _observe_action(
         )
     )
     semantics = _action_semantics(option, state)
+    cast_options = None
+    if isinstance(option.details, SpellOptionDetails):
+        details = option.details
+        key = (option.creature_ref, replace(details, target_ref=None, target_refs=()))
+        if key not in cast_cache:
+            cast_cache[key] = observe_spell_cast_options(state, option)
+        cast_options = cast_cache[key]
+        if cast_options is not None:
+            cast_options = replace(
+                cast_options, initial_target_refs=details.target_refs
+            )
     return ActionObservation(
         id=option.id,
         label=option.label,
@@ -114,11 +141,18 @@ def _observe_action(
         source_label=semantics.source_label,
         source_level=semantics.source_level,
         resource_level=semantics.resource_level,
+        grant_id=semantics.grant_id,
         feature_id=semantics.feature_id,
+        effect_id=semantics.effect_id,
         movement_direction=semantics.movement_direction,
+        movement_distance_feet=semantics.movement_distance_feet,
         target_ref=semantics.target_ref,
+        grapple_source_ref=semantics.grapple_source_ref,
+        grapple_choice=semantics.grapple_choice,
         aim_point=semantics.aim_point,
         area_preview=semantics.area_preview,
+        required_configuration=option.required_configuration,
+        spell_cast=cast_options,
     )
 
 
@@ -140,6 +174,7 @@ def _action_semantics(
             source_label=(spell.name if spell is not None else details.source_id),
             source_level=spell.level if spell is not None else None,
             resource_level=details.resource_level,
+            grant_id=details.grant_id,
             target_ref=details.target_ref,
             aim_point=details.aim_point,
             area_preview=_spell_area_preview(
@@ -163,8 +198,29 @@ def _action_semantics(
         )
     if isinstance(details, FeatureOptionDetails):
         return _ActionSemantics(feature_id=details.feature_id)
+    if isinstance(details, EffectRetargetOptionDetails):
+        return _ActionSemantics(
+            effect_id=details.effect_id,
+            target_ref=details.target_ref,
+        )
     if isinstance(details, MovementOptionDetails):
         return _ActionSemantics(movement_direction=details.direction)
+    if isinstance(details, ForcedMovementOptionDetails):
+        return _ActionSemantics(
+            source_id=details.source_id,
+            movement_direction=details.direction,
+            movement_distance_feet=details.distance_feet,
+            target_ref=details.target_ref,
+        )
+    if isinstance(details, GrappleEscapeOptionDetails):
+        return _ActionSemantics(
+            grapple_source_ref=details.source_ref,
+            grapple_choice=details.ability,
+        )
+    if isinstance(details, GrappleSaveOptionDetails):
+        return _ActionSemantics(grapple_choice=details.choice)
+    if isinstance(details, InitiativeSwapOptionDetails):
+        return _ActionSemantics(target_ref=details.target_ref)
     if isinstance(details, ResourceAllocationOptionDetails):
         return _ActionSemantics(target_ref=details.target_ref)
     if isinstance(details, DirectTargetOptionDetails):
@@ -209,7 +265,7 @@ def _spell_area_preview(
         )
     if spell.geometry_mode != "directional_area":
         return None
-    length = spell_range_squares(spell, grid)
+    length = spell_range_squares_for(state, spell, creature_state.creature)
     if length is None:
         return None
     return cast(

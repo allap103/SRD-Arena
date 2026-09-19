@@ -8,7 +8,33 @@ from srd_arena.domain.effects.rule_effects import RuntimeRuleEffect
 from srd_arena.domain.effects.runtime import EffectSource
 
 from ..encounter_models.actions import CreatureRef
-from .context import EffectQueryContext
+from .context import CreatureEffectQueryContext, EffectQueryContext
+
+
+def creature_rule_effects(
+    state: CreatureEffectQueryContext,
+    creature_ref: CreatureRef,
+) -> Iterator[tuple[str, EffectSource, RuntimeRuleEffect]]:
+    """Yield intrinsic and temporary rule effects affecting one creature."""
+
+    creature = state.creatures[creature_ref].creature
+    for provider in creature.combat_profile.intrinsic_rule_providers.values():
+        if (
+            provider.blocked_by_armor_categories
+            and creature.worn_armor_category(state.item_templates)
+            in provider.blocked_by_armor_categories
+        ):
+            continue
+        source = EffectSource(
+            provider.source_kind,
+            provider.id,
+            applied_by_ref=creature_ref,
+            label=provider.label,
+        )
+        provider_id = f"intrinsic:{creature_ref}:{provider.id}"
+        for rule_effect in provider.rule_effects:
+            yield provider_id, source, rule_effect
+    yield from ongoing_rule_effects(state, creature_ref)
 
 
 def ongoing_rule_effects(

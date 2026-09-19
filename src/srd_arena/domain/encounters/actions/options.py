@@ -9,12 +9,16 @@ from ..encounter_models.actions import EncounterAction
 from ..participants import creature_controller
 from ..reaction_runtime.damage_rerolls import reroll_damage_actions
 from ..reaction_runtime.opportunity_offers import reaction_actions
+from ..reaction_runtime.parry import parry_actions
+from .d20_roll_modifiers import d20_roll_modifier_actions
+from .forced_movement_choices import forced_movement_actions
+from .grapple_saves import grapple_save_actions
+from .initiative_swaps import initiative_swap_actions
 from .option_discovery.spell_areas import (
     spell_area,
     spell_area_targets,
     targets_in_area,
 )
-from .option_discovery.spell_selection import spell_target_selection_actions
 from .option_discovery.spell_targets import (
     spell_action_targets,
     spell_target_context,
@@ -33,6 +37,8 @@ from .option_discovery.standard import (
     available_feature_actions,
     feature_action_available,
 )
+from .reckless_attack import reckless_attack_actions
+from .weapon_mastery import weapon_mastery_actions
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
@@ -72,12 +78,31 @@ def available_actions(state: EncounterState) -> list[EncounterAction]:
     decision = state.current_decision()
     if creature_controller(state, decision.creature_ref) != "external":
         return []
+    return decision_actions(state)
+
+
+def decision_actions(state: EncounterState) -> list[EncounterAction]:
+    """Build legal choices for the current decision, independent of controller."""
+
+    decision = state.current_decision()
     if decision.kind == "reroll_dice":
         return reroll_damage_actions(state)
     if decision.kind == "reaction":
         return reaction_actions(state)
-    if decision.kind == "spell_targets":
-        return spell_target_selection_actions(state, decision.creature_ref)
+    if decision.kind == "parry":
+        return parry_actions(state)
+    if decision.kind == "grapple_save":
+        return grapple_save_actions(state)
+    if decision.kind == "forced_movement":
+        return forced_movement_actions(state)
+    if decision.kind == "initiative_swap":
+        return initiative_swap_actions(state)
+    if decision.kind == "d20_roll_modifier":
+        return d20_roll_modifier_actions(state)
+    if decision.kind == "reckless_attack":
+        return reckless_attack_actions(state)
+    if decision.kind == "weapon_mastery":
+        return weapon_mastery_actions(state)
     return available_creature_actions(state, decision.creature_ref)
 
 
@@ -85,6 +110,7 @@ __all__ = [
     "available_actions",
     "available_feature_actions",
     "available_spell_actions",
+    "decision_actions",
     "feature_action_available",
     "spell_action_cost",
     "spell_action_targets",
@@ -93,7 +119,6 @@ __all__ = [
     "spell_cast_block_reason_for",
     "spell_range_squares_for",
     "spell_target_context",
-    "spell_target_selection_actions",
     "spell_targets_self_only_for",
     "spend_spell_resources",
     "targets_in_area",

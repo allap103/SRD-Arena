@@ -15,3 +15,4 @@ class WeaponStat:
     range_normal: int | None = None
     range_long: int | None = None
     weapon_category: str = ""
+    mastery: str | None = None

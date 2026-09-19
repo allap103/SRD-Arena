@@ -5,10 +5,10 @@ from __future__ import annotations
 from collections.abc import Collection
 from typing import TYPE_CHECKING
 
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 
 from ..actions.attack_resolution import can_make_opportunity_attack
-from ..behaviors import is_adjacent as _is_adjacent
 from ..encounter_models.actions import (
     ActionCost,
     EncounterAction,
@@ -21,7 +21,13 @@ from ..encounter_models.decisions import (
 )
 from ..encounter_models.resolution import EncounterProgress
 from ..participants import creature_controller, creatures_are_opponents
-from ..rule_queries.permissions import reaction_eligibility
+from ..rule_queries.permissions import (
+    TargetingKind,
+    movement_provokes_opportunity_attacks,
+    reaction_eligibility,
+    target_eligibility,
+)
+from ..spatial import creature_distance
 from ..state_runtime import create_event, next_frame_id
 
 if TYPE_CHECKING:
@@ -38,6 +44,7 @@ def queue_opportunity_attack(
     to_position: Position,
     remaining_movement_after: MovementBudget,
     movement_cost: MovementCost,
+    movement_mode: MovementMode,
     companion_destinations: dict[str, Position],
     progress: EncounterProgress,
     external_only: bool,
@@ -46,16 +53,22 @@ def queue_opportunity_attack(
     """Push the first eligible external Opportunity Attack decision.
 
     >>> from types import SimpleNamespace
-    >>> state = SimpleNamespace(creatures={"hero": SimpleNamespace()})
+    >>> state = SimpleNamespace(
+    ...     creatures={"hero": SimpleNamespace()}, ongoing_effects=[]
+    ... )
     >>> queue_opportunity_attack(
     ...     state, mover_ref="hero", action_id="move-1", direction="right",
     ...     from_position=Position(0, 0), to_position=Position(1, 0),
     ...     remaining_movement_after=MovementBudget(5),
-    ...     movement_cost=MovementCost(1), companion_destinations={},
+    ...     movement_cost=MovementCost(1), movement_mode="walk",
+    ...     companion_destinations={},
     ...     progress=EncounterProgress(), external_only=True,
     ... )
     False
     """
+
+    if not movement_provokes_opportunity_attacks(state, mover_ref):
+        return False
 
     reactors = [
         (creature_ref, creature_state)
@@ -72,12 +85,30 @@ def queue_opportunity_attack(
             creature_ref,
             "opportunity_attack",
         ).allowed
+        and target_eligibility(
+            state,
+            creature_ref,
+            mover_ref,
+            TargetingKind.ATTACK,
+        ).allowed
         and can_make_opportunity_attack(
             creature_state.creature,
             state.item_templates,
         )
-        and _is_adjacent(from_position, creature_state.position)
-        and not _is_adjacent(to_position, creature_state.position)
+        and creature_distance(
+            state,
+            creature_ref,
+            mover_ref,
+            target_position=from_position,
+        )
+        == 1
+        and creature_distance(
+            state,
+            creature_ref,
+            mover_ref,
+            target_position=to_position,
+        )
+        != 1
     ]
     if not reactors:
         return False
@@ -99,6 +130,7 @@ def queue_opportunity_attack(
             target_ref: Position(position.x, position.y)
             for target_ref, position in companion_destinations.items()
         },
+        movement_mode=movement_mode,
     )
     state.interrupts.decision_stack.append(
         DecisionFrame(
@@ -168,6 +200,12 @@ def reaction_actions(state: EncounterState) -> list[EncounterAction]:
             state,
             reactor_ref,
             "opportunity_attack",
+        ).allowed
+        and target_eligibility(
+            state,
+            reactor_ref,
+            target_ref,
+            TargetingKind.ATTACK,
         ).allowed
         and target.is_alive
     ):

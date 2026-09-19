@@ -8,12 +8,15 @@ from srd_arena.domain.effects.runtime import UntilTurnEnd, UntilTurnStart
 from srd_arena.domain.geometry import MovementBudget, MovementCost
 
 from .attack_economy import clear_attack_action
+from .effect_lifecycle.area_turn_start import resolve_turn_start_area_effects
 from .effect_lifecycle.repeat_saves import resolve_end_turn_effects
+from .effect_lifecycle.turn_end import expire_ongoing_effects_for_turn_end
 from .effect_lifecycle.turn_start import expire_ongoing_effects_for_turn_start
 from .encounter_models.actions import CreatureRef
 from .encounter_models.resolution import EncounterProgress
 from .grappling_state import is_grappled
 from .participants import creature_team_id
+from .prone_state import apply_shared_space_prone
 from .rule_queries import movement_budget, reset_damage_reductions
 
 if TYPE_CHECKING:
@@ -74,12 +77,38 @@ def encounter_is_complete(state: EncounterState) -> bool:
     configured_teams = {
         creature_team_id(state, creature_ref) for creature_ref in state.creatures
     }
-    living_teams = {
-        creature_team_id(state, creature_ref)
-        for creature_ref, creature_state in state.creatures.items()
-        if creature_state.is_alive
-    }
+    living_teams = surviving_team_ids(state)
     return len(configured_teams) > 1 and len(living_teams) <= 1
+
+
+def surviving_team_ids(state: EncounterState) -> tuple[str, ...]:
+    """Return configured team IDs that still have a living combatant.
+
+    Team order follows the encounter's creature order so callers receive a
+    deterministic result without needing to inspect mutable combat state.
+
+    >>> from types import SimpleNamespace
+    >>> from unittest.mock import patch
+    >>> state = SimpleNamespace(creatures={
+    ...     "hero": SimpleNamespace(is_alive=True),
+    ...     "goblin": SimpleNamespace(is_alive=False),
+    ... })
+    >>> teams = {"hero": "heroes", "goblin": "foes"}
+    >>> with patch(
+    ...     "srd_arena.domain.encounters.turn_lifecycle.creature_team_id",
+    ...     side_effect=lambda _state, ref: teams[ref],
+    ... ):
+    ...     surviving_team_ids(state)
+    ('heroes',)
+    """
+
+    return tuple(
+        dict.fromkeys(
+            creature_team_id(state, creature_ref)
+            for creature_ref, creature_state in state.creatures.items()
+            if creature_state.is_alive
+        )
+    )
 
 
 def advance_turn(
@@ -98,7 +127,14 @@ def advance_turn(
     ...     ) as end_effects,
     ...     patch(
     ...         "srd_arena.domain.encounters.turn_lifecycle."
+    ...         "expire_ongoing_effects_for_turn_end"
+    ...     ),
+    ...     patch(
+    ...         "srd_arena.domain.encounters.turn_lifecycle."
     ...         "expire_conditions_for_turn_end"
+    ...     ),
+    ...     patch(
+    ...         "srd_arena.domain.encounters.turn_lifecycle.apply_shared_space_prone"
     ...     ),
     ...     patch(
     ...         "srd_arena.domain.encounters.turn_lifecycle._advance_initiative"
@@ -113,7 +149,9 @@ def advance_turn(
 
     ending_creature_ref = state.current_decision().creature_ref
     resolve_end_turn_effects(state, ending_creature_ref, progress)
+    expire_ongoing_effects_for_turn_end(state, ending_creature_ref)
     expire_conditions_for_turn_end(state, ending_creature_ref)
+    apply_shared_space_prone(state, ending_creature_ref, progress)
     _advance_initiative(state)
     _begin_turn_if_alive(state, progress)
 
@@ -143,6 +181,7 @@ def skip_defeated_turn(
 
 
 def _advance_initiative(state: EncounterState) -> None:
+    state.turn.spell_slot_users.clear()
     state.turn.index += 1
     if state.turn.index >= turn_count(state):
         state.turn.index = 0
@@ -157,6 +196,8 @@ def _begin_turn_if_alive(
     creature_state = state.creatures[creature_ref]
     if not creature_state.is_alive:
         return
+    for participant in state.creatures.values():
+        participant.features_used_this_turn.clear()
     reset_damage_reductions(state, creature_ref)
     expire_ongoing_effects_for_turn_start(state, creature_ref)
     expire_conditions_for_turn_start(state, creature_ref)
@@ -165,14 +206,17 @@ def _begin_turn_if_alive(
     recharge_stat_block_actions(creature_state.creature, state.dice.roll_die)
     creature_state.movement_remaining = None
     creature_state.movement_spent_this_turn = MovementCost(0)
+    creature_state.movement_mode = "walk"
     creature_state.actions_remaining = 1
     creature_state.action_used_this_turn = False
     creature_state.magic_actions_remaining = 1
     clear_attack_action(creature_state)
+    creature_state.attack_rolls_made_this_turn = 0
     creature_state.bonus_action_available = True
     creature_state.bonus_action_used_this_turn = False
     if progress is not None:
         progress.messages.append(("turn", f"{creature_state.creature.name}'s turn"))
+    resolve_turn_start_area_effects(state, creature_ref, progress)
 
 
 def expire_conditions_for_turn_end(

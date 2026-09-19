@@ -4,14 +4,26 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...attack_economy import consume_action
-from ...behaviors import is_adjacent
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from srd_arena.domain.effects.rule_effects import OpportunityAttackPrevention
+from srd_arena.domain.effects.runtime import (
+    EffectPolarity,
+    EffectSource,
+    EffectSourceKind,
+    OngoingEffect,
+    RuntimeStateIdentity,
+    UntilTurnEnd,
+)
+
+from ...attack_economy import clear_attack_action, consume_action
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import EncounterProgress
-from ...state_runtime import create_event
+from ...spatial import creatures_are_adjacent
+from ...state_runtime import create_event, next_runtime_origin_id
+from ..effect_retargeting import execute_effect_retarget
 from ..rejections import reject_action
+from .hiding import execute_hiding_action
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -24,7 +36,7 @@ def execute_standard_action(
     progress: EncounterProgress,
     action_id: str,
 ) -> bool:
-    """Execute wake/wait actions and report whether this handler recognized one.
+    """Execute encounter-native actions and report whether one was recognized.
 
     >>> from types import SimpleNamespace
     >>> actor = SimpleNamespace(creature=SimpleNamespace(name="Hero"))
@@ -43,7 +55,56 @@ def execute_standard_action(
     """
 
     actor = state.creatures[decision.creature_ref]
-    if action.kind == "wake_spell_target":
+    if execute_effect_retarget(state, action, progress, action_id):
+        return True
+    if execute_hiding_action(state, action, decision, progress, action_id):
+        return True
+    if action.kind == "disengage":
+        if action.cost.bonus_action:
+            state.active_bonus_action_available = False
+        else:
+            consume_action(state, allow_magic=False)
+            clear_attack_action(state.active_creature_state)
+        effect_id = next_runtime_origin_id(state)
+        state.ongoing_effects.append(
+            OngoingEffect(
+                identity=RuntimeStateIdentity(
+                    id=effect_id,
+                    source=EffectSource(
+                        EffectSourceKind.ACTION,
+                        "disengage",
+                        applied_by_ref=decision.creature_ref,
+                        label="Disengage",
+                        origin_id=action_id,
+                    ),
+                ),
+                target_refs=(decision.creature_ref,),
+                duration=UntilTurnEnd(
+                    decision.creature_ref,
+                    state.round.number,
+                ),
+                polarity=EffectPolarity.BENEFICIAL,
+                label="Disengage",
+                rule_effects=(OpportunityAttackPrevention(),),
+            )
+        )
+        progress.messages.append(
+            (
+                "system",
+                f"{actor.creature.name} disengages and no longer provokes "
+                "Opportunity Attacks this turn.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "action_resolved",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"kind": "disengage", "effect_id": effect_id},
+            )
+        )
+    elif action.kind == "rouse_spell_target":
         if not isinstance(action.value, str):
             reject_action(
                 state,
@@ -51,7 +112,7 @@ def execute_standard_action(
                 actor_ref=decision.creature_ref,
                 action_id=action_id,
                 action_kind=action.kind,
-                message="Wake action requires a creature reference.",
+                message="Rouse action requires a creature reference.",
                 reason_code="target_required",
             )
             return True
@@ -68,7 +129,11 @@ def execute_standard_action(
                 details={"target_ref": action.value},
             )
             return True
-        if not is_adjacent(actor.position, target.position):
+        if not creatures_are_adjacent(
+            state,
+            decision.creature_ref,
+            action.value,
+        ):
             reject_action(
                 state,
                 progress,
@@ -80,20 +145,20 @@ def execute_standard_action(
                 details={"target_ref": action.value},
             )
             return True
-        if not _can_wake_spell_target(state, action.value):
+        if not _can_rouse_spell_target(state, action.value):
             reject_action(
                 state,
                 progress,
                 actor_ref=decision.creature_ref,
                 action_id=action_id,
                 action_kind=action.kind,
-                message="That magical sleep effect is no longer active.",
-                reason_code="wake_unavailable",
+                message="That magical stupor is no longer active.",
+                reason_code="rouse_unavailable",
                 details={"target_ref": action.value},
             )
             return True
         consume_action(state, allow_magic=False)
-        resolve_spell_lifecycle_event(
+        resolve_effect_lifecycle_event(
             state,
             "adjacent_creature_wakes_target",
             actor_ref=decision.creature_ref,
@@ -103,7 +168,7 @@ def execute_standard_action(
         progress.messages.append(
             (
                 "system",
-                f"{actor.creature.name} wakes {target.creature.name}.",
+                f"{actor.creature.name} rouses {target.creature.name}.",
             )
         )
         progress.events.append(
@@ -112,7 +177,7 @@ def execute_standard_action(
                 "action_resolved",
                 creature_ref=decision.creature_ref,
                 action_id=action_id,
-                data={"kind": "wake_spell_target", "target_ref": action.value},
+                data={"kind": "rouse_spell_target", "target_ref": action.value},
             )
         )
     elif action.kind == "wait":
@@ -131,8 +196,8 @@ def execute_standard_action(
     return True
 
 
-def _can_wake_spell_target(state: EncounterState, target_ref: str) -> bool:
-    """Return whether an active effect lets an adjacent creature wake a target."""
+def _can_rouse_spell_target(state: EncounterState, target_ref: str) -> bool:
+    """Return whether an active effect lets an adjacent creature rouse a target."""
 
     return any(
         target_ref in effect.target_refs

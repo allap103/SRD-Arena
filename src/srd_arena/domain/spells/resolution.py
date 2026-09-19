@@ -22,6 +22,7 @@ from .resolution_steps.persistent_effects import build_persistent_spell_effects
 from .resolution_steps.preparation import prepare_spell_resolution
 from .resolution_steps.removals import build_spell_removals
 from .resolution_steps.targets import resolve_spell_targets
+from .resolution_steps.teleportation import build_spell_teleports
 
 __all__ = [
     "SpellActionContext",
@@ -91,6 +92,18 @@ def _resolve_declarative_spell(
         prepared,
         resolved_targets,
     )
+    teleports = build_spell_teleports(context, resolved_targets.affected_targets)
+    effects.extend(teleports)
+    if teleports:
+        destination = context.destination
+        assert destination is not None
+        messages.append(
+            (
+                "system",
+                f"{resolved_targets.affected_targets[0].target_label} teleports "
+                f"to ({destination.x}, {destination.y}).",
+            )
+        )
 
     removals = build_spell_removals(context, resolved_targets)
     messages.extend(removals.messages)
@@ -102,8 +115,12 @@ def _resolve_declarative_spell(
         messages=messages,
         effects=effects,
         details=SpellResolutionDetails(
-            target_ref=context.target.target_ref,
-            target_label=context.target.target_label,
+            target_ref=context.target.target_ref
+            if context.target is not None
+            else None,
+            target_label=context.target.target_label
+            if context.target is not None
+            else None,
             targets=tuple(
                 (target.target_ref, target.target_label) for target in targets
             ),
@@ -125,6 +142,7 @@ def _resolve_declarative_spell(
                 )
                 for detail in damage_details
             ),
+            attack_hit_retaliations=tuple(resolved_targets.attack_hit_retaliations),
             success=bool(effects)
             or bool(healing_details)
             or bool(temporary_hit_point_details)

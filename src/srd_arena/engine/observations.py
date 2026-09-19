@@ -10,6 +10,8 @@ from srd_arena.domain.encounters.encounter_models.actions import (
     EncounterAction,
 )
 from srd_arena.domain.encounters.encounter_models.state import EncounterCreatureState
+from srd_arena.domain.encounters.spatial import creature_occupied_cells
+from srd_arena.domain.geometry import serialize_area
 from srd_arena.engine.protocols import GameEngine
 from srd_arena.engine.queries import SessionRead
 
@@ -18,10 +20,13 @@ from .observation_models import (
     ActionObservation,
     ActionReasonObservation,
     AttributeObservation,
+    CreatureDefenseObservation,
     CreatureObservation,
+    CreatureRelationshipObservation,
     DecisionObservation,
     EncounterCompletionObservation,
     EncounterObservation,
+    EncounterTerminationReason,
     FeatureActionObservation,
     GameObservation,
     GridObservation,
@@ -29,21 +34,29 @@ from .observation_models import (
     InventoryItemObservation,
     OngoingEffectObservation,
     PositionObservation,
+    ResourcePoolObservation,
     SceneObservation,
     SpellSlotObservation,
     TargetingObservation,
     TargetResourceAllocationObservation,
     TargetResourceLimitObservation,
+    TerrainCellObservation,
 )
+from .resource_observations import observe_resource_pools, observe_spell_slots
+from .targeting_observations import observe_targeting
+from .values import freeze_mapping
 
 __all__ = [
     "ActionObservation",
     "ActionReasonObservation",
     "AttributeObservation",
+    "CreatureDefenseObservation",
     "CreatureObservation",
+    "CreatureRelationshipObservation",
     "DecisionObservation",
     "EncounterCompletionObservation",
     "EncounterObservation",
+    "EncounterTerminationReason",
     "FeatureActionObservation",
     "GameObservation",
     "GridObservation",
@@ -51,11 +64,13 @@ __all__ = [
     "InventoryItemObservation",
     "OngoingEffectObservation",
     "PositionObservation",
+    "ResourcePoolObservation",
     "SceneObservation",
     "SpellSlotObservation",
     "TargetResourceAllocationObservation",
     "TargetResourceLimitObservation",
     "TargetingObservation",
+    "TerrainCellObservation",
     "observe_session",
 ]
 
@@ -69,19 +84,29 @@ def observe_session(session: GameEngine) -> GameObservation:
     ...     encounter_state=None, completion_message=None, team_ids=(),
     ...     creature_labels={}, creature_team_ids={}, item_names={},
     ...     requires_automatic_advance=False)
-    >>> observation = observe_session(SimpleNamespace(read=lambda: read))
+    >>> from .gameplay_observations import capture_gameplay
+    >>> observation = observe_session(SimpleNamespace(observe_gameplay=lambda: capture_gameplay(read)))
     >>> (observation.scene.scene_id, observation.encounter)
     ('intro', None)
     """
 
-    read = session.read()
+    return session.observe_gameplay().game
+
+
+def observe_game_state(read: SessionRead) -> GameObservation:
+    """Capture the legacy client view as part of the shared gameplay snapshot."""
+
     state = read.encounter_state
     scene = observe_scene(read)
-    completion = (
-        EncounterCompletionObservation(message=read.completion_message)
-        if read.completion_message is not None
-        else None
-    )
+    completion = None
+    if read.completion_message is not None:
+        if read.completion_reason is None:
+            raise RuntimeError("A completed encounter requires a termination reason.")
+        completion = EncounterCompletionObservation(
+            message=read.completion_message,
+            reason=read.completion_reason,
+            winning_team_id=read.winning_team_id,
+        )
     return GameObservation(
         scene=scene,
         encounter=_observe_encounter(read) if state is not None else None,
@@ -102,7 +127,7 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
         grid=GridObservation(width=grid.width, height=grid.height),
         round_number=state.round.number,
         decision=DecisionObservation(
-            id=decision.id,
+            id=f"{decision.id}@{read.decision_epoch}:{read.decision_revision}",
             kind=decision.kind,
             creature_ref=decision.creature_ref,
         ),
@@ -121,42 +146,27 @@ def _observe_encounter(read: SessionRead) -> EncounterObservation:
             _observe_effect(effect) for effect in state.ongoing_effects
         ),
         team_ids=read.team_ids,
-        targeting=_observe_targeting(state),
-    )
-
-
-def _observe_targeting(state: EncounterState) -> TargetingObservation | None:
-    pending = state.interrupts.pending_spell_cast
-    if pending is None:
-        return None
-    actor = state.creatures[state.current_decision().creature_ref].creature
-    spell = (
-        next(
-            (
-                spell
-                for spell in actor.spellcasting.learned_spells
-                if spell.id == pending.spell_id
-            ),
-            None,
-        )
-        if actor.spellcasting is not None
-        else None
-    )
-    return TargetingObservation(
-        source_id=pending.spell_id,
-        source_label=spell.name if spell is not None else pending.spell_id,
-        selected_target_refs=tuple(pending.selected_target_refs),
-        maximum_targets=pending.maximum_targets,
-        repeat_target_allocations=pending.repeat_target_allocations,
-        require_full_target_count=pending.require_full_target_count,
-        resource_pool_total=pending.resource_pool_total,
-        resource_allocations=tuple(
-            TargetResourceAllocationObservation(target_ref=target_ref, amount=amount)
-            for target_ref, amount in pending.resource_allocations.items()
+        targeting=observe_targeting(state),
+        relationships=tuple(
+            CreatureRelationshipObservation(
+                id=relationship.identity.id,
+                kind=relationship.kind.value,
+                source_ref=relationship.source_ref,
+                target_ref=relationship.target_ref,
+                source_definition_id=relationship.identity.source.definition_id,
+            )
+            for relationship in state.relationships
         ),
-        resource_limits=tuple(
-            TargetResourceLimitObservation(target_ref=target_ref, maximum=maximum)
-            for target_ref, maximum in pending.resource_allocation_limits.items()
+        terrain=tuple(
+            TerrainCellObservation(
+                position=PositionObservation(
+                    x=terrain.position.x,
+                    y=terrain.position.y,
+                ),
+                traversal=terrain.traversal.value,
+                cover=terrain.cover.value,
+            )
+            for terrain in state.definition.terrain
         ),
     )
 
@@ -170,11 +180,6 @@ def _observe_creature(
     creature = creature_state.creature
     attributes = creature.attributes
     feature_definitions = creature.combat_profile.feature_actions
-    spellcasting = creature.spellcasting
-    slots_max = spellcasting.spell_slots_max if spellcasting is not None else {}
-    slots_remaining = (
-        spellcasting.spell_slots_remaining if spellcasting is not None else {}
-    )
     movement = rule_queries.movement_budget(state, creature_ref)
     movement_remaining = (
         creature_state.movement_remaining
@@ -248,15 +253,7 @@ def _observe_creature(
                 condition.condition.value for condition in effective_conditions
             )
         ),
-        spell_slots=tuple(
-            SpellSlotObservation(
-                level=level,
-                remaining=slots_remaining.get(level, maximum),
-                maximum=maximum,
-            )
-            for level, maximum in sorted(slots_max.items())
-            if maximum > 0
-        ),
+        spell_slots=observe_spell_slots(creature),
         feature_actions=tuple(
             FeatureActionObservation(
                 feature_id=definition.feature_id,
@@ -283,6 +280,38 @@ def _observe_creature(
             )
             for item_id in creature.inventory.items
         ),
+        temporary_hit_points=creature.temporary_hit_points,
+        creature_type=creature.statistics.creature_type,
+        type_tags=creature.statistics.type_tags,
+        size=creature.size,
+        occupied_cells=tuple(
+            PositionObservation(
+                x=cell.x,
+                y=cell.y,
+            )
+            for cell in creature_occupied_cells(state, creature_ref)
+        ),
+        resource_pools=observe_resource_pools(creature),
+        defenses=CreatureDefenseObservation(
+            condition_immunities=tuple(
+                sorted(
+                    condition.value
+                    for condition in rule_queries.condition_immunities(
+                        state,
+                        creature_ref,
+                    ).values
+                )
+            ),
+            damage_resistances=tuple(
+                sorted(rule_queries.damage_resistances(state, creature_ref).values)
+            ),
+            damage_immunities=tuple(
+                sorted(rule_queries.damage_immunities(state, creature_ref).values)
+            ),
+            damage_vulnerabilities=tuple(
+                sorted(rule_queries.damage_vulnerabilities(state, creature_ref).values)
+            ),
+        ),
     )
 
 
@@ -290,6 +319,7 @@ def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
     source = effect.identity.source
     definition_id = source.definition_id
     label = effect.label or definition_id.replace("_", " ").replace("-", " ").title()
+    area = serialize_area(effect.area)
     return OngoingEffectObservation(
         kind=effect.kind.value,
         polarity=effect.polarity.value,
@@ -297,4 +327,6 @@ def _observe_effect(effect: OngoingEffect) -> OngoingEffectObservation:
         definition_id=definition_id,
         target_refs=effect.target_refs,
         label=label,
+        area=freeze_mapping(area) if area is not None else None,
+        obscures_vision=effect.obscures_vision,
     )

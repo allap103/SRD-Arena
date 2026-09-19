@@ -1,6 +1,9 @@
 {
   "name": "Bandit Captain",
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Humanoid"
+  },
   "page": 27,
   "srd52": true,
   "basicRules2024": true,
@@ -143,7 +146,14 @@
       "name": "Parry",
       "entries": [
         "{@actTrigger} The bandit is hit by a melee attack roll while holding a weapon. {@actResponse} The bandit adds 2 to its AC against that attack, possibly causing it to miss."
-      ]
+      ],
+      "capability": {
+        "type": "parry",
+        "armor_class_bonus": 2,
+        "trigger_attack_modes": [
+          "melee"
+        ]
+      }
     }
   ],
   "environment": [

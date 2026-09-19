@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.effects.runtime import OngoingEffectKind
 
 from ...effect_lifecycle.concentration import end_concentration
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...effect_lifecycle.lifecycle_events import resolve_effect_lifecycle_event
 from ...rule_queries import InvocationStartContext, InvocationStartResult
 from ...rule_queries.invocations import (
     invocation_start_checks,
@@ -34,6 +34,7 @@ def begin_spell_invocation(
     spell: Spell,
     cost: ActionCost,
     cast_level: int | None,
+    consumes_spell_slot: bool = True,
     creature_ref: str,
     action_id: str,
     progress: EncounterProgress,
@@ -61,7 +62,7 @@ def begin_spell_invocation(
     ...     "spend_spell_resources"
     ... ) as spend, patch(
     ...     "srd_arena.domain.encounters.actions.spell_runtime.invocation."
-    ...     "resolve_spell_lifecycle_event"
+    ...     "resolve_effect_lifecycle_event"
     ... ):
     ...     allowed = begin_spell_invocation(
     ...         state,
@@ -78,7 +79,14 @@ def begin_spell_invocation(
     (True, 1)
     """
 
-    spend_spell_resources(state, spellcasting, spell, cost, cast_level)
+    spend_spell_resources(
+        state,
+        spellcasting,
+        spell,
+        cost,
+        cast_level,
+        consumes_spell_slot,
+    )
     if spell.concentration:
         _end_replaced_concentration(
             state,
@@ -86,13 +94,20 @@ def begin_spell_invocation(
             creature_ref=creature_ref,
             progress=progress,
         )
-    resolve_spell_lifecycle_event(
+    resolve_effect_lifecycle_event(
         state,
         "target_casts_spell",
         actor_ref=creature_ref,
         progress=progress,
     )
     components = spell.components.required
+    if "verbal" in components:
+        resolve_effect_lifecycle_event(
+            state,
+            "target_casts_verbal_spell",
+            actor_ref=creature_ref,
+            progress=progress,
+        )
     query = invocation_start_checks(
         state,
         InvocationStartContext(
@@ -128,6 +143,7 @@ def begin_spell_invocation(
         reason_code=first_failure.code,
         details={
             "spell_id": spell.id,
+            "cast_started": True,
             "failure_codes": [failure.code for failure in result.failures],
             "provider_state_ids": [
                 failure.provider_state_id for failure in result.failures

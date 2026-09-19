@@ -92,5 +92,52 @@
   ],
   "areaTags": [
     "ST"
-  ]
+  ],
+  "implementation": {
+    "status": "partial",
+    "omissions": [
+      {
+        "mechanic": "compelled turn execution",
+        "reason": "Approach, Flee, Grovel, and Halt execute through the normal turn pipeline. Drop remains unavailable until held objects are modeled."
+      },
+      {
+        "mechanic": "fastest available means",
+        "reason": "Flee spends the target's available movement, but the engine does not yet provide a Dash action to extend that movement."
+      }
+    ]
+  },
+  "capability": {
+    "target": {
+      "type": "creature",
+      "line_of_sight": true
+    },
+    "resolution": {
+      "type": "saving_throw",
+      "ability": "wis",
+      "failure": {
+        "effects": [
+          {
+            "type": "compelled_turn",
+            "options": ["approach", "drop", "flee", "grovel", "halt"],
+            "duration": {
+              "type": "next_turn_end",
+              "creature": "target"
+            }
+          }
+        ]
+      }
+    },
+    "scaling": [
+      {
+        "type": "slot_level",
+        "above_level": 1,
+        "per_level": [
+          {
+            "type": "target_count",
+            "amount": 1
+          }
+        ]
+      }
+    ]
+  }
 }

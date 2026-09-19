@@ -5,8 +5,10 @@ from __future__ import annotations
 from collections.abc import Mapping, Sequence
 from typing import Protocol
 
+from srd_arena.domain.effects.condition_rules import EffectiveConditionSet
 from srd_arena.domain.effects.conditions import AppliedCondition
-from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.effects.runtime import CreatureRelationship, OngoingEffect
+from srd_arena.domain.equipment import Item
 from srd_arena.domain.rolls.randomness import DiceRoller
 
 from ..definitions import EncounterDefinition
@@ -29,9 +31,31 @@ class CreatureEffectQueryContext(EffectQueryContext, Protocol):
     def creatures(self) -> Mapping[CreatureRef, EncounterCreatureState]:
         """Return encounter combatants keyed by stable creature reference."""
 
+    @property
+    def item_templates(self) -> Mapping[str, Item]:
+        """Return item templates used to interpret equipped rules objects."""
+
+
+class VisibilityQueryContext(CreatureEffectQueryContext, Protocol):
+    """Add grid configuration needed for sight and special-sense range."""
+
+    @property
+    def definition(self) -> EncounterDefinition:
+        """Return the authored encounter definition containing the grid."""
+
+    def effective_conditions_for(
+        self,
+        creature_ref: CreatureRef,
+    ) -> EffectiveConditionSet:
+        """Return the effective conditions currently affecting a creature."""
+
 
 class ConditionRuleQueryContext(CreatureEffectQueryContext, Protocol):
     """Add sourced conditions needed by permission and speed queries."""
+
+    @property
+    def definition(self) -> EncounterDefinition:
+        """Return the authored encounter definition containing teams and grid."""
 
     @property
     def conditions(self) -> Sequence[AppliedCondition]:
@@ -44,6 +68,10 @@ class MovementRuleQueryContext(ConditionRuleQueryContext, Protocol):
     @property
     def definition(self) -> EncounterDefinition:
         """Return the authored encounter definition containing the grid."""
+
+    @property
+    def relationships(self) -> Sequence[CreatureRelationship]:
+        """Return directional creature relationships relevant to movement."""
 
 
 class DamageRuleQueryContext(CreatureEffectQueryContext, Protocol):

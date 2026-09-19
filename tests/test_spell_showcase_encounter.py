@@ -4,14 +4,18 @@ from srd_arena.content.encounters import load_encounter_directory
 from srd_arena.engine.session import Session
 
 ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "spell_damage_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "spell_damage_showcase"
 )
 
 
 def test_spell_damage_showcase_loads_wave_1a_demo_spellcaster() -> None:
     encounter = load_encounter_directory(str(ENCOUNTER_DIR))
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     adept = session.encounter_state.creatures["spectrum_adept"].creature

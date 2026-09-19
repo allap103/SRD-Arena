@@ -5,21 +5,30 @@ from typing import cast
 
 from srd_arena.domain.capabilities import (
     ArmorClassModifierEffect,
+    AttackHitDamageEffect,
+    AttackHitRetaliationEffect,
+    CompelledTurnEffect,
     ConditionImmunityEffect,
     ConditionSaveAdvantageEffect,
+    DamageImmunityEffect,
     DamageReductionEffect,
     DamageResistanceEffect,
     EffectDuration,
     HitPointMaximumModifierEffect,
     SenseEffect,
     SpeedModifierEffect,
+    SpeedMultiplierEffect,
 )
 from srd_arena.domain.effects.conditions import Condition
 from srd_arena.domain.effects.modifiers import ModifierMode, RollKind, RollModifier
 from srd_arena.domain.effects.rule_effects import (
     ArmorClassAdjustment,
+    AttackHitDamage,
+    AttackHitRetaliation,
+    CompelledTurn,
     ConditionImmunity,
     ConditionSaveAdvantage,
+    DamageImmunity,
     DamageReduction,
     DamageResistance,
     GrantedSense,
@@ -27,6 +36,7 @@ from srd_arena.domain.effects.rule_effects import (
     RollAdjustment,
     RuntimeRuleEffect,
     SpeedAdjustment,
+    SpeedMultiplier,
 )
 
 from .context import SpellActionContext
@@ -60,7 +70,8 @@ def prepare_persistent_rule_plan(
     ...     roll_modifier_effects=(),
     ... )
     >>> context = SimpleNamespace(
-    ...     selected_damage_type=None, selected_ability=None
+    ...     selected_damage_type=None, selected_ability=None,
+    ...     selected_option=None
     ... )
     >>> prepare_persistent_rule_plan(context, prepared)
     PersistentRulePlan(effects=(), duration=None)
@@ -86,6 +97,12 @@ def prepare_persistent_rule_plan(
             if context.selected_damage_type in resistance_effect.damage_types
             else resistance_effect.damage_types[:1]
         )
+    damage_immunities = tuple(
+        damage_type
+        for effect in prepared.definition_effects
+        if isinstance(effect, DamageImmunityEffect)
+        for damage_type in effect.damage_types
+    )
     reduction_effect = _first_effect(prepared, DamageReductionEffect)
     damage_reduction_type = (
         context.selected_damage_type
@@ -116,6 +133,7 @@ def prepare_persistent_rule_plan(
         effects=_translate_rule_effects(
             prepared,
             context.selected_ability,
+            context.selected_option,
             maximum_hit_point_modifier=maximum_hit_point_modifier,
             also_modify_current=(
                 maximum_hit_point_effect.also_modify_current
@@ -123,6 +141,7 @@ def prepare_persistent_rule_plan(
                 else False
             ),
             damage_resistances=damage_resistances,
+            damage_immunities=damage_immunities,
             damage_reduction_type=damage_reduction_type,
             damage_reduction_dice=(
                 reduction_effect.dice if reduction_effect is not None else None
@@ -166,10 +185,12 @@ def _first_effect[
 def _translate_rule_effects(
     prepared: PreparedSpellResolution,
     selected_ability: str | None,
+    selected_option: str | None,
     *,
     maximum_hit_point_modifier: int = 0,
     also_modify_current: bool = False,
     damage_resistances: tuple[str, ...] = (),
+    damage_immunities: tuple[str, ...] = (),
     damage_reduction_type: str | None = None,
     damage_reduction_dice: str | None = None,
     condition_immunities: tuple[str, ...] = (),
@@ -186,7 +207,7 @@ def _translate_rule_effects(
     ...     ),
     ...     roll_modifier_effects=(),
     ... )
-    >>> _translate_rule_effects(prepared, None)
+    >>> _translate_rule_effects(prepared, None, None)
     (ArmorClassAdjustment(value=2), SpeedAdjustment(feet=10))
     """
 
@@ -195,6 +216,35 @@ def _translate_rule_effects(
         for effect in prepared.definition_effects
         if isinstance(effect, ArmorClassModifierEffect)
     ]
+    effects.extend(
+        AttackHitDamage(effect.dice, effect.damage_type)
+        for effect in prepared.definition_effects
+        if isinstance(effect, AttackHitDamageEffect)
+    )
+    effects.extend(
+        AttackHitRetaliation(
+            damage=(
+                effect.value
+                + resource_int_increment(
+                    prepared.definition,
+                    "attack_hit_retaliation",
+                )
+                * prepared.levels_above
+            ),
+            damage_type=effect.damage_type,
+            attack_types=frozenset(effect.attack_types),
+            requires_temporary_hit_points=effect.requires_temporary_hit_points,
+        )
+        for effect in prepared.definition_effects
+        if isinstance(effect, AttackHitRetaliationEffect)
+    )
+    for effect in prepared.definition_effects:
+        if not isinstance(effect, CompelledTurnEffect):
+            continue
+        if selected_option not in effect.options:
+            raise ValueError("A compelled-turn effect requires one authored option.")
+        effects.append(CompelledTurn(selected_option))
+
     if maximum_hit_point_modifier:
         effects.append(
             MaximumHitPointAdjustment(
@@ -204,6 +254,8 @@ def _translate_rule_effects(
         )
     if damage_resistances:
         effects.append(DamageResistance(frozenset(damage_resistances)))
+    if damage_immunities:
+        effects.append(DamageImmunity(frozenset(damage_immunities)))
     if damage_reduction_type is not None and damage_reduction_dice is not None:
         effects.append(DamageReduction(damage_reduction_type, damage_reduction_dice))
     if condition_immunities:
@@ -223,6 +275,11 @@ def _translate_rule_effects(
         SpeedAdjustment(effect.feet)
         for effect in prepared.definition_effects
         if isinstance(effect, SpeedModifierEffect)
+    )
+    effects.extend(
+        SpeedMultiplier(effect.numerator, effect.denominator)
+        for effect in prepared.definition_effects
+        if isinstance(effect, SpeedMultiplierEffect)
     )
     for effect in prepared.roll_modifier_effects:
         abilities = effect.ability_options or (effect.ability,)
@@ -244,6 +301,7 @@ def _translate_rule_effects(
                         subject=effect.subject,
                         ignored_by_senses=effect.ignored_by_senses,
                         ability=ability,
+                        consume_on_use=effect.consume_on_use,
                     )
                 )
                 for roll in rolls

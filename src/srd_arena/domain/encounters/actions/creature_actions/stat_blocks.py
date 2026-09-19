@@ -9,6 +9,7 @@ from srd_arena.domain.creatures import (
     AutomaticActionDefinition,
     Creature,
     SavingThrowActionDefinition,
+    StandardActionGrantDefinition,
 )
 
 from ...encounter_models.actions import (
@@ -45,6 +46,36 @@ def stat_block_action_candidates(
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
     for definition in actor.creature.stat_block_actions.values():
+        pending_names = (
+            {invocation.name for invocation in actor.pending_multiattack[0].options}
+            if actor.pending_multiattack
+            else None
+        )
+        if pending_names is not None and definition.name not in pending_names:
+            continue
+        if isinstance(definition, StandardActionGrantDefinition):
+            cost = (
+                ActionCost(bonus_action=1)
+                if definition.economy == "bonus_action"
+                else ActionCost(action=1)
+            )
+            source_slug = definition.name.lower().replace(" ", "-")
+            actions.extend(
+                EncounterAction(
+                    f"{display_name(actor.creature, definition.name)} — "
+                    f"{granted_action.replace('_', ' ').title()}",
+                    granted_action,
+                    id=(
+                        f"{creature_ref}-stat-block-{source_slug}-"
+                        f"{granted_action.replace('_', '-')}"
+                    ),
+                    creature_ref=creature_ref,
+                    preferred_attack_name=definition.name,
+                    cost=cost,
+                )
+                for granted_action in definition.actions
+            )
+            continue
         if not isinstance(
             definition,
             (AutomaticActionDefinition, SavingThrowActionDefinition),
@@ -53,12 +84,7 @@ def stat_block_action_candidates(
         targets: list[str | tuple[float, float] | None] = (
             [creature_ref]
             if definition.target.kind == "self"
-            else [
-                (
-                    actor.position.x + 1.5,
-                    actor.position.y + 0.5,
-                )
-            ]
+            else [None]
             if definition.target.kind == "area"
             else [
                 target_ref
@@ -73,10 +99,10 @@ def stat_block_action_candidates(
         for target in targets:
             source_slug = definition.name.lower().replace(" ", "-")
             target_slug = (
-                target.replace(":", "-")
+                "aim"
+                if definition.target.kind == "area"
+                else target.replace(":", "-")
                 if isinstance(target, str)
-                else "aim"
-                if isinstance(target, tuple)
                 else "no-target"
             )
             actions.append(
@@ -87,7 +113,8 @@ def stat_block_action_candidates(
                     id=f"{creature_ref}-stat-block-{source_slug}-{target_slug}",
                     creature_ref=creature_ref,
                     preferred_attack_name=definition.name,
-                    cost=ActionCost(action=1),
+                    aim_committed=definition.target.kind != "area",
+                    cost=ActionCost(action=0 if pending_names is not None else 1),
                 )
             )
     return actions

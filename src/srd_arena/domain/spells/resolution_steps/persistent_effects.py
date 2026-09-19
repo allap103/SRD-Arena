@@ -31,6 +31,7 @@ def build_persistent_spell_effects(
     >>> context = SimpleNamespace(
     ...     spell=spell, selected_condition=None, selected_damage_type=None,
     ...     selected_ability=None, source_ref='mage', current_round=1,
+    ...     selected_option=None,
     ...     creature=SimpleNamespace(
     ...         name='Mage',
     ...         spellcasting=SimpleNamespace(save_dc=13, ability_modifier=3),

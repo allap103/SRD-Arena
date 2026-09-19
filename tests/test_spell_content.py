@@ -351,6 +351,41 @@ def test_bless_and_bane_translate_sourced_roll_modifiers() -> None:
     ]
 
 
+def test_mind_sliver_translates_damage_scaling_and_one_use_save_penalty() -> None:
+    spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Mind Sliver")
+
+    assert spell.definition is not None
+    assert isinstance(spell.definition.resolution, SavingThrowResolution)
+    assert spell.definition.resolution.ability == "intelligence"
+    effects = primary_effects(spell.definition)
+    assert any(
+        isinstance(effect, DamageEffect)
+        and effect.dice == "1d6"
+        and effect.damage_type == "psychic"
+        for effect in effects
+    )
+    penalty = next(
+        effect for effect in effects if isinstance(effect, RollModifierEffect)
+    )
+    assert (penalty.roll, penalty.mode, penalty.dice) == (
+        "saving_throw",
+        "subtract",
+        "1d4",
+    )
+    assert penalty.consume_on_use
+    assert penalty.duration is not None
+    assert (
+        penalty.duration.kind,
+        penalty.duration.creature,
+        penalty.duration.turn_offset,
+    ) == ("end_of_turn", "source", 1)
+    assert spell.definition.scaling[0].basis == "actor_level"
+    assert [
+        (threshold.minimum_level, threshold.increments[0].amount)
+        for threshold in spell.definition.scaling[0].thresholds
+    ] == [(1, "1d6"), (5, "2d6"), (11, "3d6"), (17, "4d6")]
+
+
 def test_foresight_translates_bidirectional_roll_modes() -> None:
     spell = _build_catalog_spell(load_spell_catalog(SYSTEM_CONTENT_ROOT), "Foresight")
 

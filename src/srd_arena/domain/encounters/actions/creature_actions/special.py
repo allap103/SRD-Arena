@@ -4,16 +4,20 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from ...behaviors import is_adjacent as _is_adjacent
 from ...encounter_models.actions import (
     ActionCost,
     CreatureRef,
     EncounterAction,
 )
+from ...spatial import creatures_are_adjacent
 from ..consumables import healing_potions_in_inventory
+from ..destructible_conditions import destructible_condition_attack_actions
+from ..effect_retargeting import effect_retarget_actions
 from ..grappling import available_escape_actions
 from ..option_discovery.spells import available_spell_actions
 from ..option_discovery.standard import available_feature_actions
+from .hiding import hide_action_candidates
+from .prone import prone_action_candidates
 
 if TYPE_CHECKING:
     from ...encounter import EncounterState
@@ -28,11 +32,21 @@ def special_action_candidates(
     >>> from types import SimpleNamespace
     >>> from unittest.mock import patch
     >>> actor = SimpleNamespace(
-    ...     creature=SimpleNamespace(inventory=SimpleNamespace(items=[])),
+    ...     creature=SimpleNamespace(
+    ...         inventory=SimpleNamespace(items=[]),
+    ...         equipment=SimpleNamespace(right_hand=None, left_hand=None),
+    ...         stat_block_actions={},
+    ...     ),
     ...     position=SimpleNamespace(x=0, y=0),
+    ...     creature_id="hero", is_alive=True, pending_multiattack=[],
     ... )
     >>> state = SimpleNamespace(
-    ...     creatures={"hero": actor}, ongoing_effects=[], item_templates={},
+    ...     creatures={"hero": actor}, conditions=[], ongoing_effects=[],
+    ...     item_templates={},
+    ...     definition=SimpleNamespace(teams=[]),
+    ...     effective_conditions_for=lambda ref: SimpleNamespace(
+    ...         has=lambda condition: False
+    ...     ),
     ... )
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.special."
@@ -46,13 +60,26 @@ def special_action_candidates(
     ... ):
     ...     actions = special_action_candidates(state, "hero")
     >>> [(action.label, action.kind) for action in actions]
-    [('Wait', 'wait')]
+    [('Drop Prone', 'drop_prone'), ('Hide', 'hide'), ('Disengage', 'disengage'), ('Wait', 'wait')]
     """
 
     actor = state.creatures[creature_ref]
     actions: list[EncounterAction] = []
+    actions.extend(prone_action_candidates(state, creature_ref))
+    actions.extend(hide_action_candidates(state, creature_ref))
+    actions.append(
+        EncounterAction(
+            "Disengage",
+            "disengage",
+            id=f"{creature_ref}-disengage",
+            creature_ref=creature_ref,
+            cost=ActionCost(action=1),
+        )
+    )
     actions.extend(available_feature_actions(state, actor.creature))
     actions.extend(available_spell_actions(state, actor.creature))
+    actions.extend(effect_retarget_actions(state, creature_ref))
+    actions.extend(destructible_condition_attack_actions(state, creature_ref))
 
     for effect in state.ongoing_effects:
         if not any(
@@ -61,21 +88,21 @@ def special_action_candidates(
         ):
             continue
         for target_ref in effect.target_refs:
-            wake_target_state = state.creatures.get(target_ref)
+            rouse_target_state = state.creatures.get(target_ref)
             if (
-                wake_target_state is None
-                or not wake_target_state.is_alive
+                rouse_target_state is None
+                or not rouse_target_state.is_alive
                 or target_ref == creature_ref
             ):
                 continue
-            if not _is_adjacent(actor.position, wake_target_state.position):
+            if not creatures_are_adjacent(state, creature_ref, target_ref):
                 continue
             actions.append(
                 EncounterAction(
-                    f"Wake {wake_target_state.creature.name}",
-                    "wake_spell_target",
+                    f"Rouse {rouse_target_state.creature.name}",
+                    "rouse_spell_target",
                     target_ref,
-                    id=f"{creature_ref}-wake-{target_ref.replace(':', '-')}",
+                    id=f"{creature_ref}-rouse-{target_ref.replace(':', '-')}",
                     creature_ref=creature_ref,
                     cost=ActionCost(action=1),
                 )

@@ -7,6 +7,7 @@ from srd_arena.content.creatures.actions.builder import (
 )
 from srd_arena.content.creatures.stat_block_schema import BestiaryMonsterSchema
 from srd_arena.content.spells import SpellSchema
+from srd_arena.domain.creatures import StandardActionGrantDefinition
 
 
 def _ability_check_spell(status: str) -> SpellSchema:
@@ -61,3 +62,28 @@ def test_action_without_a_capability_is_declared_but_not_executable() -> None:
     [declaration] = build_declared_stat_block_actions(monster)
     assert declaration.name == "Unstructured Action"
     assert declaration.capability_type is None
+
+
+def test_bonus_entry_can_grant_shared_standard_actions() -> None:
+    monster = BestiaryMonsterSchema.model_validate(
+        {
+            "name": "Example Goblin",
+            "source": "TEST",
+            "bonus": [
+                {
+                    "name": "Nimble Escape",
+                    "entries": ["The goblin takes Disengage or Hide."],
+                    "capability": {
+                        "type": "standard_action_grant",
+                        "actions": ["disengage", "hide"],
+                    },
+                }
+            ],
+        }
+    )
+
+    definition = build_stat_block_actions(monster)["Nimble Escape"]
+
+    assert isinstance(definition, StandardActionGrantDefinition)
+    assert definition.actions == ("disengage", "hide")
+    assert definition.economy == "bonus_action"

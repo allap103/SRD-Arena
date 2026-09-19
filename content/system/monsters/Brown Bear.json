@@ -1,6 +1,11 @@
 {
   "name": "Brown Bear",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Beast",
+    "obvious_features": ["Thick fur", "Claws", "Fangs"]
+  },
   "page": 350,
   "srd52": true,
   "basicRules2024": true,

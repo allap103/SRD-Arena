@@ -4,6 +4,10 @@
     "Goblinoids"
   ],
   "source": "XMM",
+  "appearance": {
+    "apparent_creature_type": "Goblinoid",
+    "obvious_features": ["Small goblinoid stature"]
+  },
   "page": 142,
   "srd52": true,
   "basicRules2024": true,
@@ -144,7 +148,14 @@
       "name": "Nimble Escape",
       "entries": [
         "The goblin takes the {@action Disengage|XPHB} or {@action Hide|XPHB} action."
-      ]
+      ],
+      "capability": {
+        "type": "standard_action_grant",
+        "actions": [
+          "disengage",
+          "hide"
+        ]
+      }
     }
   ],
   "environment": [

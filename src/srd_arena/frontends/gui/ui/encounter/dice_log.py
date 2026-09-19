@@ -144,6 +144,14 @@ class DiceRollPanel(QWidget):
         self._has_content = True
 
     def _insert_widget(self, widget: QWidget) -> None:
+        labels = widget.findChildren(QLabel)
+        if isinstance(widget, QLabel):
+            labels.append(widget)
+        for label in labels:
+            label.setTextInteractionFlags(
+                Qt.TextInteractionFlag.TextSelectableByMouse
+                | Qt.TextInteractionFlag.TextSelectableByKeyboard
+            )
         self._layout.insertWidget(self._layout.count() - 1, widget)
 
     def _disable_roll_actions(self, roll_id: str | None) -> None:

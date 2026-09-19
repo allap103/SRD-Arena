@@ -41,6 +41,32 @@ class DamageEffect:
 
 
 @dataclass(frozen=True)
+class HitPointMaximumReductionEffect:
+    """Reduce maximum HP by damage actually applied during this outcome."""
+
+    amount: Literal["damage_taken"]
+
+
+@dataclass(frozen=True)
+class AttackHitDamageEffect:
+    """Add typed dice damage when the effect source hits its marked target."""
+
+    dice: str
+    damage_type: str
+
+
+@dataclass(frozen=True)
+class AttackHitRetaliationEffect:
+    """Damage an attacker after it hits the protected target with an attack."""
+
+    value: int
+    damage_type: str
+    attack_types: tuple[Literal["melee", "ranged"], ...]
+    requires_temporary_hit_points: bool = False
+    end_effect_when_depleted: bool = False
+
+
+@dataclass(frozen=True)
 class HealingEffect:
     """Restore Hit Points from dice, a pool, or damage already dealt."""
 
@@ -152,6 +178,17 @@ class HitPointMaximumModifierEffect:
 
 
 @dataclass(frozen=True)
+class DestructibleCondition:
+    """Define an attackable attachment whose destruction ends a condition."""
+
+    label: str
+    armor_class: int
+    hit_points: int
+    damage_vulnerabilities: tuple[str, ...] = ()
+    damage_immunities: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
 class ConditionEffect:
     """Apply one condition with provenance, duration, and optional escape rules."""
 
@@ -160,6 +197,7 @@ class ConditionEffect:
     requirements: tuple[CapabilityRequirement, ...] = ()
     escape_dc: int | None = None
     source_capacity: int | None = None
+    destructible: DestructibleCondition | None = None
     ends_on: tuple[str, ...] = ()
 
 
@@ -170,6 +208,14 @@ class ForcedMovementEffect:
     direction: str
     distance_feet: int
     up_to: bool
+
+
+@dataclass(frozen=True)
+class TeleportEffect:
+    """Move a target instantly to a selected destination space."""
+
+    distance_feet: int
+    line_of_sight: bool = False
 
 
 @dataclass(frozen=True)
@@ -197,6 +243,14 @@ class TurnEconomyRestrictionEffect:
 
 
 @dataclass(frozen=True)
+class CompelledTurnEffect:
+    """Offer a closed set of instructions for a target's compelled turn."""
+
+    options: tuple[Literal["approach", "drop", "flee", "grovel", "halt"], ...]
+    duration: EffectDuration
+
+
+@dataclass(frozen=True)
 class RollModifierEffect:
     """Contribute a contextual numeric or advantage-state roll adjustment."""
 
@@ -210,6 +264,7 @@ class RollModifierEffect:
     subject: Literal["target", "attacks_against_target"] = "target"
     ignored_by_senses: tuple[str, ...] = ()
     requirements: tuple[CapabilityRequirement, ...] = ()
+    consume_on_use: bool = False
 
 
 @dataclass(frozen=True)
@@ -232,6 +287,9 @@ class GainMemoriesEffect:
 
 CapabilityEffect = (
     DamageEffect
+    | HitPointMaximumReductionEffect
+    | AttackHitDamageEffect
+    | AttackHitRetaliationEffect
     | HealingEffect
     | TemporaryHitPointsEffect
     | ArmorClassModifierEffect
@@ -246,9 +304,11 @@ CapabilityEffect = (
     | HitPointMaximumModifierEffect
     | ConditionEffect
     | ForcedMovementEffect
+    | TeleportEffect
     | SpeedMultiplierEffect
     | ProhibitReactionsEffect
     | TurnEconomyRestrictionEffect
+    | CompelledTurnEffect
     | RollModifierEffect
     | ControlEffect
     | GainMemoriesEffect

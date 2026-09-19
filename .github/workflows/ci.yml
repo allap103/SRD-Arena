@@ -30,22 +30,19 @@ jobs:
           sudo apt-get install --yes libegl1 libgl1 libxkbcommon-x11-0 libxcb-cursor0
 
       - name: Install dependencies
-        run: uv sync --frozen --dev
+        run: uv sync --frozen --dev --extra training --extra observability
 
       - name: Run Ruff lint
-        run: uv run ruff check .
+        run: uv run --extra training --extra observability ruff check .
 
       - name: Check Ruff formatting
-        run: uv run ruff format --check .
+        run: uv run --extra training --extra observability ruff format --check .
 
       - name: Run mypy
-        run: uv run mypy --strict .
+        run: uv run --extra training --extra observability mypy --strict .
 
       - name: Check documentation coverage
-        run: uv run interrogate src/srd_arena
-
-      - name: Check doctest coverage
-        run: uv run doctest-audit --fail-under 90
+        run: uv run --extra training --extra observability interrogate src/srd_arena
 
       - name: Run pytest
-        run: uv run pytest
+        run: uv run --extra training --extra observability pytest

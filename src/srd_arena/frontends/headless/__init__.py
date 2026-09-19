@@ -1,5 +1,21 @@
 """Headless driving adapter for Python and ML clients."""
 
-from .adapter import EncounterOption, HeadlessGameAdapter
+from .adapter import (
+    DecisionActionMap,
+    EncounterOption,
+    EpisodeState,
+    EpisodeStatus,
+    EpisodeTruncationReason,
+    HeadlessGameAdapter,
+    NumericActionSlot,
+)
 
-__all__ = ["EncounterOption", "HeadlessGameAdapter"]
+__all__ = [
+    "DecisionActionMap",
+    "EncounterOption",
+    "EpisodeState",
+    "EpisodeStatus",
+    "EpisodeTruncationReason",
+    "HeadlessGameAdapter",
+    "NumericActionSlot",
+]

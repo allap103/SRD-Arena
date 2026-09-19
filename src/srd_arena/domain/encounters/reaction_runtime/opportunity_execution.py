@@ -7,14 +7,22 @@ from functools import partial
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.geometry import Position
+from srd_arena.domain.rolls.dice import DieRoller
 
 from ..actions.attack_resolution import (
     apply_attack_damage,
     can_make_opportunity_attack,
     matching_damage_reroll_rule,
     resolve_attack,
+    selected_attack_ability,
 )
-from ..behaviors import is_adjacent as _is_adjacent
+from ..actions.weapon_mastery import (
+    mastery_request_for_attack,
+    open_weapon_mastery_decision,
+    resolve_weapon_mastery_automatically,
+)
+from ..attack_economy import record_attack_rolls
+from ..defeat import resolve_creature_defeat
 from ..encounter_models.actions import EncounterAction
 from ..encounter_models.decisions import (
     CloseParentDecision,
@@ -26,17 +34,44 @@ from ..encounter_models.resolution import (
     EncounterProgress,
 )
 from ..participants import creature_controller, creatures_are_opponents
-from ..rule_queries.defenses import apply_damage
+from ..rule_queries.damage_riders import attack_hit_damage
 from ..rule_queries.numeric import effective_armor_class
-from ..rule_queries.permissions import reaction_eligibility
+from ..rule_queries.permissions import (
+    TargetingKind,
+    reaction_eligibility,
+    target_eligibility,
+)
+from ..rule_queries.retaliation import attack_hit_retaliations
 from ..rule_queries.rolls import roll_modifiers
-from ..state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
+from ..spatial import creature_distance
+from ..state_combat import (
+    apply_combat_damage,
+    attack_roll_mode_for,
+    automatic_critical_provider_ids_for,
+)
 from ..state_runtime import create_event, creature_label, next_action_id
 from .attack_lifecycle import resolve_attack_lifecycle
 from .damage_rerolls import open_damage_reroll_decision
+from .parry import open_parry_decision
 
 if TYPE_CHECKING:
     from ..encounter import EncounterState
+
+
+def _damage_roll_modifier(
+    state: EncounterState,
+    creature_ref: str,
+    roller: DieRoller,
+    ability: str | None,
+) -> int:
+    """Resolve sourced damage modifiers for an attack's selected ability."""
+
+    return roll_modifiers(
+        state,
+        creature_ref,
+        "damage_roll",
+        ability,
+    ).resolve_modifier(roller)
 
 
 def opportunity_attack_request(decision: DecisionFrame) -> OpportunityAttackRequest:
@@ -104,25 +139,45 @@ def resolve_automatic_opportunity_attacks(
             reactor_ref,
             "opportunity_attack",
         ).allowed
+        and target_eligibility(
+            state,
+            reactor_ref,
+            mover_ref,
+            TargetingKind.ATTACK,
+        ).allowed
         and can_make_opportunity_attack(
             reactor.creature,
             state.item_templates,
         )
-        and _is_adjacent(from_position, reactor.position)
-        and not _is_adjacent(to_position, reactor.position)
+        and creature_distance(
+            state,
+            reactor_ref,
+            mover_ref,
+            target_position=from_position,
+        )
+        == 1
+        and creature_distance(
+            state,
+            reactor_ref,
+            mover_ref,
+            target_position=to_position,
+        )
+        != 1
     ]
     for reactor_ref, reactor in reactors:
         reactor.reaction_available = False
+        attack_ability = selected_attack_ability(
+            reactor.creature,
+            state.item_templates,
+            preferred_attack_type="melee",
+        )
         attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
+            attack_ability,
         )
-        damage_roll_rules = roll_modifiers(
-            state,
-            reactor_ref,
-            "damage_roll",
-        )
+        record_attack_rolls(state, reactor_ref)
         attack = resolve_attack(
             reactor.creature,
             mover.creature,
@@ -140,15 +195,17 @@ def resolve_automatic_opportunity_attacks(
                 "melee",
                 reactor.position,
                 (mover.position,),
+                attack_ability=attack_ability,
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-            sourced_attack_roll_mode=attack_roll_rules.mode,
             target_armor_class=effective_armor_class(
                 state,
                 mover_ref,
             ).value,
             sourced_damage_modifier_for=partial(
-                damage_roll_rules.resolve_modifier,
+                _damage_roll_modifier,
+                state,
+                reactor_ref,
                 roll_die,
             ),
             d20_roller=roll_die,
@@ -160,6 +217,13 @@ def resolve_automatic_opportunity_attacks(
                     mover_ref,
                 )
             ),
+            sourced_additional_damage=tuple(
+                (contribution.provider_state_id, contribution.value)
+                for contribution in attack_hit_damage(state, reactor_ref, mover_ref)
+            ),
+        )
+        retaliations = (
+            attack_hit_retaliations(state, mover_ref, "melee") if attack.hit else ()
         )
         apply_attack_damage(
             attack,
@@ -167,9 +231,10 @@ def resolve_automatic_opportunity_attacks(
             attacker_label=reactor.creature.name,
             target_label=mover.creature.name,
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 mover_ref,
+                critical_hit=attack.critical_hit,
             ),
         )
         resolve_attack_lifecycle(
@@ -178,6 +243,8 @@ def resolve_automatic_opportunity_attacks(
             target_ref=mover_ref,
             damage=attack.damage,
             progress=progress,
+            retaliations=retaliations,
+            action_id=action_id,
         )
         messages.extend(attack.messages)
         progress.events.append(
@@ -200,6 +267,15 @@ def resolve_automatic_opportunity_attacks(
                 },
             )
         )
+        mastery_request = mastery_request_for_attack(
+            state,
+            attack,
+            attacker_ref=reactor_ref,
+            target_ref=mover_ref,
+            action_id=action_id,
+        )
+        if mastery_request is not None:
+            resolve_weapon_mastery_automatically(state, mastery_request, progress)
         if not mover.is_alive:
             break
     return messages
@@ -256,21 +332,31 @@ def apply_reaction_action(
         )
         if not eligibility.allowed:
             raise ValueError(eligibility.failures[0].message)
-        reactor.reaction_available = False
         target_ref = movement.creature_ref
+        targeting = target_eligibility(
+            state,
+            reactor_ref,
+            target_ref,
+            TargetingKind.ATTACK,
+        )
+        if not targeting.allowed:
+            raise ValueError(targeting.failures[0].message)
+        reactor.reaction_available = False
         target = state.creatures[target_ref]
         target_label = creature_label(state, target_ref)
         reactor_label = creature_label(state, reactor_ref)
+        attack_ability = selected_attack_ability(
+            reactor.creature,
+            state.item_templates,
+            preferred_attack_type="melee",
+        )
         attack_roll_rules = roll_modifiers(
             state,
             reactor_ref,
             "attack_roll",
+            attack_ability,
         )
-        damage_roll_rules = roll_modifiers(
-            state,
-            reactor_ref,
-            "damage_roll",
-        )
+        record_attack_rolls(state, reactor_ref)
         attack = resolve_attack(
             reactor.creature,
             target.creature,
@@ -288,15 +374,18 @@ def apply_reaction_action(
                 "melee",
                 reactor.position,
                 (target.position,),
+                attack_ability=attack_ability,
             ),
             sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-            sourced_attack_roll_mode=attack_roll_rules.mode,
             target_armor_class=effective_armor_class(
                 state,
                 target_ref,
             ).value,
-            sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
-                roll_die
+            sourced_damage_modifier_for=partial(
+                _damage_roll_modifier,
+                state,
+                reactor_ref,
+                roll_die,
             ),
             d20_roller=roll_die,
             die_roller=roll_die,
@@ -307,8 +396,38 @@ def apply_reaction_action(
                     target_ref,
                 )
             ),
+            sourced_additional_damage=tuple(
+                (contribution.provider_state_id, contribution.value)
+                for contribution in attack_hit_damage(state, reactor_ref, target_ref)
+            ),
         )
-        reroll_rule = matching_damage_reroll_rule(reactor.creature, attack)
+        if open_parry_decision(
+            state,
+            attack=attack,
+            attacker_ref=reactor_ref,
+            target_ref=target_ref,
+            attacker_label=reactor_label,
+            target_label=target_label,
+            attack_name=attack.weapon_name,
+            attacks_remaining=state.active_attacks_remaining,
+            action_id=resolved_action_id,
+            progress=progress,
+            continuation=CloseParentDecision(
+                frame_id=decision.id,
+                action_id=resolved_action_id,
+            ),
+            reaction_attack=True,
+        ):
+            return DecisionExecutionResult(
+                progress=progress,
+                action_id=resolved_action_id,
+                completed=False,
+            )
+        reroll_rule = matching_damage_reroll_rule(
+            reactor.creature,
+            attack,
+            excluded_effect_ids=reactor.features_used_this_turn,
+        )
         if attack.hit and reroll_rule is not None:
             open_damage_reroll_decision(
                 state,
@@ -331,15 +450,19 @@ def apply_reaction_action(
                 action_id=resolved_action_id,
                 completed=False,
             )
+        retaliations = (
+            attack_hit_retaliations(state, target_ref, "melee") if attack.hit else ()
+        )
         apply_attack_damage(
             attack,
             target.creature,
             attacker_label=reactor_label,
             target_label=target_label,
             damage_receiver=partial(
-                apply_damage,
+                apply_combat_damage,
                 state,
                 target_ref,
+                critical_hit=attack.critical_hit,
             ),
         )
         resolve_attack_lifecycle(
@@ -348,6 +471,9 @@ def apply_reaction_action(
             target_ref=target_ref,
             damage=attack.damage,
             progress=progress,
+            retaliations=retaliations,
+            action_id=resolved_action_id,
+            frame_id=decision.id,
         )
         progress.messages.extend(attack.messages)
         progress.events.append(
@@ -372,14 +498,35 @@ def apply_reaction_action(
             )
         )
         if not target.is_alive:
-            progress.events.append(
-                create_event(
-                    state,
-                    "creature_defeated",
-                    creature_ref=movement.creature_ref,
+            resolve_creature_defeat(
+                state,
+                movement.creature_ref,
+                defeated_by_ref=reactor_ref,
+                progress=progress,
+                frame_id=decision.id,
+                action_id=resolved_action_id,
+            )
+        mastery_request = mastery_request_for_attack(
+            state,
+            attack,
+            attacker_ref=reactor_ref,
+            target_ref=target_ref,
+            action_id=resolved_action_id,
+        )
+        if mastery_request is not None:
+            open_weapon_mastery_decision(
+                state,
+                mastery_request,
+                progress,
+                continuation=CloseParentDecision(
                     frame_id=decision.id,
                     action_id=resolved_action_id,
-                )
+                ),
+            )
+            return DecisionExecutionResult(
+                progress=progress,
+                action_id=resolved_action_id,
+                completed=False,
             )
     elif action.kind != "pass":
         raise ValueError(f"Unsupported reaction action: {action.kind}")

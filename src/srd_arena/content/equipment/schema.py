@@ -30,8 +30,13 @@ class ItemSchema(SourceModel):
         default_factory=list,
         alias="property",
     )
+    mastery: list[str] = Field(default_factory=list)
     weapon_category: str = Field(default="", alias="weaponCategory")
     range: str | None = None
+    armor: bool = False
+    armor_class: int | None = Field(default=None, alias="ac")
+    strength_requirement: str | int | None = Field(default=None, alias="strength")
+    stealth_disadvantage: bool = Field(default=False, alias="stealth")
     misc_tags: list[str] = Field(default_factory=list, alias="miscTags")
     srd: bool | str | None = None
     srd52: bool | str | None = None
@@ -56,3 +61,15 @@ class ItemSchema(SourceModel):
         True
         """
         return self.weapon or self.damage is not None
+
+    @property
+    def is_armor(self) -> bool:
+        """Return whether authored fields identify armor or a Shield.
+
+        >>> ItemSchema(name="Leather Armor", source="X", type="LA", ac=11).is_armor
+        True
+        >>> ItemSchema(name="Shield", source="X", type="S", ac=2).is_armor
+        True
+        """
+
+        return self.armor or self.type.split("|", 1)[0] in {"LA", "MA", "HA", "S"}

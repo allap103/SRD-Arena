@@ -56,6 +56,45 @@ def test_stunned_reuses_attack_and_save_traits_without_automatic_criticals() -> 
     assert effective.has_trait(CombatTrait.HITS_WITHIN_5_FEET_ARE_CRITICAL) is False
 
 
+def test_prone_exposes_distance_sensitive_attack_traits() -> None:
+    prone = _applied(Condition.PRONE, "fall")
+
+    effective = effective_conditions((prone,))
+
+    for trait in (
+        CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+        CombatTrait.NEARBY_ATTACKERS_HAVE_ADVANTAGE,
+        CombatTrait.DISTANT_ATTACKERS_HAVE_DISADVANTAGE,
+    ):
+        assert effective.providers_for_trait(trait) == (prone.id,)
+
+
+def test_poisoned_exposes_attack_and_ability_check_disadvantage() -> None:
+    poisoned = _applied(Condition.POISONED, "venom")
+
+    effective = effective_conditions((poisoned,))
+
+    for trait in (
+        CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+        CombatTrait.ABILITY_CHECKS_HAVE_DISADVANTAGE,
+    ):
+        assert effective.providers_for_trait(trait) == (poisoned.id,)
+
+
+def test_restrained_exposes_speed_attack_and_dexterity_save_traits() -> None:
+    restrained = _applied(Condition.RESTRAINED, "web")
+
+    effective = effective_conditions((restrained,))
+
+    for trait in (
+        CombatTrait.SPEED_ZERO,
+        CombatTrait.ATTACKERS_HAVE_ADVANTAGE,
+        CombatTrait.ATTACK_ROLLS_HAVE_DISADVANTAGE,
+        CombatTrait.DEXTERITY_SAVES_HAVE_DISADVANTAGE,
+    ):
+        assert effective.providers_for_trait(trait) == (restrained.id,)
+
+
 def test_effective_condition_preserves_all_independent_providers() -> None:
     paralyzed = _applied(Condition.PARALYZED, "hold_person")
     stunned = _applied(Condition.STUNNED, "mind_blast")

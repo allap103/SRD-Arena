@@ -21,6 +21,7 @@ from srd_arena.content.encounters import (
     EncounterConfigSchema,
     EncounterDefinitionSchema,
     load_encounter_directory,
+    load_encounter_file,
 )
 from srd_arena.content.spells import load_spell_catalog
 from srd_arena.domain.creatures import AttackActionDefinition
@@ -30,7 +31,11 @@ from srd_arena.engine.session import Session
 FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 TACTICAL_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "tactical_game"
 GOBLIN_SKIRMISH_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "full_control_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "full_control_showcase"
 )
 
 
@@ -73,6 +78,24 @@ def test_load_encounter_parses_definition() -> None:
     assert len(patrol.path) == 3
 
 
+def test_encounter_file_loads_global_combat_environment(tmp_path: Path) -> None:
+    path = tmp_path / "encounter.json"
+    path.write_text(
+        json.dumps(
+            {
+                "id": "sunlit_arena",
+                "grid": {"width": 5, "height": 5},
+                "environment": {"sunlight": True},
+            }
+        ),
+        encoding="utf-8",
+    )
+
+    loaded = load_encounter_file(path)
+
+    assert loaded.definition.environment.sunlight is True
+
+
 def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None:
     encounter_dir = tmp_path / "mixed_control"
     encounter_dir.mkdir()
@@ -96,7 +119,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
     encounter = load_encounter_directory(encounter_dir)
     participant = encounter.participants[1]
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert participant.creature_id == "goblin_1"
     assert participant.controller == "external"
@@ -106,7 +129,7 @@ def test_encounter_creature_can_override_team_controller(tmp_path: Path) -> None
 def test_full_control_showcase_gives_external_control_to_every_creature() -> None:
     encounter = load_encounter_directory(GOBLIN_SKIRMISH_DIR)
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert {creature.name for creature in encounter.creatures} == {
         "Aldren",
@@ -133,7 +156,7 @@ def test_encounter_can_be_fully_scripted() -> None:
         team.controller = "scripted"
 
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     assert session.encounter_state.requires_automatic_advance() is True
@@ -190,7 +213,7 @@ def test_game_loads_geometry_settings_from_config_json() -> None:
     assert presentation.grid_opacity == 0.65
 
     session = Session(encounter)
-    session.read()
+    session._read()
 
     assert not hasattr(session, "background_image")
     assert not hasattr(session, "grid_color")

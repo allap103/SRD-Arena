@@ -53,6 +53,10 @@ def build_battlefield_view(
                 y=creature.position.y,
             ),
             health=creature.health,
+            occupied_cells=tuple(
+                GridPositionView(x=cell.x, y=cell.y)
+                for cell in getattr(creature, "occupied_cells", (creature.position,))
+            ),
             conditions=effective_condition_names(creature),
             is_concentrating=creature.creature_ref in concentrating_refs,
             buffs=buffs_by_ref.get(creature.creature_ref, ()),
@@ -125,14 +129,22 @@ def _render_battlefield_text(encounter: EncounterObservation) -> str:
     for y in range(height):
         row: list[str] = []
         for x in range(width):
-            if actor_position.x == x and actor_position.y == y:
+            if any(
+                cell.x == x and cell.y == y
+                for cell in getattr(actor_state, "occupied_cells", (actor_position,))
+            ):
                 row.append("A")
                 continue
             creature_here = next(
                 (
                     creature
                     for creature in live_others
-                    if creature.position.x == x and creature.position.y == y
+                    if any(
+                        cell.x == x and cell.y == y
+                        for cell in getattr(
+                            creature, "occupied_cells", (creature.position,)
+                        )
+                    )
                 ),
                 None,
             )

@@ -12,6 +12,7 @@ from srd_arena.content.common.paths import SYSTEM_CONTENT_ROOT
 from srd_arena.content.common.sources import load_json
 from srd_arena.content.creatures import (
     load_bestiary_catalog,
+    load_character_snapshot_catalog,
     load_player_character_templates,
 )
 from srd_arena.content.equipment import load_system_items
@@ -40,6 +41,7 @@ def load_encounter_directory(
         load_player_character_templates(directory / "player_characters"),
         load_optional_feature_catalog(system_path),
         load_spell_catalog(system_path),
+        load_character_snapshot_catalog(system_path),
     )
     definition = loaded.definition
     definition.display_name = config.display_name

@@ -1,0 +1,133 @@
+# Minimum disclosure supported by the current implementation.
+# Allied HP/AC, perceived creature geometry/appearance, terrain and action routing remain required.
+schema_version: 1
+name: minimal
+perspective:
+  knowledge_sharing: team
+visibility:
+  own: always
+  ally: always
+  enemy: perceived
+memory:
+  own: current_only
+  ally: current_only
+  enemy: current_only
+  demonstrated_facts: retain
+creatures:
+  position:
+    own: exact
+    ally: exact
+    enemy: exact
+  size:
+    own: exact
+    ally: exact
+    enemy: exact
+  appearance:
+    own: visible_equipment
+    ally: visible_equipment
+    enemy: visible_equipment
+  creature_type:
+    own: apparent
+    ally: apparent
+    enemy: apparent
+  health:
+    disclosure:
+      own: exact
+      ally: exact
+      enemy: hidden
+    intervals:
+      boundaries:
+      - 0.0
+      - 0.25
+      - 0.5
+      - 0.75
+      - 1.0
+      distinguish_full_health: true
+  temporary_health:
+    own: exact
+    ally: exact
+    enemy: hidden
+  defeated:
+    own: omit
+    ally: omit
+    enemy: omit
+  armor_class:
+    own: exact
+    ally: exact
+    enemy: hidden
+  ability_scores:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  saving_throw_modifiers:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  skill_modifiers:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  movement:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  action_economy:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  resources:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  capabilities:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  defenses:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  conditions:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+  effects:
+    disclosure:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+    duration:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+    mechanics:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+  relationships:
+    own: hidden
+    ally: hidden
+    enemy: hidden
+battlefield:
+  dimensions: include
+  terrain: all
+  environment: hidden
+  persistent_areas: hidden
+encounter:
+  round: omit
+  active_turn: omit
+  initiative: hidden
+  roster: all
+history:
+  events: hidden
+  recent_event_limit: 0
+  accumulated:
+    damage_received:
+      own: hidden
+      ally: hidden
+      enemy: hidden
+    demonstrated_capabilities: false
+    demonstrated_defenses: false
+decisions:
+  context: hidden
+  capability_descriptions: hidden

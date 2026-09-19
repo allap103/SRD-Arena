@@ -1,6 +1,11 @@
 {
   "name": "Skeleton",
   "source": "XMM",
+  "appearance": {
+    "armor_category": "none",
+    "apparent_creature_type": "Undead",
+    "obvious_features": ["Exposed animated skeleton"]
+  },
   "page": 282,
   "srd52": true,
   "basicRules2024": true,
@@ -70,13 +75,54 @@
       "name": "Shortsword",
       "entries": [
         "{@atkr m} {@hit 5}, reach 5 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "melee"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 5
+        },
+        "reach_feet": 5,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "bonus": 3,
+            "damage_type": "piercing"
+          }
+        ]
+      }
     },
     {
       "name": "Shortbow",
       "entries": [
         "{@atkr r} {@hit 5}, range 80/320 ft. {@h}6 ({@damage 1d6 + 3}) Piercing damage."
-      ]
+      ],
+      "capability": {
+        "type": "attack",
+        "attack_modes": [
+          "ranged"
+        ],
+        "attack_bonus": 5,
+        "target": {
+          "type": "creature",
+          "range_feet": 80
+        },
+        "range_normal_feet": 80,
+        "range_long_feet": 320,
+        "hit": [
+          {
+            "type": "damage",
+            "dice": "1d6",
+            "bonus": 3,
+            "damage_type": "piercing"
+          }
+        ]
+      }
     }
   ],
   "environment": [

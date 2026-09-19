@@ -60,6 +60,15 @@ class DicePoolResult:
     subtotal: int
     total: int
     replacements: tuple[DieReplacement, ...] = ()
+    modifier_source_ids: tuple[str, ...] = ()
+
+
+@dataclass(frozen=True)
+class ResolvedRollModifier:
+    """Carry a resolved numeric modifier and the rule sources behind it."""
+
+    value: int = 0
+    source_ids: tuple[str, ...] = ()
 
 
 @dataclass(frozen=True)
@@ -130,6 +139,7 @@ def resolve_dice(
     sides: int,
     *,
     modifier: int = 0,
+    modifier_source_ids: tuple[str, ...] = (),
     reroll_values: Collection[int] = (),
     max_rerolls_per_die: int = 0,
     roller: DieRoller = roll_die,
@@ -174,6 +184,7 @@ def resolve_dice(
         tuple(dice),
         modifier=modifier,
         replacements=tuple(replacements),
+        modifier_source_ids=modifier_source_ids,
     )
 
 
@@ -217,6 +228,7 @@ def reroll_dice(
         tuple(dice),
         modifier=pool.modifier,
         replacements=tuple(replacements),
+        modifier_source_ids=pool.modifier_source_ids,
     )
 
 
@@ -235,7 +247,11 @@ def reroll_dice_pool(
     dice = tuple(
         DieRollResult(sides=die.sides, rolls=(roller(die.sides),)) for die in pool.dice
     )
-    return _dice_pool_result(dice, modifier=pool.modifier)
+    return _dice_pool_result(
+        dice,
+        modifier=pool.modifier,
+        modifier_source_ids=pool.modifier_source_ids,
+    )
 
 
 def resolve_roll_attempts[RollResultT](
@@ -366,6 +382,7 @@ def _dice_pool_result(
     *,
     modifier: int,
     replacements: tuple[DieReplacement, ...] = (),
+    modifier_source_ids: tuple[str, ...] = (),
 ) -> DicePoolResult:
     subtotal = sum(die.result for die in dice)
     return DicePoolResult(
@@ -374,6 +391,7 @@ def _dice_pool_result(
         subtotal=subtotal,
         total=subtotal + modifier,
         replacements=replacements,
+        modifier_source_ids=modifier_source_ids,
     )
 
 

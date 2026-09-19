@@ -15,20 +15,28 @@ from srd_arena.domain.creatures import (
     Equipment,
     Inventory,
 )
+from srd_arena.domain.creatures.feature_rules import (
+    LUCKY_FEATURE_ID,
+    feat_triggered_effects,
+)
 
 from .actions.builder import (
     build_declared_stat_block_actions,
     build_stat_block_actions,
 )
 from .actions.multiattack import MultiattackCapabilitySchema, build_multiattack
+from .appearance import build_observable_appearance
 from .attributes import build_creature_attributes, build_creature_size
 from .catalog import BestiaryCatalog
 from .character_options import (
     find_class_record,
     resolve_class_features,
     resolve_optional_feature_effects,
+    resolve_subclass_features,
 )
+from .character_snapshots import CharacterSnapshotCatalog, build_character_profile
 from .features import build_combat_profile, build_feature_uses_remaining
+from .monster_traits import build_monster_trait_rule_providers
 from .player_characters import PlayerCharacterTemplates
 from .schema import CreatureItemReferenceSchema, CreatureSchema
 from .spellcasting import build_spellcasting
@@ -43,6 +51,7 @@ def load_creature(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> Creature:
     """Validate one creature document and translate it with the supplied catalogs.
 
@@ -63,6 +72,7 @@ def load_creature(
         player_characters,
         optional_features,
         spells,
+        character_snapshots,
     )
 
 
@@ -73,6 +83,7 @@ def build_creature(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> Creature:
     """Assemble a domain creature from authored statistics, actions, and options.
 
@@ -81,7 +92,11 @@ def build_creature(
     ('hero', 10)
     """
 
-    schema = _resolve_creature_schema(schema, player_characters)
+    schema = _resolve_creature_schema(
+        schema,
+        player_characters,
+        character_snapshots,
+    )
     stat_block = _find_bestiary_monster(schema, bestiary)
     class_record = find_class_record(schema, classes)
     equipment = Equipment(
@@ -91,9 +106,28 @@ def build_creature(
         }
     )
     attributes = build_creature_attributes(schema, stat_block, class_record)
-    class_features = resolve_class_features(class_record, schema.attributes.level)
-    triggered_effects = resolve_optional_feature_effects(schema, optional_features)
+    character_profile = build_character_profile(schema.character_profile)
+    class_features = [
+        *resolve_class_features(class_record, schema.attributes.level),
+        *resolve_subclass_features(
+            character_profile,
+            class_record,
+            schema.attributes.level,
+        ),
+    ]
+    triggered_effects = [
+        *resolve_optional_feature_effects(schema, optional_features),
+        *feat_triggered_effects(character_profile),
+    ]
     combat_profile = build_combat_profile(class_features)
+    combat_profile.intrinsic_rule_providers.update(
+        build_monster_trait_rule_providers(stat_block)
+    )
+    if character_profile is not None and any(
+        feat.name.casefold() == "lucky" for feat in character_profile.feats
+    ):
+        combat_profile.feature_uses_max[LUCKY_FEATURE_ID] = attributes.proficiency_bonus
+        combat_profile.feature_recharge[LUCKY_FEATURE_ID] = {"long_rest": "all"}
     spellcasting = build_spellcasting(
         schema,
         attributes,
@@ -132,6 +166,7 @@ def build_creature(
             if schema.class_ref
             else None
         ),
+        character_profile=character_profile,
         class_features=class_features,
         triggered_effects=triggered_effects,
         combat_profile=combat_profile,
@@ -148,30 +183,58 @@ def build_creature(
         max_health_override=(
             stat_block.average_hit_points if stat_block is not None else None
         ),
+        observable_appearance=build_observable_appearance(schema, stat_block),
     )
 
 
 def _resolve_creature_schema(
     instance: CreatureSchema,
     player_characters: PlayerCharacterTemplates | None,
+    character_snapshots: CharacterSnapshotCatalog | None,
 ) -> CreatureSchema:
-    if instance.player_character is None:
-        return instance
-    if player_characters is None:
+    if (
+        instance.player_character is not None
+        and instance.character_snapshot is not None
+    ):
         raise ValueError(
-            f"Creature '{instance.id}' references player character "
-            f"'{instance.player_character}', but no player character catalog was loaded."
+            f"Creature '{instance.id}' cannot reference both a local player "
+            "character and a canonical character snapshot."
         )
-    template = player_characters.get(instance.player_character)
-    if template is None:
-        raise KeyError(f"Player character '{instance.player_character}' not found.")
+    if instance.player_character is None and instance.character_snapshot is None:
+        return instance
+    template: CreatureSchema
+    if instance.character_snapshot is not None:
+        if character_snapshots is None:
+            raise ValueError(
+                f"Creature '{instance.id}' references canonical build "
+                f"'{instance.character_snapshot.build}', but no character "
+                "snapshot catalog was loaded."
+            )
+        template = character_snapshots.creature_template(
+            instance.character_snapshot.build,
+            instance.character_snapshot.level,
+        )
+    else:
+        if player_characters is None:
+            raise ValueError(
+                f"Creature '{instance.id}' references player character "
+                f"'{instance.player_character}', but no player character catalog "
+                "was loaded."
+            )
+        local_template = player_characters.get(instance.player_character or "")
+        if local_template is None:
+            raise KeyError(f"Player character '{instance.player_character}' not found.")
+        template = local_template
 
-    template_data = template.model_dump(exclude={"id", "player_character"})
+    template_data = template.model_dump(
+        exclude_unset=True, exclude={"id", "player_character", "character_snapshot"}
+    )
     instance_data = instance.model_dump(
         exclude_unset=True,
         exclude={
             "attributes",
             "player_character",
+            "character_snapshot",
             "equipment",
             "inventory",
             "metadata",

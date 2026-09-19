@@ -74,7 +74,6 @@
       "type": "repeat",
       "count": 4,
       "allocation": "same_or_different",
-      "simultaneous": true,
       "resolution": {
         "type": "spell_attack",
         "mode": "ranged",

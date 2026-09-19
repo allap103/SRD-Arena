@@ -9,6 +9,13 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
+from .actions.d20_roll_modifiers import apply_d20_roll_modifier_action
+from .actions.forced_movement_choices import apply_forced_movement_action
+from .actions.grapple_saves import apply_grapple_save_action
+from .actions.initiative_swaps import apply_initiative_swap_action
+from .actions.options import decision_actions
+from .actions.reckless_attack import apply_reckless_attack_action
+from .actions.weapon_mastery import apply_weapon_mastery_action
 from .continuations import ContinuationRunner
 from .creature_control import available_creature_actions, execute_creature_action
 from .encounter_models.actions import (
@@ -24,6 +31,7 @@ from .encounter_models.resolution import (
 from .participants import creature_controller
 from .reaction_runtime.damage_rerolls import apply_damage_reroll_action
 from .reaction_runtime.opportunity_execution import apply_reaction_action
+from .reaction_runtime.parry import apply_parry_action
 from .state_runtime import merge_progress
 from .turn_lifecycle import (
     active_turn_creature,
@@ -71,6 +79,38 @@ class EncounterOrchestrator:
                 "External action requested for a scripted-controlled creature."
             )
 
+        return self._apply_current_action(state, action, decision)
+
+    def _apply_current_action(
+        self,
+        state: EncounterState,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        """Dispatch either a specialized choice or an ordinary selected action."""
+
+        if decision.kind in {
+            "reroll_dice",
+            "reaction",
+            "parry",
+            "grapple_save",
+            "forced_movement",
+            "initiative_swap",
+            "d20_roll_modifier",
+            "reckless_attack",
+            "weapon_mastery",
+        }:
+            return self._apply_decision_action(state, action, decision)
+        return self._apply_selected_action(state, action, decision)
+
+    def _apply_decision_action(
+        self,
+        state: EncounterState,
+        action: EncounterAction,
+        decision: DecisionFrame,
+    ) -> EncounterProgress:
+        """Resolve one specialized decision for either controller type."""
+
         if decision.kind == "reroll_dice":
             result = apply_damage_reroll_action(
                 state,
@@ -85,7 +125,28 @@ class EncounterOrchestrator:
                 decision,
             )
             return self._finish_decision_execution(state, decision, result)
-        return self._apply_selected_action(state, action, decision)
+        if decision.kind == "parry":
+            result = apply_parry_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "grapple_save":
+            result = apply_grapple_save_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "forced_movement":
+            result = apply_forced_movement_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "initiative_swap":
+            result = apply_initiative_swap_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "d20_roll_modifier":
+            result = apply_d20_roll_modifier_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "reckless_attack":
+            result = apply_reckless_attack_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        if decision.kind == "weapon_mastery":
+            result = apply_weapon_mastery_action(state, action, decision)
+            return self._finish_decision_execution(state, decision, result)
+        raise ValueError(f"Unsupported specialized decision: {decision.kind}")
 
     def advance(self, state: EncounterState) -> EncounterProgress:
         """Resolve scripted actions until input or completion stops execution.
@@ -139,8 +200,43 @@ class EncounterOrchestrator:
             if progress.completed:
                 break
             if state.interrupts.decision_stack:
-                progress.paused_for_decision = True
-                break
+                decision = state.current_decision()
+                if creature_controller(state, decision.creature_ref) == "external":
+                    progress.paused_for_decision = True
+                    break
+                if stop_after_action and automatic_action_resolved:
+                    break
+                actions = decision_actions(state)
+                selected_action = state._action_selectors[
+                    decision.creature_ref
+                ].select_action(
+                    state,
+                    decision.creature_ref,
+                    tuple(actions),
+                )
+                if selected_action is None:
+                    raise RuntimeError(
+                        "A scripted controller declined its required decision."
+                    )
+                decision_progress = self._apply_current_action(
+                    state,
+                    selected_action,
+                    decision,
+                )
+                if (
+                    state.interrupts.decision_stack
+                    and creature_controller(
+                        state,
+                        state.current_decision().creature_ref,
+                    )
+                    == "scripted"
+                ):
+                    decision_progress.paused_for_decision = False
+                merge_progress(state, progress, decision_progress)
+                automatic_action_resolved = True
+                if progress.completed or stop_after_action:
+                    break
+                continue
 
             creature_ref = active_turn_creature(state)
             if not state.creatures[creature_ref].is_alive:
@@ -172,7 +268,20 @@ class EncounterOrchestrator:
             )
             automatic_action_resolved = True
             merge_progress(state, progress, actor_progress)
-            if progress.completed or progress.paused_for_decision:
+            if progress.completed:
+                break
+            if progress.paused_for_decision:
+                if (
+                    not stop_after_action
+                    and state.interrupts.decision_stack
+                    and creature_controller(
+                        state,
+                        state.current_decision().creature_ref,
+                    )
+                    == "scripted"
+                ):
+                    progress.paused_for_decision = False
+                    continue
                 break
             if completed_turn:
                 self._finish_turn(state, creature_ref, progress)
@@ -203,7 +312,7 @@ class EncounterOrchestrator:
         state: EncounterState,
         progress: EncounterProgress,
     ) -> None:
-        if not progress.completed:
+        if not progress.completed and not state.interrupts.decision_stack:
             progress.completed = encounter_is_complete(state)
 
     def _finish_turn(

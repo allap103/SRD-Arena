@@ -69,6 +69,7 @@ def build_movement_plan(
     >>> hero = SimpleNamespace(
     ...     creature_ref="hero", is_active=True,
     ...     position=SimpleNamespace(x=0, y=0),
+    ...     occupied_cells=(),
     ... )
     >>> action = SimpleNamespace(cost={"movement": 1})
     >>> encounter = SimpleNamespace(
@@ -100,11 +101,16 @@ def build_movement_plan(
     step_cost = min(movement_costs)
     max_steps = encounter.resources.movement_remaining // step_cost
     blocked = {
-        (creature.position.x, creature.position.y)
+        (cell.x, cell.y)
         for creature in encounter.battlefield.creatures
         if creature.creature_ref != creature_ref
+        for cell in creature.occupied_cells or (creature.position,)
     }
     origin = (planner.position.x, planner.position.y)
+    footprint_offsets = {
+        (cell.x - planner.position.x, cell.y - planner.position.y)
+        for cell in planner.occupied_cells or (planner.position,)
+    }
     return MovementPlan(
         creature_ref=creature_ref,
         paths=shortest_movement_paths(
@@ -113,6 +119,7 @@ def build_movement_plan(
             origin,
             blocked,
             max_steps,
+            footprint_offsets=footprint_offsets,
         ),
     )
 
@@ -147,6 +154,8 @@ def shortest_movement_paths(
     origin: GridCell,
     blocked: set[GridCell],
     max_steps: int,
+    *,
+    footprint_offsets: set[GridCell] | frozenset[GridCell] = frozenset({(0, 0)}),
 ) -> dict[GridCell, MovementPath]:
     """Find one shortest path to every reachable grid cell.
 
@@ -170,11 +179,17 @@ def shortest_movement_paths(
                 position[0] + delta_x,
                 position[1] + delta_y,
             )
+            destination_cells = {
+                (destination[0] + offset_x, destination[1] + offset_y)
+                for offset_x, offset_y in footprint_offsets
+            }
             if (
                 destination in paths
-                or destination in blocked
-                or not 0 <= destination[0] < width
-                or not 0 <= destination[1] < height
+                or destination_cells & blocked
+                or any(
+                    not 0 <= cell_x < width or not 0 <= cell_y < height
+                    for cell_x, cell_y in destination_cells
+                )
             ):
                 continue
             paths[destination] = (*path, direction)

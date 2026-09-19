@@ -123,13 +123,13 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
     )
     attack_id = next(
         action.id
-        for action in session.read().action_options
+        for action in session._read().action_options
         if action.kind == "attack"
         and isinstance(action.details, DirectTargetOptionDetails)
         and action.details.target_ref == "goblin_1"
     )
 
-    result = session.choose(attack_id)
+    result = session._choose(attack_id)
 
     assert session.encounter_state is not None
     assert any(event.type == "attack_resolved" for event in result.events)
@@ -138,7 +138,7 @@ def test_great_weapon_fighting_does_not_trigger_for_one_handed_weapon() -> None:
 
 def _adjacent_tactical_encounter() -> Session:
     session = Session(load_encounter_directory(TACTICAL_ENCOUNTER_DIR))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
     session.encounter_state.active_position.y = 3

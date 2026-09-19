@@ -8,10 +8,15 @@ from types import MappingProxyType
 from typing import Protocol
 
 from srd_arena.domain.creatures import Creature
-from srd_arena.domain.geometry import AreaOfEffect
-from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
+from srd_arena.domain.geometry import AreaOfEffect, Position
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DicePoolResult,
+    ResolvedRollModifier,
+)
 
-from ..definitions import Spell
+from ..definitions import Spell, SpellDamage
 
 
 def _read_only[Key, Value](
@@ -30,6 +35,7 @@ class SpellTargetContext:
     target_ref: str
     target_label: str
     target_conditions: tuple[str, ...] = ()
+    effective_conditions: tuple[str, ...] = ()
     condition_immunities: frozenset[str] = frozenset()
     automatic_save_failures: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
 
@@ -76,11 +82,23 @@ class SpellResolutionEnvironment(Protocol):
     def attack_roll_modifier(self, target_ref: str) -> int:
         """Resolve the caster's current sourced attack-roll modifier."""
 
-    def attack_roll_mode(self, target_ref: str) -> D20RollMode:
-        """Resolve the caster's current sourced attack-roll mode."""
+    def damage_roll_modifier(self) -> ResolvedRollModifier:
+        """Resolve the caster's current damage modifier and its sources."""
 
-    def damage_roll_modifier(self) -> int:
-        """Resolve the caster's current sourced damage-roll modifier."""
+    def attack_hit_damage(
+        self,
+        target_ref: str,
+        *,
+        critical_hit: bool,
+    ) -> tuple[tuple[SpellDamage, DicePoolResult], ...]:
+        """Roll source-bound damage added by hitting this target."""
+
+    def attack_hit_retaliations(
+        self,
+        target_ref: str,
+        attack_type: str,
+    ) -> tuple[AttackHitRetaliationApplication, ...]:
+        """Snapshot sourced retaliation before one successful attack deals damage."""
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve a target's current sourced saving-throw modifier."""
@@ -100,6 +118,8 @@ class SpellResolutionEnvironment(Protocol):
         target_ref: str,
         amount: int,
         damage_type: str | None,
+        *,
+        critical_hit: bool = False,
     ) -> int:
         """Apply effect-adjusted damage and return the amount dealt."""
 
@@ -123,23 +143,30 @@ class SpellActionContext:
 
     creature: Creature
     spell: Spell
-    target: SpellTargetContext
+    target: SpellTargetContext | None
     current_round: int
     source_ref: str
     environment: SpellResolutionEnvironment
     targets: tuple[SpellTargetContext, ...] = ()
     area: AreaOfEffect | None = None
+    destination: Position | None = None
     selected_condition: str | None = None
     selected_damage_type: str | None = None
     selected_ability: str | None = None
+    selected_option: str | None = None
     attack_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
     target_armor_classes: Mapping[str, int] = field(default_factory=dict)
     automatic_critical_providers: Mapping[str, tuple[str, ...]] = field(
         default_factory=dict
     )
     cast_level: int | None = None
+    announce_cast: bool = True
     save_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
+    d20_roll_modes: Mapping[str, D20RollMode] = field(default_factory=dict)
+    roll_occurrence_index_offset: int = 0
+    saving_throw_cover_bonuses: Mapping[str, int] = field(default_factory=dict)
     healing_allocations: Mapping[str, int] = field(default_factory=dict)
+    maximize_temporary_hit_point_dice: bool = False
 
     def __post_init__(self) -> None:
         """Detach all mapping facts from their mutable construction inputs."""
@@ -149,6 +176,8 @@ class SpellActionContext:
             "target_armor_classes",
             "automatic_critical_providers",
             "save_roll_modes",
+            "d20_roll_modes",
+            "saving_throw_cover_bonuses",
             "healing_allocations",
         ):
             values = getattr(self, name)

@@ -1,8 +1,7 @@
 """Capability scaling calculations used while resolving a spell."""
 
-import re
-
 from srd_arena.domain.capabilities import CapabilityDefinition
+from srd_arena.domain.rolls import parse_dice_expression
 
 
 def scale_dice(
@@ -20,8 +19,8 @@ def scale_dice(
 
     if base is None or increment is None or levels_above <= 0:
         return base
-    base_count, base_sides = parse_damage_dice(base)
-    increment_count, increment_sides = parse_damage_dice(increment)
+    base_count, base_sides = parse_dice_expression(base)
+    increment_count, increment_sides = parse_dice_expression(increment)
     if base_sides != increment_sides:
         raise ValueError("Healing scaling must use the base healing die.")
     return f"{base_count + increment_count * levels_above}d{base_sides}"
@@ -39,7 +38,7 @@ def scaled_damage_dice(
     '10d6'
     """
 
-    count, sides = parse_damage_dice(dice)
+    count, sides = parse_dice_expression(dice)
     if sides != increment_sides:
         raise ValueError("Slot damage scaling must use the base damage die.")
     return f"{count + increment_count * levels_above}d{sides}"
@@ -152,16 +151,35 @@ def resource_int_increment(
     )
 
 
-def parse_damage_dice(expression: str) -> tuple[int, int]:
-    """Parse an authored dice expression into its count and die size.
+def resource_duration_rounds(
+    definition: CapabilityDefinition,
+    resource_level: int,
+) -> int | None:
+    """Return the highest explicit duration threshold reached by a slot."""
 
-    >>> parse_damage_dice("8d6")
-    (8, 6)
-    >>> parse_damage_dice("2d10")
-    (2, 10)
-    """
-
-    match = re.fullmatch(r"(\d+)d(\d+)", expression)
-    if match is None:
-        raise ValueError(f"Unsupported damage dice expression: {expression!r}")
-    return int(match.group(1)), int(match.group(2))
+    rounds_per_unit = {
+        "round": 1,
+        "minute": 10,
+        "hour": 600,
+        "day": 14_400,
+    }
+    thresholds = sorted(
+        (
+            threshold
+            for scaling in definition.scaling
+            if scaling.basis == "resource_level"
+            for threshold in scaling.thresholds
+            if threshold.minimum_level <= resource_level
+        ),
+        key=lambda threshold: threshold.minimum_level,
+        reverse=True,
+    )
+    for threshold in thresholds:
+        for increment in threshold.increments:
+            if (
+                increment.kind == "duration"
+                and isinstance(increment.amount, int)
+                and increment.unit is not None
+            ):
+                return increment.amount * rounds_per_unit[increment.unit]
+    return None

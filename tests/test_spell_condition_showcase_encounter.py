@@ -6,13 +6,17 @@ from srd_arena.domain.encounters.participants import creature_controller
 from srd_arena.engine.session import Session
 
 ENCOUNTER_DIR = (
-    Path(__file__).parents[1] / "content" / "encounters" / "spell_condition_showcase"
+    Path(__file__).parents[1]
+    / "content"
+    / "encounters"
+    / "archive"
+    / "spell_condition_showcase"
 )
 
 
 def test_spell_condition_showcase_loads_wave_1b_capability() -> None:
     session = Session(load_encounter_directory(str(ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

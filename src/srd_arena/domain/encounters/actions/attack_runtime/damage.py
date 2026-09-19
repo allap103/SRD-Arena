@@ -7,6 +7,7 @@ from dataclasses import dataclass
 
 from srd_arena.domain.capabilities import DamageEffect
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     D20RollMode,
     DicePoolResult,
@@ -40,6 +41,7 @@ def roll_attack_damage(
     attack_roll_mode: D20RollMode,
     roller: DieRoller,
     sourced_modifier_for: Callable[[], int],
+    sourced_additional_damage: tuple[tuple[str, DamageEffect], ...] = (),
 ) -> AttackDamageResolution:
     """Roll primary and conditional additional damage in authored order.
 
@@ -55,7 +57,7 @@ def roll_attack_damage(
     ('1d8', 7, 7)
     """
     damage_dice = attack_source.damage_dice
-    damage_die_count, damage_die_sides = parse_damage_dice(damage_dice)
+    damage_die_count, damage_die_sides = parse_dice_expression(damage_dice)
     if critical_hit:
         damage_die_count *= 2
         damage_dice = f"{damage_die_count}d{damage_die_sides}"
@@ -70,17 +72,22 @@ def roll_attack_damage(
     damage_total = damage_roll.total
     additional_damage = 0
     additional_damage_details: list[dict[str, object]] = []
-    for effect in attack_source.additional_damage:
+    for provider_state_id, effect in (
+        *(("", effect) for effect in attack_source.additional_damage),
+        *sourced_additional_damage,
+    ):
         if not damage_effect_requirements_met(effect, attack_roll_mode):
             continue
         extra_dice = effect.dice
         extra_bonus = effect.bonus
         extra_type = effect.damage_type
-        extra_count, extra_sides = parse_damage_dice(extra_dice)
+        extra_count, extra_sides = parse_dice_expression(extra_dice)
         if critical_hit:
             extra_count *= 2
             extra_dice = f"{extra_count}d{extra_sides}"
-        extra_sourced_modifier = sourced_modifier_for()
+        # A modifier to an attack's damage roll, such as Rage Damage, applies
+        # once to the attack rather than once again to every damage rider.
+        extra_sourced_modifier = 0
         extra_roll = resolve_dice(
             extra_count,
             extra_sides,
@@ -88,19 +95,20 @@ def roll_attack_damage(
             roller=roller,
         )
         additional_damage += max(0, extra_roll.total)
-        additional_damage_details.append(
-            {
-                "dice": extra_dice,
-                "dice_values": [die.result for die in extra_roll.dice],
-                "die_rolls": [list(die.rolls) for die in extra_roll.dice],
-                "dice_total": extra_roll.subtotal,
-                "modifier": extra_bonus + extra_sourced_modifier,
-                "sourced_modifier": extra_sourced_modifier,
-                "total": extra_roll.total,
-                "damage_type": extra_type,
-                "critical_hit": critical_hit,
-            }
-        )
+        extra_detail: dict[str, object] = {
+            "dice": extra_dice,
+            "dice_values": [die.result for die in extra_roll.dice],
+            "die_rolls": [list(die.rolls) for die in extra_roll.dice],
+            "dice_total": extra_roll.subtotal,
+            "modifier": extra_bonus + extra_sourced_modifier,
+            "sourced_modifier": extra_sourced_modifier,
+            "total": extra_roll.total,
+            "damage_type": extra_type,
+            "critical_hit": critical_hit,
+        }
+        if provider_state_id:
+            extra_detail["provider_state_ids"] = [provider_state_id]
+        additional_damage_details.append(extra_detail)
     detail: dict[str, object] = {
         "dice": damage_dice,
         "dice_values": [die.result for die in damage_roll.dice],
@@ -188,8 +196,6 @@ def apply_attack_damage(
             ),
         ]
     )
-    if attack.defender_defeated:
-        attack.messages.append(("system", f"{target_label} is defeated."))
 
 
 def damage_roll_detail(
@@ -226,6 +232,8 @@ def damage_roll_detail(
         detail["weapon_id"] = attack.weapon_id
     if attack.weapon_name is not None:
         detail["weapon_name"] = attack.weapon_name
+    if attack.weapon_mastery is not None:
+        detail["weapon_mastery"] = attack.weapon_mastery
     return detail
 
 
@@ -246,13 +254,3 @@ def damage_effect_requirements_met(
     False
     """
     return all(requirement.mode == roll_mode for requirement in effect.requirements)
-
-
-def parse_damage_dice(damage: str) -> tuple[int, int]:
-    """Parse a simple NdS damage expression.
-
-    >>> parse_damage_dice("2d10")
-    (2, 10)
-    """
-    count_text, sides_text = damage.lower().split("d", 1)
-    return int(count_text), int(sides_text)

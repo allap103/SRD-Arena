@@ -5,25 +5,37 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.creatures import Creature
+from srd_arena.domain.creatures.feature_rules import FRENZY_FEATURE_ID
+from srd_arena.domain.rolls.dice import combine_roll_modes
+from srd_arena.domain.rolls.occurrences import attack_roll_occurrence_id
 
-from ...attack_economy import spend_attack, spend_current_attack
-from ...effect_lifecycle.concentration import resolve_concentration_damage
-from ...effect_lifecycle.lifecycle_events import resolve_spell_lifecycle_event
+from ...attack_economy import record_attack_rolls, spend_attack, spend_current_attack
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.resolution import EncounterProgress
-from ...grappling_state import remove_relationships_for_creature
 from ...participants import creatures_are_opponents
-from ...rule_queries.defenses import apply_damage
+from ...reaction_runtime.parry import open_parry_decision
+from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.numeric import effective_armor_class
+from ...rule_queries.obstructions import cover_between
 from ...rule_queries.rolls import roll_modifiers
-from ...state_combat import attack_roll_mode_for, automatic_critical_provider_ids_for
-from ...state_runtime import create_event, creature_label
+from ...spatial import creature_distance
+from ...state_combat import (
+    attack_roll_mode_for,
+    automatic_critical_provider_ids_for,
+)
+from ...state_runtime import creature_label
 from ..attack_resolution import (
-    apply_attack_damage,
+    attack_range_band_squares,
     resolve_attack,
+    selected_attack_ability,
+    selected_attack_damage_type,
     selected_attack_type,
 )
-from ..hit_effects import apply_attack_hit_effects
+from ..d20_roll_modifiers import (
+    clear_d20_roll_modes,
+    consume_d20_roll_mode,
+)
+from ..pending_attacks import continue_pending_attack
 from .resources import consume_stat_block_action_resource
 
 if TYPE_CHECKING:
@@ -83,23 +95,60 @@ def resolve_attack_action(
         raise ValueError("Attack target must belong to an opposing team.")
     defender = state.creatures[target_ref].creature
     target_label = creature_label(state, target_ref)
-    nearby_opponent_positions = tuple(
-        candidate.position
+    nearby_opponent_refs = tuple(
+        opponent_ref
         for opponent_ref, candidate in state.creatures.items()
         if candidate.is_alive
         and creatures_are_opponents(state, creature_ref, opponent_ref)
+    )
+    nearby_opponent_positions = tuple(
+        state.creatures[opponent_ref].position for opponent_ref in nearby_opponent_refs
+    )
+    attack_ability = selected_attack_ability(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    attack_damage_type = selected_attack_damage_type(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
     )
     attack_roll_rules = roll_modifiers(
         state,
         creature_ref,
         "attack_roll",
+        attack_ability,
     )
-    damage_roll_rules = roll_modifiers(
+    attack_type = selected_attack_type(
+        creature,
+        state.item_templates,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    range_band = attack_range_band_squares(
+        creature,
+        state.item_templates,
+        state.definition.grid,
+        preferred_attack_type=action.preferred_attack_type,
+        preferred_attack_name=preferred_attack_name,
+    )
+    range_roll_mode = range_band.roll_mode(
+        creature_distance(state, creature_ref, target_ref)
+    )
+    cover = cover_between(state, creature_ref, target_ref)
+    roll_die = state.dice.roll_die
+    record_attack_rolls(state, creature_ref)
+    damage_riders = attack_hit_damage(
         state,
         creature_ref,
-        "damage_roll",
+        target_ref,
+        attack_ability=attack_ability,
+        attack_damage_type=attack_damage_type,
+        excluded_feature_ids=frozenset(creature_state.features_used_this_turn),
     )
-    roll_die = state.dice.roll_die
     outcome = resolve_attack(
         creature,
         defender,
@@ -110,27 +159,36 @@ def resolve_attack_action(
         nearby_opponent_positions=nearby_opponent_positions,
         preferred_attack_name=preferred_attack_name,
         preferred_attack_type=action.preferred_attack_type,
-        attack_roll_mode_override=attack_roll_mode_for(
-            state,
-            creature_ref,
-            target_ref,
-            selected_attack_type(
-                creature,
-                state.item_templates,
-                preferred_attack_type=action.preferred_attack_type,
+        attack_roll_mode_override=combine_roll_modes(
+            attack_roll_mode_for(
+                state,
+                creature_ref,
+                target_ref,
+                attack_type,
+                creature_state.position,
+                nearby_opponent_positions,
+                nearby_opponent_refs=nearby_opponent_refs,
+                attack_ability=attack_ability,
             ),
-            creature_state.position,
-            nearby_opponent_positions,
+            range_roll_mode,
+            consume_d20_roll_mode(
+                state,
+                action_id,
+                attack_roll_occurrence_id(),
+            ),
         ),
         sourced_attack_modifier=attack_roll_rules.resolve_modifier(roll_die),
-        sourced_attack_roll_mode=attack_roll_rules.mode,
         target_armor_class=effective_armor_class(
             state,
             target_ref,
-        ).value,
-        sourced_damage_modifier_for=lambda: damage_roll_rules.resolve_modifier(
-            roll_die
-        ),
+        ).value
+        + cover.bonus,
+        sourced_damage_modifier_for=lambda ability: roll_modifiers(
+            state,
+            creature_ref,
+            "damage_roll",
+            ability,
+        ).resolve_modifier(roll_die),
         d20_roller=roll_die,
         die_roller=roll_die,
         automatic_critical_provider_ids=(
@@ -140,82 +198,49 @@ def resolve_attack_action(
                 target_ref,
             )
         ),
-    )
-    if isinstance(preferred_attack_name, str):
-        consume_stat_block_action_resource(creature, preferred_attack_name)
-    apply_attack_damage(
-        outcome,
-        defender,
-        attacker_label=creature.name,
-        target_label=target_label,
-        damage_receiver=lambda amount, damage_type: apply_damage(
-            state,
-            target_ref,
-            amount,
-            damage_type,
+        sourced_additional_damage=tuple(
+            (contribution.provider_state_id, contribution.value)
+            for contribution in damage_riders
         ),
     )
-    resolve_spell_lifecycle_event(
+    on_hit_feature_ids = (
+        (FRENZY_FEATURE_ID,)
+        if outcome.hit
+        and any(
+            contribution.source.definition_id == FRENZY_FEATURE_ID
+            for contribution in damage_riders
+        )
+        else ()
+    )
+    clear_d20_roll_modes(state, action_id)
+    if isinstance(preferred_attack_name, str):
+        consume_stat_block_action_resource(creature, preferred_attack_name)
+    outcome.attack_roll_detail["cover_degree"] = cover.degree.value
+    outcome.attack_roll_detail["cover_bonus"] = cover.bonus
+    if open_parry_decision(
         state,
-        "target_makes_attack",
-        actor_ref=creature_ref,
+        attack=outcome,
+        attacker_ref=creature_ref,
         target_ref=target_ref,
+        attacker_label=creature.name,
+        target_label=target_label,
+        attack_name=preferred_attack_name,
+        attacks_remaining=creature_state.attacks_remaining,
+        action_id=action_id,
         progress=progress,
+        on_hit_feature_ids=on_hit_feature_ids,
+    ):
+        return
+    continue_pending_attack(
+        state,
+        attack=outcome,
+        attacker_ref=creature_ref,
+        target_ref=target_ref,
+        attacker_label=creature.name,
+        target_label=target_label,
+        attack_name=preferred_attack_name,
+        attacks_remaining=creature_state.attacks_remaining,
+        action_id=action_id,
+        progress=progress,
+        on_hit_feature_ids=on_hit_feature_ids,
     )
-    if outcome.damage > 0:
-        resolve_spell_lifecycle_event(
-            state,
-            "target_damaged",
-            actor_ref=creature_ref,
-            target_ref=target_ref,
-            progress=progress,
-        )
-        resolve_spell_lifecycle_event(
-            state,
-            "target_deals_damage",
-            actor_ref=creature_ref,
-            target_ref=target_ref,
-            progress=progress,
-        )
-    resolve_concentration_damage(state, target_ref, outcome.damage, progress)
-    if outcome.hit and defender.get_health() > 0:
-        apply_attack_hit_effects(
-            state,
-            attacker_ref=creature_ref,
-            target_ref=target_ref,
-            effects=outcome.hit_effects,
-            progress=progress,
-            origin_id=action_id,
-        )
-    progress.messages.extend(outcome.messages)
-    progress.events.append(
-        create_event(
-            state,
-            "attack_resolved",
-            creature_ref=creature_ref,
-            action_id=action_id,
-            data={
-                "attacker_label": creature.name,
-                "target_ref": target_ref,
-                "target_label": target_label,
-                "attack_name": preferred_attack_name,
-                "attack_roll": outcome.attack_roll,
-                "attack_roll_detail": outcome.attack_roll_detail,
-                "hit": outcome.hit,
-                "critical_hit": outcome.critical_hit,
-                "damage": outcome.damage,
-                "damage_roll_detail": outcome.damage_roll_detail,
-                "attacks_remaining": creature_state.attacks_remaining,
-            },
-        )
-    )
-    if defender.get_health() <= 0:
-        remove_relationships_for_creature(state, target_ref)
-        progress.events.append(
-            create_event(
-                state,
-                "creature_defeated",
-                creature_ref=target_ref,
-                action_id=action_id,
-            )
-        )

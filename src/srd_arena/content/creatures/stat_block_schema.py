@@ -11,6 +11,7 @@ from .actions.multiattack import (
     iter_stat_block_references,
 )
 from .actions.schema import NonMultiattackCapabilitySchema
+from .schema import ObservableAppearanceSchema
 
 BestiaryCapabilitySchema = MultiattackCapabilitySchema | NonMultiattackCapabilitySchema
 
@@ -49,12 +50,34 @@ class BestiaryChallengeRatingSchema(SourceModel):
     cr: str
 
 
+class BestiaryInitiativeSchema(SourceModel):
+    """Define how many proficiency bonuses a stat block adds to Initiative."""
+
+    proficiency: int = Field(default=0, ge=0)
+
+
 class BestiaryConditionalImmunitySchema(SourceModel):
     """Define the authored stat-block fields with condition immune and note."""
 
     condition_immune: list[str] = Field(alias="conditionImmune")
     note: str | None = None
     conditional: bool = Field(default=True, alias="cond")
+
+
+class BestiaryDamageDefenseSchema(SourceModel):
+    """Preserve a conditional or specially determined damage defense.
+
+    Plain string entries are unconditional and executable. Structured entries
+    remain typed source data until their condition or special choice can be
+    evaluated by a dedicated rule provider.
+    """
+
+    resist: list[str] = Field(default_factory=list)
+    immune: list[str] = Field(default_factory=list)
+    vulnerable: list[str] = Field(default_factory=list)
+    note: str | None = None
+    conditional: bool = Field(default=True, alias="cond")
+    special: str | None = None
 
 
 class BestiaryConditionalSpeedSchema(SourceModel):
@@ -124,6 +147,13 @@ class BestiaryActionSchema(SourceModel):
         return value
 
 
+class BestiaryGearSchema(SourceModel):
+    """Describe a visible carried item with an optional authored quantity."""
+
+    item: str
+    quantity: int = Field(default=1, ge=1)
+
+
 class BestiaryMonsterSchema(SourceModel):
     """Define the authored stat-block fields with name and source."""
 
@@ -133,6 +163,8 @@ class BestiaryMonsterSchema(SourceModel):
     speed: BestiarySpeedSchema = Field(default_factory=BestiarySpeedSchema)
     hp: BestiaryHitPointsSchema = Field(default_factory=BestiaryHitPointsSchema)
     ac: list[int | BestiaryArmorClassSchema] = Field(default_factory=list)
+    gear: list[str | BestiaryGearSchema] = Field(default_factory=list)
+    appearance: ObservableAppearanceSchema | None = None
     action: list[BestiaryActionSchema] = Field(default_factory=list)
     bonus: list[BestiaryActionSchema] = Field(default_factory=list)
     reaction: list[BestiaryActionSchema] = Field(default_factory=list)
@@ -146,10 +178,17 @@ class BestiaryMonsterSchema(SourceModel):
     senses: list[str] = Field(default_factory=list)
     passive: int | None = None
     languages: list[str] = Field(default_factory=list)
+    initiative: BestiaryInitiativeSchema = Field(
+        default_factory=BestiaryInitiativeSchema
+    )
+    trait_tags: list[str] = Field(default_factory=list, alias="traitTags")
     condition_immune: list[str | BestiaryConditionalImmunitySchema] = Field(
         default_factory=list,
         alias="conditionImmune",
     )
+    resist: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
+    immune: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
+    vulnerable: list[str | BestiaryDamageDefenseSchema] = Field(default_factory=list)
     mechanical_traits: list[str] = Field(
         default_factory=list,
         alias="mechanicalTraits",

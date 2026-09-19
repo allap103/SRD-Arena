@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from srd_arena.domain.creatures.attributes import MovementMode
 from srd_arena.domain.effects.condition_rules import effective_conditions
 from srd_arena.domain.effects.conditions import CombatTrait
 from srd_arena.domain.effects.rule_effects import (
@@ -10,6 +11,7 @@ from srd_arena.domain.effects.rule_effects import (
     SpeedAdjustment,
     SpeedMultiplier,
 )
+from srd_arena.domain.effects.runtime import EffectSource, EffectSourceKind
 
 from ..encounter_models.actions import CreatureRef
 from .context import (
@@ -25,7 +27,7 @@ from .models import (
     NumericRuleContribution,
     NumericRuleResult,
 )
-from .providers import ongoing_rule_effects
+from .providers import creature_rule_effects, ongoing_rule_effects
 
 
 def effective_armor_class(
@@ -36,21 +38,18 @@ def effective_armor_class(
 
     >>> from types import SimpleNamespace
     >>> creature = SimpleNamespace(
-    ...     attributes=SimpleNamespace(base_armor_class=10, dexterity=14),
-    ...     get_modifier=lambda score: (score - 10) // 2,
+    ...     get_armor_class=lambda items: 12,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[],
+    ...     ongoing_effects=[], item_templates={},
     ... )
     >>> effective_armor_class(state, "hero").value
     12
     """
 
     creature = state.creatures[creature_ref].creature
-    base = creature.attributes.base_armor_class + creature.get_modifier(
-        creature.attributes.dexterity
-    )
+    base = creature.get_armor_class(state.item_templates)
     contributions = tuple(
         NumericRuleContribution(
             provider_state_id,
@@ -69,6 +68,8 @@ def effective_armor_class(
 def effective_speed(
     state: ConditionRuleQueryContext,
     creature_ref: CreatureRef,
+    *,
+    mode: MovementMode | None = None,
 ) -> NumericRuleResult:
     """Return effective Speed after additions, multipliers, and caps.
 
@@ -77,11 +78,14 @@ def effective_speed(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
+    ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ...     armor_speed_penalty=lambda items: 0,
+    ...     worn_armor=lambda items: None,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[], conditions=[],
+    ...     ongoing_effects=[], conditions=[], item_templates={},
     ... )
     >>> effective_speed(state, "hero").value
     30
@@ -89,7 +93,7 @@ def effective_speed(
 
     creature = state.creatures[creature_ref].creature
     contributions: list[NumericRuleContribution] = []
-    for provider_state_id, source, rule_effect in ongoing_rule_effects(
+    for provider_state_id, source, rule_effect in creature_rule_effects(
         state, creature_ref
     ):
         if isinstance(rule_effect, SpeedAdjustment):
@@ -111,6 +115,22 @@ def effective_speed(
                     rule_effect.denominator,
                 )
             )
+    armor_penalty = creature.armor_speed_penalty(state.item_templates)
+    worn_armor = creature.worn_armor(state.item_templates)
+    if armor_penalty and worn_armor is not None:
+        contributions.append(
+            NumericRuleContribution(
+                f"equipment:{creature_ref}:{worn_armor.id}",
+                EffectSource(
+                    EffectSourceKind.ITEM,
+                    worn_armor.id,
+                    applied_by_ref=creature_ref,
+                    label=worn_armor.name,
+                ),
+                NumericOperation.ADD,
+                armor_penalty,
+            )
+        )
     applied_conditions = tuple(
         condition
         for condition in state.conditions
@@ -134,8 +154,18 @@ def effective_speed(
                 0,
             )
         )
+    authored_speed = (
+        creature.attributes.movement.effective_speed_feet
+        if mode is None
+        else creature.attributes.movement.feet_for(mode)
+    )
+    base_speed = (
+        creature.attributes.movement.speed_feet
+        if authored_speed is None
+        else authored_speed
+    )
     return NumericRuleResult(
-        creature.attributes.movement.effective_speed_feet,
+        base_speed,
         tuple(contributions),
         minimum=0,
     )
@@ -153,11 +183,14 @@ def movement_budget(
     ...     attributes=SimpleNamespace(
     ...         movement=SimpleNamespace(effective_speed_feet=30)
     ...     ),
+    ...     combat_profile=SimpleNamespace(intrinsic_rule_providers={}),
     ...     statistics=SimpleNamespace(condition_immunities=frozenset()),
+    ...     armor_speed_penalty=lambda items: 0,
+    ...     worn_armor=lambda items: None,
     ... )
     >>> state = SimpleNamespace(
     ...     creatures={"hero": SimpleNamespace(creature=creature)},
-    ...     ongoing_effects=[], conditions=[],
+    ...     ongoing_effects=[], conditions=[], item_templates={},
     ...     definition=SimpleNamespace(grid=Grid(10, 10)),
     ... )
     >>> movement_budget(state, "hero").budget
@@ -165,6 +198,20 @@ def movement_budget(
     """
 
     speed = effective_speed(state, creature_ref)
+    return MovementQueryResult(
+        speed=speed,
+        budget=state.definition.grid.movement_budget(speed.value),
+    )
+
+
+def movement_budget_for_mode(
+    state: MovementRuleQueryContext,
+    creature_ref: CreatureRef,
+    mode: MovementMode,
+) -> MovementQueryResult:
+    """Translate one effective walking or special Speed into grid movement."""
+
+    speed = effective_speed(state, creature_ref, mode=mode)
     return MovementQueryResult(
         speed=speed,
         budget=state.definition.grid.movement_budget(speed.value),

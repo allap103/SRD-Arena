@@ -30,9 +30,6 @@ from srd_arena.domain.encounters.effect_lifecycle.repeat_saves import (
 from srd_arena.domain.encounters.effect_lifecycle.turn_start import (
     expire_ongoing_effects_for_turn_start,
 )
-from srd_arena.domain.encounters.encounter import (
-    EncounterAction,
-)
 from srd_arena.domain.encounters.encounter_models.resolution import EncounterProgress
 from srd_arena.domain.encounters.state_combat import attack_roll_mode_for
 from srd_arena.domain.encounters.state_runtime import apply_encounter_effects
@@ -57,6 +54,7 @@ from tests.encounter_runtime_support import (
 )
 from tests.encounter_runtime_support import (
     TACTICAL_ENCOUNTER_DIR,
+    complete_spell_action,
     is_spell_action,
     player_first_initiative,
     spell_payload,
@@ -94,7 +92,7 @@ pytestmark = pytest.mark.usefixtures(player_first_initiative.__name__)
 
 def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
@@ -109,7 +107,7 @@ def test_color_spray_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
@@ -124,7 +122,7 @@ def test_burning_hands_appears_as_spell_action_when_enemy_is_in_range() -> None:
 
 def test_presentation_derives_spell_slot_rows_from_player_spellcasting() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     session.encounter_state.active_position.x = 4
@@ -146,7 +144,7 @@ def test_presentation_derives_spell_slot_rows_from_player_spellcasting() -> None
 
 def test_lesser_restoration_appears_when_player_has_removable_condition() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     caster = _active_creature(session)
@@ -175,7 +173,7 @@ def test_lesser_restoration_appears_when_player_has_removable_condition() -> Non
 
 def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     caster = _active_creature(session)
@@ -209,7 +207,7 @@ def test_color_spray_consumes_slot_and_applies_blinded_on_failed_save() -> None:
 
 def test_color_spray_cone_can_affect_multiple_enemies() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     assert _active_creature(session).spellcasting is not None
@@ -245,7 +243,7 @@ def test_color_spray_cone_can_affect_multiple_enemies() -> None:
 
 def test_color_spray_cone_uses_continuous_aim_vector() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -275,7 +273,7 @@ def test_color_spray_cone_uses_continuous_aim_vector() -> None:
 
 def test_burning_hands_cone_damages_multiple_enemies() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -317,7 +315,7 @@ def test_burning_hands_cone_damages_multiple_enemies() -> None:
 
 def test_burning_hands_can_use_and_scale_a_higher_level_slot() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     state.active_position.x = 4
@@ -339,7 +337,7 @@ def test_burning_hands_can_use_and_scale_a_higher_level_slot() -> None:
 
 def test_fireball_point_area_damages_multiple_enemies() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     caster = _active_creature(session)
@@ -392,7 +390,7 @@ def test_fireball_point_area_damages_multiple_enemies() -> None:
 
 def test_pyside6_window_extracts_spell_area_overlay() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -425,7 +423,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -469,7 +467,7 @@ def test_pyside6_window_does_not_keep_spell_overlay_after_cast(
 
 def test_battlefield_widget_preview_overlay_reaims_directional_area() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -510,7 +508,7 @@ def test_battlefield_widget_preview_overlay_reaims_directional_area() -> None:
 
 def test_blinded_enemy_attacks_with_disadvantage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     assert _active_creature(session).spellcasting is not None
@@ -525,7 +523,7 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
     result = session.advance_until_input_required()
 
     attack_event = next(
@@ -540,7 +538,7 @@ def test_blinded_enemy_attacks_with_disadvantage() -> None:
 
 def test_attacks_against_blinded_target_gain_advantage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -566,7 +564,7 @@ def test_attacks_against_blinded_target_gain_advantage() -> None:
 
 def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -580,19 +578,19 @@ def test_blinded_from_color_spray_expires_at_end_of_players_next_turn() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: next(rolls, 3))
 
     _choose_directional_spell(session, "Cast Color Spray", (3, 2))
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
     session.advance_until_input_required()
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
 def test_reapplying_blinded_preserves_independent_durations() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -605,25 +603,25 @@ def test_reapplying_blinded_preserves_independent_durations() -> None:
     _use_deterministic_dice(session, die_roller=lambda sides: 5)
 
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
     session.advance_until_input_required()
     _choose_directional_spell(session, "Cast Color Spray", (4, 1))
 
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
     assert len(state.conditions_for("goblin_1")) == 2
 
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
     session.advance_until_input_required()
     assert state.has_condition("goblin_1", Condition.BLINDED) is True
 
-    session.choose(_action_id_by_label(session, "Wait"))
+    session._choose(_action_id_by_label(session, "Wait"))
     session.advance_until_input_required()
     assert state.has_condition("goblin_1", Condition.BLINDED) is False
 
 
 def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state
@@ -692,7 +690,7 @@ def test_remove_condition_effect_clears_blinded_rules_immediately() -> None:
 
 def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     caster = _active_creature(session)
@@ -715,7 +713,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
         ],
     )
 
-    result = session.choose(_action_id_by_prefix(session, "Cast Lesser Restoration"))
+    result = session._choose(_action_id_by_prefix(session, "Cast Lesser Restoration"))
 
     assert (
         "system",
@@ -736,7 +734,7 @@ def test_lesser_restoration_consumes_bonus_action_and_removes_condition() -> Non
 
 def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
@@ -748,7 +746,7 @@ def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
     caster.current_health = caster.get_max_health() - 12
     _use_deterministic_dice(session, die_roller=lambda _sides: 4)
 
-    result = session.choose(_action_id_by_prefix(session, "Cast Cure Wounds"))
+    result = session._choose(_action_id_by_prefix(session, "Cast Cure Wounds"))
 
     assert caster.get_health() == caster.get_max_health() - 3
     spell_event = next(event for event in result.events if event.type == "spell_cast")
@@ -760,7 +758,7 @@ def test_cure_wounds_heals_through_generic_spell_resolution() -> None:
 
 def test_false_life_grants_scaled_temporary_hit_points() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     caster = _active_creature(session)
     assert caster.spellcasting is not None
     caster.spellcasting.learned_spells.append(
@@ -771,7 +769,7 @@ def test_false_life_grants_scaled_temporary_hit_points() -> None:
     caster.spellcasting.spell_slots_remaining[2] = 1
     _use_deterministic_dice(session, die_roller=lambda _sides: 3)
 
-    result = session.choose(_action_id_by_prefix(session, "Cast False Life (Level 2)"))
+    result = session._choose(_action_id_by_prefix(session, "Cast False Life (Level 2)"))
 
     assert caster.temporary_hit_points == 15
     spell_event = next(event for event in result.events if event.type == "spell_cast")
@@ -784,7 +782,7 @@ def test_false_life_grants_scaled_temporary_hit_points() -> None:
 
 def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -809,20 +807,9 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "mass_healing_word", target_ref="goblin_1")
     )
-    _ORCHESTRATOR.submit(state, initial)
-    add_second = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_2"
+    result = _ORCHESTRATOR.submit(
+        state, complete_spell_action(initial, ("goblin_1", "goblin_2"))
     )
-    _ORCHESTRATOR.submit(state, add_second)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-
-    result = _ORCHESTRATOR.submit(state, confirm)
 
     event = next(event for event in result.events if event.type == "spell_cast")
     details = [
@@ -835,7 +822,7 @@ def test_mass_healing_word_uses_one_roll_for_selected_targets() -> None:
 
 def test_heal_upcasts_and_removes_every_listed_condition() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -889,7 +876,7 @@ def test_heal_upcasts_and_removes_every_listed_condition() -> None:
 
 def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -933,7 +920,7 @@ def test_protection_from_energy_offers_and_applies_one_resistance() -> None:
 
 def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -959,7 +946,7 @@ def test_invisibility_is_classified_and_exported_as_beneficial() -> None:
 
 def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1022,7 +1009,7 @@ def test_enhance_ability_offers_and_applies_one_ability_choice() -> None:
 
 def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1066,7 +1053,7 @@ def test_faerie_fire_applies_attack_advantage_only_after_failed_save() -> None:
 
 def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1139,7 +1126,7 @@ def test_phantasmal_killer_scales_and_repeats_typed_damage() -> None:
 
 def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1175,7 +1162,7 @@ def test_resistance_offers_and_applies_one_damage_reduction_type() -> None:
 
 def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1207,19 +1194,7 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
             slot_level=3,
         )
     )
-    _ORCHESTRATOR.submit(state, initial)
-    add_target = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "toggle_spell_target" and action.value == "goblin_1"
-    )
-    _ORCHESTRATOR.submit(state, add_target)
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
-    )
-    _ORCHESTRATOR.submit(state, confirm)
+    _ORCHESTRATOR.submit(state, complete_spell_action(initial, ("player", "goblin_1")))
 
     assert (
         rule_queries.effective_maximum_health(state, "player").value
@@ -1247,7 +1222,7 @@ def test_aid_upcasts_for_multiple_targets_and_reverts_on_expiry() -> None:
 
 def test_mass_heal_uses_bounded_numeric_allocations() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1284,41 +1259,19 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
         for action in state.available_actions()
         if is_spell_action(action, "mass_heal")
     )
-    opened = _ORCHESTRATOR.submit(state, initial)
-
-    assert opened.paused_for_decision
-    assert state.interrupts.pending_spell_cast is not None
-    assert state.interrupts.pending_spell_cast.resource_pool_total == 700
-    for target_ref, amount in (("player", 300), ("goblin_1", 400)):
-        _ORCHESTRATOR.submit(
-            state,
-            EncounterAction(
-                label="Set healing allocation",
-                kind="set_spell_resource_allocation",
-                value=f"{target_ref}~{amount}",
-                id=f"player-spell-allocation-{target_ref}",
-                creature_ref="player",
-            ),
-        )
     rejected = _ORCHESTRATOR.submit(
         state,
-        EncounterAction(
-            label="Over-allocate healing",
-            kind="set_spell_resource_allocation",
-            value="player~301",
-            id="player-spell-allocation-player",
-            creature_ref="player",
+        complete_spell_action(
+            initial, ("player", "goblin_1"), (("player", 301), ("goblin_1", 400))
         ),
     )
-    assert rejected.events[-1].data["success"] is False
-    assert rejected.events[-1].data["reason_code"] == "resource_pool_exceeded"
-    assert "remaining healing pool" in rejected.messages[-1][1]
-    confirm = next(
-        action
-        for action in state.available_actions()
-        if action.kind == "confirm_spell_targets"
+    assert rejected.events[-1].data["reason_code"] == "invalid_allocation"
+    result = _ORCHESTRATOR.submit(
+        state,
+        complete_spell_action(
+            initial, ("player", "goblin_1"), (("player", 300), ("goblin_1", 400))
+        ),
     )
-    result = _ORCHESTRATOR.submit(state, confirm)
 
     assert caster.get_health() == 400
     assert target.creature.get_health() == 500
@@ -1334,7 +1287,7 @@ def test_mass_heal_uses_bounded_numeric_allocations() -> None:
 
 def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1405,7 +1358,7 @@ def test_greater_restoration_selects_a_specific_sourced_effect() -> None:
 
 def test_remove_curse_ends_every_curse_on_one_creature() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1447,7 +1400,7 @@ def test_remove_curse_ends_every_curse_on_one_creature() -> None:
 
 def test_greater_restoration_removes_all_maximum_hit_point_reductions() -> None:
     session = Session(load_encounter_directory(str(TACTICAL_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     caster = _active_creature(session)
@@ -1524,7 +1477,7 @@ def test_lesser_restoration_explicitly_selects_the_condition_to_remove() -> None
             str(TACTICAL_ENCOUNTER_DIR),
         )
     )
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

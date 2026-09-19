@@ -13,7 +13,7 @@ from srd_arena.domain.capabilities import (
     SavingThrowResolution,
     primary_effects,
 )
-from srd_arena.domain.geometry import AreaOfEffect
+from srd_arena.domain.geometry import AreaOfEffect, Position
 from srd_arena.domain.rolls.dice import D20RollMode
 from srd_arena.domain.spells.resolution import SpellActionContext, SpellTargetContext
 from srd_arena.domain.spells.rules import SpellActionPayload
@@ -21,11 +21,16 @@ from srd_arena.domain.spells.rules import SpellActionPayload
 from ...participants import creatures_are_opponents
 from ...rule_queries.defenses import has_condition_save_advantage
 from ...rule_queries.numeric import effective_armor_class
+from ...rule_queries.obstructions import (
+    CoverResult,
+    cover_between,
+    cover_from_position,
+)
+from ...spatial import creature_occupied_cells, creature_position
 from ...state_combat import (
     attack_roll_mode_for,
     automatic_critical_provider_ids_for,
 )
-from ...state_runtime import creature_position
 from .environment import EncounterSpellResolutionEnvironment
 
 if TYPE_CHECKING:
@@ -42,10 +47,14 @@ def build_spell_action_context(
     spell: Spell,
     payload: SpellActionPayload,
     creature_ref: str,
-    target: SpellTargetContext,
+    target: SpellTargetContext | None,
     targets: tuple[SpellTargetContext, ...],
     area: AreaOfEffect | None,
     cast_level: int | None,
+    action_id: str | None = None,
+    roll_occurrence_index_offset: int = 0,
+    maximize_temporary_hit_point_dice: bool = False,
+    announce_cast: bool = True,
 ) -> SpellActionContext:
     """Supply encounter state needed by otherwise source-neutral resolution.
 
@@ -72,7 +81,12 @@ def build_spell_action_context(
     attack_mode = _spell_attack_mode(definition.resolution)
     conditions = _spell_conditions(definition)
     save_advantage_against_opponents = _saves_favor_opponents(definition.resolution)
-    environment = EncounterSpellResolutionEnvironment(state, actor, creature_ref)
+    environment = EncounterSpellResolutionEnvironment(
+        state,
+        actor,
+        creature_ref,
+        spell,
+    )
     return SpellActionContext(
         creature=actor,
         spell=spell,
@@ -80,11 +94,17 @@ def build_spell_action_context(
         current_round=state.round.number,
         targets=targets,
         area=area,
+        destination=(
+            Position(int(payload.aim_point[0]), int(payload.aim_point[1]))
+            if payload.aim_point is not None
+            else None
+        ),
         source_ref=creature_ref,
         environment=environment,
         selected_condition=payload.selected_condition,
         selected_damage_type=payload.selected_damage_type,
         selected_ability=payload.selected_ability,
+        selected_option=payload.selected_option,
         attack_roll_modes=_attack_roll_modes(
             state,
             creature_ref,
@@ -92,10 +112,15 @@ def build_spell_action_context(
             attack_mode,
         ),
         target_armor_classes={
-            candidate.target_ref: effective_armor_class(
-                state,
-                candidate.target_ref,
-            ).value
+            candidate.target_ref: (
+                effective_armor_class(state, candidate.target_ref).value
+                + _cover_for_target(
+                    state,
+                    creature_ref,
+                    candidate.target_ref,
+                    area,
+                ).bonus
+            )
             for candidate in targets
         },
         automatic_critical_providers={
@@ -105,6 +130,7 @@ def build_spell_action_context(
             for candidate in targets
         },
         cast_level=cast_level,
+        announce_cast=announce_cast,
         save_roll_modes=_save_roll_modes(
             state,
             creature_ref,
@@ -112,7 +138,45 @@ def build_spell_action_context(
             conditions,
             save_advantage_against_opponents,
         ),
+        d20_roll_modes=(
+            dict(state.active_d20_roll_modes)
+            if state.active_d20_action_id == action_id
+            else {}
+        ),
+        roll_occurrence_index_offset=roll_occurrence_index_offset,
+        saving_throw_cover_bonuses={
+            candidate.target_ref: _cover_for_target(
+                state,
+                creature_ref,
+                candidate.target_ref,
+                area,
+            ).bonus
+            for candidate in targets
+        },
         healing_allocations=dict(payload.healing_allocations),
+        maximize_temporary_hit_point_dice=maximize_temporary_hit_point_dice,
+    )
+
+
+def _cover_for_target(
+    state: EncounterState,
+    source_ref: str,
+    target_ref: str,
+    area: AreaOfEffect | None,
+) -> CoverResult:
+    """Return cover measured from a direct caster or an area's point of origin."""
+
+    if area is None:
+        return cover_between(state, source_ref, target_ref)
+    return cover_from_position(
+        state,
+        area.origin,
+        target_ref,
+        source_ref=(
+            source_ref
+            if area.origin in creature_occupied_cells(state, source_ref)
+            else None
+        ),
     )
 
 
@@ -158,11 +222,14 @@ def _attack_roll_modes(
 
     if attack_mode is None:
         return {}
-    opponent_positions = tuple(
-        creature_state.position
+    opponent_refs = tuple(
+        opponent_ref
         for opponent_ref, creature_state in state.creatures.items()
         if creature_state.is_alive
         and creatures_are_opponents(state, creature_ref, opponent_ref)
+    )
+    opponent_positions = tuple(
+        state.creatures[opponent_ref].position for opponent_ref in opponent_refs
     )
     actor_position = creature_position(state, creature_ref)
     return {
@@ -173,6 +240,7 @@ def _attack_roll_modes(
             attack_mode,
             actor_position,
             opponent_positions,
+            nearby_opponent_refs=opponent_refs,
         )
         for target in targets
     }

@@ -11,6 +11,7 @@ from .schema import (
     EncounterDefinitionSchema,
     GridSchema,
     PositionSchema,
+    TerrainCellSchema,
 )
 
 __all__ = [
@@ -24,6 +25,7 @@ __all__ = [
     "GridSchema",
     "LoadedEncounter",
     "PositionSchema",
+    "TerrainCellSchema",
     "load_encounter_directory",
     "load_encounter_file",
 ]

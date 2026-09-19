@@ -1,4 +1,5 @@
 from copy import deepcopy
+from dataclasses import replace
 
 from srd_arena.domain.creatures import Attributes, Creature, Equipment, Inventory
 from srd_arena.domain.effects.conditions import Condition, build_applied_condition
@@ -11,8 +12,10 @@ from srd_arena.domain.effects.rule_effects import (
     AttackLimit,
     ConditionImmunity,
     ConditionSuppression,
+    DamageImmunity,
     DamageReduction,
     DamageResistance,
+    DamageVulnerability,
     GrantedSense,
     InvocationFailureChance,
     MaximumHitPointAdjustment,
@@ -54,7 +57,9 @@ from srd_arena.domain.encounters.rule_queries import (
     attack_limit,
     condition_immunities,
     condition_suppressions,
+    damage_immunities,
     damage_resistances,
+    damage_vulnerabilities,
     effective_armor_class,
     effective_maximum_health,
     effective_speed,
@@ -276,6 +281,53 @@ def test_damage_reduction_is_consumed_before_resistance_and_resets() -> None:
     rule_queries.reset_damage_reductions(state, ACTOR_REF)
     state.creatures[ACTOR_REF].creature.current_health = 10
     assert apply_damage(state, ACTOR_REF, 10, "fire") == 3
+
+
+def test_damage_defenses_follow_srd_application_order() -> None:
+    state = _encounter()
+    creature = state.creatures[ACTOR_REF].creature
+    creature.statistics = replace(
+        creature.statistics,
+        damage_resistances=frozenset({"fire"}),
+        damage_immunities=frozenset({"poison"}),
+        damage_vulnerabilities=frozenset({"fire"}),
+    )
+
+    assert apply_damage(state, ACTOR_REF, 9, "poison") == 0
+    assert apply_damage(state, ACTOR_REF, 9, "fire") == 8
+    assert creature.get_health() == 2
+
+
+def test_damage_immunity_does_not_consume_a_reduction() -> None:
+    state = _encounter()
+    creature = state.creatures[ACTOR_REF].creature
+    creature.statistics = replace(
+        creature.statistics,
+        damage_immunities=frozenset({"poison"}),
+    )
+    reduction = DamageReduction("poison", "1d4")
+    state.ongoing_effects.append(_ongoing_effect("effect:reduction", reduction))
+
+    assert apply_damage(state, ACTOR_REF, 10, "poison") == 0
+    assert reduction.available is True
+
+
+def test_temporary_damage_defenses_are_source_aware() -> None:
+    state = _encounter()
+    ward = _ongoing_effect(
+        "effect:ward",
+        DamageImmunity(frozenset({"Poison"})),
+        DamageVulnerability(frozenset({"Cold"})),
+    )
+    state.ongoing_effects.append(ward)
+
+    immunities = damage_immunities(state, ACTOR_REF)
+    vulnerabilities = damage_vulnerabilities(state, ACTOR_REF)
+
+    assert immunities.values == frozenset({"poison"})
+    assert vulnerabilities.values == frozenset({"cold"})
+    assert immunities.contributions[0].provider_state_id == ward.identity.id
+    assert vulnerabilities.contributions[0].source == ward.identity.source
 
 
 def test_maximum_health_uses_strongest_same_definition_instance() -> None:

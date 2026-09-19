@@ -4,6 +4,8 @@ from __future__ import annotations
 
 from collections.abc import Callable
 
+from srd_arena.domain.geometry import serialize_area
+
 from .conditions import AppliedCondition, Condition, build_applied_condition
 from .results import EffectResult
 from .rule_effects import serialize_runtime_rule_effect
@@ -12,7 +14,9 @@ from .runtime import EffectSourceKind
 ApplyCondition = Callable[[AppliedCondition], object]
 RemoveCondition = Callable[[str, Condition], None]
 ApplyOngoingEffect = Callable[[EffectResult, str], object]
+ExtendOngoingEffect = Callable[[EffectResult], object]
 RemoveOngoingEffects = Callable[[EffectResult], object]
+ApplyTeleport = Callable[[str, int, int], object]
 
 
 def apply_effects(
@@ -21,7 +25,9 @@ def apply_effects(
     apply_condition: ApplyCondition,
     remove_condition: RemoveCondition,
     apply_ongoing_effect: ApplyOngoingEffect | None = None,
+    extend_ongoing_effect: ExtendOngoingEffect | None = None,
     remove_ongoing_effects: RemoveOngoingEffects | None = None,
+    apply_teleport: ApplyTeleport | None = None,
     origin_id: str | None = None,
 ) -> list[tuple[str, str]]:
     """Dispatch resolved effects through the supplied state-mutation services.
@@ -59,12 +65,24 @@ def apply_effects(
             if apply_ongoing_effect is None:
                 raise ValueError("No ongoing-effect application service provided.")
             apply_ongoing_effect(effect, origin_id or "")
+        elif effect.kind == "extend_ongoing_effect":
+            if extend_ongoing_effect is None:
+                raise ValueError("No ongoing-effect extension service provided.")
+            extend_ongoing_effect(effect)
         elif effect.kind == "remove_ongoing_effects":
             if remove_ongoing_effects is None:
                 raise ValueError("No ongoing-effect removal service provided.")
             remove_ongoing_effects(effect)
         elif effect.kind == "message":
             messages.extend(message_effects(effect))
+        elif effect.kind == "teleport":
+            if apply_teleport is None:
+                raise ValueError("No teleport application service provided.")
+            x = effect.data.get("x")
+            y = effect.data.get("y")
+            if not isinstance(x, int) or not isinstance(y, int):
+                raise ValueError("teleport effect requires integer coordinates.")
+            apply_teleport(effect.target_ref, x, y)
         else:
             raise ValueError(f"Unsupported effect kind: {effect.kind}")
     return messages
@@ -109,6 +127,8 @@ def _serialize_effect(effect: EffectResult) -> dict[str, object]:
         ]
     if effect.effect_label is not None:
         payload["effect_label"] = effect.effect_label
+    if effect.area is not None:
+        payload["area"] = serialize_area(effect.area)
     return payload
 
 

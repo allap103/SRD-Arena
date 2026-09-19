@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.results import EffectResult
 from srd_arena.domain.effects.rule_effects import MaximumHitPointAdjustment
-from srd_arena.domain.effects.runtime import OngoingEffect
+from srd_arena.domain.effects.runtime import EffectTag, OngoingEffect
 
 from ..attack_economy import reconcile_remaining_attacks
 from ..rule_queries.health import effective_maximum_health
@@ -55,7 +55,11 @@ def remove_ongoing_effects(state: EncounterState, result: EffectResult) -> None:
         for effect in state.ongoing_effects
         if result.target_ref in effect.target_refs
         and (not isinstance(effect_id, str) or effect.identity.id == effect_id)
-        and (not isinstance(effect_kind, str) or effect.kind.value == effect_kind)
+        and (
+            not isinstance(effect_kind, str)
+            or effect.kind.value == effect_kind
+            or (effect_kind == EffectTag.CURSE.value and EffectTag.CURSE in effect.tags)
+        )
         and (
             parameter != "negative_maximum_hit_points"
             or any(
@@ -73,20 +77,70 @@ def _remove_effect_tree(state: EncounterState, effect: OngoingEffect) -> None:
     """Remove an ongoing effect, every target modifier, and child condition."""
 
     origin_id = effect.identity.source.origin_id
-    previous_maximums = _maximums_before_removal(state, effect, effect.target_refs)
+    removed_effect_ids = _descendant_effect_ids(state, effect.identity.id)
+    removed_effects = tuple(
+        existing
+        for existing in state.ongoing_effects
+        if existing.identity.id in removed_effect_ids
+    )
+    target_refs = tuple(
+        dict.fromkeys(
+            target_ref
+            for removed_effect in removed_effects
+            for target_ref in removed_effect.target_refs
+        )
+    )
+    previous_maximums = _maximums_before_removing_effects(
+        state,
+        removed_effects,
+        target_refs,
+    )
     state.ongoing_effects = [
         existing
         for existing in state.ongoing_effects
-        if existing.identity.id != effect.identity.id
+        if existing.identity.id not in removed_effect_ids
     ]
+    removed_condition_ids = {
+        condition.id
+        for condition in state.conditions
+        if condition.identity.source.origin_id == origin_id
+        or condition.identity.parent_id in removed_effect_ids
+        or condition.identity.root_id in removed_effect_ids
+    }
     state.conditions = [
         condition
         for condition in state.conditions
-        if condition.identity.source.origin_id != origin_id
+        if condition.id not in removed_condition_ids
+    ]
+    state.relationships = [
+        relationship
+        for relationship in state.relationships
+        if relationship.identity.parent_id not in removed_effect_ids
+        and relationship.identity.parent_id not in removed_condition_ids
     ]
     _adjust_current_health_after_removal(state, previous_maximums)
-    reconcile_remaining_attacks(state, effect.target_refs)
-    reconcile_remaining_movement(state, effect.target_refs)
+    reconcile_remaining_attacks(state, target_refs)
+    reconcile_remaining_movement(state, target_refs)
+
+
+def _descendant_effect_ids(
+    state: EncounterState,
+    parent_id: str,
+) -> frozenset[str]:
+    """Return an ongoing effect identity and every nested child identity."""
+
+    found = {parent_id}
+    changed = True
+    while changed:
+        changed = False
+        for existing in state.ongoing_effects:
+            if (
+                existing.identity.parent_id in found
+                and existing.identity.id not in found
+            ):
+                found.add(existing.identity.id)
+                changed = True
+    return frozenset(found)
 
 
 def _remove_effect_target(
@@ -137,6 +191,24 @@ def _maximums_before_removal(
     if not any(
         isinstance(rule_effect, MaximumHitPointAdjustment)
         and rule_effect.also_modify_current
+        for rule_effect in effect.rule_effects
+    ):
+        return {}
+    return {
+        target_ref: effective_maximum_health(state, target_ref).value
+        for target_ref in target_refs
+    }
+
+
+def _maximums_before_removing_effects(
+    state: EncounterState,
+    effects: tuple[OngoingEffect, ...],
+    target_refs: tuple[str, ...],
+) -> dict[str, int]:
+    if not any(
+        isinstance(rule_effect, MaximumHitPointAdjustment)
+        and rule_effect.also_modify_current
+        for effect in effects
         for rule_effect in effect.rule_effects
     ):
         return {}

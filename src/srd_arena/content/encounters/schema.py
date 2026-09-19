@@ -25,6 +25,17 @@ class GridSchema(BaseModel):
     height: int = Field(gt=0)
 
 
+class TerrainCellSchema(BaseModel):
+    """Validate traversal and cover authored for one battlefield cell."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    position: PositionSchema
+    traversal: Literal["normal", "difficult", "blocked"] = "normal"
+    cover: Literal["none", "half", "three_quarters", "total"] = "none"
+    movement_mode: Literal["ground", "climb", "swim"] = "ground"
+
+
 class GeometryConfigSchema(BaseModel):
     """Validate encounter-level geometry rule configuration."""
 
@@ -35,6 +46,14 @@ class GeometryConfigSchema(BaseModel):
         ge=0.0,
         le=1.0,
     )
+
+
+class EncounterEnvironmentSchema(BaseModel):
+    """Validate global combat-relevant environmental facts."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    sunlight: bool = False
 
 
 class EncounterConfigSchema(BaseModel):
@@ -100,6 +119,10 @@ class EncounterDefinitionSchema(BaseModel):
     grid: GridSchema
     creatures: list[EncounterCreatureSchema] = Field(default_factory=list)
     teams: list[EncounterTeamSchema] = Field(default_factory=list, max_length=5)
+    terrain: list[TerrainCellSchema] = Field(default_factory=list)
+    environment: EncounterEnvironmentSchema = Field(
+        default_factory=EncounterEnvironmentSchema
+    )
 
     @model_validator(mode="after")
     def validate_creatures(self) -> EncounterDefinitionSchema:
@@ -164,6 +187,21 @@ class EncounterDefinitionSchema(BaseModel):
             raise ValueError(
                 "Encounter creature starting positions must be unique: " + placements
             )
+        terrain_positions = [
+            (cell.position.x, cell.position.y) for cell in self.terrain
+        ]
+        if len(terrain_positions) != len(set(terrain_positions)):
+            raise ValueError("Encounter terrain positions must be unique.")
+        outside_terrain = [
+            position
+            for position in terrain_positions
+            if not (
+                0 <= position[0] < self.grid.width
+                and 0 <= position[1] < self.grid.height
+            )
+        ]
+        if outside_terrain:
+            raise ValueError("Encounter terrain positions must lie within the grid.")
         return self
 
 

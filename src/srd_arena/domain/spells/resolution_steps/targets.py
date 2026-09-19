@@ -7,6 +7,7 @@ from srd_arena.domain.capabilities import (
     AutomaticResolution,
     SavingThrowResolution,
 )
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
 
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
@@ -26,6 +27,7 @@ class ResolvedSpellTargets:
     healing_details: list[dict[str, object]]
     temporary_hit_point_details: list[dict[str, object]]
     affected_targets: list[SpellTargetContext]
+    attack_hit_retaliations: list[AttackHitRetaliationApplication]
 
 
 def resolve_spell_targets(
@@ -43,6 +45,7 @@ def resolve_spell_targets(
     >>> context = SimpleNamespace(
     ...     creature=SimpleNamespace(name="Mage"),
     ...     spell=SimpleNamespace(name="Ward", removable_conditions=()),
+    ...     announce_cast=True,
     ... )
     >>> prepared = SimpleNamespace(definition=definition, targets=())
     >>> resolved = resolve_spell_targets(context, prepared)
@@ -55,18 +58,23 @@ def resolve_spell_targets(
         if prepared.definition.target.kind == "creature" and len(prepared.targets) == 1
         else ""
     )
-    messages = [
-        (
-            "system",
-            f"{context.creature.name} casts {context.spell.name}{target_suffix}.",
-        )
-    ]
+    messages = (
+        [
+            (
+                "system",
+                f"{context.creature.name} casts {context.spell.name}{target_suffix}.",
+            )
+        ]
+        if context.announce_cast
+        else []
+    )
     save_details: list[dict[str, object]] = []
     attack_details: list[dict[str, object]] = []
     damage_details: list[dict[str, object]] = []
     healing_details: list[dict[str, object]] = []
     temporary_hit_point_details: list[dict[str, object]] = []
     affected_targets: list[SpellTargetContext] = []
+    attack_hit_retaliations: list[AttackHitRetaliationApplication] = []
 
     for target in prepared.targets:
         roll_outcome = resolve_target_roll(
@@ -82,6 +90,7 @@ def resolve_spell_targets(
 
         damage = apply_target_damage(context, target, prepared, roll_outcome)
         damage_details.extend(damage.details)
+        attack_hit_retaliations.extend(roll_outcome.attack_hit_retaliations)
         affected = (
             isinstance(prepared.resolution, SavingThrowResolution)
             and not roll_outcome.successful_save
@@ -153,4 +162,5 @@ def resolve_spell_targets(
         healing_details=healing_details,
         temporary_hit_point_details=temporary_hit_point_details,
         affected_targets=affected_targets,
+        attack_hit_retaliations=attack_hit_retaliations,
     )

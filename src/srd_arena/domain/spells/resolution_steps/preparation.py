@@ -6,6 +6,7 @@ from srd_arena.domain.capabilities import (
     CapabilityDefinition,
     CapabilityEffect,
     CapabilityResolution,
+    ConditionRequirement,
     HealingEffect,
     RepeatSave,
     RollModifierEffect,
@@ -36,6 +37,7 @@ class PreparedSpellResolution:
     conditions: tuple[str, ...]
     automatic_failure_creature_types: tuple[str, ...]
     automatic_success_condition_immunities: tuple[str, ...]
+    automatic_success_conditions: tuple[ConditionRequirement, ...]
     automatic_success_traits: tuple[str, ...]
     disadvantage_creature_types: tuple[str, ...]
     expires_on_source_turn_end: bool
@@ -62,6 +64,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     DamageEffect, Outcome,
     ... )
+    >>> from srd_arena.domain.rolls.dice import ResolvedRollModifier
     >>> from ..definitions import Spell
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget('creature'),
@@ -72,7 +75,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
     ...     spell=spell,
     ...     environment=SimpleNamespace(
     ...         roll_die=lambda sides: 4,
-    ...         damage_roll_modifier=lambda: 0,
+    ...         damage_roll_modifier=lambda: ResolvedRollModifier(),
     ...     ),
     ...     cast_level=None,
     ...     creature=SimpleNamespace(attributes=SimpleNamespace(level=1)),
@@ -117,7 +120,8 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         definition=definition,
         resolution=definition.resolution,
         definition_effects=definition_effects,
-        targets=context.targets or (context.target,),
+        targets=context.targets
+        or ((context.target,) if context.target is not None else ()),
         cast_level=rolls.cast_level,
         levels_above=rolls.levels_above,
         save_ability=rules.save_ability,
@@ -127,6 +131,7 @@ def prepare_spell_resolution(context: SpellActionContext) -> PreparedSpellResolu
         automatic_success_condition_immunities=(
             rules.automatic_success_condition_immunities
         ),
+        automatic_success_conditions=rules.automatic_success_conditions,
         automatic_success_traits=rules.automatic_success_traits,
         disadvantage_creature_types=rules.disadvantage_creature_types,
         expires_on_source_turn_end=rules.expires_on_source_turn_end,

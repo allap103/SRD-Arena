@@ -2,6 +2,7 @@
 
 from dataclasses import dataclass
 
+from .armor import ArmorStat
 from .weapons import WeaponStat
 
 
@@ -16,6 +17,7 @@ class Item:
     weapon_stat: WeaponStat | None = None
     item_type: str = ""
     misc_tags: list[str] | None = None
+    armor_stat: ArmorStat | None = None
 
     def has_misc_tag(self, tag: str) -> bool:
         """Return whether the item carries a miscellaneous rules tag.

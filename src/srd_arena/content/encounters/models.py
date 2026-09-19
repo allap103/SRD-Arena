@@ -21,3 +21,4 @@ class EncounterSummary:
     id: str
     label: str
     presentation: EncounterPresentation = EncounterPresentation()
+    folder: tuple[str, ...] = ()

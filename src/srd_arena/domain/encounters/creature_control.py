@@ -12,6 +12,7 @@ from typing import TYPE_CHECKING
 from .actions.creature_actions.capability_execution import (
     execute_capability_action,
 )
+from .actions.creature_actions.compelled import execute_compelled_turn_action
 from .actions.creature_actions.discovery import (
     _stat_block_display_name,
     available_creature_actions,
@@ -22,14 +23,17 @@ from .actions.creature_actions.lifecycle import (
     finish_action_execution,
 )
 from .actions.creature_actions.movement import execute_movement
+from .actions.creature_actions.prone import execute_prone_action
 from .actions.creature_actions.spell_invocation import execute_spell_invocation
-from .actions.creature_actions.spell_selection import (
-    execute_spell_selection_action,
-)
 from .actions.creature_actions.standard import execute_standard_action
+from .actions.d20_roll_modifiers import (
+    action_d20_occurrences,
+    open_d20_roll_modifier_decision,
+)
+from .actions.reckless_attack import open_reckless_attack_decision
 from .encounter_models.actions import EncounterAction
-from .encounter_models.decisions import DecisionFrame
-from .encounter_models.resolution import ActionExecutionResult
+from .encounter_models.decisions import DecisionFrame, ResumeActionExecution
+from .encounter_models.resolution import ActionExecutionContext, ActionExecutionResult
 
 if TYPE_CHECKING:
     from .encounter import EncounterState
@@ -50,10 +54,15 @@ def execute_creature_action(
     >>> action = EncounterAction("Wait", "wait")
     >>> decision = DecisionFrame("turn", "hero", "turn", "active")
     >>> context = SimpleNamespace(
+    ...     actor_ref="hero",
     ...     actor=SimpleNamespace(creature=object()),
+    ...     action=action,
+    ...     decision=decision,
     ...     progress=SimpleNamespace(),
     ...     action_id="action-1",
     ...     rejection=None,
+    ...     reckless_attack_decision_checked=True,
+    ...     d20_decisions_checked=True,
     ... )
     >>> marker = object()
     >>> with patch(
@@ -61,10 +70,6 @@ def execute_creature_action(
     ...     return_value=context,
     ... ), patch(
     ...     "srd_arena.domain.encounters.creature_control.execute_capability_action",
-    ...     return_value=False,
-    ... ), patch(
-    ...     "srd_arena.domain.encounters.creature_control."
-    ...     "execute_spell_selection_action",
     ...     return_value=False,
     ... ), patch(
     ...     "srd_arena.domain.encounters.creature_control.execute_standard_action",
@@ -79,12 +84,43 @@ def execute_creature_action(
     """
 
     context = begin_action_execution(state, action, decision)
-    actor = context.actor.creature
-    progress = context.progress
-    action_id = context.action_id
-
     if context.rejection is not None:
         return finish_action_execution(context, action_ends_turn=False)
+    return continue_creature_action(state, context)
+
+
+def continue_creature_action(
+    state: EncounterState,
+    context: ActionExecutionContext,
+) -> ActionExecutionResult:
+    """Continue one already-declared action after any pre-roll decisions."""
+
+    actor = context.actor.creature
+    progress = context.progress
+    action = context.action
+    decision = context.decision
+    action_id = context.action_id
+    if not context.reckless_attack_decision_checked:
+        context.reckless_attack_decision_checked = True
+        if open_reckless_attack_decision(
+            state,
+            action,
+            actor_ref=context.actor_ref,
+            action_id=action_id,
+            continuation=ResumeActionExecution(context),
+            progress=progress,
+        ):
+            return finish_action_execution(context, action_ends_turn=False)
+    if not context.d20_decisions_checked:
+        context.d20_decisions_checked = True
+        if open_d20_roll_modifier_decision(
+            state,
+            action_d20_occurrences(state, action, context.actor_ref),
+            action_id=action_id,
+            continuation=ResumeActionExecution(context),
+            progress=progress,
+        ):
+            return finish_action_execution(context, action_ends_turn=False)
 
     if action.kind == "move":
         movement_result = execute_movement(state, action, decision, context)
@@ -107,18 +143,28 @@ def execute_creature_action(
             progress,
             action_id,
         )
-    elif execute_spell_selection_action(
-        state,
-        actor,
-        action,
-        progress,
-        action_id,
-    ) or execute_standard_action(
-        state,
-        action,
-        decision,
-        progress,
-        action_id,
+    elif (
+        execute_prone_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
+        or execute_compelled_turn_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
+        or execute_standard_action(
+            state,
+            action,
+            decision,
+            progress,
+            action_id,
+        )
     ):
         pass
     else:
@@ -126,7 +172,7 @@ def execute_creature_action(
 
     return finish_action_execution(
         context,
-        action_ends_turn=action.kind == "wait",
+        action_ends_turn=action.kind in {"wait", "obey_compelled_turn"},
     )
 
 
@@ -134,6 +180,7 @@ __all__ = [
     "_stat_block_display_name",
     "available_creature_actions",
     "begin_action_execution",
+    "continue_creature_action",
     "creature_action_candidates",
     "execute_creature_action",
     "finish_action_execution",

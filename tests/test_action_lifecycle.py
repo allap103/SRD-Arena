@@ -16,7 +16,7 @@ _ORCHESTRATOR = EncounterOrchestrator()
 
 def _encounter_state() -> EncounterState:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     state = session.encounter_state
     external_ref = next(

@@ -3,20 +3,34 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, cast
 
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
+from srd_arena.domain.effects.triggered import ability_modifier_contributions
 from srd_arena.domain.geometry import build_radius_area
-from srd_arena.domain.rolls.dice import D20RollMode
+from srd_arena.domain.rolls import parse_dice_expression
+from srd_arena.domain.rolls.dice import (
+    D20RollMode,
+    DicePoolResult,
+    ResolvedRollModifier,
+    resolve_dice,
+)
+from srd_arena.domain.rolls.saving_throws import Ability
+from srd_arena.domain.spells.definitions import SpellDamage
 from srd_arena.domain.spells.resolution import SpellTargetContext
 
-from ...rule_queries.defenses import apply_damage
+from ...effect_lifecycle.roll_usage import resolve_saving_throw_modifier
+from ...rule_queries.damage_riders import attack_hit_damage
 from ...rule_queries.health import apply_healing
+from ...rule_queries.retaliation import attack_hit_retaliations
 from ...rule_queries.rolls import roll_modifiers
-from ...state_runtime import creature_position
+from ...spatial import creature_position
+from ...state_combat import apply_combat_damage
 from ..option_discovery.spell_areas import targets_in_area
 
 if TYPE_CHECKING:
     from srd_arena.domain.creatures import Creature
+    from srd_arena.domain.spells import Spell
 
     from ...encounter import EncounterState
 
@@ -28,6 +42,7 @@ class EncounterSpellResolutionEnvironment:
     state: EncounterState
     actor: Creature
     actor_ref: str
+    spell: Spell
 
     def roll_die(self, sides: int) -> int:
         """Roll one die through the encounter's injected random source."""
@@ -43,33 +58,113 @@ class EncounterSpellResolutionEnvironment:
             "attack_roll",
         ).resolve_modifier(self.roll_die)
 
-    def attack_roll_mode(self, _target_ref: str) -> D20RollMode:
-        """Resolve sourced attack modes for the spell's caster."""
+    def damage_roll_modifier(self) -> ResolvedRollModifier:
+        """Resolve ongoing and intrinsic modifiers for this spell's damage."""
 
-        return roll_modifiers(
-            self.state,
-            self.actor_ref,
-            "attack_roll",
-        ).mode
-
-    def damage_roll_modifier(self) -> int:
-        """Resolve sourced damage modifiers for the spell's caster."""
-
-        return roll_modifiers(
+        ongoing = roll_modifiers(
             self.state,
             self.actor_ref,
             "damage_roll",
-        ).resolve_modifier(self.roll_die)
+        )
+        intrinsic = ability_modifier_contributions(
+            self.actor.triggered_effects,
+            "spell_damage_roll",
+            {"spell_id": self.spell.id},
+            self._ability_modifier,
+        )
+        return ResolvedRollModifier(
+            value=ongoing.resolve_modifier(self.roll_die)
+            + sum(contribution.value for contribution in intrinsic),
+            source_ids=(
+                *(
+                    contribution.provider_state_id
+                    for contribution in ongoing.contributions
+                ),
+                *(contribution.source_id for contribution in intrinsic),
+            ),
+        )
+
+    def attack_hit_damage(
+        self,
+        target_ref: str,
+        *,
+        critical_hit: bool,
+    ) -> tuple[tuple[SpellDamage, DicePoolResult], ...]:
+        """Roll persistent damage riders bound to this caster and target."""
+
+        results: list[tuple[SpellDamage, DicePoolResult]] = []
+        for contribution in attack_hit_damage(
+            self.state,
+            self.actor_ref,
+            target_ref,
+        ):
+            count, sides = parse_dice_expression(contribution.value.dice)
+            if critical_hit:
+                count *= 2
+            results.append(
+                (
+                    SpellDamage(
+                        f"{count}d{sides}",
+                        contribution.value.damage_type,
+                    ),
+                    resolve_dice(
+                        count,
+                        sides,
+                        modifier_source_ids=(contribution.provider_state_id,),
+                        roller=self.roll_die,
+                    ),
+                )
+            )
+        return tuple(results)
+
+    def attack_hit_retaliations(
+        self,
+        target_ref: str,
+        attack_type: str,
+    ) -> tuple[AttackHitRetaliationApplication, ...]:
+        """Snapshot sourced retaliation before one successful spell attack hits."""
+
+        return tuple(
+            AttackHitRetaliationApplication(
+                protected_target_ref=target_ref,
+                provider_state_id=contribution.provider_state_id,
+                source_definition_id=contribution.source.definition_id,
+                source_ref=contribution.source.applied_by_ref,
+                damage=contribution.value.damage,
+                damage_type=contribution.value.damage_type,
+            )
+            for contribution in attack_hit_retaliations(
+                self.state,
+                target_ref,
+                attack_type,
+            )
+        )
+
+    def _ability_modifier(self, ability: str) -> int:
+        """Return the actor's modifier for one fully named ability."""
+
+        if ability not in {
+            "strength",
+            "dexterity",
+            "constitution",
+            "intelligence",
+            "wisdom",
+            "charisma",
+        }:
+            raise ValueError(f"Unknown ability for damage modifier: {ability!r}.")
+        score = self.actor.saving_throw_ability_score(cast(Ability, ability))
+        return self.actor.get_modifier(score)
 
     def saving_throw_modifier(self, target_ref: str, ability: str) -> int:
         """Resolve sourced saving-throw modifiers for one target."""
 
-        return roll_modifiers(
+        rules = roll_modifiers(
             self.state,
             target_ref,
             "saving_throw",
             ability=ability,
-        ).resolve_modifier(self.roll_die)
+        )
+        return resolve_saving_throw_modifier(self.state, target_ref, rules)
 
     def saving_throw_mode(self, target_ref: str, ability: str) -> D20RollMode:
         """Resolve sourced saving-throw modes for one target."""
@@ -106,14 +201,17 @@ class EncounterSpellResolutionEnvironment:
         target_ref: str,
         amount: int,
         damage_type: str | None,
+        *,
+        critical_hit: bool = False,
     ) -> int:
         """Apply encounter-adjusted spell damage to one target."""
 
-        return apply_damage(
+        return apply_combat_damage(
             self.state,
             target_ref,
             amount,
             damage_type,
+            critical_hit=critical_hit,
         )
 
     def apply_healing(self, target_ref: str, amount: int) -> int:

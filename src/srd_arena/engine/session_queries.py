@@ -37,13 +37,16 @@ def read_session(session: Session) -> SessionRead:
     A completed encounter advertises only Restart and system-level choices.
 
     >>> from types import SimpleNamespace
+    >>> from srd_arena.engine.api import EncounterTerminationReason
     >>> session = SimpleNamespace(
     ...     pending_encounter_completion=SimpleNamespace(
-    ...         message="Encounter complete"
+    ...         message="Encounter complete",
+    ...         reason=EncounterTerminationReason.LAST_TEAM_STANDING,
+    ...         winning_team_id="heroes",
     ...     ),
     ...     encounter_state=None,
     ...     encounter=SimpleNamespace(id="demo", teams=[]),
-    ...     item_templates={})
+    ...     item_templates={}, decision_epoch=0, decision_revision=0)
     >>> [option.label for option in read_session(session).action_options]
     ['Restart encounter', 'Exit game']
     """
@@ -68,20 +71,20 @@ def read_session(session: Session) -> SessionRead:
     session._ensure_encounter_state()
     state = session.encounter_state
     assert state is not None
-    session._encounter_actions = state.available_actions()
-    action_ids = [action.id for action in session._encounter_actions]
-    if len(action_ids) != len(set(action_ids)):
-        raise ValueError("Available encounter action IDs must be unique.")
-
     decision = state.current_decision()
     if (
         decision.kind == "turn"
         and creature_controller(state, decision.creature_ref) == "external"
     ):
         candidates = creature_action_candidates(state, decision.creature_ref)
+        # Discovery and eligibility are pure within this read. Reuse the same
+        # checks for executable actions and for displayed unavailable options.
+        checked = [(action, state.action_eligibility(action)) for action in candidates]
+        session._encounter_actions = [
+            action for action, eligibility in checked if eligibility.allowed
+        ]
         action_options = [
-            _action_option(action, state.action_eligibility(action))
-            for action in candidates
+            _action_option(action, eligibility) for action, eligibility in checked
         ]
         action_options.extend(
             _unimplemented_stat_block_action_options(
@@ -91,10 +94,14 @@ def read_session(session: Session) -> SessionRead:
             )
         )
     else:
+        session._encounter_actions = state.available_actions()
         action_options = [
             _action_option(action) for action in session._encounter_actions
         ]
 
+    action_ids = [action.id for action in session._encounter_actions]
+    if len(action_ids) != len(set(action_ids)):
+        raise ValueError("Available encounter action IDs must be unique.")
     action_options.extend(_system_action_options(session))
     return _session_read(session, action_options=action_options)
 
@@ -140,6 +147,18 @@ def _session_read(
             and state is not None
             and state.requires_automatic_advance()
         ),
+        completion_reason=(
+            session.pending_encounter_completion.reason
+            if session.pending_encounter_completion is not None
+            else None
+        ),
+        winning_team_id=(
+            session.pending_encounter_completion.winning_team_id
+            if session.pending_encounter_completion is not None
+            else None
+        ),
+        decision_epoch=session.decision_epoch,
+        decision_revision=session.decision_revision,
     )
 
 
@@ -169,6 +188,7 @@ def _action_option(
         eligibility=checked_eligibility,
         implemented=implemented,
         details=option_details(action),
+        required_configuration=(None if action.aim_committed else "aim"),
     )
 
 

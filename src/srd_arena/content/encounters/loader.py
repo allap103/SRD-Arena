@@ -10,6 +10,7 @@ from srd_arena.content.character_options.classes import (
 from srd_arena.content.common.sources import load_json
 from srd_arena.content.creatures import (
     BestiaryCatalog,
+    CharacterSnapshotCatalog,
     CreatureSchema,
     PlayerCharacterTemplates,
     build_creature,
@@ -17,11 +18,17 @@ from srd_arena.content.creatures import (
 from srd_arena.content.spells import SpellCatalog
 from srd_arena.domain.creatures import Creature
 from srd_arena.domain.encounters import (
+    CoverDegree,
     EncounterBehavior,
     EncounterDefinition,
+    EncounterEnvironment,
     EncounterParticipant,
     EncounterTeam,
+    TerrainCell,
+    TerrainMovementMode,
+    TerrainTraversal,
 )
+from srd_arena.domain.encounters.spatial import validate_placements
 from srd_arena.domain.geometry import Grid, Position
 
 from .schema import EncounterDefinitionSchema, PositionSchema
@@ -89,6 +96,16 @@ def _build_encounter(schema: EncounterDefinitionSchema) -> EncounterDefinition:
             for creature in schema.creatures
         ],
         teams=teams,
+        terrain=tuple(
+            TerrainCell(
+                position=_build_position(cell.position),
+                traversal=TerrainTraversal(cell.traversal),
+                cover=CoverDegree(cell.cover),
+                movement_mode=TerrainMovementMode(cell.movement_mode),
+            )
+            for cell in schema.terrain
+        ),
+        environment=EncounterEnvironment(sunlight=schema.environment.sunlight),
     )
 
 
@@ -99,6 +116,7 @@ def load_encounter_file(
     player_characters: PlayerCharacterTemplates | None = None,
     optional_features: OptionalFeatureCatalog | None = None,
     spells: SpellCatalog | None = None,
+    character_snapshots: CharacterSnapshotCatalog | None = None,
 ) -> LoadedEncounter:
     """Validate one encounter file and build all referenced domain objects.
 
@@ -124,28 +142,45 @@ def load_encounter_file(
     """
 
     schema = EncounterDefinitionSchema.model_validate(load_json(path))
-    return LoadedEncounter(
-        definition=_build_encounter(schema),
-        creatures=tuple(
-            build_creature(
-                CreatureSchema.model_validate(
-                    creature.model_dump(
-                        exclude_unset=True,
-                        exclude={
-                            "start",
-                            "team_id",
-                            "controller",
-                            "behavior",
-                            "takes_turns",
-                        },
-                    )
-                ),
-                bestiary,
-                classes,
-                player_characters,
-                optional_features,
-                spells,
+    definition = _build_encounter(schema)
+    creatures = tuple(
+        build_creature(
+            CreatureSchema.model_validate(
+                creature.model_dump(
+                    exclude_unset=True,
+                    exclude={
+                        "start",
+                        "team_id",
+                        "controller",
+                        "behavior",
+                        "takes_turns",
+                    },
+                )
+            ),
+            bestiary,
+            classes,
+            player_characters,
+            optional_features,
+            spells,
+            character_snapshots,
+        )
+        for creature in schema.creatures
+    )
+    creatures_by_id = {creature.id: creature for creature in creatures}
+    validate_placements(
+        definition.grid,
+        (
+            (
+                participant.creature_id,
+                participant.start,
+                creatures_by_id[participant.creature_id].size,
             )
-            for creature in schema.creatures
+            for participant in definition.participants
+        ),
+        blocked_cells=(
+            terrain.position
+            for terrain in definition.terrain
+            if terrain.traversal is TerrainTraversal.BLOCKED
         ),
     )
+    return LoadedEncounter(definition=definition, creatures=creatures)

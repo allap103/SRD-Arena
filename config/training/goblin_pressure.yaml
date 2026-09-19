@@ -1,0 +1,27 @@
+schema_version: 1
+encounter: warlock_goblin_pressure
+perspective_creature: warlock
+observation_config: ../observations/training.yaml
+encounter_seed: 42
+learner_seed: 7
+episodes: 150
+max_decisions: 150
+max_engine_steps: 1500
+max_rounds: 40
+max_entities: 16
+max_candidates: 16384
+hidden_size: 32
+learning_rate: 0.001
+entropy_coefficient: 0.01
+device: auto
+
+# Terminal score; preservation terms are normalized and victory-only.
+reward:
+  win: 1.0
+  loss: -1.0
+  draw: 0.0
+  truncation: 0.0
+  party_member_down: -0.4
+  victory_health: 0.1
+  victory_spell_slots: 0.05
+  victory_class_resources: 0.0

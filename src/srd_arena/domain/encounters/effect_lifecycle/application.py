@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import TYPE_CHECKING
 
 from srd_arena.domain.effects.results import EffectResult
@@ -16,6 +17,7 @@ from srd_arena.domain.effects.runtime import (
     OngoingEffectLifecycle,
     Rounds,
     RuntimeStateIdentity,
+    UntilTurnEnd,
 )
 
 from ..attack_economy import reconcile_remaining_attacks
@@ -75,10 +77,12 @@ def start_ongoing_effect(
     definition_id = _required_string(result, "definition_id")
     kind = OngoingEffectKind(_required_string(result, "effect_kind"))
     polarity = EffectPolarity(str(result.data.get("polarity", "neutral")))
-    if kind is OngoingEffectKind.CONCENTRATION:
+    if kind is OngoingEffectKind.CONCENTRATION or bool(
+        result.data.get("ends_concentration", False)
+    ):
         end_concentration(state, source_ref)
     source = EffectSource(
-        kind=EffectSourceKind.SPELL,
+        kind=EffectSourceKind(str(result.data.get("source_kind", "spell"))),
         definition_id=definition_id,
         applied_by_ref=source_ref,
         label=source_label,
@@ -111,16 +115,22 @@ def start_ongoing_effect(
         ),
         target_refs=target_refs,
         duration=(
-            Rounds(duration_rounds)
-            if isinstance(duration_rounds, int)
-            else Indefinite()
+            result.duration
+            or (
+                Rounds(duration_rounds)
+                if isinstance(duration_rounds, int)
+                else Indefinite()
+            )
         ),
         kind=kind,
         polarity=polarity,
         label=result.effect_label,
         lifecycle=result.lifecycle or OngoingEffectLifecycle(),
-        dispellable=True,
+        dispellable=bool(result.data.get("dispellable", True)),
+        tags=result.tags,
         rule_effects=result.rule_effects,
+        area=result.area,
+        obscures_vision=bool(result.data.get("obscures_vision", False)),
     )
     state.ongoing_effects.append(effect)
     reconcile_remaining_attacks(state, target_refs)
@@ -138,6 +148,65 @@ def start_ongoing_effect(
             )
             creature.current_health = max(0, creature.get_health() + maximum_delta)
     return effect
+
+
+def extend_ongoing_effect(
+    state: EncounterState,
+    result: EffectResult,
+) -> OngoingEffect:
+    """Move a matching effect's turn-end expiry to an authored round."""
+
+    definition_id = _required_string(result, "definition_id")
+    requested_round = result.data.get("expires_on_round")
+    if not isinstance(requested_round, int):
+        raise ValueError("Ongoing effect extension requires expires_on_round.")
+    effect = next(
+        (
+            candidate
+            for candidate in state.ongoing_effects
+            if result.target_ref in candidate.target_refs
+            and candidate.identity.source.definition_id == definition_id
+        ),
+        None,
+    )
+    if effect is None:
+        raise ValueError(f"No active {definition_id} effect can be extended.")
+    return extend_effect_through_turn_end(
+        state,
+        effect,
+        result.target_ref,
+        requested_round,
+    )
+
+
+def extend_effect_through_turn_end(
+    state: EncounterState,
+    effect: OngoingEffect,
+    creature_ref: str,
+    requested_round: int,
+) -> OngoingEffect:
+    """Replace an effect with a later turn-end duration within its maximum."""
+
+    maximum = effect.lifecycle.maximum_end_round
+    resolved_round = (
+        min(requested_round, maximum) if maximum is not None else requested_round
+    )
+    current_round = (
+        effect.duration.round_number
+        if isinstance(effect.duration, UntilTurnEnd)
+        and effect.duration.round_number is not None
+        else 0
+    )
+    resolved_round = max(current_round, resolved_round)
+    extended = replace(
+        effect,
+        duration=UntilTurnEnd(creature_ref, resolved_round),
+    )
+    state.ongoing_effects = [
+        extended if candidate.identity.id == effect.identity.id else candidate
+        for candidate in state.ongoing_effects
+    ]
+    return extended
 
 
 def _required_string(result: EffectResult, key: str) -> str:

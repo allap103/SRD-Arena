@@ -1,15 +1,21 @@
 """Resolve the save or attack roll for one spell target."""
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import cast
 
 from srd_arena.domain.capabilities import AttackResolution, SavingThrowResolution
+from srd_arena.domain.effects.results import AttackHitRetaliationApplication
+from srd_arena.domain.rolls import parse_dice_expression
 from srd_arena.domain.rolls.dice import (
     DicePoolResult,
     combine_roll_modes,
     resolve_check,
     resolve_d20,
     resolve_dice,
+)
+from srd_arena.domain.rolls.occurrences import (
+    spell_attack_occurrence_id,
+    spell_save_occurrence_id,
 )
 from srd_arena.domain.rolls.saving_throws import (
     Ability,
@@ -19,7 +25,6 @@ from srd_arena.domain.rolls.saving_throws import (
 from ..definitions import SpellDamage
 from .context import SpellActionContext, SpellTargetContext
 from .preparation import PreparedSpellResolution
-from .scaling import parse_damage_dice
 
 
 @dataclass
@@ -32,6 +37,9 @@ class TargetRollOutcome:
     damage_rolls: list[tuple[SpellDamage, DicePoolResult]]
     save_detail: dict[str, object] | None = None
     attack_detail: dict[str, object] | None = None
+    attack_hit_retaliations: tuple[AttackHitRetaliationApplication, ...] = field(
+        default_factory=tuple
+    )
 
 
 def resolve_target_roll(
@@ -63,7 +71,12 @@ def resolve_target_roll(
 
     assert context.creature.spellcasting is not None
     if isinstance(prepared.resolution, SavingThrowResolution):
-        return _resolve_saving_throw(context, prepared, target)
+        return _resolve_saving_throw(
+            context,
+            prepared,
+            target,
+            target_index=projectile_index,
+        )
     if isinstance(prepared.resolution, AttackResolution):
         return _resolve_spell_attack(
             context,
@@ -83,6 +96,8 @@ def _resolve_saving_throw(
     context: SpellActionContext,
     prepared: PreparedSpellResolution,
     target: SpellTargetContext,
+    *,
+    target_index: int,
 ) -> TargetRollOutcome:
     """Resolve one target's spell saving throw and its structured detail."""
 
@@ -122,19 +137,34 @@ def _resolve_saving_throw(
             else "normal"
         ),
     )
+    cover_bonus = (
+        context.saving_throw_cover_bonuses.get(target.target_ref, 0)
+        if ability == "dexterity"
+        else 0
+    )
+    sourced_mode = context.environment.saving_throw_mode(
+        target.target_ref,
+        ability,
+    )
+    sourced_modifier = context.environment.saving_throw_modifier(
+        target.target_ref,
+        ability,
+    )
     save = resolve_saving_throw(
         target.creature,
         cast(Ability, ability),
         context.creature.spellcasting.save_dc,
-        mode=base_mode,
-        sourced_modifier_override=context.environment.saving_throw_modifier(
-            target.target_ref,
-            ability,
+        mode=combine_roll_modes(
+            base_mode,
+            context.d20_roll_modes.get(
+                spell_save_occurrence_id(
+                    target_index + context.roll_occurrence_index_offset
+                ),
+                "normal",
+            ),
         ),
-        sourced_mode_override=context.environment.saving_throw_mode(
-            target.target_ref,
-            ability,
-        ),
+        sourced_modifier_override=sourced_modifier + cover_bonus,
+        sourced_mode_override=sourced_mode,
         roller=context.environment.roll_die,
         automatic_failure_reasons=automatic_failure_reasons,
     )
@@ -148,7 +178,11 @@ def _resolve_saving_throw(
             "target_label": target.target_label,
             "ability": ability,
             "die": save.check.roll.selected,
+            "dice": list(save.check.roll.dice),
+            "selected_index": save.check.roll.selected_index,
+            "mode": save.check.roll.mode,
             "modifier": save.modifiers.total,
+            "cover_bonus": cover_bonus,
             "total": save.check.roll.total,
             "target_dc": save.check.target,
             "success": save.check.success,
@@ -170,12 +204,25 @@ def _automatic_success_reasons(
         for condition in prepared.automatic_success_condition_immunities
         if condition in target.condition_immunities
     )
+    target_conditions = frozenset(target.effective_conditions)
+    condition_reasons = tuple(
+        f"{context.spell.name}: {', '.join(requirement.conditions)}"
+        for requirement in prepared.automatic_success_conditions
+        if requirement.applied_by == "any"
+        and (
+            all(condition in target_conditions for condition in requirement.conditions)
+            if requirement.match == "all"
+            else any(
+                condition in target_conditions for condition in requirement.conditions
+            )
+        )
+    )
     trait_reasons = tuple(
         f"{context.spell.name}: {trait}"
         for trait in prepared.automatic_success_traits
         if trait in target.creature.statistics.mechanical_traits
     )
-    return immunity_reasons + trait_reasons
+    return immunity_reasons + condition_reasons + trait_reasons
 
 
 def _resolve_spell_attack(
@@ -188,6 +235,7 @@ def _resolve_spell_attack(
     """Resolve one target's spell attack and any per-projectile damage dice."""
 
     assert context.creature.spellcasting is not None
+    assert isinstance(prepared.resolution, AttackResolution)
     attack = resolve_d20(
         modifier=(
             context.creature.spellcasting.attack_bonus
@@ -195,7 +243,12 @@ def _resolve_spell_attack(
         ),
         mode=combine_roll_modes(
             context.attack_roll_modes.get(target.target_ref, "normal"),
-            context.environment.attack_roll_mode(target.target_ref),
+            context.d20_roll_modes.get(
+                spell_attack_occurrence_id(
+                    projectile_index + context.roll_occurrence_index_offset
+                ),
+                "normal",
+            ),
         ),
         roller=context.environment.roll_die,
     )
@@ -212,18 +265,27 @@ def _resolve_spell_attack(
     critical_hit = hit and (attack.selected == 20 or bool(automatic_critical))
     damage_rolls = list(prepared.shared_damage_rolls)
     for damage in prepared.damage_definitions:
-        count, sides = parse_damage_dice(damage.dice)
+        count, sides = parse_dice_expression(damage.dice)
         if critical_hit:
             count *= 2
+        modifier = context.environment.damage_roll_modifier()
         damage_rolls.append(
             (
                 damage,
                 resolve_dice(
                     count,
                     sides,
-                    modifier=context.environment.damage_roll_modifier(),
+                    modifier=modifier.value,
+                    modifier_source_ids=modifier.source_ids,
                     roller=context.environment.roll_die,
                 ),
+            )
+        )
+    if hit:
+        damage_rolls.extend(
+            context.environment.attack_hit_damage(
+                target.target_ref,
+                critical_hit=critical_hit,
             )
         )
     return TargetRollOutcome(
@@ -236,6 +298,9 @@ def _resolve_spell_attack(
             "target_ref": target.target_ref,
             "target_label": target.target_label,
             "die": attack.selected,
+            "dice": list(attack.dice),
+            "selected_index": attack.selected_index,
+            "mode": attack.mode,
             "modifier": attack.total - attack.selected,
             "total": attack.total,
             "target_ac": target_ac,
@@ -243,4 +308,12 @@ def _resolve_spell_attack(
             "critical_hit": critical_hit,
             "automatic_critical_provider_ids": list(automatic_critical),
         },
+        attack_hit_retaliations=(
+            context.environment.attack_hit_retaliations(
+                target.target_ref,
+                prepared.resolution.modes[0],
+            )
+            if hit
+            else ()
+        ),
     )

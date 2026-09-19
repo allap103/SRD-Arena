@@ -43,10 +43,27 @@ class CombatTrait(StrEnum):
     CANNOT_TAKE_REACTIONS = "cannot_take_reactions"
     SPEED_ZERO = "speed_zero"
     ATTACKERS_HAVE_ADVANTAGE = "attackers_have_advantage"
+    ATTACK_ROLLS_HAVE_DISADVANTAGE = "attack_rolls_have_disadvantage"
+    ABILITY_CHECKS_HAVE_DISADVANTAGE = "ability_checks_have_disadvantage"
+    DEXTERITY_SAVES_HAVE_DISADVANTAGE = "dexterity_saves_have_disadvantage"
+    NEARBY_ATTACKERS_HAVE_ADVANTAGE = "nearby_attackers_have_advantage"
+    DISTANT_ATTACKERS_HAVE_DISADVANTAGE = "distant_attackers_have_disadvantage"
     AUTO_FAIL_STRENGTH_SAVES = "auto_fail_strength_saves"
     AUTO_FAIL_DEXTERITY_SAVES = "auto_fail_dexterity_saves"
     HITS_WITHIN_5_FEET_ARE_CRITICAL = "hits_within_5_feet_are_critical"
     INITIATIVE_DISADVANTAGE = "initiative_disadvantage"
+
+
+@dataclass(frozen=True)
+class DestructibleConditionState:
+    """Track the remaining durability of an attackable condition attachment."""
+
+    label: str
+    armor_class: int
+    hit_points: int
+    maximum_hit_points: int
+    damage_vulnerabilities: frozenset[str] = frozenset()
+    damage_immunities: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -65,6 +82,7 @@ class AppliedCondition:
     value: int | None = None
     triggered_effects: tuple[TriggeredEffect, ...] = ()
     metadata: dict[str, object] = field(default_factory=dict)
+    destructible: DestructibleConditionState | None = None
 
     def __post_init__(self) -> None:
         if self.condition is Condition.EXHAUSTION:
@@ -129,6 +147,7 @@ def build_applied_condition(
     origin_id: str | None = None,
     parent_id: str | None = None,
     root_id: str | None = None,
+    destructible: DestructibleConditionState | None = None,
 ) -> AppliedCondition:
     """Build one sourced condition instance for a target.
 
@@ -166,6 +185,7 @@ def build_applied_condition(
         value=value,
         triggered_effects=_condition_effects(condition, target_ref),
         metadata=dict(metadata or {}),
+        destructible=destructible,
     )
 
 

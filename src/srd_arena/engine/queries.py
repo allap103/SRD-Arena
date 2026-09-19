@@ -12,6 +12,8 @@ from srd_arena.domain.encounters.actions.eligibility_rules.models import (
 )
 from srd_arena.domain.encounters.encounter import EncounterState
 
+from .observation_models import EncounterTerminationReason
+
 EXIT_CHOICE_TEXT = "Exit game"
 RESTART_CHOICE_TEXT = "Restart encounter"
 
@@ -33,7 +35,9 @@ class SpellOptionDetails:
     selected_condition: str | None
     selected_damage_type: str | None
     selected_ability: str | None
+    selected_option: str | None
     healing_allocations: tuple[tuple[str, int], ...]
+    grant_id: str | None = None
 
 
 @dataclass(frozen=True)
@@ -47,6 +51,36 @@ class StatBlockOptionDetails:
 @dataclass(frozen=True)
 class DirectTargetOptionDetails:
     """Identify the creature affected by a direct-target engine option."""
+
+    target_ref: str | None
+
+
+@dataclass(frozen=True)
+class EffectRetargetOptionDetails:
+    """Identify the persistent effect and replacement target of an option."""
+
+    effect_id: str
+    target_ref: str
+
+
+@dataclass(frozen=True)
+class GrappleEscapeOptionDetails:
+    """Identify the grapple source and skill selected for an escape check."""
+
+    source_ref: str
+    ability: Literal["strength", "dexterity"]
+
+
+@dataclass(frozen=True)
+class GrappleSaveOptionDetails:
+    """Identify the target's response to one Grapple saving throw."""
+
+    choice: Literal["strength", "dexterity", "fail"]
+
+
+@dataclass(frozen=True)
+class InitiativeSwapOptionDetails:
+    """Identify the ally selected for an optional Alert Initiative swap."""
 
     target_ref: str | None
 
@@ -66,6 +100,16 @@ class MovementOptionDetails:
 
 
 @dataclass(frozen=True)
+class ForcedMovementOptionDetails:
+    """Expose one optional forced-movement outcome to an engine client."""
+
+    target_ref: str
+    direction: Literal["away", "toward"]
+    distance_feet: int
+    source_id: str | None
+
+
+@dataclass(frozen=True)
 class ResourceAllocationOptionDetails:
     """Identify a target whose share of a staged resource can be changed."""
 
@@ -76,29 +120,35 @@ ActionOptionDetails = (
     SpellOptionDetails
     | StatBlockOptionDetails
     | DirectTargetOptionDetails
+    | EffectRetargetOptionDetails
+    | GrappleEscapeOptionDetails
+    | GrappleSaveOptionDetails
+    | InitiativeSwapOptionDetails
     | FeatureOptionDetails
     | MovementOptionDetails
+    | ForcedMovementOptionDetails
     | ResourceAllocationOptionDetails
 )
 
 
 @dataclass(frozen=True)
 class ActionAim:
-    """Request that an advertised area action be aimed at a battlefield point."""
+    """Request that an advertised action be aimed at a battlefield point."""
 
     x: float
     y: float
 
 
 @dataclass(frozen=True)
-class ActionResourceAllocation:
-    """Request an exact resource amount for one target in a staged action."""
+class ActionSpellCast:
+    """Configure all target choices before submitting a spell action."""
 
-    target_ref: str
-    amount: int
+    target_refs: tuple[str, ...]
+    allocations: tuple[tuple[str, int], ...]
+    aim: tuple[float, float] | None
 
 
-ActionConfiguration = ActionAim | ActionResourceAllocation
+ActionConfiguration = ActionAim | ActionSpellCast
 
 
 @dataclass(frozen=True)
@@ -126,6 +176,7 @@ class ActionOption:
     eligibility: ActionEligibility = field(default_factory=ActionEligibility)
     implemented: bool = True
     details: ActionOptionDetails | None = None
+    required_configuration: Literal["aim"] | None = None
 
     @property
     def enabled(self) -> bool:
@@ -174,6 +225,10 @@ class SessionRead:
     creature_team_ids: Mapping[str, str]
     item_names: Mapping[str, str]
     requires_automatic_advance: bool
+    completion_reason: EncounterTerminationReason | None = None
+    winning_team_id: str | None = None
+    decision_epoch: int = 0
+    decision_revision: int = 0
 
     def __post_init__(self) -> None:
         object.__setattr__(

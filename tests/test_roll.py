@@ -60,6 +60,7 @@ def test_seeded_dice_are_isolated_and_restartable() -> None:
     opening = tuple(first.roll_die(20) for _ in range(5))
     restarted = first.restarted()
 
+    assert first.seed == 42
     assert tuple(same_seed.roll_die(20) for _ in range(5)) == opening
     assert tuple(restarted.roll_die(20) for _ in range(5)) == opening
 
@@ -147,7 +148,13 @@ def test_reroll_dice_replaces_only_selected_dice() -> None:
 
 def test_reroll_dice_pool_creates_independent_attempt() -> None:
     _, initial_roller = _roller([2, 5])
-    original = resolve_dice(2, 6, modifier=1, roller=initial_roller)
+    original = resolve_dice(
+        2,
+        6,
+        modifier=1,
+        modifier_source_ids=("agonizing_blast|xphb",),
+        roller=initial_roller,
+    )
     _, replacement_roller = _roller([6, 4])
 
     replacement = reroll_dice_pool(original, roller=replacement_roller)
@@ -155,6 +162,7 @@ def test_reroll_dice_pool_creates_independent_attempt() -> None:
     assert [die.result for die in original.dice] == [2, 5]
     assert [die.result for die in replacement.dice] == [6, 4]
     assert replacement.modifier == 1
+    assert replacement.modifier_source_ids == ("agonizing_blast|xphb",)
     assert replacement.total == 11
     assert replacement.replacements == ()
 

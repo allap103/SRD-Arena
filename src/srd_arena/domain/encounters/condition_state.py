@@ -13,6 +13,7 @@ from srd_arena.domain.effects.conditions import (
 )
 
 from .effect_lifecycle.concentration import end_concentration
+from .effect_lifecycle.removal import _remove_effect_tree
 from .encounter_models.actions import CreatureRef
 from .rule_queries.defenses import condition_immunities, condition_suppressions
 
@@ -111,10 +112,19 @@ def apply_condition(
         if condition.target_ref == applied.target_ref
     )
     suppressions = condition_suppressions(state, applied.target_ref).values
-    if effective_conditions(target_conditions, suppressions).has(
-        Condition.INCAPACITATED
-    ):
+    effective = effective_conditions(target_conditions, suppressions)
+    if effective.has(Condition.INCAPACITATED):
         end_concentration(state, applied.target_ref)
+    ending_effects = tuple(
+        effect
+        for effect in state.ongoing_effects
+        if applied.target_ref in effect.target_refs
+        and any(
+            effective.has(condition) for condition in effect.lifecycle.end_conditions
+        )
+    )
+    for effect in ending_effects:
+        _remove_effect_tree(state, effect)
     return ConditionApplicationResult(
         requested_condition=applied.condition,
         applied=tuple(consequences),
@@ -187,6 +197,26 @@ def remove_condition_from_source(
             removed_by_ref == target_ref
             and applied.metadata.get("blocks_self_removal") is True
         )
+    }
+    state.conditions = [
+        applied for applied in state.conditions if applied.id not in removed_ids
+    ]
+    if removed_ids:
+        state.relationships = [
+            relationship
+            for relationship in state.relationships
+            if relationship.identity.parent_id not in removed_ids
+        ]
+
+
+def remove_condition_application(
+    state: EncounterState,
+    condition_id: str,
+) -> None:
+    """Remove exactly one sourced condition application and its relationships."""
+
+    removed_ids = {
+        applied.id for applied in state.conditions if applied.id == condition_id
     }
     state.conditions = [
         applied for applied in state.conditions if applied.id not in removed_ids

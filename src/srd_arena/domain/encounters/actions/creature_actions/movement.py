@@ -7,6 +7,7 @@ from typing import TYPE_CHECKING
 from srd_arena.domain.geometry import MovementBudget, MovementCost, Position
 
 from ...behaviors import DIRECTION_DELTAS
+from ...effect_lifecycle.movement import reconcile_remaining_movement
 from ...encounter_models.actions import EncounterAction
 from ...encounter_models.decisions import DecisionFrame
 from ...encounter_models.resolution import (
@@ -14,11 +15,16 @@ from ...encounter_models.resolution import (
     ActionExecutionOutcome,
     ActionExecutionResult,
 )
-from ...grappling_state import grappling_targets_for, movement_cost_for
+from ...grappling_state import grappling_targets_for
 from ...reaction_runtime.opportunity_execution import (
     resolve_automatic_opportunity_attacks,
 )
 from ...reaction_runtime.opportunity_offers import queue_opportunity_attack
+from ...rule_queries.movement import (
+    movement_mode_for_step,
+    movement_step_cost,
+    remaining_movement_for_mode,
+)
 from ...state_runtime import create_event
 
 if TYPE_CHECKING:
@@ -50,7 +56,13 @@ def execute_movement(
     >>> from unittest.mock import patch
     >>> with patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
-    ...     "movement_cost_for", return_value=MovementCost(1)
+    ...     "movement_mode_for_step", return_value="walk"
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "remaining_movement_for_mode", return_value=MovementBudget(6)
+    ... ), patch(
+    ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
+    ...     "movement_step_cost", return_value=MovementCost(1)
     ... ), patch(
     ...     "srd_arena.domain.encounters.actions.creature_actions.movement."
     ...     "grappling_targets_for", return_value=()
@@ -71,10 +83,20 @@ def execute_movement(
     direction = str(action.value)
     dx, dy = DIRECTION_DELTAS[direction]
     destination = Position(mover.position.x + dx, mover.position.y + dy)
-    movement_cost = movement_cost_for(state, decision.creature_ref)
-    if movement_cost is None:
-        raise RuntimeError("Movement is unavailable for this creature.")
-    remaining = MovementBudget(max(0, (mover.movement_remaining or 0) - movement_cost))
+    movement_mode = movement_mode_for_step(
+        state,
+        decision.creature_ref,
+        destination,
+    )
+    movement_cost = movement_step_cost(state, decision.creature_ref, destination)
+    remaining_before = remaining_movement_for_mode(
+        state,
+        decision.creature_ref,
+        movement_mode,
+    )
+    remaining = MovementBudget(max(0, remaining_before - movement_cost))
+    mover.movement_mode = movement_mode
+    mover.movement_remaining = remaining_before
     grappled_refs = grappling_targets_for(state, decision.creature_ref)
     grappled_positions = {
         target_ref: Position(
@@ -92,6 +114,7 @@ def execute_movement(
         to_position=destination,
         remaining_movement_after=remaining,
         movement_cost=movement_cost,
+        movement_mode=movement_mode,
         companion_destinations=grappled_positions,
         progress=progress,
         external_only=True,
@@ -118,6 +141,27 @@ def execute_movement(
             context,
             ActionExecutionOutcome.CONTINUE_TURN,
         )
+    if movement_cost > remaining_before:
+        progress.messages.append(
+            (
+                "system",
+                f"{mover.creature.name} no longer has enough movement to move "
+                f"{direction}.",
+            )
+        )
+        progress.events.append(
+            create_event(
+                state,
+                "movement_cancelled",
+                creature_ref=decision.creature_ref,
+                action_id=action_id,
+                data={"direction": direction, "reason": "insufficient_movement"},
+            )
+        )
+        return ActionExecutionResult(
+            context,
+            ActionExecutionOutcome.CONTINUE_TURN,
+        )
     mover.position = destination
     for target_ref, target_position in grappled_positions.items():
         state.creatures[target_ref].position = target_position
@@ -125,6 +169,7 @@ def execute_movement(
     mover.movement_spent_this_turn = MovementCost(
         int(mover.movement_spent_this_turn) + int(movement_cost)
     )
+    reconcile_remaining_movement(state, (decision.creature_ref,))
     progress.messages.append(
         (
             "system",
@@ -140,6 +185,7 @@ def execute_movement(
             action_id=action_id,
             data={
                 "direction": direction,
+                "movement_mode": movement_mode,
                 "to": {"x": destination.x, "y": destination.y},
             },
         )

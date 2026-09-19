@@ -8,13 +8,14 @@ ENCOUNTER_DIR = (
     Path(__file__).parents[1]
     / "content"
     / "encounters"
+    / "archive"
     / "eldritch_blast_scaling_showcase"
 )
 
 
 def test_eldritch_blast_scaling_showcase_loads_all_caster_thresholds() -> None:
     session = Session(load_encounter_directory(str(ENCOUNTER_DIR)))
-    session.read()
+    session._read()
 
     assert session.encounter_state is not None
     state = session.encounter_state

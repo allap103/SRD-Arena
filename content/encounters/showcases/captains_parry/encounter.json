@@ -1,0 +1,32 @@
+{
+  "id": "captains_parry",
+  "grid": {"width": 12, "height": 9},
+  "creatures": [
+    {
+      "id": "warlock",
+      "name": "Warlock",
+      "character_snapshot": {"build": "warlock", "level": 5},
+      "start": {"x": 2, "y": 2},
+      "team_id": "challengers"
+    },
+    {
+      "id": "barbarian",
+      "name": "Barbarian",
+      "character_snapshot": {"build": "barbarian", "level": 5},
+      "start": {"x": 4, "y": 5},
+      "team_id": "challengers"
+    },
+    {
+      "id": "bandit_captain",
+      "name": "Bandit Captain",
+      "size": "M",
+      "stat_block": {"name": "Bandit Captain", "source": "XMM"},
+      "start": {"x": 5, "y": 5},
+      "team_id": "captain"
+    }
+  ],
+  "teams": [
+    {"id": "challengers", "name": "Challengers", "controller": "external"},
+    {"id": "captain", "name": "Captain", "controller": "external"}
+  ]
+}

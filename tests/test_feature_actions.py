@@ -13,7 +13,7 @@ FIXTURE_ENCOUNTER_DIR = Path(__file__).parent / "fixtures" / "encounter_game"
 
 def test_second_wind_returns_healing_effect_result() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     creature = session.encounter_state.creatures["player"].creature
     creature.current_health = 10
@@ -49,7 +49,7 @@ def test_second_wind_returns_healing_effect_result() -> None:
 
 def test_action_surge_returns_extra_action_result() -> None:
     session = Session(load_encounter_directory(str(FIXTURE_ENCOUNTER_DIR)))
-    session.read()
+    session._read()
     assert session.encounter_state is not None
     creature = session.encounter_state.creatures["player"].creature
 

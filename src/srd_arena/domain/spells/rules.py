@@ -14,6 +14,7 @@ from .casting import (
 from .properties import spell_duration_rounds, spell_supports_higher_level
 from .targeting import (
     spell_area_shape,
+    spell_can_damage_targets,
     spell_chooses_area_targets,
     spell_max_targets,
     spell_range_squares,
@@ -21,6 +22,7 @@ from .targeting import (
     spell_requires_full_target_count,
     spell_target_disposition,
     spell_targets_self_only,
+    spell_uses_attack_roll,
 )
 
 __all__ = [
@@ -31,6 +33,7 @@ __all__ = [
     "spell_action_label",
     "spell_action_payload",
     "spell_area_shape",
+    "spell_can_damage_targets",
     "spell_cast_block_reason",
     "spell_chooses_area_targets",
     "spell_duration_rounds",
@@ -41,4 +44,5 @@ __all__ = [
     "spell_supports_higher_level",
     "spell_target_disposition",
     "spell_targets_self_only",
+    "spell_uses_attack_roll",
 ]

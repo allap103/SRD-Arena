@@ -9,6 +9,8 @@ from typing import TYPE_CHECKING
 from .rule_effects import RuntimeRuleEffect
 
 if TYPE_CHECKING:
+    from srd_arena.domain.geometry import AreaOfEffect
+
     from .conditions import Condition
 
 
@@ -159,6 +161,37 @@ class EndEventRule:
 
 
 @dataclass(frozen=True)
+class ExtendEventRule:
+    """Extend an ongoing effect when a matching sourced event occurs."""
+
+    event: str
+    scope: str
+
+
+@dataclass(frozen=True)
+class RetargetOnDefeatLifecycle:
+    """Track a persistent effect that may move after its target is defeated."""
+
+    range_feet: int | None
+    line_of_sight: bool
+    disposition: str
+    defeated_target_ref: str | None = None
+    defeated_round: int | None = None
+    defeated_turn_index: int | None = None
+
+
+@dataclass(frozen=True)
+class AreaTurnStartSave:
+    """Resolve a save when a creature starts its turn inside an effect area."""
+
+    ability: str
+    dc: int
+    failure_conditions: tuple[Condition, ...] = ()
+    failure_rule_effects: tuple[RuntimeRuleEffect, ...] = ()
+    negated_by_condition_immunity: Condition | None = None
+
+
+@dataclass(frozen=True)
 class OngoingEffectLifecycle:
     """Hold typed turn, event, and duration-progress behavior for an effect."""
 
@@ -166,6 +199,12 @@ class OngoingEffectLifecycle:
     repeat_save: RepeatSaveLifecycle | None = None
     end_events: tuple[EndEventRule, ...] = ()
     turn_start_temporary_hit_points: int = 0
+    ends_when_temporary_hit_points_depleted: bool = False
+    retarget_on_defeat: RetargetOnDefeatLifecycle | None = None
+    area_turn_start_save: AreaTurnStartSave | None = None
+    end_conditions: tuple[Condition, ...] = ()
+    extend_events: tuple[ExtendEventRule, ...] = ()
+    maximum_end_round: int | None = None
 
 
 @dataclass(frozen=True)
@@ -188,6 +227,8 @@ class OngoingEffect:
     dispellable: bool = False
     tags: frozenset[EffectTag] = frozenset()
     rule_effects: tuple[RuntimeRuleEffect, ...] = ()
+    area: AreaOfEffect | None = None
+    obscures_vision: bool = False
 
 
 class RelationshipKind(StrEnum):

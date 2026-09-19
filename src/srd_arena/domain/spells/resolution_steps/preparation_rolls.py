@@ -10,14 +10,17 @@ from srd_arena.domain.capabilities import (
     HealingEffect,
     SavingThrowResolution,
 )
-from srd_arena.domain.rolls.dice import DicePoolResult, resolve_dice
+from srd_arena.domain.rolls import parse_dice_expression
+from srd_arena.domain.rolls.dice import (
+    DicePoolResult,
+    resolve_dice,
+)
 
 from ..definitions import SpellDamage
 from .context import SpellActionContext
 from .details import roll_optional_dice
 from .scaling import (
     actor_level_damage_dice,
-    parse_damage_dice,
     resource_dice_increment,
     scale_dice,
 )
@@ -50,6 +53,7 @@ def prepare_spell_rolls(
     ...     AutomaticResolution, CapabilityDefinition, CapabilityTarget,
     ...     DamageEffect, Outcome,
     ... )
+    >>> from srd_arena.domain.rolls.dice import ResolvedRollModifier
     >>> from ..definitions import Spell
     >>> definition = CapabilityDefinition(
     ...     CapabilityTarget("creature"),
@@ -61,7 +65,7 @@ def prepare_spell_rolls(
     ...     creature=SimpleNamespace(attributes=SimpleNamespace(level=1)),
     ...     environment=SimpleNamespace(
     ...         roll_die=lambda sides: 4,
-    ...         damage_roll_modifier=lambda: 0,
+    ...         damage_roll_modifier=lambda: ResolvedRollModifier(),
     ...     ),
     ... )
     >>> prepare_spell_rolls(
@@ -82,17 +86,7 @@ def prepare_spell_rolls(
         levels_above=levels_above,
     )
     shared_damage_rolls = (
-        tuple(
-            (
-                damage,
-                resolve_dice(
-                    *parse_damage_dice(damage.dice),
-                    modifier=context.environment.damage_roll_modifier(),
-                    roller=context.environment.roll_die,
-                ),
-            )
-            for damage in damage_definitions
-        )
+        tuple(_resolve_damage_roll(context, damage) for damage in damage_definitions)
         if isinstance(resolution, SavingThrowResolution)
         else ()
     )
@@ -118,6 +112,24 @@ def prepare_spell_rolls(
         damage_definitions=damage_definitions,
         shared_damage_rolls=shared_damage_rolls,
         shared_healing_rolls=shared_healing_rolls,
+    )
+
+
+def _resolve_damage_roll(
+    context: SpellActionContext,
+    damage: SpellDamage,
+) -> tuple[SpellDamage, DicePoolResult]:
+    """Resolve one shared damage pool with its sourced modifier metadata."""
+
+    modifier = context.environment.damage_roll_modifier()
+    return (
+        damage,
+        resolve_dice(
+            *parse_dice_expression(damage.dice),
+            modifier=modifier.value,
+            modifier_source_ids=modifier.source_ids,
+            roller=context.environment.roll_die,
+        ),
     )
 
 
@@ -154,8 +166,8 @@ def _scaled_damage_definitions(
         if increment is None:
             scaled.append(damage)
             continue
-        increment_count, increment_sides = parse_damage_dice(increment)
-        count, sides = parse_damage_dice(damage.dice)
+        increment_count, increment_sides = parse_dice_expression(increment)
+        count, sides = parse_dice_expression(damage.dice)
         if sides != increment_sides:
             raise ValueError("Slot damage scaling must use the base damage die.")
         scaled.append(
